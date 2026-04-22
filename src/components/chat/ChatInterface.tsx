@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage, Agent } from '@/types/models';
 import { cn } from '@/lib/utils';
+import { fetchFromModel } from '@/lib/api';
 
 export function ChatInterface() {
   const activeSession = useAppStore(state => state.getActiveSession());
@@ -37,7 +38,7 @@ export function ChatInterface() {
     const mentionedAgents = agents.filter(a => userText.includes(`@${a.name}`));
 
     // If no explicit mention, default to activeAgentId or the first agent
-    const { activeAgentId, settings } = useAppStore.getState();
+    const { activeAgentId } = useAppStore.getState();
     const defaultAgent = agents.find(a => a.id === activeAgentId) || agents[0];
     const agentsToRespond = mentionedAgents.length > 0 ? mentionedAgents : [defaultAgent];
 
@@ -47,21 +48,38 @@ export function ChatInterface() {
     agentsToRespond.forEach(async (agent) => {
       // Create initial streaming block
       addAgentResponseStream(activeSession.id, assistantMessageId, agent.id, '');
-      
+
       try {
-        if (settings.apiProvider === 'custom') {
-          // This would ideally be a Tauri command or a fetch call using custom settings
-          console.log(`Calling Custom API for ${agent.name} at ${settings.customBaseUrl} using model ${settings.customModelId}`);
-          
-          // Mock streaming logic for demonstration
-          simulateAgentStream(activeSession.id, assistantMessageId, agent, userText, true);
-        } else {
-          // Normal logic
-          simulateAgentStream(activeSession.id, assistantMessageId, agent, userText, false);
+        const { settings } = useAppStore.getState();
+        const providerToUse: string = settings.apiProvider === 'custom' ? 'custom' : agent.modelProvider;
+        const modelToUse = settings.apiProvider === 'custom' ? settings.customModelId : agent.modelId;
+
+        // Skip actual API call if mock mode or no API key is provided and not using a custom provider that might not need one
+        const hasKey = (providerToUse === 'openai' && settings.openaiKey) ||
+                       (providerToUse === 'anthropic' && settings.anthropicKey) ||
+                       (providerToUse === 'google' && settings.googleKey) ||
+                       providerToUse === 'custom';
+
+        if (!hasKey) {
+            console.log(`Simulating API call for ${agent.name} because no API key is configured for ${providerToUse}.`);
+            simulateAgentStream(activeSession.id, assistantMessageId, agent, userText, providerToUse === 'custom');
+            return;
         }
-      } catch (e) {
+
+        console.log(`Calling API for ${agent.name} using ${providerToUse} and model ${modelToUse}`);
+
+        const { textStream } = await fetchFromModel(providerToUse, modelToUse, userText, settings, agent.systemPrompt);
+
+        let fullText = '';
+        for await (const textPart of textStream) {
+            fullText += textPart;
+            addAgentResponseStream(activeSession.id, assistantMessageId, agent.id, fullText);
+        }
+        completeAgentResponse(activeSession.id, assistantMessageId, agent.id);
+
+      } catch (e: any) {
         console.error("API error", e);
-        addAgentResponseStream(activeSession.id, assistantMessageId, agent.id, '\n\nError: Failed to fetch from API.');
+        addAgentResponseStream(activeSession.id, assistantMessageId, agent.id, `\n\nError: Failed to fetch from API. ${e.message || e}`);
         completeAgentResponse(activeSession.id, assistantMessageId, agent.id);
       }
     });

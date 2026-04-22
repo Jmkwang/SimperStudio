@@ -41,6 +41,7 @@ interface AppState {
     apiProvider: string;
     openaiKey: string;
     anthropicKey: string;
+    googleKey: string;
     customProtocol: string;
     customBaseUrl: string;
     customModelId: string;
@@ -199,6 +200,7 @@ export const useAppStore = create<AppState>()(
         apiProvider: 'openai',
         openaiKey: '',
         anthropicKey: '',
+        googleKey: '',
         customProtocol: 'openai-compatible',
         customBaseUrl: '',
         customModelId: '',
