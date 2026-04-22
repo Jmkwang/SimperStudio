@@ -1,0 +1,20 @@
+--- src/components/workflow/WorkflowCanvas.tsx
++++ src/components/workflow/WorkflowCanvas.tsx
+@@ -19,6 +19,7 @@
+ import { Plus, Save } from 'lucide-react';
+ import { useAppStore } from '@/store/appStore';
+ import { useTheme } from '@/components/theme/ThemeProvider';
++import { toast } from 'sonner';
+ 
+ const nodeTypes = {
+   trigger: TriggerNode,
+@@ -73,8 +74,8 @@
+   const handleSave = () => {
+     if (activeWorkflow) {
+       saveWorkflow(activeWorkflow.id, nodes, edges);
+-      // Optional: Add toast notification here
+       console.log('Workflow saved!');
++      toast.success('Workflow saved successfully!');
+     }
+   };
+ 

@@ -1,0 +1,65 @@
+--- src/store/appStore.ts
++++ src/store/appStore.ts
+@@ -82,6 +82,24 @@
+               sessionId: 'default-session',
+               role: 'system',
+               content: { text: 'Session initialized.' },
+               timestamp: Date.now()
+             }
+           ]
++        },
++        {
++          id: '2',
++          workspaceId: 'default-workspace',
++          title: 'UI Component Design',
++          messages: [],
++          createdAt: Date.now(),
++          updatedAt: Date.now()
++        },
++        {
++          id: '3',
++          workspaceId: 'default-workspace',
++          title: 'General Inquiry',
++          messages: [],
++          createdAt: Date.now(),
++          updatedAt: Date.now()
+         }
+       ],
+       workflows: [
+@@ -112,6 +130,36 @@
+           status: 'active',
+           createdAt: Date.now(),
+           updatedAt: Date.now()
++        },
++        {
++          id: 'w1',
++          workspaceId: 'default-workspace',
++          name: 'Data Processing Pipeline',
++          nodes_data: [],
++          edges_data: [],
++          status: 'active',
++          createdAt: Date.now(),
++          updatedAt: Date.now()
++        },
++        {
++          id: 'w2',
++          workspaceId: 'default-workspace',
++          name: 'Weekly Report Generator',
++          nodes_data: [],
++          edges_data: [],
++          status: 'active',
++          createdAt: Date.now(),
++          updatedAt: Date.now()
++        },
++        {
++          id: 'w3',
++          workspaceId: 'default-workspace',
++          name: 'User Onboarding Flow',
++          nodes_data: [],
++          edges_data: [],
++          status: 'active',
++          createdAt: Date.now(),
++          updatedAt: Date.now()
+         }
+       ],
+       activeWorkspaceId: 'default-workspace',
