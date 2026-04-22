@@ -72,7 +72,7 @@ export function ChatInterface() {
 
         let fullText = '';
         for await (const textPart of textStream) {
-            fullText += textPart;
+            fullText = textPart;
             addAgentResponseStream(activeSession.id, assistantMessageId, agent.id, fullText);
         }
         completeAgentResponse(activeSession.id, assistantMessageId, agent.id);
