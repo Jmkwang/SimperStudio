@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__aionui-team-948fa052-f133-4a46-ba2f-8d2c343afc13__team_task_list",
+      "mcp__aionui-team-948fa052-f133-4a46-ba2f-8d2c343afc13__team_send_message",
+      "mcp__aionui-team-948fa052-f133-4a46-ba2f-8d2c343afc13__team_task_update",
+      "mcp__aionui-team-948fa052-f133-4a46-ba2f-8d2c343afc13__team_members",
+      "mcp__aionui-team-948fa052-f133-4a46-ba2f-8d2c343afc13__team_shutdown_agent",
+      "mcp__aionui-team-948fa052-f133-4a46-ba2f-8d2c343afc13__team_spawn_agent",
+      "Bash(python C:\\\\Users\\\\111\\\\.claude\\\\skills\\\\ui-ux-pro-max/scripts/search.py \"desktop workflow automation chat macOS minimal\" --design-system -p \"SimperStudio\" -f markdown)",
+      "Bash(python \"C:\\\\Users\\\\111\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"desktop workflow automation chat macOS minimal\" --design-system -p \"SimperStudio\" -f markdown)",
+      "Bash(npm create *)",
+      "Bash(python \"C:\\\\Users\\\\111\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"productivity tool desktop macOS minimalist workflow\" --design-system -p \"SimperStudio\" -f markdown)",
+      "Bash(npx create-tauri-app@latest tmp_tauri --manager npm --template react-ts -y)",
+      "Bash(mv tmp_tauri/* .)",
+      "Bash(mv tmp_tauri/.[!.]* .)",
+      "Bash(npm install *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(npx tailwindcss@3 init -p)",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npm config *)",
+      "Bash(export HTTP_PROXY=http://127.0.0.1:7890)",
+      "Bash(export HTTPS_PROXY=http://127.0.0.1:7890)",
+      "Bash(claude doctor *)",
+      "Bash(brew upgrade:*)",
+      "mcp__aionui-team-a22a00aa-08dd-4643-9eae-53f28a5fb2ec__team_task_update",
+      "mcp__aionui-team-a22a00aa-08dd-4643-9eae-53f28a5fb2ec__team_task_create",
+      "mcp__aionui-team-a22a00aa-08dd-4643-9eae-53f28a5fb2ec__team_send_message",
+      "mcp__aionui-team-a22a00aa-08dd-4643-9eae-53f28a5fb2ec__team_shutdown_agent",
+      "mcp__aionui-team-a22a00aa-08dd-4643-9eae-53f28a5fb2ec__team_members",
+      "mcp__aionui-team-a22a00aa-08dd-4643-9eae-53f28a5fb2ec__team_spawn_agent",
+      "Bash(npx -p typescript tsc --noEmit)",
+      "Bash(npx shadcn@latest add slider)",
+      "Bash(grep -n \"Binding element ''value''\" -C 5)",
+      "Bash(npm run tauri dev)"
+    ]
+  }
+}

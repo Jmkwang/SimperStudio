@@ -1,0 +1,116 @@
+import { useState, useCallback, useEffect } from 'react';
+import {
+  ReactFlow,
+  Controls,
+  Background,
+  applyNodeChanges,
+  applyEdgeChanges,
+  addEdge,
+  Node,
+  Edge,
+  NodeChange,
+  EdgeChange,
+  Connection,
+  BackgroundVariant,
+  Panel,
+  ReactFlowProvider
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { TriggerNode } from './nodes/TriggerNode';
+import { AgentNode } from './nodes/AgentNode';
+import { OutputNode } from './nodes/OutputNode';
+import { Button } from '@/components/ui/button';
+import { Plus, Save } from 'lucide-react';
+import { useAppStore } from '@/store/appStore';
+import { useTheme } from '@/components/theme/ThemeProvider';
+
+const nodeTypes = {
+  trigger: TriggerNode,
+  agent: AgentNode,
+  output: OutputNode,
+};
+
+function Flow() {
+  const activeWorkflow = useAppStore(state => state.getActiveWorkflow());
+  const saveWorkflow = useAppStore(state => state.saveWorkflow);
+  const { theme } = useTheme();
+
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+
+  // Load active workflow into canvas
+  useEffect(() => {
+    if (activeWorkflow) {
+      setNodes(activeWorkflow.nodes_data || []);
+      setEdges(activeWorkflow.edges_data || []);
+    }
+  }, [activeWorkflow?.id]);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
+
+  const addAgentNode = () => {
+    const newNode: Node = {
+      id: `agent-${nodes.length + 1}-${Date.now()}`,
+      type: 'agent',
+      position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
+      data: { label: 'New Agent Task', agentId: '', prompt: 'Configure me.' },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
+  const handleSave = () => {
+    if (activeWorkflow) {
+      saveWorkflow(activeWorkflow.id, nodes, edges);
+      // Optional: Add toast notification here
+      console.log('Workflow saved!');
+    }
+  };
+
+  return (
+    <div className="flex-1 w-full h-full relative bg-background">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        nodeTypes={nodeTypes}
+        fitView
+        className="bg-background"
+        colorMode={theme === 'dark' ? 'dark' : theme === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : 'light'}
+      >
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
+        <Controls className="bg-card border shadow-sm rounded-lg" />
+        <Panel position="top-right" className="flex gap-2">
+           <Button onClick={addAgentNode} variant="secondary" size="sm" className="shadow-sm">
+             <Plus className="h-4 w-4 mr-2" /> Add Agent Node
+           </Button>
+           <Button onClick={handleSave} size="sm" className="shadow-sm">
+             <Save className="h-4 w-4 mr-2" /> Save Workflow
+           </Button>
+        </Panel>
+      </ReactFlow>
+    </div>
+  );
+}
+
+export function WorkflowCanvas() {
+  return (
+    <ReactFlowProvider>
+      <Flow />
+    </ReactFlowProvider>
+  );
+}
