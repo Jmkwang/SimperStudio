@@ -28,17 +28,20 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
-const GenericNode = ({ data }: any) => {
+const GenericNode = ({ data, id }: any) => {
   const { t } = useTranslation();
   return (
   <div className="bg-card border-2 border-primary rounded-lg p-3 shadow-md min-w-[150px]">
     <div className="font-semibold text-sm border-b pb-1 mb-2">{data.label}</div>
-    <div className="text-xs text-muted-foreground">{t("Configure in sidebar")}</div>
-  </div>
-  );
-};
+    <div className="text-xs text-muted-foreground">{t("Configure in sidebar")}  <div className="mt-2 text-right">
+            <Button variant="ghost" size="sm" onClick={() => data.deleteNode && data.deleteNode(id)} className="h-6 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950">Delete</Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-const nodeTypes = {
+  const nodeTypes = {
   trigger: TriggerNode,
   agent: AgentNode,
   output: OutputNode,
@@ -57,10 +60,15 @@ function Flow() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
+  const deleteNode = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+    setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+  }, []);
+
   // Load active workflow into canvas
   useEffect(() => {
     if (activeWorkflow) {
-      setNodes(activeWorkflow.nodes_data || []);
+      setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ ...n, data: { ...n.data, deleteNode } })));
       setEdges(activeWorkflow.edges_data || []);
     }
   }, [activeWorkflow?.id]);

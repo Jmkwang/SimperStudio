@@ -43,29 +43,6 @@ export function SettingsView() {
         <section className="space-y-4">
           <h3 className="text-lg font-medium border-b pb-2">{t("General")}</h3>
           <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="theme">{t("Theme Preference")}</Label>
-              <div className="text-sm text-muted-foreground mb-2">Select your preferred color theme.</div>
-              {/* Theme toggle is in sidebar, this could be a select later */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={localSettings.theme === 'light' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleChange('theme', 'light')}
-                >{t("Light")}</Button>
-                <Button
-                  variant={localSettings.theme === 'dark' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleChange('theme', 'dark')}
-                >{t("Dark")}</Button>
-                <Button
-                  variant={localSettings.theme === 'system' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleChange('theme', 'system')}
-                >{t("System")}</Button>
-              </div>
-            </div>
-
             <div className="space-y-2 mt-4">
               <Label>{t("Language")}</Label>
               <div className="text-sm text-muted-foreground mb-2">Select application language.</div>
@@ -84,7 +61,34 @@ export function SettingsView() {
         </section>
 
         <section className="space-y-4">
-          <h3 className="text-lg font-medium border-b pb-2">{t("Model Settings")}</h3>
+          <h3 className="text-lg font-medium border-b pb-2">{t("Appearance")}</h3>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme">{t("Theme Preference")}</Label>
+              <div className="text-sm text-muted-foreground mb-2">Select your preferred color theme.</div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={localSettings.theme === 'light' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleChange('theme', 'light')}
+                >{t("Light")}</Button>
+                <Button
+                  variant={localSettings.theme === 'dark' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleChange('theme', 'dark')}
+                >{t("Dark")}</Button>
+                <Button
+                  variant={localSettings.theme === 'system' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleChange('theme', 'system')}
+                >{t("System")}</Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className="text-lg font-medium border-b pb-2">{t("API Keys")}</h3>
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label>{t("API Provider")}</Label>
@@ -95,6 +99,9 @@ export function SettingsView() {
                 <SelectContent>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
+                  <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
+                  <SelectItem value="gemini-flash">Gemini Flash</SelectItem>
+                  <SelectItem value="gemini-pro-vision">Gemini Pro Vision</SelectItem>
                   <SelectItem value="custom">Custom API</SelectItem>
                 </SelectContent>
               </Select>
@@ -128,6 +135,20 @@ export function SettingsView() {
               </div>
             )}
 
+            {localSettings.apiProvider?.startsWith('gemini') && (
+              <div className="space-y-2">
+                <Label htmlFor="gemini-key">Gemini API Key</Label>
+                <Input
+                  id="gemini-key"
+                  type="password"
+                  placeholder="AIza..."
+                  value={localSettings.geminiKey || ''}
+                  onChange={(e) => handleChange('geminiKey', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Used for Gemini models.</p>
+              </div>
+            )}
+
             {localSettings.apiProvider === 'custom' && (
               <div className="space-y-4 border rounded-md p-4 bg-muted/20">
                 <div className="space-y-2">
@@ -138,6 +159,8 @@ export function SettingsView() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="openai-compatible">{t("OpenAI Compatible")}</SelectItem>
+                      <SelectItem value="openai-response">{t("OpenAI Response")}</SelectItem>
+                      <SelectItem value="openai-completions">{t("OpenAI Completions")}</SelectItem>
                       <SelectItem value="ollama">Ollama</SelectItem>
                       <SelectItem value="lmstudio">LM Studio</SelectItem>
                     </SelectContent>
@@ -170,6 +193,54 @@ export function SettingsView() {
                     value={localSettings.customApiKey}
                     onChange={(e) => handleChange('customApiKey', e.target.value)}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="custom-header">Custom Header (Optional)</Label>
+                  <Input
+                    id="custom-header"
+                    placeholder="e.g. Authorization: Bearer TOKEN"
+                    value={localSettings.customHeader || ''}
+                    onChange={(e) => handleChange('customHeader', e.target.value)}
+                  />
+                </div>
+                
+                {/* XML Preview Display based on selected protocol */}
+                <div className="space-y-2 mt-4 p-4 bg-black/5 rounded-md border border-gray-200 dark:border-gray-800">
+                  <Label className="text-xs uppercase text-muted-foreground tracking-wider mb-2 block">XML Request Preview (Simulation)</Label>
+                  <pre className="text-xs p-2 bg-black text-green-400 rounded-md overflow-x-auto font-mono whitespace-pre-wrap">
+{localSettings.customProtocol === 'openai-response' ? `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || 'https://api.openai.com/v1'}/chat/completions</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+  <body>
+    <model>${localSettings.customModelId || 'gpt-3.5-turbo'}</model>
+    <messages>
+      <message role="user">...</message>
+    </messages>
+  </body>
+</request>` : localSettings.customProtocol === 'openai-completions' ? `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || 'https://api.openai.com/v1'}/completions</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+  <body>
+    <model>${localSettings.customModelId || 'text-davinci-003'}</model>
+    <prompt>...</prompt>
+  </body>
+</request>` : `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || '...'}/chat/completions</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+</request>`}
+                  </pre>
                 </div>
               </div>
             )}

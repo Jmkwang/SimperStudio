@@ -46,6 +46,8 @@ interface AppState {
     customBaseUrl: string;
     customModelId: string;
     customApiKey: string;
+    customHeader: string;
+    geminiKey: string;
   };
   updateSettings: (updates: Partial<AppState['settings']>) => void;
 
@@ -205,6 +207,8 @@ export const useAppStore = create<AppState>()(
         customBaseUrl: '',
         customModelId: '',
         customApiKey: '',
+        customHeader: '',
+        geminiKey: '',
       },
 
       fetchInitialData: async () => {
