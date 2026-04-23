@@ -1,9 +1,13 @@
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/store/appStore"
 import { useTranslation } from "@/hooks/useTranslation"
+import { Plus } from "lucide-react"
 
 export function ContextSidebar({ currentView }: { currentView: string }) {
   const setActiveSession = useAppStore(state => state.setActiveSession)
+  const createSession = useAppStore(state => state.createSession)
+  const createWorkflow = useAppStore(state => state.createWorkflow)
+  const activeWorkspaceId = useAppStore(state => state.activeWorkspaceId)
   const setActiveWorkflow = useAppStore(state => state.setActiveWorkflow)
   const setActiveAgent = useAppStore(state => state.setActiveAgent)
   const sessions = useAppStore(state => state.sessions)
@@ -95,8 +99,23 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
 
   return (
     <div className="flex w-64 flex-col border-r bg-background/50">
-      <div className="p-4 border-b h-14 flex items-center">
+      <div className="p-4 border-b h-14 flex items-center justify-between">
         <h2 className="font-semibold text-sm">{content.title}</h2>
+        {(currentView === 'chat' || !currentView || currentView === 'workflow') && (
+          <button 
+            onClick={() => {
+              if (currentView === 'workflow') {
+                createWorkflow(t('New Workflow'), activeWorkspaceId || 'default-workspace');
+              } else {
+                createSession(t('New Chat'), activeWorkspaceId || 'default-workspace');
+              }
+            }}
+            className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
+            title={currentView === 'workflow' ? t("New Workflow") : t("New Chat")}
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
       </div>
       <div className="flex-1 overflow-auto p-2">
         <div className="flex flex-col gap-1">
