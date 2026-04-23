@@ -48,6 +48,7 @@ interface AppState {
     customApiKey: string;
     customHeader: string;
     geminiKey: string;
+    allowRemoteAccess: boolean;
   };
   updateSettings: (updates: Partial<AppState['settings']>) => void;
 
@@ -209,6 +210,7 @@ export const useAppStore = create<AppState>()(
         customApiKey: '',
         customHeader: '',
         geminiKey: '',
+        allowRemoteAccess: true,
       },
 
       fetchInitialData: async () => {

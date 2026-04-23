@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
@@ -19,7 +20,7 @@ export function SettingsView() {
     setLocalSettings(settings);
   }, [settings]);
 
-  const handleChange = (key: string, value: string) => {
+  const handleChange = (key: string, value: string | boolean) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -43,6 +44,19 @@ export function SettingsView() {
         <section className="space-y-4">
           <h3 className="text-lg font-medium border-b pb-2">{t("General")}</h3>
           <div className="grid gap-4">
+            <div className="flex items-center justify-between mt-4">
+              <div className="space-y-0.5">
+                <Label>{t("Allow Remote Access")}</Label>
+                <div className="text-sm text-muted-foreground">
+                  Allow other devices on your local network to access this application.
+                </div>
+              </div>
+              <Switch 
+                checked={localSettings.allowRemoteAccess} 
+                onCheckedChange={(checked: boolean) => handleChange('allowRemoteAccess', checked)} 
+              />
+            </div>
+
             <div className="space-y-2 mt-4">
               <Label>{t("Language")}</Label>
               <div className="text-sm text-muted-foreground mb-2">Select application language.</div>
