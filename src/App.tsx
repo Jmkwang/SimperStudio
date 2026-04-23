@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
@@ -12,7 +12,12 @@ type ViewMode = 'chat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'pr
 
 function App() {
   const activeSession = useAppStore(state => state.getActiveSession());
+  const fetchInitialData = useAppStore(state => state.fetchInitialData);
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const renderContent = () => {
     switch (viewMode) {

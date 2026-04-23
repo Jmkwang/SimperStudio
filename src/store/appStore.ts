@@ -217,12 +217,36 @@ export const useAppStore = create<AppState>()(
         try {
           const agents = await invoke<Agent[]>('get_agents');
           set({ agents });
+
+          const workspaces = await invoke<Workspace[]>('get_workspaces');
+          if (workspaces.length > 0) {
+            set({ workspaces });
+            const defaultWorkspaceId = workspaces[0].id;
+            set({ activeWorkspaceId: defaultWorkspaceId });
+
+            // Load sessions for default workspace
+            const sessions = await invoke<ChatSession[]>('get_chat_sessions', { workspaceId: defaultWorkspaceId });
+            
+            // For each session, load its messages
+            for (let i = 0; i < sessions.length; i++) {
+                const messages = await invoke<ChatMessage[]>('get_chat_messages', { sessionId: sessions[i].id });
+                // We need to parse content back to object
+                sessions[i].messages = messages.map(m => ({...m, content: JSON.parse(m.content as unknown as string)}));
+            }
+            set({ sessions });
+
+            // Load workflows
+            const workflows = await invoke<Workflow[]>('get_workflows', { workspaceId: defaultWorkspaceId });
+            // parse nodes and edges back from string
+            const parsedWorkflows = workflows.map(w => ({...w, nodes_data: JSON.parse(w.nodes_data as unknown as string), edges_data: JSON.parse(w.edges_data as unknown as string)}));
+            set({ workflows: parsedWorkflows });
+          }
         } catch (error) {
           console.error('Failed to fetch initial data:', error);
         }
       },
 
-      addWorkspace: (name, description = '') => set((state) => {
+      addWorkspace: async (name, description = '') => {
         const newWorkspace: Workspace = {
           id: uuidv4(),
           name,
@@ -230,8 +254,13 @@ export const useAppStore = create<AppState>()(
           createdAt: Date.now(),
           updatedAt: Date.now()
         };
-        return { workspaces: [...state.workspaces, newWorkspace] };
-      }),
+        try {
+          await invoke('add_workspace', { workspace: newWorkspace });
+          set((state) => ({ workspaces: [...state.workspaces, newWorkspace] }));
+        } catch (error) {
+          console.error('Failed to add workspace', error);
+        }
+      },
 
       setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
 
@@ -244,7 +273,8 @@ export const useAppStore = create<AppState>()(
 
         try {
           // Call Tauri backend to add the agent
-          await invoke('add_agent', { agent: newAgent });
+          const agentToSave = {...newAgent, parameters: JSON.stringify(newAgent.parameters || {})};
+          await invoke('add_agent', { agent: agentToSave });
           // Update local state only if backend call succeeds
           set((state) => ({ agents: [...state.agents, newAgent] }));
         } catch (error) {
@@ -259,7 +289,7 @@ export const useAppStore = create<AppState>()(
         )
       })),
 
-      createSession: (title, workspaceId) => set((state) => {
+      createSession: async (title, workspaceId) => {
         const newSession: ChatSession = {
           id: uuidv4(),
           workspaceId,
@@ -268,12 +298,17 @@ export const useAppStore = create<AppState>()(
           createdAt: Date.now(),
           updatedAt: Date.now()
         };
-        return { sessions: [...state.sessions, newSession], activeSessionId: newSession.id };
-      }),
+        try {
+          await invoke('add_chat_session', { session: newSession });
+          set((state) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
+        } catch (error) {
+          console.error('Failed to create session:', error);
+        }
+      },
 
       setActiveSession: (id) => set({ activeSessionId: id }),
 
-      addUserMessage: (sessionId, text) => set((state) => {
+      addUserMessage: async (sessionId, text) => {
         const newMessage: ChatMessage = {
           id: uuidv4(),
           sessionId,
@@ -282,67 +317,96 @@ export const useAppStore = create<AppState>()(
           timestamp: Date.now()
         };
 
-        const sessions = state.sessions.map(s => {
-          if (s.id === sessionId) {
-            return { ...s, messages: [...s.messages, newMessage], updatedAt: Date.now() };
-          }
-          return s;
-        });
-
-        return { sessions };
-      }),
-
-      addAgentResponseStream: (sessionId, messageId, agentId, textChunk) => set((state) => {
-        const sessions = state.sessions.map(s => {
-          if (s.id === sessionId) {
-            const messages = [...s.messages];
-
-            // Find existing assistant message block for this interaction round, or create one
-            let assistantMsgIndex = messages.findIndex(m => m.id === messageId);
-
-            if (assistantMsgIndex === -1) {
-               // Create new assistant message block
-               const newAssistantMsg: ChatMessage = {
-                 id: messageId,
-                 sessionId,
-                 role: 'assistant',
-                 content: { text: '' }, // Optional overall text
-                 agentResponses: [{
-                   agentId,
-                   content: { text: textChunk },
-                   status: 'streaming',
-                   timestamp: Date.now()
-                 }],
-                 timestamp: Date.now()
-               };
-               messages.push(newAssistantMsg);
-            } else {
-              // Update existing assistant message block
-              const msg = { ...messages[assistantMsgIndex] };
-              msg.agentResponses = [...(msg.agentResponses || [])];
-
-              const agentRespIndex = msg.agentResponses.findIndex(ar => ar.agentId === agentId);
-              if (agentRespIndex === -1) {
-                msg.agentResponses.push({
-                   agentId,
-                   content: { text: textChunk },
-                   status: 'streaming',
-                   timestamp: Date.now()
+        try {
+            const msgToSave = {...newMessage, content: JSON.stringify(newMessage.content)};
+            await invoke('add_chat_message', { message: msgToSave });
+            
+            set((state) => {
+                const sessions = state.sessions.map(s => {
+                  if (s.id === sessionId) {
+                    return { ...s, messages: [...s.messages, newMessage], updatedAt: Date.now() };
+                  }
+                  return s;
                 });
-              } else {
-                const resp = { ...msg.agentResponses[agentRespIndex] };
-                resp.content = { text: resp.content.text + textChunk };
-                msg.agentResponses[agentRespIndex] = resp;
-              }
-              messages[assistantMsgIndex] = msg;
-            }
+                return { sessions };
+            });
+        } catch (error) {
+            console.error('Failed to add user message:', error);
+        }
+      },
 
-            return { ...s, messages, updatedAt: Date.now() };
-          }
-          return s;
+      addAgentResponseStream: async (sessionId, messageId, agentId, textChunk) => {
+        let assistantMsgIndex = -1;
+        let newAssistantMsg: ChatMessage | null = null;
+        
+        set((state) => {
+            const sessions = state.sessions.map(s => {
+              if (s.id === sessionId) {
+                const messages = [...s.messages];
+
+                // Find existing assistant message block for this interaction round, or create one
+                assistantMsgIndex = messages.findIndex(m => m.id === messageId);
+
+                if (assistantMsgIndex === -1) {
+                   // Create new assistant message block
+                   newAssistantMsg = {
+                     id: messageId,
+                     sessionId,
+                     role: 'assistant',
+                     content: { text: '' }, // Optional overall text
+                     agentResponses: [{
+                       agentId,
+                       content: { text: textChunk },
+                       status: 'streaming',
+                       timestamp: Date.now()
+                     }],
+                     timestamp: Date.now()
+                   };
+                   messages.push(newAssistantMsg);
+                } else {
+                  // Update existing assistant message block
+                  const msg = { ...messages[assistantMsgIndex] };
+                  msg.agentResponses = [...(msg.agentResponses || [])];
+
+                  const agentRespIndex = msg.agentResponses.findIndex(ar => ar.agentId === agentId);
+                  if (agentRespIndex === -1) {
+                    msg.agentResponses.push({
+                       agentId,
+                       content: { text: textChunk },
+                       status: 'streaming',
+                       timestamp: Date.now()
+                    });
+                  } else {
+                    const resp = { ...msg.agentResponses[agentRespIndex] };
+                    resp.content = { text: resp.content.text + textChunk };
+                    msg.agentResponses[agentRespIndex] = resp;
+                  }
+                  messages[assistantMsgIndex] = msg;
+                  newAssistantMsg = messages[assistantMsgIndex];
+                }
+
+                return { ...s, messages, updatedAt: Date.now() };
+              }
+              return s;
+            });
+            return { sessions };
         });
-        return { sessions };
-      }),
+
+        // Try to sync with backend
+        if (newAssistantMsg) {
+            try {
+                const msg: ChatMessage = newAssistantMsg;
+                const msgToSave = {...msg, content: JSON.stringify(msg.content)};
+                if (assistantMsgIndex === -1) {
+                    await invoke('add_chat_message', { message: msgToSave });
+                } else {
+                    await invoke('update_chat_message', { message: msgToSave });
+                }
+            } catch (error) {
+                console.error("Failed to sync agent response", error);
+            }
+        }
+      },
 
       completeAgentResponse: (sessionId, messageId, agentId) => set((state) => {
         const sessions = state.sessions.map(s => {
@@ -370,7 +434,7 @@ export const useAppStore = create<AppState>()(
         return sessions.find(s => s.id === activeSessionId);
       },
 
-      createWorkflow: (name, workspaceId) => set((state) => {
+      createWorkflow: async (name, workspaceId) => {
         const newWorkflow: Workflow = {
            id: uuidv4(),
            workspaceId,
@@ -381,18 +445,37 @@ export const useAppStore = create<AppState>()(
            createdAt: Date.now(),
            updatedAt: Date.now()
         };
-        return { workflows: [...state.workflows, newWorkflow], activeWorkflowId: newWorkflow.id };
-      }),
+        try {
+            const wfToSave = {...newWorkflow, nodes_data: "[]", edges_data: "[]"};
+            await invoke('add_workflow', { workflow: wfToSave });
+            set((state) => ({ workflows: [...state.workflows, newWorkflow], activeWorkflowId: newWorkflow.id }));
+        } catch (error) {
+            console.error("Failed to create workflow:", error);
+        }
+      },
 
-      saveWorkflow: (id, nodes, edges) => set((state) => {
-         const workflows = state.workflows.map(w => {
-            if (w.id === id) {
-               return { ...w, nodes_data: nodes, edges_data: edges, updatedAt: Date.now() };
-            }
-            return w;
-         });
-         return { workflows };
-      }),
+      saveWorkflow: async (id, nodes, edges) => {
+         try {
+             const { workflows } = get();
+             const wf = workflows.find(w => w.id === id);
+             if (wf) {
+                 const wfToSave = {...wf, nodes_data: JSON.stringify(nodes), edges_data: JSON.stringify(edges), updatedAt: Date.now()};
+                 await invoke('update_workflow', { workflow: wfToSave });
+                 
+                 set((state) => {
+                    const wfs = state.workflows.map(w => {
+                        if (w.id === id) {
+                            return { ...w, nodes_data: nodes, edges_data: edges, updatedAt: Date.now() };
+                        }
+                        return w;
+                    });
+                    return { workflows: wfs };
+                 });
+             }
+         } catch (error) {
+             console.error("Failed to save workflow:", error);
+         }
+      },
 
       setActiveWorkflow: (id) => set({ activeWorkflowId: id }),
       setActiveAgent: (id) => set({ activeAgentId: id }),

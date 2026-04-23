@@ -1,6 +1,12 @@
 mod db;
 
-use db::{DbState, init_db, get_agents, add_agent};
+use db::{
+    DbState, init_db, get_agents, add_agent,
+    get_workspaces, add_workspace, update_workspace, delete_workspace,
+    get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
+    get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,
+    get_workflows, add_workflow, update_workflow, delete_workflow
+};
 use std::sync::Mutex;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -20,8 +26,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet, 
-            get_agents, 
-            add_agent
+            get_agents, add_agent,
+            get_workspaces, add_workspace, update_workspace, delete_workspace,
+            get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
+            get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,
+            get_workflows, add_workflow, update_workflow, delete_workflow
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
