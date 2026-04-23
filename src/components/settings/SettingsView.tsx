@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -15,13 +17,143 @@ export function SettingsView() {
   const { t } = useTranslation();
 
   const [localSettings, setLocalSettings] = useState(settings);
+  const [editedXmlPreview, setEditedXmlPreview] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalSettings(settings);
+    setEditedXmlPreview(null);
   }, [settings]);
 
-  const handleChange = (key: string, value: string | boolean) => {
+  // Reset edited preview when provider changes
+  useEffect(() => {
+    setEditedXmlPreview(null);
+  }, [localSettings.apiProvider, localSettings.customProtocol]);
+
+  const handleChange = (key: keyof typeof settings | string, value: string | boolean) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const generateXmlPreview = () => {
+    if (localSettings.apiProvider === 'openai') {
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>https://api.openai.com/v1/chat/completions</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>
+    <header name="Authorization">Bearer ${localSettings.openaiKey ? '***' : ''}</header>
+  </headers>
+  <body>
+    <model>${(localSettings as any).openaiModelId || 'gpt-4o'}</model>
+    <messages>
+      <message role="user">...</message>
+    </messages>
+  </body>
+</request>`;
+    } else if (localSettings.apiProvider === 'anthropic') {
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>https://api.anthropic.com/v1/messages</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>
+    <header name="x-api-key">${localSettings.anthropicKey ? '***' : ''}</header>
+    <header name="anthropic-version">2023-06-01</header>
+  </headers>
+  <body>
+    <model>${(localSettings as any).anthropicModelId || 'claude-3-5-sonnet-20240620'}</model>
+    <messages>
+      <message role="user">...</message>
+    </messages>
+  </body>
+</request>`;
+    } else if (localSettings.apiProvider === 'gemini') {
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>https://generativelanguage.googleapis.com/v1beta/models/${(localSettings as any).geminiModelId || 'gemini-1.5-pro-latest'}:generateContent?key=${localSettings.geminiKey ? '***' : ''}</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>
+  </headers>
+  <body>
+    <contents>
+      <parts>
+        <text>...</text>
+      </parts>
+    </contents>
+  </body>
+</request>`;
+    } else if (localSettings.apiProvider === 'custom') {
+      if (localSettings.customProtocol === 'openai-response' || localSettings.customProtocol === 'openai-compatible' || localSettings.customProtocol === 'lmstudio') {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || 'https://api.openai.com/v1'}/chat/completions</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customApiKey ? `\n    <header name="Authorization">Bearer ***</header>` : ''}${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+  <body>
+    <model>${localSettings.customModelId || 'gpt-3.5-turbo'}</model>
+    <messages>
+      <message role="user">...</message>
+    </messages>
+  </body>
+</request>`;
+      } else if (localSettings.customProtocol === 'openai-completions') {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || 'https://api.openai.com/v1'}/completions</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customApiKey ? `\n    <header name="Authorization">Bearer ***</header>` : ''}${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+  <body>
+    <model>${localSettings.customModelId || 'text-davinci-003'}</model>
+    <prompt>...</prompt>
+  </body>
+</request>`;
+      } else if (localSettings.customProtocol === 'ollama') {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || 'http://localhost:11434/api'}/chat</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+  <body>
+    <model>${localSettings.customModelId || 'llama3'}</model>
+    <messages>
+      <message role="user">...</message>
+    </messages>
+  </body>
+</request>`;
+      } else if (localSettings.customProtocol === 'anthropic') {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || 'https://api.anthropic.com/v1'}/messages</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customApiKey ? `\n    <header name="x-api-key">***</header>` : ''}${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+  <body>
+    <model>${localSettings.customModelId || 'claude-3-opus-20240229'}</model>
+    <messages>
+      <message role="user">...</message>
+    </messages>
+  </body>
+</request>`;
+      } else {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<request>
+  <url>${localSettings.customBaseUrl || '...'}</url>
+  <method>POST</method>
+  <headers>
+    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
+  </headers>
+</request>`;
+      }
+    }
+    return '';
   };
 
   const handleSave = () => {
@@ -40,11 +172,17 @@ export function SettingsView() {
         </p>
       </div>
 
-      <div className="space-y-8">
-        <section className="space-y-4">
-          <h3 className="text-lg font-medium border-b pb-2">{t("General")}</h3>
-          <div className="grid gap-4">
-            <div className="flex items-center justify-between mt-4">
+      <Tabs defaultValue="general" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsTrigger value="general">{t("General")}</TabsTrigger>
+          <TabsTrigger value="appearance">{t("Appearance")}</TabsTrigger>
+          <TabsTrigger value="apikeys">{t("API Keys")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-4">
+          <div className="grid gap-4 bg-card border rounded-lg p-6 shadow-sm">
+            <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("General Settings")}</h3>
+            <div className="flex items-center justify-between mt-2">
               <div className="space-y-0.5">
                 <Label>{t("Allow Remote Access")}</Label>
                 <div className="text-sm text-muted-foreground">
@@ -71,12 +209,16 @@ export function SettingsView() {
                 </SelectContent>
               </Select>
             </div>
+            
+            <div className="pt-6 mt-4 border-t">
+              <Button onClick={handleSave}>{t("Save Settings")}</Button>
+            </div>
           </div>
-        </section>
+        </TabsContent>
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-medium border-b pb-2">{t("Appearance")}</h3>
-          <div className="grid gap-4">
+        <TabsContent value="appearance" className="space-y-4">
+          <div className="grid gap-4 bg-card border rounded-lg p-6 shadow-sm">
+            <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("Appearance Settings")}</h3>
             <div className="space-y-2">
               <Label htmlFor="theme">{t("Theme Preference")}</Label>
               <div className="text-sm text-muted-foreground mb-2">Select your preferred color theme.</div>
@@ -98,12 +240,16 @@ export function SettingsView() {
                 >{t("System")}</Button>
               </div>
             </div>
+            
+            <div className="pt-6 mt-4 border-t">
+              <Button onClick={handleSave}>{t("Save Settings")}</Button>
+            </div>
           </div>
-        </section>
+        </TabsContent>
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-medium border-b pb-2">{t("API Keys")}</h3>
-          <div className="grid gap-4">
+        <TabsContent value="apikeys" className="space-y-4">
+          <div className="grid gap-4 bg-card border rounded-lg p-6 shadow-sm">
+            <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("API Keys Configuration")}</h3>
             <div className="space-y-2">
               <Label>{t("API Provider")}</Label>
               <Select value={localSettings.apiProvider} onValueChange={(val) => handleChange('apiProvider', val)}>
@@ -113,16 +259,14 @@ export function SettingsView() {
                 <SelectContent>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
-                  <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
-                  <SelectItem value="gemini-flash">Gemini Flash</SelectItem>
-                  <SelectItem value="gemini-pro-vision">Gemini Pro Vision</SelectItem>
+                  <SelectItem value="gemini">Gemini</SelectItem>
                   <SelectItem value="custom">Custom API</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {localSettings.apiProvider === 'openai' && (
-              <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+              <div className="space-y-4 border rounded-md p-4 bg-muted/20 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="openai-key">OpenAI API Key</Label>
                   <Input
@@ -134,12 +278,20 @@ export function SettingsView() {
                   />
                   <p className="text-xs text-muted-foreground">Used for GPT models.</p>
                 </div>
-                
+                <div className="space-y-2">
+                  <Label htmlFor="openai-model">Model ID</Label>
+                  <Input
+                    id="openai-model"
+                    placeholder="gpt-4o"
+                    value={(localSettings as any).openaiModelId || ''}
+                    onChange={(e) => handleChange('openaiModelId', e.target.value)}
+                  />
+                </div>
               </div>
             )}
 
             {localSettings.apiProvider === 'anthropic' && (
-              <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+              <div className="space-y-4 border rounded-md p-4 bg-muted/20 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="anthropic-key">Anthropic API Key</Label>
                   <Input
@@ -151,12 +303,20 @@ export function SettingsView() {
                   />
                   <p className="text-xs text-muted-foreground">Used for Claude models.</p>
                 </div>
-                
+                <div className="space-y-2">
+                  <Label htmlFor="anthropic-model">Model ID</Label>
+                  <Input
+                    id="anthropic-model"
+                    placeholder="claude-3-5-sonnet-20240620"
+                    value={(localSettings as any).anthropicModelId || ''}
+                    onChange={(e) => handleChange('anthropicModelId', e.target.value)}
+                  />
+                </div>
               </div>
             )}
 
-            {localSettings.apiProvider?.startsWith('gemini') && (
-              <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+            {localSettings.apiProvider === 'gemini' && (
+              <div className="space-y-4 border rounded-md p-4 bg-muted/20 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="gemini-key">Gemini API Key</Label>
                   <Input
@@ -168,12 +328,20 @@ export function SettingsView() {
                   />
                   <p className="text-xs text-muted-foreground">Used for Gemini models.</p>
                 </div>
-                
+                <div className="space-y-2">
+                  <Label htmlFor="gemini-model">Model ID</Label>
+                  <Input
+                    id="gemini-model"
+                    placeholder="gemini-1.5-pro-latest"
+                    value={(localSettings as any).geminiModelId || ''}
+                    onChange={(e) => handleChange('geminiModelId', e.target.value)}
+                  />
+                </div>
               </div>
             )}
 
             {localSettings.apiProvider === 'custom' && (
-              <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+              <div className="space-y-4 border rounded-md p-4 bg-muted/20 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="custom-protocol">{t("Protocol")}</Label>
                   <Select value={localSettings.customProtocol} onValueChange={(val) => handleChange('customProtocol', val)}>
@@ -227,128 +395,49 @@ export function SettingsView() {
                     onChange={(e) => handleChange('customHeader', e.target.value)}
                   />
                 </div>
-                
-                
               </div>
             )}
 
-            
-            {/* Unified XML Request Preview (Simulation) */}
+            {/* Editable XML Request Preview */}
             <div className="space-y-2 mt-4 p-4 bg-black/5 rounded-md border border-gray-200 dark:border-gray-800">
-              <Label className="text-xs uppercase text-muted-foreground tracking-wider mb-2 block">XML Request Preview (Simulation)</Label>
-              <pre className="text-xs p-2 bg-black text-green-400 rounded-md overflow-x-auto font-mono whitespace-pre-wrap">
-{localSettings.apiProvider === 'openai' ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>https://api.openai.com/v1/chat/completions</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>
-    <header name="Authorization">Bearer ${localSettings.openaiKey ? '***' : ''}</header>
-  </headers>
-  <body>
-    <model>gpt-4o</model>
-    <messages>
-      <message role="user">...</message>
-    </messages>
-  </body>
-</request>` : localSettings.apiProvider === 'anthropic' ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>https://api.anthropic.com/v1/messages</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>
-    <header name="x-api-key">${localSettings.anthropicKey ? '***' : ''}</header>
-    <header name="anthropic-version">2023-06-01</header>
-  </headers>
-  <body>
-    <model>claude-3-opus-20240229</model>
-    <messages>
-      <message role="user">...</message>
-    </messages>
-  </body>
-</request>` : localSettings.apiProvider?.startsWith('gemini') ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>https://generativelanguage.googleapis.com/v1beta/models/${localSettings.apiProvider}:generateContent?key=${localSettings.geminiKey ? '***' : ''}</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>
-  </headers>
-  <body>
-    <contents>
-      <parts>
-        <text>...</text>
-      </parts>
-    </contents>
-  </body>
-</request>` : localSettings.apiProvider === 'custom' ? (
-  localSettings.customProtocol === 'openai-response' || localSettings.customProtocol === 'openai-compatible' || localSettings.customProtocol === 'lmstudio' ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>${localSettings.customBaseUrl || 'https://api.openai.com/v1'}/chat/completions</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>${localSettings.customApiKey ? `\n    <header name="Authorization">Bearer ***</header>` : ''}${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
-  </headers>
-  <body>
-    <model>${localSettings.customModelId || 'gpt-3.5-turbo'}</model>
-    <messages>
-      <message role="user">...</message>
-    </messages>
-  </body>
-</request>` : localSettings.customProtocol === 'openai-completions' ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>${localSettings.customBaseUrl || 'https://api.openai.com/v1'}/completions</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>${localSettings.customApiKey ? `\n    <header name="Authorization">Bearer ***</header>` : ''}${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
-  </headers>
-  <body>
-    <model>${localSettings.customModelId || 'text-davinci-003'}</model>
-    <prompt>...</prompt>
-  </body>
-</request>` : localSettings.customProtocol === 'ollama' ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>${localSettings.customBaseUrl || 'http://localhost:11434/api'}/chat</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
-  </headers>
-  <body>
-    <model>${localSettings.customModelId || 'llama3'}</model>
-    <messages>
-      <message role="user">...</message>
-    </messages>
-  </body>
-</request>` : localSettings.customProtocol === 'anthropic' ? `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>${localSettings.customBaseUrl || 'https://api.anthropic.com/v1'}/messages</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>${localSettings.customApiKey ? `\n    <header name="x-api-key">***</header>` : ''}${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
-  </headers>
-  <body>
-    <model>${localSettings.customModelId || 'claude-3-opus-20240229'}</model>
-    <messages>
-      <message role="user">...</message>
-    </messages>
-  </body>
-</request>` : `<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <url>${localSettings.customBaseUrl || '...'}</url>
-  <method>POST</method>
-  <headers>
-    <header name="Content-Type">application/json</header>${localSettings.customHeader ? `\n    <header name="Custom">${localSettings.customHeader}</header>` : ''}
-  </headers>
-</request>`
-) : ''}
-              </pre>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-xs uppercase text-muted-foreground tracking-wider block">XML Request Template</Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 text-xs px-2"
+                  onClick={() => setEditedXmlPreview(null)}
+                  disabled={editedXmlPreview === null}
+                >
+                  Reset to Default
+                </Button>
+              </div>
+              <Textarea 
+                className="text-xs p-3 bg-black text-green-400 rounded-md font-mono whitespace-pre-wrap min-h-[250px] resize-y border-0 focus-visible:ring-1 focus-visible:ring-primary"
+                value={editedXmlPreview !== null ? editedXmlPreview : generateXmlPreview()}
+                onChange={(e) => setEditedXmlPreview(e.target.value)}
+                spellCheck={false}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">This template defines how requests are structured when sent to the provider. You can customize the XML structure if needed.</p>
             </div>
 
-            <div className="pt-2">
-              <Button onClick={handleSave}>{t("Save Settings")}</Button>
+            <div className="pt-6 mt-4 border-t">
+              <Button onClick={() => {
+                // We should also save the custom template if edited
+                const newSettings = { ...localSettings };
+                if (editedXmlPreview !== null) {
+                  // Assuming there is a property for this in the actual store schema
+                  // For now we just add it to the saved payload
+                  (newSettings as any).customXmlTemplate = editedXmlPreview;
+                }
+                updateSettings(newSettings);
+                setTheme(newSettings.theme as any);
+                console.log("Settings saved:", newSettings);
+              }}>{t("Save Settings")}</Button>
             </div>
           </div>
-        </section>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -202,7 +202,9 @@ export const useAppStore = create<AppState>()(
         language: 'en',
         apiProvider: 'openai',
         openaiKey: '',
+        openaiModelId: '',
         anthropicKey: '',
+        anthropicModelId: '',
         googleKey: '',
         customProtocol: 'openai-compatible',
         customBaseUrl: '',
@@ -210,6 +212,7 @@ export const useAppStore = create<AppState>()(
         customApiKey: '',
         customHeader: '',
         geminiKey: '',
+        geminiModelId: '',
         allowRemoteAccess: true,
       },
 
