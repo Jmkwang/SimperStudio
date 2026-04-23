@@ -33,7 +33,7 @@ The application is built on a modern, high-performance web and desktop stack:
 - **Theming:** Light/Dark mode toggle with fluid CSS variable transitions mapped to shadcn/ui.
 
 ### ⏳ Pending / TODO
-- **Agent Zone UI:** Build the comprehensive interface for creating, configuring, and tweaking individual AI agents.
-- **Custom API Integration:** Add global API configuration and the capability to define custom REST endpoints as tools for agents or nodes.
+- ~~**Agent Zone UI:** Build the comprehensive interface for creating, configuring, and tweaking individual AI agents.~~ (Implemented!)
+- ~~**Custom API Integration:** Add global API configuration and the capability to define custom REST endpoints as tools for agents or nodes.~~ (Implemented with Vercel AI SDK integration!)
 - **Database Migration:** Fully integrate Tauri's SQLite plugin to transition from simple localStorage to robust local desktop database storage.
 - **Packaging:** Build, sign, and package the application specifically for the Windows platform.
