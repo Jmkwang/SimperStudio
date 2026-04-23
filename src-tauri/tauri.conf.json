@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tmp_tauri",
+  "productName": "SimperStudio",
   "version": "0.1.0",
-  "identifier": "com.kwang.tmp_tauri",
+  "identifier": "com.kwang.simperstudio",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
