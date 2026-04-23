@@ -13,6 +13,8 @@ export interface Agent {
   temperature?: number;
   maxTokens?: number;
   parameters?: any;
+  apiKey?: string;
+  baseUrl?: string;
   createdAt?: number;
 }
 

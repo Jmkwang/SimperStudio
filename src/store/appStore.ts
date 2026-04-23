@@ -219,9 +219,23 @@ export const useAppStore = create<AppState>()(
       fetchInitialData: async () => {
         try {
           const agents = await invoke<Agent[]>('get_agents');
-          set({ agents });
+          // parse parameters back from string
+          const parsedAgents = agents.map(a => ({...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters}));
+          set({ agents: parsedAgents });
 
           const workspaces = await invoke<Workspace[]>('get_workspaces');
+          if (workspaces.length === 0) {
+            const defaultWorkspaceId = uuidv4();
+            const defaultWorkspace = {
+              id: defaultWorkspaceId,
+              name: 'Default Workspace',
+              description: 'Your default workspace',
+              createdAt: Date.now(),
+              updatedAt: Date.now()
+            };
+            await invoke('add_workspace', { workspace: defaultWorkspace });
+            workspaces.push(defaultWorkspace);
+          }
           if (workspaces.length > 0) {
             set({ workspaces });
             const defaultWorkspaceId = workspaces[0].id;
