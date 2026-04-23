@@ -7,6 +7,7 @@ pub struct DbState {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Workspace {
     pub id: String,
     pub name: String,
@@ -16,6 +17,7 @@ pub struct Workspace {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Agent {
     pub id: String,
     pub name: String,
@@ -199,6 +201,7 @@ pub fn delete_workspace(id: String, state: tauri::State<DbState>) -> Result<(), 
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ChatSession {
     pub id: String,
     pub workspace_id: String,
@@ -257,6 +260,7 @@ pub fn delete_chat_session(id: String, state: tauri::State<DbState>) -> Result<(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ChatMessage {
     pub id: String,
     pub session_id: String,
@@ -315,6 +319,7 @@ pub fn delete_chat_message(id: String, state: tauri::State<DbState>) -> Result<(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Workflow {
     pub id: String,
     pub workspace_id: String,

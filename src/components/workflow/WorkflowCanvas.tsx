@@ -20,7 +20,8 @@ import { TriggerNode } from './nodes/TriggerNode';
 import { AgentNode } from './nodes/AgentNode';
 import { OutputNode } from './nodes/OutputNode';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Save, Trash2 } from 'lucide-react';
 
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/components/theme/ThemeProvider';
@@ -31,15 +32,17 @@ import { toast } from 'sonner';
 const GenericNode = ({ data, id }: any) => {
   const { t } = useTranslation();
   return (
-  <div className="bg-card border-2 border-primary rounded-lg p-3 shadow-md min-w-[150px]">
-    <div className="font-semibold text-sm border-b pb-1 mb-2">{data.label}</div>
-    <div className="text-xs text-muted-foreground">{t("Configure in sidebar")}  <div className="mt-2 text-right">
-            <Button variant="ghost" size="sm" onClick={() => data.deleteNode && data.deleteNode(id)} className="h-6 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950">Delete</Button>
-          </div>
-        </div>
+    <div className="bg-card border-2 border-primary rounded-lg p-3 shadow-md min-w-[150px]">
+      <div className="font-semibold text-sm border-b pb-1 mb-2">{data.label}</div>
+      <div className="text-xs text-muted-foreground">{t("Configure in sidebar")}</div>
+      <div className="mt-2 text-right">
+        <Button variant="ghost" size="sm" onClick={() => data.deleteNode && data.deleteNode(id)} className="h-6 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-1 ml-auto">
+          <Trash2 className="h-3 w-3" /> {t("Delete")}
+        </Button>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   const nodeTypes = {
   trigger: TriggerNode,
@@ -93,7 +96,7 @@ function Flow() {
       id: `${type}-${nodes.length + 1}-${Date.now()}`,
       type: type,
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-      data: { label: label, ...(type === 'agent' ? { agentId: '', prompt: 'Configure me.' } : {}) },
+      data: { label: label, deleteNode, ...(type === 'agent' ? { agentId: '', prompt: 'Configure me.' } : {}) },
     };
     setNodes((nds) => [...nds, newNode]);
   };
@@ -122,24 +125,31 @@ function Flow() {
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
         <Controls className="bg-card border shadow-sm rounded-lg" />
         <Panel position="top-right" className="flex gap-2">
-                      <select 
-             className="h-9 px-3 py-2 bg-secondary text-secondary-foreground rounded-md text-sm border shadow-sm"
-             onChange={(e) => {
-               if(e.target.value) {
-                 addNode(e.target.value, 'New ' + e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1));
-                 e.target.value = ''; // reset
-               }
-             }}
-           >
-             <option value="">{t("+ Add Node...")}</option>
-             <option value="trigger">{t("Trigger Node")}</option>
-             <option value="agent">{t("Agent Node")}</option>
-             <option value="condition">{t("Condition Node")}</option>
-             <option value="subworkflow">{t("SubWorkflow Node")}</option>
-             <option value="action">{t("Action Node")}</option>
-             <option value="transformation">{t("Data Transformation Node")}</option>
-             <option value="output">{t("Output Node")}</option>
-           </select>
+                      <div className="w-[180px]">
+             <Select 
+               onValueChange={(val) => {
+                 if(val) {
+                   addNode(val, 'New ' + val.charAt(0).toUpperCase() + val.slice(1));
+                   // To "reset" the select, we don't control its value here directly, 
+                   // but usually users just select and want to keep selecting, or it resets when losing focus/selecting same.
+                   // As it's uncontrolled here without a value prop, it just triggers onValueChange.
+                 }
+               }}
+             >
+               <SelectTrigger className="h-9 bg-secondary text-secondary-foreground border shadow-sm">
+                 <SelectValue placeholder={t("+ Add Node...")} />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="trigger">{t("Trigger Node")}</SelectItem>
+                 <SelectItem value="agent">{t("Agent Node")}</SelectItem>
+                 <SelectItem value="condition">{t("Condition Node")}</SelectItem>
+                 <SelectItem value="subworkflow">{t("SubWorkflow Node")}</SelectItem>
+                 <SelectItem value="action">{t("Action Node")}</SelectItem>
+                 <SelectItem value="transformation">{t("Data Transformation Node")}</SelectItem>
+                 <SelectItem value="output">{t("Output Node")}</SelectItem>
+               </SelectContent>
+             </Select>
+           </div>
            <Button onClick={handleSave} size="sm" className="shadow-sm">
              <Save className="h-4 w-4 mr-2" /> {t("Save Workflow")}
            </Button>
