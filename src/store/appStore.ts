@@ -12,6 +12,7 @@ interface AppState {
   activeSessionId: string | null;
   activeWorkflowId: string | null;
   activeAgentId: string | null;
+  workflowChatMode: boolean;
 
   // Actions
   fetchInitialData: () => Promise<void>;
@@ -21,7 +22,7 @@ interface AppState {
   addAgent: (agent: Omit<Agent, 'id' | 'createdAt'>) => Promise<void>;
   updateAgent: (id: string, updates: Partial<Agent>) => void;
 
-  createSession: (title: string, workspaceId: string) => void;
+  createSession: (title: string, workspaceId: string, workflowId?: string) => void;
   setActiveSession: (id: string) => void;
 
   addUserMessage: (sessionId: string, text: string) => void;
@@ -33,6 +34,11 @@ interface AppState {
   saveWorkflow: (id: string, nodes: any[], edges: any[]) => void;
   setActiveWorkflow: (id: string | null) => void;
   setActiveAgent: (id: string | null) => void;
+
+  // Workflow Chat Mode
+  toggleWorkflowChatMode: (enabled: boolean) => void;
+  linkWorkflowToSession: (sessionId: string, workflowId: string) => void;
+  getWorkflowForSession: (sessionId: string) => Workflow | undefined;
 
   // Settings Actions
   settings: {
@@ -70,6 +76,30 @@ export const useAppStore = create<AppState>()(
       ],
       agents: [
         {
+          id: 'agent-organize',
+          name: '整理助手',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=organize',
+          systemPrompt: '你是一个文本整理助手，负责整理和组织用户输入的内容，使其结构清晰、层次分明。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.7,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'General'
+        },
+        {
+          id: 'agent-summary',
+          name: '总结助手',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=summary',
+          systemPrompt: '你是一个文本总结助手，负责对用户输入的内容进行总结，提取关键信息和要点。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.7,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'General'
+        },
+        {
           id: 'agent-1',
           name: 'System Architect',
           avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=architect',
@@ -98,7 +128,8 @@ export const useAppStore = create<AppState>()(
         {
           id: 'default-session',
           workspaceId: 'default-workspace',
-          title: 'Project Planning',
+          title: 'My First Workflow',
+          workflowId: 'default-workflow',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: [
@@ -137,25 +168,39 @@ export const useAppStore = create<AppState>()(
              {
                id: 'trigger-1',
                type: 'trigger',
-               position: { x: 100, y: 150 },
+               position: { x: 100, y: 250 },
                data: { label: 'User Input' },
              },
              {
-               id: 'agent-1',
+               id: 'agent-organize',
                type: 'agent',
-               position: { x: 400, y: 150 },
-               data: { label: 'Summarizer', agentId: 'agent-1', prompt: 'Summarize the input text.' },
+               position: { x: 400, y: 100 },
+               data: { label: '整理', agentId: 'agent-organize', prompt: '整理并组织用户输入的内容，使其结构清晰。' },
+             },
+             {
+               id: 'agent-summary',
+               type: 'agent',
+               position: { x: 400, y: 400 },
+               data: { label: '总结', agentId: 'agent-summary', prompt: '对用户输入的内容进行总结，提取关键信息。' },
              },
              {
                id: 'output-1',
                type: 'output',
-               position: { x: 750, y: 150 },
-               data: { label: 'Chat Response' },
+               position: { x: 750, y: 100 },
+               data: { label: '整理结果' },
+             },
+             {
+               id: 'output-2',
+               type: 'output',
+               position: { x: 750, y: 400 },
+               data: { label: '总结结果' },
              },
           ],
           edges_data: [
-             { id: 'e1-2', source: 'trigger-1', target: 'agent-1', animated: true },
-             { id: 'e2-3', source: 'agent-1', target: 'output-1', animated: true },
+             { id: 'e-trigger-organize', source: 'trigger-1', target: 'agent-organize', animated: true },
+             { id: 'e-trigger-summary', source: 'trigger-1', target: 'agent-summary', animated: true },
+             { id: 'e-organize-output1', source: 'agent-organize', target: 'output-1', animated: true },
+             { id: 'e-summary-output2', source: 'agent-summary', target: 'output-2', animated: true },
           ],
           status: 'active',
           createdAt: Date.now(),
@@ -196,6 +241,7 @@ export const useAppStore = create<AppState>()(
       activeSessionId: 'default-session',
       activeWorkflowId: 'default-workflow',
       activeAgentId: 'agent-1',
+      workflowChatMode: false,
 
       settings: {
         theme: 'system',
@@ -219,7 +265,6 @@ export const useAppStore = create<AppState>()(
       fetchInitialData: async () => {
         try {
           const agents = await invoke<Agent[]>('get_agents');
-          // parse parameters back from string
           const parsedAgents = agents.map(a => ({...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters}));
           set({ agents: parsedAgents });
 
@@ -241,25 +286,20 @@ export const useAppStore = create<AppState>()(
             const defaultWorkspaceId = workspaces[0].id;
             set({ activeWorkspaceId: defaultWorkspaceId });
 
-            // Load sessions for default workspace
             const sessions = await invoke<ChatSession[]>('get_chat_sessions', { workspaceId: defaultWorkspaceId });
             
-            // For each session, load its messages
             for (let i = 0; i < sessions.length; i++) {
                 const messages = await invoke<ChatMessage[]>('get_chat_messages', { sessionId: sessions[i].id });
-                // We need to parse content back to object
                 sessions[i].messages = messages.map(m => ({...m, content: JSON.parse(m.content as unknown as string)}));
             }
             set({ sessions });
 
-            // Load workflows
             const workflows = await invoke<Workflow[]>('get_workflows', { workspaceId: defaultWorkspaceId });
-            // parse nodes and edges back from string
             const parsedWorkflows = workflows.map(w => ({...w, nodes_data: JSON.parse(w.nodes_data as unknown as string), edges_data: JSON.parse(w.edges_data as unknown as string)}));
             set({ workflows: parsedWorkflows });
           }
         } catch (error) {
-          console.error('Failed to fetch initial data:', error);
+          console.log('Running in browser mode without Tauri backend - using default data');
         }
       },
 
@@ -306,11 +346,12 @@ export const useAppStore = create<AppState>()(
         )
       })),
 
-      createSession: async (title, workspaceId) => {
+      createSession: async (title, workspaceId, workflowId) => {
         const newSession: ChatSession = {
           id: uuidv4(),
           workspaceId,
           title,
+          workflowId,
           messages: [],
           createdAt: Date.now(),
           updatedAt: Date.now()
@@ -476,13 +517,25 @@ export const useAppStore = create<AppState>()(
              const { workflows } = get();
              const wf = workflows.find(w => w.id === id);
              if (wf) {
-                 const wfToSave = {...wf, nodes_data: JSON.stringify(nodes), edges_data: JSON.stringify(edges), updatedAt: Date.now()};
+                 const cleanNodes = nodes.map((n: any) => ({
+                   id: n.id,
+                   type: n.type,
+                   position: n.position,
+                   data: { label: n.data?.label, agentId: n.data?.agentId, prompt: n.data?.prompt }
+                 }));
+                 const cleanEdges = edges.map((e: any) => ({
+                   id: e.id,
+                   source: e.source,
+                   target: e.target,
+                   animated: e.animated
+                 }));
+                 const wfToSave = {...wf, nodes_data: JSON.stringify(cleanNodes), edges_data: JSON.stringify(cleanEdges), updatedAt: Date.now()};
                  await invoke('update_workflow', { workflow: wfToSave });
                  
                  set((state) => {
                     const wfs = state.workflows.map(w => {
                         if (w.id === id) {
-                            return { ...w, nodes_data: nodes, edges_data: edges, updatedAt: Date.now() };
+                            return { ...w, nodes_data: cleanNodes, edges_data: cleanEdges, updatedAt: Date.now() };
                         }
                         return w;
                     });
@@ -496,6 +549,23 @@ export const useAppStore = create<AppState>()(
 
       setActiveWorkflow: (id) => set({ activeWorkflowId: id }),
       setActiveAgent: (id) => set({ activeAgentId: id }),
+
+      toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
+
+      linkWorkflowToSession: (sessionId, workflowId) => set((state) => ({
+        sessions: state.sessions.map(s =>
+          s.id === sessionId ? { ...s, workflowId } : s
+        )
+      })),
+
+      getWorkflowForSession: (sessionId) => {
+        const { sessions, workflows } = get();
+        const session = sessions.find(s => s.id === sessionId);
+        if (session?.workflowId) {
+          return workflows.find(w => w.id === session.workflowId);
+        }
+        return undefined;
+      },
 
       getActiveWorkflow: () => {
          const { workflows, activeWorkflowId } = get();

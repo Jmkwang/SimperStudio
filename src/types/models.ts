@@ -75,6 +75,7 @@ export interface ChatSession {
   workspaceId: string;
   title: string;
   messages: ChatMessage[];
+  workflowId?: string;
   createdAt: number;
   updatedAt: number;
 }

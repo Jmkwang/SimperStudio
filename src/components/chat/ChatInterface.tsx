@@ -3,14 +3,16 @@ import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage, Agent } from '@/types/models';
 import { cn } from '@/lib/utils';
 import { fetchFromModel } from '@/lib/api';
+import { DualAgentChatView } from './DualAgentChatView';
 
 export function ChatInterface() {
   const activeSession = useAppStore(state => state.getActiveSession());
+  const workflows = useAppStore(state => state.workflows);
   const agents = useAppStore(state => state.agents);
   const addUserMessage = useAppStore(state => state.addUserMessage);
   const addAgentResponseStream = useAppStore(state => state.addAgentResponseStream);
@@ -19,6 +21,14 @@ export function ChatInterface() {
   const [input, setInput] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const workflow = activeSession?.workflowId 
+    ? workflows.find(w => w.id === activeSession.workflowId)
+    : undefined;
+
+  if (workflow) {
+    return <DualAgentChatView workflow={workflow} />;
+  }
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -122,14 +132,19 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full relative">
-      <ScrollArea className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto flex flex-col gap-6 pb-4">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-3xl mx-auto flex flex-col gap-6 pb-4 min-h-full">
+          {activeSession.messages.length === 0 && (
+            <div className="flex-1 flex items-center justify-center min-h-[200px]">
+              <p className="text-muted-foreground text-sm">No messages yet. Start a conversation!</p>
+            </div>
+          )}
           {activeSession.messages.map(msg => (
             <MessageBlock key={msg.id} message={msg} agents={agents} />
           ))}
           <div ref={scrollRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="p-4 border-t bg-background shrink-0 relative">
         <div className="max-w-3xl mx-auto relative flex gap-2">

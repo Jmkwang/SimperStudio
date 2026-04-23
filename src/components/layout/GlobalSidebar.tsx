@@ -1,4 +1,4 @@
-import { MessageSquare, Workflow, Users, Settings, User, Moon, Sun } from "lucide-react"
+import { MessageSquare, Workflow, Users, Settings, User, Moon, Sun, Wand2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useTheme } from "../theme/ThemeProvider"
@@ -21,6 +21,7 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
             <NavIcon icon={MessageSquare} label={t("Chats")} id="chat" active={currentView === 'chat'} onClick={() => setCurrentView('chat')} />
             <NavIcon icon={Workflow} label={t("Workflows")} id="workflow" active={currentView === 'workflow'} onClick={() => setCurrentView('workflow')} />
             <NavIcon icon={Users} label={t("Agents")} id="agents" active={currentView === 'agents'} onClick={() => setCurrentView('agents')} />
+            <NavIcon icon={Wand2} label={t("Prompts")} id="prompts" active={currentView === 'prompts'} onClick={() => setCurrentView('prompts')} />
           </TooltipProvider>
         </nav>
       </div>

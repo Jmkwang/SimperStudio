@@ -5,10 +5,11 @@ import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
 import { AgentsView } from "@/components/agents/AgentsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { ProfileView } from "@/components/profile/ProfileView";
+import { PromptGenerator } from "@/components/prompts/PromptGenerator";
 import { useAppStore } from "@/store/appStore";
 import { Toaster } from "@/components/ui/toaster";
 
-type ViewMode = 'chat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'profile';
+type ViewMode = 'chat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'profile' | 'prompts';
 
 function App() {
   const activeSession = useAppStore(state => state.getActiveSession());
@@ -27,6 +28,8 @@ function App() {
         return <WorkflowCanvas />;
       case 'agents':
         return <AgentsView />;
+      case 'prompts':
+        return <PromptGenerator />;
       case 'settings':
         return <SettingsView />;
       case 'profile':
@@ -45,6 +48,7 @@ function App() {
       case 'chat': return activeSession?.title || 'No Session';
       case 'workflow': return 'Workflow Editor';
       case 'agents': return 'Agent Management';
+      case 'prompts': return 'Prompt Generator';
       case 'workspaces': return 'Workspaces';
       case 'settings': return 'Settings';
       case 'profile': return 'User Profile';

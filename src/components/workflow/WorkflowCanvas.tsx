@@ -109,6 +109,14 @@ function Flow() {
     }
   };
 
+  // Re-sync local state when activeWorkflow changes
+  useEffect(() => {
+    if (activeWorkflow) {
+      setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ ...n, data: { ...n.data, deleteNode } })));
+      setEdges(activeWorkflow.edges_data || []);
+    }
+  }, [activeWorkflow]);
+
   return (
     <div className="flex-1 w-full h-full relative bg-background">
       <ReactFlow
