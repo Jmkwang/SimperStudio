@@ -32,7 +32,9 @@
       "Bash(npx -p typescript tsc --noEmit)",
       "Bash(npx shadcn@latest add slider)",
       "Bash(grep -n \"Binding element ''value''\" -C 5)",
-      "Bash(npm run tauri dev)"
+      "Bash(npm run tauri dev)",
+      "Bash(gh auth:*)",
+      "Bash(npx shadcn@latest:*)"
     ]
   }
 }
