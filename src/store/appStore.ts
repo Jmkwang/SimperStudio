@@ -40,6 +40,16 @@ interface AppState {
   linkWorkflowToSession: (sessionId: string, workflowId: string) => void;
   getWorkflowForSession: (sessionId: string) => Workflow | undefined;
 
+  // Workflow Execution State
+  workflowExecution: {
+     status: 'idle' | 'running' | 'completed' | 'error';
+     currentNodeId: string | null;
+     results: Record<string, any>;
+  };
+  setWorkflowExecutionState: (state: Partial<AppState['workflowExecution']>) => void;
+  executeWorkflow: (workflowId: string, initialInput: string) => Promise<void>;
+
+
   // Settings Actions
   settings: {
     theme: string;
@@ -259,7 +269,14 @@ export const useAppStore = create<AppState>()(
       activeSessionId: 'default-session',
       activeWorkflowId: 'default-workflow',
       activeAgentId: 'agent-1',
+      
       workflowChatMode: false,
+      workflowExecution: {
+        status: 'idle',
+        currentNodeId: null,
+        results: {}
+      },
+
 
       settings: {
         theme: 'system',
@@ -575,6 +592,60 @@ export const useAppStore = create<AppState>()(
           s.id === sessionId ? { ...s, workflowId } : s
         )
       })),
+
+      
+      setWorkflowExecutionState: (updates) => set((state) => ({
+        workflowExecution: { ...state.workflowExecution, ...updates }
+      })),
+
+      executeWorkflow: async (workflowId, initialInput) => {
+         const { workflows, setWorkflowExecutionState } = get();
+         const workflow = workflows.find(w => w.id === workflowId);
+         
+         if (!workflow) return;
+
+         setWorkflowExecutionState({ status: 'running', currentNodeId: null, results: {} });
+
+         // For now we will implement a basic execution simulator directly in the store
+         // to show real-time UI updates
+         const triggerNode = workflow.nodes_data.find(n => n.type === 'trigger');
+         if (!triggerNode) {
+            setWorkflowExecutionState({ status: 'error' });
+            return;
+         }
+
+         let currentNodes = [triggerNode.id];
+         let results: Record<string, any> = {
+            [triggerNode.id]: initialInput
+         };
+
+         while (currentNodes.length > 0) {
+            const nextNodes: string[] = [];
+            
+            for (const nodeId of currentNodes) {
+               setWorkflowExecutionState({ currentNodeId: nodeId, results });
+               
+               // Simulate processing time
+               await new Promise(r => setTimeout(r, 1000));
+               
+               const node = workflow.nodes_data.find(n => n.id === nodeId);
+               if (node?.type === 'agent') {
+                  results[nodeId] = `[Agent Processed]: ${results[nodeId] || initialInput}`;
+               }
+
+               const edges = workflow.edges_data.filter(e => e.source === nodeId);
+               for (const edge of edges) {
+                  results[edge.target] = results[nodeId]; // pass data forward
+                  if (!nextNodes.includes(edge.target)) {
+                     nextNodes.push(edge.target);
+                  }
+               }
+            }
+            currentNodes = nextNodes;
+         }
+
+         setWorkflowExecutionState({ status: 'completed', currentNodeId: null, results });
+      },
 
       getWorkflowForSession: (sessionId) => {
         const { sessions, workflows } = get();

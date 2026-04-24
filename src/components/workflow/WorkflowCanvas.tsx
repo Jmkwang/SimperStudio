@@ -26,6 +26,7 @@ import { Save, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useTranslation } from '@/hooks/useTranslation';
+import { PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
@@ -57,6 +58,8 @@ const GenericNode = ({ data, id }: any) => {
 function Flow() {
   const activeWorkflow = useAppStore(state => state.getActiveWorkflow());
   const saveWorkflow = useAppStore(state => state.saveWorkflow);
+  const workflowExecution = useAppStore(state => state.workflowExecution);
+  const executeWorkflow = useAppStore(state => state.executeWorkflow);
   const { theme } = useTheme();
   const { t } = useTranslation();
 
@@ -71,7 +74,11 @@ function Flow() {
   // Load active workflow into canvas
   useEffect(() => {
     if (activeWorkflow) {
-      setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ ...n, data: { ...n.data, deleteNode } })));
+      setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ 
+        ...n, 
+        className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 animate-pulse' : '',
+        data: { ...n.data, deleteNode } 
+      })));
       setEdges(activeWorkflow.edges_data || []);
     }
   }, [activeWorkflow?.id]);
@@ -158,6 +165,16 @@ function Flow() {
                </SelectContent>
              </Select>
            </div>
+           <Button 
+             variant="outline" 
+             onClick={() => executeWorkflow(activeWorkflow!.id, "Hello from test input!")} 
+             size="sm" 
+             className="shadow-sm mr-2"
+             disabled={workflowExecution.status === 'running'}
+           >
+             <PlayCircle className="h-4 w-4 mr-2" />
+             {workflowExecution.status === 'running' ? 'Running...' : 'Test Run'}
+           </Button>
            <Button onClick={handleSave} size="sm" className="shadow-sm">
              <Save className="h-4 w-4 mr-2" /> {t("Save Workflow")}
            </Button>
