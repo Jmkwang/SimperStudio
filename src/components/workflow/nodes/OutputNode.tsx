@@ -10,7 +10,7 @@ import { FileOutput } from 'lucide-react';
 
 export function OutputNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
-  const connections = useNodeConnections({ type: 'target' });
+  const connections = useNodeConnections({ handleType: "target" });
   const [localLabel, setLocalLabel] = useState(data.label || 'Output');
   const [isOpen, setIsOpen] = useState(false);
 

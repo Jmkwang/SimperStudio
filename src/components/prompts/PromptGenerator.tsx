@@ -2,11 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
-import { fetchChatCompletion } from '@/lib/api/openai';
+import { fetchFromModel } from "@/lib/api";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -30,6 +29,7 @@ export function PromptGenerator() {
     }
   }, [messages, isLoading]);
 
+  
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     
@@ -43,55 +43,36 @@ export function PromptGenerator() {
     setIsLoading(true);
 
     try {
-      // Create the API request payload
-      const apiMessages = [
-        { role: 'system', content: metaPrompt },
-        ...newMessages.map(m => ({ role: m.role, content: m.content }))
-      ];
-
-      // Temporary assistant message for streaming
+      const providerToUse = settings.apiProvider === 'custom' ? 'custom' : 'openai';
+      const modelToUse = settings.apiProvider === 'custom' ? settings.customModelId : '';
+      
+      const { textStream } = await fetchFromModel(providerToUse, modelToUse, userMessage, settings, metaPrompt);
+      
+      let fullText = '';
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-
-      let streamedResponse = '';
       
-      // We'll just use the first available API key config or let the api function handle it
-      // Default to OpenAI structure for standard completions
-      
-      const config = settings?.models?.openai || { 
-        apiKey: '', 
-        baseURL: 'https://api.openai.com/v1', 
-        defaultModel: 'gpt-4o-mini' 
-      };
-
-      await fetchChatCompletion(
-        {
-          model: config.defaultModel || 'gpt-4o-mini',
-          messages: apiMessages,
-          stream: true,
-        },
-        config,
-        (chunk) => {
-          streamedResponse += chunk;
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1].content = streamedResponse;
-            return updated;
-          });
-        }
-      );
+      for await (const chunk of textStream) {
+        fullText = chunk;
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1].content = fullText;
+          return updated;
+        });
+      }
     } catch (error) {
       console.error('Failed to generate prompt:', error);
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1].content += `\n\n[Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}]`;
+        updated[updated.length - 1].content += `
+
+[Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}]`;
         return updated;
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();

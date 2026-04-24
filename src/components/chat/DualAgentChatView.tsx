@@ -72,8 +72,7 @@ export function DualAgentChatView({ workflow }: DualAgentChatViewProps) {
     completeAgentResponse(session.id, streamingMessageId, agentId);
   };
 
-  const hasMessages = session && session.messages.length > 1;
-
+  
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 min-h-0">
