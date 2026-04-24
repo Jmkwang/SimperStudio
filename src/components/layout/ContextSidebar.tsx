@@ -43,11 +43,7 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
       case 'settings':
         return {
           title: t('Settings'),
-          items: [
-            { id: 's1', title: t('General'), active: true },
-            { id: 's2', title: t('Appearance'), active: false },
-            { id: 's3', title: t('API Keys'), active: false },
-          ]
+          items: []
         };
       case 'profile':
         return {

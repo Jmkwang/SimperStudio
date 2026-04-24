@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
@@ -172,21 +171,15 @@ export function SettingsView() {
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="general">{t("General")}</TabsTrigger>
-          <TabsTrigger value="appearance">{t("Appearance")}</TabsTrigger>
-          <TabsTrigger value="apikeys">{t("API Keys")}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general" className="space-y-4">
+      <div className="space-y-6">
+        <div className="space-y-4">
           <div className="grid gap-4 bg-card border rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("General Settings")}</h3>
             <div className="flex items-center justify-between mt-2">
               <div className="space-y-0.5">
                 <Label>{t("Allow Remote Access")}</Label>
                 <div className="text-sm text-muted-foreground">
-                  Allow other devices on your local network to access this application.
+                  Allow other devices on your local network to access this application (e.g. http://192.168.50.96:1420/).
                 </div>
               </div>
               <Switch 
@@ -214,9 +207,9 @@ export function SettingsView() {
               <Button onClick={handleSave}>{t("Save Settings")}</Button>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="appearance" className="space-y-4">
+        <div className="space-y-4">
           <div className="grid gap-4 bg-card border rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("Appearance Settings")}</h3>
             <div className="space-y-2">
@@ -245,11 +238,11 @@ export function SettingsView() {
               <Button onClick={handleSave}>{t("Save Settings")}</Button>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="apikeys" className="space-y-4">
+        <div className="space-y-4">
           <div className="grid gap-4 bg-card border rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("API Keys Configuration")}</h3>
+            <h3 className="text-lg font-medium border-b pb-2 mb-2">{t("Models Configuration")}</h3>
             <div className="space-y-2">
               <Label>{t("API Provider")}</Label>
               <Select value={localSettings.apiProvider} onValueChange={(val) => handleChange('apiProvider', val)}>
@@ -436,8 +429,8 @@ export function SettingsView() {
               }}>{t("Save Settings")}</Button>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

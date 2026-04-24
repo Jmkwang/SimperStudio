@@ -37,7 +37,9 @@
       "Bash(npx shadcn@latest:*)",
       "Bash(git checkout:*)",
       "Bash(npm run:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "Bash(find src *)"
     ]
   }
 }

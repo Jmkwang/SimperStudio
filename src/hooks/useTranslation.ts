@@ -21,7 +21,8 @@ const translations: Translations = {
     // Settings
     'General': 'General',
     'Appearance': 'Appearance',
-    'API Keys': 'API Keys',
+    'Models': 'Models',
+    'Models Configuration': 'Models Configuration',
     'My Account': 'My Account',
     'Billing': 'Billing',
     'Save Settings': 'Save Settings',
@@ -106,7 +107,8 @@ const translations: Translations = {
     // Settings
     'General': '通用',
     'Appearance': '外观',
-    'API Keys': 'API 密钥',
+    'Models': '模型',
+    'Models Configuration': '模型配置',
     'My Account': '我的账户',
     'Billing': '账单',
     'Save Settings': '保存设置',
