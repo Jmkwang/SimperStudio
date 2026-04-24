@@ -146,6 +146,7 @@ export const useAppStore = create<AppState>()(
           id: '2',
           workspaceId: 'default-workspace',
           title: 'UI Component Design',
+          workflowId: 'w1',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: []
@@ -154,6 +155,7 @@ export const useAppStore = create<AppState>()(
           id: '3',
           workspaceId: 'default-workspace',
           title: 'General Inquiry',
+          workflowId: 'w2',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: []
@@ -207,21 +209,37 @@ export const useAppStore = create<AppState>()(
           updatedAt: Date.now()
         },
         {
+          
           id: 'w1',
           workspaceId: 'default-workspace',
           name: 'Data Processing Pipeline',
-          nodes_data: [],
-          edges_data: [],
+          nodes_data: [
+             { id: 't1', type: 'trigger', position: { x: 50, y: 150 }, data: { label: 'Data Input' } },
+             { id: 'a1', type: 'agent', position: { x: 300, y: 150 }, data: { label: 'Data Cleaner', agentId: 'agent-1', prompt: 'Clean this data' } },
+             { id: 'o1', type: 'output', position: { x: 550, y: 150 }, data: { label: 'Cleaned Data' } }
+          ],
+          edges_data: [
+             { id: 'e1', source: 't1', target: 'a1', animated: true },
+             { id: 'e2', source: 'a1', target: 'o1', animated: true }
+          ],
           status: 'active',
           createdAt: Date.now(),
           updatedAt: Date.now()
         },
         {
+          
           id: 'w2',
           workspaceId: 'default-workspace',
           name: 'Weekly Report Generator',
-          nodes_data: [],
-          edges_data: [],
+          nodes_data: [
+             { id: 't2', type: 'trigger', position: { x: 100, y: 100 }, data: { label: 'Start Report' } },
+             { id: 'a2', type: 'agent', position: { x: 350, y: 100 }, data: { label: 'Report Writer', agentId: 'agent-summary', prompt: 'Generate report' } },
+             { id: 'o2', type: 'output', position: { x: 600, y: 100 }, data: { label: 'Final Report' } }
+          ],
+          edges_data: [
+             { id: 'e3', source: 't2', target: 'a2', animated: true },
+             { id: 'e4', source: 'a2', target: 'o2', animated: true }
+          ],
           status: 'active',
           createdAt: Date.now(),
           updatedAt: Date.now()

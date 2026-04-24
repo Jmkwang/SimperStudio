@@ -34,7 +34,10 @@
       "Bash(grep -n \"Binding element ''value''\" -C 5)",
       "Bash(npm run tauri dev)",
       "Bash(gh auth:*)",
-      "Bash(npx shadcn@latest:*)"
+      "Bash(npx shadcn@latest:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
