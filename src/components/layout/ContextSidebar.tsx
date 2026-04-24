@@ -57,6 +57,14 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
             { id: 'p2', title: t('Billing'), active: false },
           ]
         };
+      case 'prompts':
+        return {
+          title: t('Prompts'),
+          items: [
+            { id: 'pr1', title: t('System Prompts'), active: true },
+            { id: 'pr2', title: t('Saved Templates'), active: false },
+          ]
+        };
       case 'chat':
       default:
         return {
