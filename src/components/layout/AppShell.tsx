@@ -13,7 +13,7 @@ export function AppShell({
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
       <GlobalSidebar currentView={currentView} setCurrentView={setCurrentView} />
-      <ContextSidebar currentView={currentView} />
+      {currentView !== 'prompts' && <ContextSidebar currentView={currentView} />}
       <main className="flex-1 overflow-hidden bg-background flex flex-col relative">
         {children}
       </main>
