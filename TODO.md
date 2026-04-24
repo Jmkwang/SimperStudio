@@ -34,7 +34,7 @@
 - \[x\] \*\*完善工作流逻辑\*\*: 
   - 实现自定义节点（触发器、Agent 节点、输出节点）的完整功能和属性面板。
   - 实现 DAG 执行引擎：按顺序执行工作流并将上一节点的输出传递给下一节点。
-- [ ] **本地 SQLite 数据库集成**: 替换目前的 Zustand `persist` (localStorage)，使用 Tauri SQLite 插件实现真正的本地持久化存储。
+- \[x\] \*\*本地 SQLite 数据库集成\*\*: 替换目前的 Zustand `persist` (localStorage)，使用 Tauri SQLite 插件实现真正的本地持久化存储。
 - [ ] **构建与打包准备**:
   - 更新 `src-tauri/tauri.conf.json` 中的 `identifier` 和 `productName`。
   - 优化 Tauri build 尺寸，准备最终的 Windows 桌面端打包。
