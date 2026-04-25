@@ -47,7 +47,7 @@ interface AppState {
      results: Record<string, any>;
   };
   setWorkflowExecutionState: (state: Partial<AppState['workflowExecution']>) => void;
-  executeWorkflow: (workflowId: string, initialInput: string) => Promise<void>;
+  executeWorkflow: (workflowId: string, initialPayload: Record<string, any>) => Promise<Record<string, any>>;
 
 
   // Settings Actions
@@ -255,11 +255,121 @@ export const useAppStore = create<AppState>()(
           updatedAt: Date.now()
         },
         {
-          id: 'w3',
+          id: 'w4',
           workspaceId: 'default-workspace',
-          name: 'User Onboarding Flow',
-          nodes_data: [],
-          edges_data: [],
+          name: 'Advanced Logic Loop',
+          nodes_data: [
+             { id: 't1', type: 'trigger', position: { x: 50, y: 250 }, data: { label: 'Start Phase' } },
+             { id: 'r1', type: 'condition', position: { x: 250, y: 250 }, data: { label: 'Value Router', routes: [
+                 { id: 'route-high', condition: 'payload.value > 50' },
+                 { id: 'route-low', condition: 'payload.value <= 50' }
+               ]
+             }},
+             { id: 'llm-high', type: 'llm', position: { x: 550, y: 100 }, data: {
+                 label: 'High Value Processor',
+                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nProcess this high value data.',
+                 schema: '{"status": "string", "reason": "string"}'
+             }},
+             { id: 'code-high', type: 'code', position: { x: 850, y: 100 }, data: {
+                 label: 'Update High',
+                 code: 'payload.processed = true; payload.path = "high"; return payload;'
+             }},
+             { id: 'llm-low', type: 'llm', position: { x: 550, y: 400 }, data: {
+                 label: 'Low Value Processor',
+                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nProcess this low value data.',
+                 schema: '{"status": "string", "reason": "string"}'
+             }},
+             { id: 'code-low', type: 'code', position: { x: 850, y: 400 }, data: {
+                 label: 'Update Low',
+                 code: 'payload.processed = true; payload.path = "low"; return payload;'
+             }},
+             { id: 'out-high', type: 'output', position: { x: 1150, y: 100 }, data: { label: 'Result (High)' } },
+             { id: 'out-low', type: 'output', position: { x: 1150, y: 400 }, data: { label: 'Result (Low)' } }
+          ],
+          edges_data: [
+             { id: 'e1', source: 't1', target: 'r1', animated: true },
+             { id: 'e2', source: 'r1', sourceHandle: 'route-high', target: 'llm-high', animated: true },
+             { id: 'e3', source: 'r1', sourceHandle: 'route-low', target: 'llm-low', animated: true },
+             { id: 'e4', source: 'llm-high', target: 'code-high', animated: true },
+             { id: 'e5', source: 'code-high', target: 'out-high', animated: true },
+             { id: 'e6', source: 'llm-low', target: 'code-low', animated: true },
+             { id: 'e7', source: 'code-low', target: 'out-low', animated: true }
+          ],
+          status: 'active',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        },
+        {
+          id: 'w5',
+          workspaceId: 'default-workspace',
+          name: 'Werewolf Game Logic',
+          nodes_data: [
+             { id: 't1', type: 'trigger', position: { x: 50, y: 350 }, data: { label: 'Start Phase' } },
+             { id: 'r-phase', type: 'condition', position: { x: 250, y: 350 }, data: { label: 'Phase Router', routes: [
+                 { id: 'route-night', condition: 'payload.phase === "night" && payload.gameStatus === "playing"' },
+                 { id: 'route-day', condition: 'payload.phase === "day" && payload.gameStatus === "playing"' },
+                 { id: 'route-end', condition: 'payload.gameStatus !== "playing"' }
+               ]
+             }},
+             { id: 'llm-wolf', type: 'llm', position: { x: 550, y: 50 }, data: {
+                 label: 'Werewolves Action',
+                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the werewolves kill tonight?',
+                 schema: '{"targetId": "string", "reason": "string"}'
+             }},
+             { id: 'code-wolf', type: 'code', position: { x: 850, y: 50 }, data: {
+                 label: 'Save Wolf Target',
+                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.wolfTarget = payload.llmResult?.targetId; return payload;'
+             }},
+             { id: 'llm-seer', type: 'llm', position: { x: 1150, y: 50 }, data: {
+                 label: 'Seer Action',
+                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the seer inspect?',
+                 schema: '{"targetId": "string", "reason": "string"}'
+             }},
+             { id: 'code-seer', type: 'code', position: { x: 1450, y: 50 }, data: {
+                 label: 'Save Seer Target',
+                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.seerTarget = payload.llmResult?.targetId; return payload;'
+             }},
+             { id: 'llm-witch', type: 'llm', position: { x: 1750, y: 50 }, data: {
+                 label: 'Witch Action',
+                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWolf target is {{payload.nightState.wolfTarget}}. Witch has potions: {{JSON.stringify(payload.players.find(p=>p.role==="witch")?.potions)}}. Use heal on target? Or use poison on someone else?',
+                 schema: '{"useHeal": "boolean", "poisonTargetId": "string|null"}'
+             }},
+             { id: 'code-witch', type: 'code', position: { x: 2050, y: 50 }, data: {
+                 label: 'Save Witch Action',
+                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.witchHeal = payload.llmResult?.useHeal; payload.nightState.witchPoison = payload.llmResult?.poisonTargetId; return payload;'
+             }},
+             { id: 'code-night-resolve', type: 'code', position: { x: 2350, y: 50 }, data: {
+                 label: 'Resolve Night',
+                 code: 'const s = payload.nightState; const p = payload.players; let died = []; if (s.wolfTarget && !s.witchHeal) died.push(s.wolfTarget); if (s.witchPoison) died.push(s.witchPoison); died.forEach(id => { const player = p.find(x => x.id === id); if(player) player.status = "dead"; }); payload.phase = "day"; payload.nightState = {}; const wolves = p.filter(x => x.role === "werewolf" && x.status === "alive").length; const goods = p.filter(x => x.role !== "werewolf" && x.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; return payload;'
+             }},
+             { id: 'out-day', type: 'output', position: { x: 2650, y: 50 }, data: { label: 'To Day Phase' } },
+             { id: 'llm-day-vote', type: 'llm', position: { x: 550, y: 450 }, data: {
+                 label: 'Town Vote',
+                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the town vote out today?',
+                 schema: '{"targetId": "string", "reason": "string"}'
+             }},
+             { id: 'code-day-resolve', type: 'code', position: { x: 850, y: 450 }, data: {
+                 label: 'Resolve Day',
+                 code: 'if(payload.llmResult?.targetId) { const target = payload.players.find(p => p.id === payload.llmResult.targetId); if(target) target.status = "dead"; } payload.phase = "night"; payload.dayCount = (payload.dayCount || 0) + 1; const p = payload.players; const wolves = p.filter(x => x.role === "werewolf" && x.status === "alive").length; const goods = p.filter(x => x.role !== "werewolf" && x.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; return payload;'
+             }},
+             { id: 'out-night', type: 'output', position: { x: 1150, y: 450 }, data: { label: 'To Night Phase' } },
+             { id: 'out-end', type: 'output', position: { x: 550, y: 650 }, data: { label: 'Game Over' } }
+          ],
+          edges_data: [
+             { id: 'e-start', source: 't1', target: 'r-phase', animated: true },
+             { id: 'e-night-1', source: 'r-phase', sourceHandle: 'route-night', target: 'llm-wolf', animated: true },
+             { id: 'e-night-2', source: 'llm-wolf', target: 'code-wolf', animated: true },
+             { id: 'e-night-3', source: 'code-wolf', target: 'llm-seer', animated: true },
+             { id: 'e-night-4', source: 'llm-seer', target: 'code-seer', animated: true },
+             { id: 'e-night-5', source: 'code-seer', target: 'llm-witch', animated: true },
+             { id: 'e-night-6', source: 'llm-witch', target: 'code-witch', animated: true },
+             { id: 'e-night-7', source: 'code-witch', target: 'code-night-resolve', animated: true },
+             { id: 'e-night-8', source: 'code-night-resolve', target: 'out-day', animated: true },
+             { id: 'e-day-1', source: 'r-phase', sourceHandle: 'route-day', target: 'llm-day-vote', animated: true },
+             { id: 'e-day-2', source: 'llm-day-vote', target: 'code-day-resolve', animated: true },
+             { id: 'e-day-3', source: 'code-day-resolve', target: 'out-night', animated: true },
+             { id: 'e-end-1', source: 'r-phase', sourceHandle: 'route-end', target: 'out-end', animated: true }
+          ],
           status: 'active',
           createdAt: Date.now(),
           updatedAt: Date.now()
@@ -556,12 +666,20 @@ export const useAppStore = create<AppState>()(
                    id: n.id,
                    type: n.type,
                    position: n.position,
-                   data: { label: n.data?.label, agentId: n.data?.agentId, prompt: n.data?.prompt }
+                   data: {
+                     label: n.data?.label,
+                     agentId: n.data?.agentId,
+                     prompt: n.data?.prompt,
+                     routes: n.data?.routes,
+                     code: n.data?.code
+                   }
                  }));
                  const cleanEdges = edges.map((e: any) => ({
                    id: e.id,
                    source: e.source,
+                   sourceHandle: e.sourceHandle,
                    target: e.target,
+                   targetHandle: e.targetHandle,
                    animated: e.animated
                  }));
                  const wfToSave = {...wf, nodes_data: JSON.stringify(cleanNodes), edges_data: JSON.stringify(cleanEdges), updatedAt: Date.now()};
@@ -598,46 +716,172 @@ export const useAppStore = create<AppState>()(
         workflowExecution: { ...state.workflowExecution, ...updates }
       })),
 
-      executeWorkflow: async (workflowId, initialInput) => {
+      executeWorkflow: async (workflowId, initialPayload) => {
          const { workflows, setWorkflowExecutionState } = get();
          const workflow = workflows.find(w => w.id === workflowId);
-         
-         if (!workflow) return;
+
+         if (!workflow) return initialPayload;
 
          setWorkflowExecutionState({ status: 'running', currentNodeId: null, results: {} });
 
-         // For now we will implement a basic execution simulator directly in the store
-         // to show real-time UI updates
-         const triggerNode = workflow.nodes_data.find(n => n.type === 'trigger');
+         // Identify trigger and output nodes
+         const triggerNode = workflow.nodes_data.find((n: any) => n.type === 'trigger');
+
          if (!triggerNode) {
             setWorkflowExecutionState({ status: 'error' });
-            return;
+            return initialPayload;
          }
 
          let currentNodes = [triggerNode.id];
          let results: Record<string, any> = {
-            [triggerNode.id]: initialInput
+            [triggerNode.id]: structuredClone(initialPayload) // Initial payload object
+         };
+
+         // Final output payload
+         let finalPayload = structuredClone(initialPayload);
+
+         // Helper for async function creation
+         const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+
+         // Helper to race execution with a timeout to prevent infinite loops (e.g. 10s max per node)
+         const withTimeout = <T>(promise: Promise<T>, ms: number, fallbackError: string): Promise<T> => {
+            let timeoutId: NodeJS.Timeout;
+            const timeoutPromise = new Promise<T>((_, reject) => {
+               timeoutId = setTimeout(() => reject(new Error(fallbackError)), ms);
+            });
+            return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
          };
 
          while (currentNodes.length > 0) {
             const nextNodes: string[] = [];
-            
+
             for (const nodeId of currentNodes) {
                setWorkflowExecutionState({ currentNodeId: nodeId, results });
-               
-               // Simulate processing time
-               await new Promise(r => setTimeout(r, 1000));
-               
-               const node = workflow.nodes_data.find(n => n.id === nodeId);
-               if (node?.type === 'agent') {
-                  results[nodeId] = `[Agent Processed]: ${results[nodeId] || initialInput}`;
+
+               // Simulate minimum UI processing time so animation is visible
+               await new Promise(r => setTimeout(r, 400));
+
+               const node = workflow.nodes_data.find((n: any) => n.id === nodeId);
+               let currentPayload = results[nodeId] ? structuredClone(results[nodeId]) : structuredClone(initialPayload);
+
+               // Save final payload if we reach an output node
+               if (node?.type === 'output') {
+                  finalPayload = currentPayload;
+                  continue; // Output nodes have no outgoing edges to process
                }
 
-               const edges = workflow.edges_data.filter(e => e.source === nodeId);
-               for (const edge of edges) {
-                  results[edge.target] = results[nodeId]; // pass data forward
-                  if (!nextNodes.includes(edge.target)) {
-                     nextNodes.push(edge.target);
+               // Process node based on type
+               if (node?.type === 'agent') {
+                  currentPayload = {
+                     ...currentPayload,
+                     output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.`
+                  };
+               } else if (node?.type === 'llm') {
+                  // In a real implementation, this would use AI SDK's generateObject
+                  // For now, we simulate structural processing based on the schema string
+                  console.log("Simulating LLM Structural inference with prompt:", node.data?.prompt);
+                  let parsedOutput = {};
+                  try {
+                     if (node.data?.schema) {
+                        // Very naive schema to placeholder json simulation for UI testing
+                        const schemaStr = node.data.schema;
+                        if (schemaStr.includes('targetId')) parsedOutput = { targetId: "player_3", reason: "simulated logic" };
+                        else parsedOutput = { result: "simulated" };
+                     }
+                  } catch(e) {
+                     console.error("Schema parsing error:", e);
+                  }
+
+                  currentPayload = {
+                     ...currentPayload,
+                     llmResult: parsedOutput
+                  };
+               } else if (node?.type === 'code') {
+                  // Execute custom code snippet asynchronously
+                  try {
+                     const jsCode = `
+                        try {
+                           ${node.data?.code || 'return payload;'}
+                        } catch(e) {
+                           console.error('Code node execution error:', e);
+                           return { ...payload, _error: e.message };
+                        }
+                     `;
+                     const executeFn = new AsyncFunction('payload', jsCode);
+                     // Clone to prevent state mutation inside the function
+                     const safePayload = structuredClone(currentPayload);
+
+                     // Execute with 10s timeout
+                     const resultPayload = await withTimeout(
+                        executeFn(safePayload),
+                        10000,
+                        "Code execution timed out after 10s"
+                     );
+
+                     // Handle case where user forgets to return payload
+                     currentPayload = resultPayload || currentPayload;
+
+                  } catch (e: any) {
+                     console.error('Code compilation error:', e);
+                     currentPayload = { ...currentPayload, _error: e.message };
+                  }
+               }
+
+               // Save the modified payload back to results for this node
+               results[nodeId] = currentPayload;
+
+               // Find outgoing edges
+               const edges = workflow.edges_data.filter((e: any) => e.source === nodeId);
+
+               // Handle routing logic for RouterNode
+               if (node?.type === 'condition' && node.data?.routes) {
+                  let matchedRouteId = null;
+
+                  // Evaluate routes in order
+                  for (const route of node.data.routes) {
+                     try {
+                        const conditionJs = `
+                           try {
+                              with (payload) {
+                                  return ${route.condition || 'false'};
+                              }
+                           } catch(e) {
+                              return false;
+                           }
+                        `;
+                        const evaluateCondition = new AsyncFunction('payload', conditionJs);
+                        const isMatch = await withTimeout(
+                           evaluateCondition(structuredClone(currentPayload)),
+                           2000, // 2s timeout for simple condition evaluation
+                           "Route evaluation timed out"
+                        );
+
+                        if (isMatch) {
+                           matchedRouteId = route.id;
+                           break; // Only take the first matching route
+                        }
+                     } catch (e) {
+                        console.error('Route evaluation error:', e);
+                     }
+                  }
+
+                  // Follow only the edge that connects to the matched route
+                  if (matchedRouteId) {
+                     const matchingEdge = edges.find((e: any) => e.sourceHandle === matchedRouteId);
+                     if (matchingEdge) {
+                        results[matchingEdge.target] = structuredClone(currentPayload);
+                        if (!nextNodes.includes(matchingEdge.target)) {
+                           nextNodes.push(matchingEdge.target);
+                        }
+                     }
+                  }
+               } else {
+                  // Standard node forwarding (send to all connected targets)
+                  for (const edge of edges) {
+                     results[edge.target] = structuredClone(currentPayload); // pass payload forward
+                     if (!nextNodes.includes(edge.target)) {
+                        nextNodes.push(edge.target);
+                     }
                   }
                }
             }
@@ -645,6 +889,7 @@ export const useAppStore = create<AppState>()(
          }
 
          setWorkflowExecutionState({ status: 'completed', currentNodeId: null, results });
+         return finalPayload;
       },
 
       getWorkflowForSession: (sessionId) => {
