@@ -174,7 +174,22 @@ function Flow() {
            </div>
            <Button
              variant="outline"
-             onClick={() => executeWorkflow(activeWorkflow!.id, { text: "Hello from test input!" })}
+             onClick={() => {
+               const isWerewolf = activeWorkflow?.name === 'Werewolf Game Logic';
+               const initialPayload = isWerewolf 
+                 ? { 
+                     phase: "night", 
+                     gameStatus: "playing",
+                     players: [
+                       { id: "p1", role: "werewolf", status: "alive" },
+                       { id: "p2", role: "seer", status: "alive" },
+                       { id: "p3", role: "witch", status: "alive" },
+                       { id: "p4", role: "villager", status: "alive" }
+                     ]
+                   } 
+                 : { text: "Hello from test input!", value: 75 };
+               executeWorkflow(activeWorkflow!.id, initialPayload);
+             }}
              size="sm"
              className="shadow-sm mr-2"
              disabled={workflowExecution.status === 'running'}
