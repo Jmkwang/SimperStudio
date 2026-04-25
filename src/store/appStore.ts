@@ -772,14 +772,9 @@ export const useAppStore = create<AppState>()(
 
                // Process node based on type
                if (node?.type === 'agent') {
-                  currentPayload = {
-                     ...currentPayload,
-                     output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.`
-                  };
-               } else if (node?.type === 'llm') {
-                  // In a real implementation, this would use AI SDK's generateObject
-                  // For now, we simulate structural processing based on the schema string
-                  console.log("Simulating LLM Structural inference with prompt:", node.data?.prompt);
+                  // In a real implementation, this would use AI SDK's generateObject or generateText
+                  // depending on if a schema is provided
+                  console.log("Simulating Agent inference with prompt:", node.data?.prompt);
                   let parsedOutput = {};
                   try {
                      if (node.data?.schema) {
@@ -787,15 +782,20 @@ export const useAppStore = create<AppState>()(
                         const schemaStr = node.data.schema;
                         if (schemaStr.includes('targetId')) parsedOutput = { targetId: "player_3", reason: "simulated logic" };
                         else parsedOutput = { result: "simulated" };
+                        
+                        currentPayload = {
+                           ...currentPayload,
+                           llmResult: parsedOutput
+                        };
+                     } else {
+                        currentPayload = {
+                           ...currentPayload,
+                           output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.`
+                        };
                      }
                   } catch(e) {
-                     console.error("Schema parsing error:", e);
+                     console.error("Agent execution error:", e);
                   }
-
-                  currentPayload = {
-                     ...currentPayload,
-                     llmResult: parsedOutput
-                  };
                } else if (node?.type === 'code') {
                   // Execute custom code snippet asynchronously
                   try {
