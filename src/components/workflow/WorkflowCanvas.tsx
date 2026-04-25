@@ -215,6 +215,24 @@ function Flow() {
             <div className="text-xs text-muted-foreground flex gap-4">
               {workflowExecution.status === 'error' && <span className="text-red-500">Error executing workflow</span>}
               <span>Current Node: {workflowExecution.currentNodeId || 'None'}</span>
+
+              <button 
+                className="hover:text-foreground underline ml-4 font-semibold text-primary" 
+                onClick={() => {
+                  const finalOutputId = Object.keys(workflowExecution.results).find(id => {
+                     const node = activeWorkflow?.nodes_data.find(n => n.id === id);
+                     return node && node.type === 'output';
+                  });
+                  const finalOutputPayload = finalOutputId ? workflowExecution.results[finalOutputId] : null;
+                  
+                  if (finalOutputPayload) {
+                     executeWorkflow(activeWorkflow!.id, finalOutputPayload);
+                  }
+                }}
+                disabled={workflowExecution.status === 'running'}
+              >
+                {workflowExecution.status === 'running' ? 'Running...' : 'Next Round (Loop)'}
+              </button>
               <button 
                 className="hover:text-foreground underline" 
                 onClick={() => useAppStore.getState().setWorkflowExecutionState({ status: 'idle' })}
