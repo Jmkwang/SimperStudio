@@ -265,7 +265,7 @@ export const useAppStore = create<AppState>()(
                  { id: 'route-low', condition: 'payload.value <= 50' }
                ]
              }},
-             { id: 'llm-high', type: 'llm', position: { x: 550, y: 100 }, data: {
+             { id: 'llm-high', type: 'agent', position: { x: 550, y: 100 }, data: {
                  label: 'High Value Processor',
                  prompt: 'Current State: {{JSON.stringify(payload)}}\n\nProcess this high value data.',
                  schema: '{"status": "string", "reason": "string"}'
@@ -274,7 +274,7 @@ export const useAppStore = create<AppState>()(
                  label: 'Update High',
                  code: 'payload.processed = true; payload.path = "high"; return payload;'
              }},
-             { id: 'llm-low', type: 'llm', position: { x: 550, y: 400 }, data: {
+             { id: 'llm-low', type: 'agent', position: { x: 550, y: 400 }, data: {
                  label: 'Low Value Processor',
                  prompt: 'Current State: {{JSON.stringify(payload)}}\n\nProcess this low value data.',
                  schema: '{"status": "string", "reason": "string"}'
@@ -311,7 +311,7 @@ export const useAppStore = create<AppState>()(
                  { id: 'route-end', condition: 'payload.gameStatus !== "playing"' }
                ]
              }},
-             { id: 'llm-wolf', type: 'llm', position: { x: 550, y: 50 }, data: {
+             { id: 'llm-wolf', type: 'agent', position: { x: 550, y: 50 }, data: {
                  label: 'Werewolves Action',
                  prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the werewolves kill tonight?',
                  schema: '{"targetId": "string", "reason": "string"}'
@@ -320,7 +320,7 @@ export const useAppStore = create<AppState>()(
                  label: 'Save Wolf Target',
                  code: 'payload.nightState = payload.nightState || {}; payload.nightState.wolfTarget = payload.llmResult?.targetId; return payload;'
              }},
-             { id: 'llm-seer', type: 'llm', position: { x: 1150, y: 50 }, data: {
+             { id: 'llm-seer', type: 'agent', position: { x: 1150, y: 50 }, data: {
                  label: 'Seer Action',
                  prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the seer inspect?',
                  schema: '{"targetId": "string", "reason": "string"}'
@@ -329,7 +329,7 @@ export const useAppStore = create<AppState>()(
                  label: 'Save Seer Target',
                  code: 'payload.nightState = payload.nightState || {}; payload.nightState.seerTarget = payload.llmResult?.targetId; return payload;'
              }},
-             { id: 'llm-witch', type: 'llm', position: { x: 1750, y: 50 }, data: {
+             { id: 'llm-witch', type: 'agent', position: { x: 1750, y: 50 }, data: {
                  label: 'Witch Action',
                  prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWolf target is {{payload.nightState.wolfTarget}}. Witch has potions: {{JSON.stringify(payload.players.find(p=>p.role==="witch")?.potions)}}. Use heal on target? Or use poison on someone else?',
                  schema: '{"useHeal": "boolean", "poisonTargetId": "string|null"}'
@@ -343,7 +343,7 @@ export const useAppStore = create<AppState>()(
                  code: 'const s = payload.nightState; const p = payload.players; let died = []; if (s.wolfTarget && !s.witchHeal) died.push(s.wolfTarget); if (s.witchPoison) died.push(s.witchPoison); died.forEach(id => { const player = p.find(x => x.id === id); if(player) player.status = "dead"; }); payload.phase = "day"; payload.nightState = {}; const wolves = p.filter(x => x.role === "werewolf" && x.status === "alive").length; const goods = p.filter(x => x.role !== "werewolf" && x.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; return payload;'
              }},
              { id: 'out-day', type: 'output', position: { x: 2650, y: 50 }, data: { label: 'To Day Phase' } },
-             { id: 'llm-day-vote', type: 'llm', position: { x: 550, y: 450 }, data: {
+             { id: 'llm-day-vote', type: 'agent', position: { x: 550, y: 450 }, data: {
                  label: 'Town Vote',
                  prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the town vote out today?',
                  schema: '{"targetId": "string", "reason": "string"}'

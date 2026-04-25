@@ -56,6 +56,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
           <div>
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
+            {data.schema && <p className="text-[10px] text-primary mt-0.5">Tool Calling Enabled</p>}
           </div>
         </div>
 
@@ -82,6 +83,25 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="schema">Output Schema (JSON)</Label>
+                <Textarea
+                  id="schema"
+                  value={data.schema || ""}
+                  onChange={(e) => {
+                    setNodes((nds) =>
+                      nds.map((node) => {
+                        if (node.id === id) {
+                          return { ...node, data: { ...node.data, schema: e.target.value } };
+                        }
+                        return node;
+                      })
+                    );
+                  }}
+                  placeholder='{"targetId": "string"}'
+                  className="resize-none h-20 font-mono text-xs"
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="prompt">Node Prompt / Instructions</Label>
