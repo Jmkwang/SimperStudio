@@ -19,6 +19,9 @@ import '@xyflow/react/dist/style.css';
 import { TriggerNode } from './nodes/TriggerNode';
 import { AgentNode } from './nodes/AgentNode';
 import { OutputNode } from './nodes/OutputNode';
+import { RouterNode } from './nodes/RouterNode';
+import { CodeNode } from './nodes/CodeNode';
+import { LLMNode } from './nodes/LLMNode';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from 'lucide-react';
@@ -49,7 +52,9 @@ const GenericNode = ({ data, id }: any) => {
   trigger: TriggerNode,
   agent: AgentNode,
   output: OutputNode,
-  condition: GenericNode,
+  condition: RouterNode,
+  code: CodeNode,
+  llm: LLMNode,
   subworkflow: GenericNode,
   action: GenericNode,
   transformation: GenericNode
@@ -157,7 +162,9 @@ function Flow() {
                <SelectContent>
                  <SelectItem value="trigger">{t("Trigger Node")}</SelectItem>
                  <SelectItem value="agent">{t("Agent Node")}</SelectItem>
-                 <SelectItem value="condition">{t("Condition Node")}</SelectItem>
+                 <SelectItem value="llm">{t("Structured LLM Node")}</SelectItem>
+                 <SelectItem value="condition">{t("Router/Condition Node")}</SelectItem>
+                 <SelectItem value="code">{t("Code Execution Node")}</SelectItem>
                  <SelectItem value="subworkflow">{t("SubWorkflow Node")}</SelectItem>
                  <SelectItem value="action">{t("Action Node")}</SelectItem>
                  <SelectItem value="transformation">{t("Data Transformation Node")}</SelectItem>
@@ -165,10 +172,10 @@ function Flow() {
                </SelectContent>
              </Select>
            </div>
-           <Button 
-             variant="outline" 
-             onClick={() => executeWorkflow(activeWorkflow!.id, "Hello from test input!")} 
-             size="sm" 
+           <Button
+             variant="outline"
+             onClick={() => executeWorkflow(activeWorkflow!.id, { text: "Hello from test input!" })}
+             size="sm"
              className="shadow-sm mr-2"
              disabled={workflowExecution.status === 'running'}
            >

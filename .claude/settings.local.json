@@ -39,7 +39,13 @@
       "Bash(npm run:*)",
       "Bash(git commit:*)",
       "Bash(curl:*)",
-      "Bash(find src *)"
+      "Bash(find src *)",
+      "Bash(python3 *)",
+      "Bash(python *)",
+      "Bash(mkdir -p C:/Users/111/.claude/plans)",
+      "Bash(cp /tmp/plan_for_claude.md C:/Users/111/.claude/plans/abundant-dancing-lake-agent-a23d5bbbdf7c71259.md)",
+      "Bash(git add *)",
+      "Bash(npx kill-port *)"
     ]
   }
 }
