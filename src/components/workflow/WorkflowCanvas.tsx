@@ -213,6 +213,7 @@ function Flow() {
               Execution Result
             </h3>
             <div className="text-xs text-muted-foreground flex gap-4">
+              {workflowExecution.status === 'error' && <span className="text-red-500">Error executing workflow</span>}
               <span>Current Node: {workflowExecution.currentNodeId || 'None'}</span>
               <button 
                 className="hover:text-foreground underline" 
