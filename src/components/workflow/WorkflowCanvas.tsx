@@ -202,6 +202,31 @@ function Flow() {
            </Button>
         </Panel>
       </ReactFlow>
+      {workflowExecution.status !== 'idle' && (
+        <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur border rounded-xl shadow-lg p-4 z-10 max-w-3xl mx-auto pointer-events-auto">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-semibold text-sm flex items-center">
+              <div className={`w-2 h-2 rounded-full mr-2 ${
+                workflowExecution.status === 'running' ? 'bg-blue-500 animate-pulse' :
+                workflowExecution.status === 'completed' ? 'bg-emerald-500' : 'bg-red-500'
+              }`}></div>
+              Execution Result
+            </h3>
+            <div className="text-xs text-muted-foreground flex gap-4">
+              <span>Current Node: {workflowExecution.currentNodeId || 'None'}</span>
+              <button 
+                className="hover:text-foreground underline" 
+                onClick={() => useAppStore.getState().setWorkflowExecutionState({ status: 'idle' })}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="text-xs font-mono bg-muted/50 p-2 rounded-md max-h-[250px] overflow-auto">
+            <pre>{JSON.stringify(workflowExecution.results[workflowExecution.currentNodeId || Object.keys(workflowExecution.results).pop() || ''] || {}, null, 2)}</pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
