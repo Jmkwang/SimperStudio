@@ -1,39 +1,88 @@
 # SimperStudio
 
-SimperStudio is a "small and beautiful" desktop application designed to bridge the gap between conversational AI and automated workflows. It acts as a local-first workflow and multi-agent chat hub, combining the seamless multi-agent chat experience of CherryStudio with the powerful, visual node-based automation of n8n.
+SimperStudio is a local-first desktop app that combines multi-agent chat and visual workflow automation in one place. It is built to feel lightweight, fast, and practical for everyday AI-assisted work.
 
-## Design Philosophy
+## Highlights
 
-SimperStudio follows a **"Small & Beautiful" (小而美)** design approach, drawing inspiration from modern macOS and refined minimalist Windows 11 aesthetics.
+- Multi-agent chat with `@` mentions and streaming responses
+- Visual workflow builder powered by React Flow
+- Node types: `trigger`, `agent`, `condition`, `code`, `loop`, `output`
+- Workflow test-run panel with live execution status and result payload preview
+- Light/Dark theme support
+- Tauri desktop shell (Rust backend + React frontend)
 
-- **Minimalist Interface:** Clean, distraction-free environment with ample whitespace, subtle glassmorphic effects, and crisp typography utilizing `Inter` or native system UI fonts.
-- **Component System:** Built using `shadcn/ui` components and Radix UI primitives for accessible, high-quality interactive elements.
-- **Multi-Agent Chat Stacking:** Dynamic chat interface capable of rendering concurrent or stacked responses from multiple agents simultaneously within the same conversation thread, utilizing clear avatars and streaming states.
-- **Node-Based Workflow:** A snappy, card-based visual canvas for connecting triggers, actions, and AI agents with clear visual hierarchy and fluid bezier edge connections.
-- **Theming:** Full support for system-level Dark and Light modes with smooth color transitions across all UI zones.
+## Tech Stack
 
-## Technical Architecture
+- **Desktop runtime:** [Tauri v2](https://v2.tauri.app/)
+- **Frontend:** React 19 + Vite + TypeScript
+- **UI:** Tailwind CSS + shadcn/ui + Radix UI
+- **State:** Zustand
+- **Workflow canvas:** [React Flow](https://reactflow.dev/)
+- **LLM integration:** Vercel AI SDK providers
 
-The application is built on a modern, high-performance web and desktop stack:
+## Workflow Engine Notes
 
-- **App Framework:** [Tauri v2](https://v2.tauri.app/) - Provides a lightweight footprint and native desktop capabilities using a Rust backend.
-- **Frontend Framework:** React 19 + Vite - For rapid UI development, robust component architecture, and blazing fast HMR.
-- **Styling:** Tailwind CSS - Utility-first CSS framework synced with semantic design tokens.
-- **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) - Lightweight state management utilizing local storage persistence (`simper-studio-storage`).
-- **Workflow Engine:** [React Flow](https://reactflow.dev/) - Powers the interactive, drag-and-drop visual node editor in the Workflow Zone.
-- **Database:** Local SQLite (via Tauri SQL plugin) planned for robust, local-first persistent storage for chats, agents, and workflow data.
+Current runtime supports:
 
-## Current Status & TODO List
+- **Condition routing:** first matched route is taken
+- **Code node execution:** async JavaScript with timeout guard
+- **Loop node execution:**
+  - iterates over `itemsPath`
+  - injects `itemAlias` and `indexAlias`
+  - exposes `payload.loop = { currentItem, index, total }`
+  - supports `breakCondition`
+  - supports per-node iteration cap (`maxIterations`)
+  - includes global workflow step cap to avoid runaway graph execution
 
-### ✅ What's Done
-- **Layout Shell:** Three-pane architecture (Global Sidebar, Context Sidebar, Main Area) implemented with dynamic routing.
-- **Chat UI:** Multi-agent conversation interface with concurrent streaming responses, auto-scrolling, and `@` mention popovers.
-- **Workflow Canvas:** Interactive node-based editor integrating custom Agent nodes with configuration dialogs.
-- **Local State DB:** Zustand store configured with persistence for workspaces, chat sessions, agents, and workflow topologies.
-- **Theming:** Light/Dark mode toggle with fluid CSS variable transitions mapped to shadcn/ui.
+## Development
 
-### ⏳ Pending / TODO
-- ~~**Agent Zone UI:** Build the comprehensive interface for creating, configuring, and tweaking individual AI agents.~~ (Implemented!)
-- ~~**Custom API Integration:** Add global API configuration and the capability to define custom REST endpoints as tools for agents or nodes.~~ (Implemented with Vercel AI SDK integration!)
-- **Database Migration:** Fully integrate Tauri's SQLite plugin to transition from simple localStorage to robust local desktop database storage.
-- **Packaging:** Build, sign, and package the application specifically for the Windows platform.
+### Prerequisites
+
+- Node.js 18+
+- npm
+- Rust toolchain + Tauri prerequisites (for desktop packaging)
+
+### Install
+
+```bash
+npm install
+```
+
+### Run web dev server
+
+```bash
+npm run dev
+```
+
+### Build frontend
+
+```bash
+npm run build
+```
+
+### Run Tauri app (desktop)
+
+```bash
+npm run tauri dev
+```
+
+## Project Status
+
+Implemented:
+
+- Core app layout and navigation
+- Multi-agent chat UI and streaming pipeline
+- Workflow canvas editing and persistence
+- Loop node UI + runtime semantics (Step 1 & Step 2)
+
+In progress / next:
+
+- Loop result aggregation contract (`payload.loopResults[...]`)
+- Werewolf workflow phased migration to loop-based day speech flow
+- SQLite persistence consolidation and release packaging
+
+## Additional Docs
+
+- `README.zh-CN.md` – Chinese overview
+- `TODO.md` – Detailed progress and phased implementation checklist
+- `docs/` – Product/design docs

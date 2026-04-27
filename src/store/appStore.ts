@@ -671,7 +671,12 @@ export const useAppStore = create<AppState>()(
                      agentId: n.data?.agentId,
                      prompt: n.data?.prompt,
                      routes: n.data?.routes,
-                     code: n.data?.code
+                     code: n.data?.code,
+                     itemsPath: n.data?.itemsPath,
+                     itemAlias: n.data?.itemAlias,
+                     indexAlias: n.data?.indexAlias,
+                     maxIterations: n.data?.maxIterations,
+                     breakCondition: n.data?.breakCondition
                    }
                  }));
                  const cleanEdges = edges.map((e: any) => ({
@@ -724,7 +729,6 @@ export const useAppStore = create<AppState>()(
 
          setWorkflowExecutionState({ status: 'running', currentNodeId: null, results: {} });
 
-         // Identify trigger and output nodes
          const triggerNode = workflow.nodes_data.find((n: any) => n.type === 'trigger');
 
          if (!triggerNode) {
@@ -732,18 +736,23 @@ export const useAppStore = create<AppState>()(
             return initialPayload;
          }
 
-         let currentNodes = [triggerNode.id];
-         let results: Record<string, any> = {
-            [triggerNode.id]: structuredClone(initialPayload) // Initial payload object
+         type ExecutionFrame = {
+            nodeId: string;
+            payload: any;
          };
 
-         // Final output payload
+         let queue: ExecutionFrame[] = [
+            { nodeId: triggerNode.id, payload: structuredClone(initialPayload) }
+         ];
+
+         let results: Record<string, any> = {
+            [triggerNode.id]: structuredClone(initialPayload)
+         };
+
          let finalPayload = structuredClone(initialPayload);
 
-         // Helper for async function creation
          const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
-         // Helper to race execution with a timeout to prevent infinite loops (e.g. 10s max per node)
          const withTimeout = <T>(promise: Promise<T>, ms: number, fallbackError: string): Promise<T> => {
             let timeoutId: NodeJS.Timeout;
             const timeoutPromise = new Promise<T>((_, reject) => {
@@ -752,140 +761,188 @@ export const useAppStore = create<AppState>()(
             return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
          };
 
-         while (currentNodes.length > 0) {
-            const nextNodes: string[] = [];
+         const getByPath = (obj: any, path: string) => {
+            if (!path) return undefined;
+            const normalizedPath = path.startsWith('payload.') ? path.slice('payload.'.length) : path;
+            if (!normalizedPath) return obj;
+            return normalizedPath.split('.').reduce((acc: any, key: string) => {
+               if (acc === null || acc === undefined) return undefined;
+               return acc[key];
+            }, obj);
+         };
 
-            for (const nodeId of currentNodes) {
-               setWorkflowExecutionState({ currentNodeId: nodeId, results });
-
-               // Simulate minimum UI processing time so animation is visible
-               await new Promise(r => setTimeout(r, 400));
-
-               const node = workflow.nodes_data.find((n: any) => n.id === nodeId);
-               let currentPayload = results[nodeId] ? structuredClone(results[nodeId]) : structuredClone(initialPayload);
-
-               // Save final payload if we reach an output node
-               if (node?.type === 'output') {
-                  finalPayload = currentPayload;
-                  continue; // Output nodes have no outgoing edges to process
-               }
-
-               // Process node based on type
-               if (node?.type === 'agent') {
-                  // In a real implementation, this would use AI SDK's generateObject or generateText
-                  // depending on if a schema is provided
-                  console.log("Simulating Agent inference with prompt:", node.data?.prompt);
-                  let parsedOutput = {};
-                  try {
-                     if (node.data?.schema) {
-                        // Very naive schema to placeholder json simulation for UI testing
-                        const schemaStr = node.data.schema;
-                        if (schemaStr.includes('targetId')) parsedOutput = { targetId: "player_3", reason: "simulated logic" };
-                        else parsedOutput = { result: "simulated" };
-                        
-                        currentPayload = {
-                           ...currentPayload,
-                           llmResult: parsedOutput
-                        };
-                     } else {
-                        currentPayload = {
-                           ...currentPayload,
-                           output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.`
-                        };
-                     }
-                  } catch(e) {
-                     console.error("Agent execution error:", e);
+         const evaluateExpression = async (expression: string, payload: any, timeoutMs: number) => {
+            const expressionJs = `
+               try {
+                  with (payload) {
+                     return ${expression};
                   }
-               } else if (node?.type === 'code') {
-                  // Execute custom code snippet asynchronously
-                  try {
-                     const jsCode = `
-                        try {
-                           ${node.data?.code || 'return payload;'}
-                        } catch(e) {
-                           console.error('Code node execution error:', e);
-                           return { ...payload, _error: e.message };
-                        }
-                     `;
-                     const executeFn = new AsyncFunction('payload', jsCode);
-                     // Clone to prevent state mutation inside the function
-                     const safePayload = structuredClone(currentPayload);
-
-                     // Execute with 10s timeout
-                     const resultPayload = await withTimeout(
-                        executeFn(safePayload),
-                        10000,
-                        "Code execution timed out after 10s"
-                     );
-
-                     // Handle case where user forgets to return payload
-                     currentPayload = resultPayload || currentPayload;
-
-                  } catch (e: any) {
-                     console.error('Code compilation error:', e);
-                     currentPayload = { ...currentPayload, _error: e.message };
-                  }
+               } catch(e) {
+                  return false;
                }
+            `;
+            const evaluateFn = new AsyncFunction('payload', expressionJs);
+            return withTimeout(
+               evaluateFn(structuredClone(payload)),
+               timeoutMs,
+               'Expression evaluation timed out'
+            );
+         };
 
-               // Save the modified payload back to results for this node
+         const MAX_WORKFLOW_STEPS = 1000;
+         let stepCounter = 0;
+
+         while (queue.length > 0) {
+            const frame = queue.shift()!;
+            const nodeId = frame.nodeId;
+            const node = workflow.nodes_data.find((n: any) => n.id === nodeId);
+            let currentPayload = structuredClone(frame.payload);
+
+            stepCounter += 1;
+            if (stepCounter > MAX_WORKFLOW_STEPS) {
+               setWorkflowExecutionState({ status: 'error', currentNodeId: null, results });
+               return finalPayload;
+            }
+
+            setWorkflowExecutionState({ currentNodeId: nodeId, results });
+
+            await new Promise(r => setTimeout(r, 400));
+
+            if (node?.type === 'output') {
+               finalPayload = currentPayload;
                results[nodeId] = currentPayload;
+               continue;
+            }
 
-               // Find outgoing edges
-               const edges = workflow.edges_data.filter((e: any) => e.source === nodeId);
+            if (node?.type === 'agent') {
+               console.log('Simulating Agent inference with prompt:', node.data?.prompt);
+               let parsedOutput = {};
+               try {
+                  if (node.data?.schema) {
+                     const schemaStr = node.data.schema;
+                     if (schemaStr.includes('targetId')) parsedOutput = { targetId: 'player_3', reason: 'simulated logic' };
+                     else parsedOutput = { result: 'simulated' };
 
-               // Handle routing logic for RouterNode
-               if (node?.type === 'condition' && node.data?.routes) {
-                  let matchedRouteId = null;
-
-                  // Evaluate routes in order
-                  for (const route of node.data.routes) {
+                     currentPayload = {
+                        ...currentPayload,
+                        llmResult: parsedOutput
+                     };
+                  } else {
+                     currentPayload = {
+                        ...currentPayload,
+                        output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.`
+                     };
+                  }
+               } catch (e) {
+                  console.error('Agent execution error:', e);
+               }
+            } else if (node?.type === 'code') {
+               try {
+                  const jsCode = `
                      try {
-                        const conditionJs = `
-                           try {
-                              with (payload) {
-                                  return ${route.condition || 'false'};
-                              }
-                           } catch(e) {
-                              return false;
-                           }
-                        `;
-                        const evaluateCondition = new AsyncFunction('payload', conditionJs);
-                        const isMatch = await withTimeout(
-                           evaluateCondition(structuredClone(currentPayload)),
-                           2000, // 2s timeout for simple condition evaluation
-                           "Route evaluation timed out"
-                        );
+                        ${node.data?.code || 'return payload;'}
+                     } catch(e) {
+                        console.error('Code node execution error:', e);
+                        return { ...payload, _error: e.message };
+                     }
+                  `;
+                  const executeFn = new AsyncFunction('payload', jsCode);
+                  const safePayload = structuredClone(currentPayload);
 
-                        if (isMatch) {
-                           matchedRouteId = route.id;
-                           break; // Only take the first matching route
-                        }
-                     } catch (e) {
-                        console.error('Route evaluation error:', e);
-                     }
-                  }
+                  const resultPayload = await withTimeout(
+                     executeFn(safePayload),
+                     10000,
+                     'Code execution timed out after 10s'
+                  );
 
-                  // Follow only the edge that connects to the matched route
-                  if (matchedRouteId) {
-                     const matchingEdge = edges.find((e: any) => e.sourceHandle === matchedRouteId);
-                     if (matchingEdge) {
-                        results[matchingEdge.target] = structuredClone(currentPayload);
-                        if (!nextNodes.includes(matchingEdge.target)) {
-                           nextNodes.push(matchingEdge.target);
-                        }
-                     }
-                  }
-               } else {
-                  // Standard node forwarding (send to all connected targets)
-                  for (const edge of edges) {
-                     results[edge.target] = structuredClone(currentPayload); // pass payload forward
-                     if (!nextNodes.includes(edge.target)) {
-                        nextNodes.push(edge.target);
-                     }
-                  }
+                  currentPayload = resultPayload || currentPayload;
+               } catch (e: any) {
+                  console.error('Code compilation error:', e);
+                  currentPayload = { ...currentPayload, _error: e.message };
                }
             }
-            currentNodes = nextNodes;
+
+            results[nodeId] = currentPayload;
+            const edges = workflow.edges_data.filter((e: any) => e.source === nodeId);
+
+            if (node?.type === 'condition' && node.data?.routes) {
+               let matchedRouteId = null;
+
+               for (const route of node.data.routes) {
+                  try {
+                     const isMatch = await evaluateExpression(route.condition || 'false', currentPayload, 2000);
+                     if (isMatch) {
+                        matchedRouteId = route.id;
+                        break;
+                     }
+                  } catch (e) {
+                     console.error('Route evaluation error:', e);
+                  }
+               }
+
+               if (matchedRouteId) {
+                  const matchingEdge = edges.find((e: any) => e.sourceHandle === matchedRouteId);
+                  if (matchingEdge) {
+                     const nextPayload = structuredClone(currentPayload);
+                     results[matchingEdge.target] = nextPayload;
+                     queue.push({ nodeId: matchingEdge.target, payload: nextPayload });
+                  }
+               }
+            } else if (node?.type === 'loop') {
+               const itemsPath = node.data?.itemsPath || 'payload.alivePlayers';
+               const itemAlias = node.data?.itemAlias || 'item';
+               const indexAlias = node.data?.indexAlias || 'index';
+               const maxIterationsValue = Number(node.data?.maxIterations);
+               const maxIterations = maxIterationsValue > 0 ? maxIterationsValue : 20;
+               const breakCondition = node.data?.breakCondition?.trim();
+
+               const resolvedItems = getByPath(currentPayload, itemsPath);
+               const items = Array.isArray(resolvedItems) ? resolvedItems : [];
+               const total = items.length;
+               const iterationCount = Math.min(total, maxIterations);
+
+               if (!Array.isArray(resolvedItems)) {
+                  currentPayload = {
+                     ...currentPayload,
+                     _error: `Loop itemsPath did not resolve to an array: ${itemsPath}`
+                  };
+                  results[nodeId] = currentPayload;
+               }
+
+               for (let i = 0; i < iterationCount; i++) {
+                  const iterationPayload = structuredClone(currentPayload);
+                  iterationPayload[itemAlias] = items[i];
+                  iterationPayload[indexAlias] = i;
+                  iterationPayload.loop = {
+                     currentItem: items[i],
+                     index: i,
+                     total
+                  };
+
+                  if (breakCondition) {
+                     try {
+                        const shouldBreak = await evaluateExpression(breakCondition, iterationPayload, 2000);
+                        if (shouldBreak) {
+                           break;
+                        }
+                     } catch (e) {
+                        console.error('Loop break condition evaluation error:', e);
+                     }
+                  }
+
+                  for (const edge of edges) {
+                     const nextPayload = structuredClone(iterationPayload);
+                     results[edge.target] = nextPayload;
+                     queue.push({ nodeId: edge.target, payload: nextPayload });
+                  }
+               }
+            } else {
+               for (const edge of edges) {
+                  const nextPayload = structuredClone(currentPayload);
+                  results[edge.target] = nextPayload;
+                  queue.push({ nodeId: edge.target, payload: nextPayload });
+               }
+            }
          }
 
          setWorkflowExecutionState({ status: 'completed', currentNodeId: null, results });

@@ -1,39 +1,88 @@
 # SimperStudio
 
-SimperStudio 是一款“小而美”的桌面应用程序，旨在填合对话式 AI 和自动化工作流之间的鸿沟。它作为一个本地优先的工作流和多智能体聊天中心，结合了 CherryStudio 无缝的多智能体聊天体验和 n8n 强大且基于节点的可视化自动化功能。
+SimperStudio 是一个本地优先（local-first）的桌面应用，把多智能体聊天与可视化工作流自动化整合在同一个界面中。它强调轻量、流畅、实用，面向日常 AI 辅助工作场景。
 
-## 设计理念
+## 亮点
 
-SimperStudio 遵循 **“小而美”** 的设计理念，从现代 macOS 和精简风格的 Windows 11 美学中汲取灵感。
+- 支持 `@` 提及与流式响应的多智能体聊天
+- 基于 React Flow 的可视化工作流构建器
+- 节点类型：`trigger`、`agent`、`condition`、`code`、`loop`、`output`
+- 工作流测试运行面板，支持实时执行状态与结果 payload 预览
+- 浅色/深色主题支持
+- Tauri 桌面外壳（Rust 后端 + React 前端）
 
-- **极简界面：** 干净、无干扰的环境，拥有充足的留白、微妙的毛玻璃效果，并使用 `Inter` 或原生系统 UI 字体展现清晰排版。
-- **组件系统：** 使用 `shadcn/ui` 组件和 Radix UI 原语构建，提供无障碍且高质量的交互元素。
-- **多智能体聊天堆叠：** 动态聊天界面，能够在同一对话线程中同时渲染来自多个智能体的并发或堆叠响应，并利用清晰的头像和流式传输状态。
-- **基于节点的工作流：** 敏捷的、基于卡片的可视化画布，用于连接触发器、操作和 AI 智能体，具有清晰的视觉层次结构和流畅的贝塞尔曲线连接。
-- **主题化：** 全面支持系统级深色和浅色模式，所有 UI 区域均有平滑的颜色过渡。
+## 技术栈
 
-## 技术架构
+- **桌面运行时：** [Tauri v2](https://v2.tauri.app/)
+- **前端：** React 19 + Vite + TypeScript
+- **UI：** Tailwind CSS + shadcn/ui + Radix UI
+- **状态管理：** Zustand
+- **工作流画布：** [React Flow](https://reactflow.dev/)
+- **LLM 集成：** Vercel AI SDK providers
 
-该应用程序构建在现代、高性能的 Web 和桌面技术栈之上：
+## 工作流引擎说明
 
-- **应用程序框架：** [Tauri v2](https://v2.tauri.app/) - 使用 Rust 后端提供轻量级占用空间和原生桌面功能。
-- **前端框架：** React 19 + Vite - 用于快速 UI 开发、强大的组件架构和极速的 HMR。
-- **样式：** Tailwind CSS - 与语义设计令牌同步的实用优先 CSS 框架。
-- **状态管理：** [Zustand](https://zustand-demo.pmnd.rs/) - 利用本地存储持久化 (`simper-studio-storage`) 的轻量级状态管理。
-- **工作流引擎：** [React Flow](https://reactflow.dev/) - 为工作流区域中基于交互式拖放的视觉节点编辑器提供支持。
-- **数据库：** 计划使用本地 SQLite（通过 Tauri SQL 插件），为聊天、智能体和工作流数据提供强大的本地优先持久化存储。
+当前运行时支持：
 
-## 当前状态与待办事项 (TODO List)
+- **条件路由：** 命中第一条条件分支即继续执行
+- **Code 节点执行：** 支持异步 JavaScript，带超时保护
+- **Loop 节点执行：**
+  - 按 `itemsPath` 迭代
+  - 注入 `itemAlias` 与 `indexAlias`
+  - 暴露 `payload.loop = { currentItem, index, total }`
+  - 支持 `breakCondition`
+  - 支持节点级迭代上限（`maxIterations`）
+  - 支持全局工作流步骤上限，防止图执行失控
 
-### ✅ 已完成
-- **布局外壳：** 实现具有动态路由的三窗格架构（全局侧边栏、上下文侧边栏、主要区域）。
-- **聊天 UI：** 具有并发流响应、自动滚动和 `@` 提及弹窗的多智能体对话界面。
-- **工作流画布：** 集成自定义智能体节点并配有配置对话框的交互式节点编辑器。
-- **本地状态 DB：** 配置了 Zustand 存储，用于持久化工作区、聊天会话、智能体和工作流拓扑结构。
-- **主题化：** 浅色/深色模式切换功能，配合映射到 shadcn/ui 的流畅 CSS 变量过渡。
+## 开发
 
-### ⏳ 待处理 / 待办
-- ~~**智能体区域 UI：** 构建用于创建、配置和调整单个 AI 智能体的综合界面。~~ (已实现！)
-- ~~**自定义 API 集成：** 添加全局 API 配置功能，以及能够定义自定义 REST 接口作为智能体或节点的工具的功能。~~ (已通过 Vercel AI SDK 集成实现！)
-- **数据库迁移：** 完全集成 Tauri 的 SQLite 插件，实现从简单的 localStorage 向强大的本地桌面数据库存储过渡。
-- **打包：** 专门针对 Windows 平台构建、签名并打包应用程序。
+### 前置要求
+
+- Node.js 18+
+- npm
+- Rust toolchain + Tauri prerequisites（桌面打包所需）
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 启动 Web 开发服务
+
+```bash
+npm run dev
+```
+
+### 构建前端
+
+```bash
+npm run build
+```
+
+### 启动 Tauri 桌面应用（开发模式）
+
+```bash
+npm run tauri dev
+```
+
+## 项目状态
+
+已实现：
+
+- 核心应用布局与导航
+- 多智能体聊天 UI 与流式响应链路
+- 工作流画布编辑与持久化
+- Loop 节点 UI + 运行时语义（Step 1 & Step 2）
+
+进行中 / 下一步：
+
+- Loop 结果聚合约定（`payload.loopResults[...]`）
+- Werewolf 工作流分阶段迁移（先迁移 Day Speech 到 loop）
+- SQLite 持久化整合与发布打包
+
+## 更多文档
+
+- `README.md` – English overview
+- `TODO.md` – 详细进度与分阶段实施清单
+- `docs/` – 产品与设计文档

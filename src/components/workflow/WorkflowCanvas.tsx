@@ -21,7 +21,7 @@ import { AgentNode } from './nodes/AgentNode';
 import { OutputNode } from './nodes/OutputNode';
 import { RouterNode } from './nodes/RouterNode';
 import { CodeNode } from './nodes/CodeNode';
-import { LLMNode } from './nodes/LLMNode';
+import { LoopNode } from './nodes/LoopNode';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from 'lucide-react';
@@ -54,7 +54,7 @@ const GenericNode = ({ data, id }: any) => {
   output: OutputNode,
   condition: RouterNode,
   code: CodeNode,
-  llm: LLMNode,
+  loop: LoopNode,
   subworkflow: GenericNode,
   action: GenericNode,
   transformation: GenericNode
@@ -104,11 +104,27 @@ function Flow() {
   );
 
   const addNode = (type: string, label: string) => {
+    const baseData: Record<string, any> = { label, deleteNode };
+
+    if (type === 'agent') {
+      Object.assign(baseData, { agentId: '', prompt: 'Configure me.' });
+    }
+
+    if (type === 'loop') {
+      Object.assign(baseData, {
+        itemsPath: 'payload.alivePlayers',
+        itemAlias: 'item',
+        indexAlias: 'index',
+        maxIterations: 20,
+        breakCondition: ''
+      });
+    }
+
     const newNode: Node = {
       id: `${type}-${nodes.length + 1}-${Date.now()}`,
       type: type,
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-      data: { label: label, deleteNode, ...(type === 'agent' ? { agentId: '', prompt: 'Configure me.' } : {}) },
+      data: baseData,
     };
     setNodes((nds) => [...nds, newNode]);
   };
@@ -162,9 +178,9 @@ function Flow() {
                <SelectContent>
                  <SelectItem value="trigger">{t("Trigger Node")}</SelectItem>
                  <SelectItem value="agent">{t("Agent Node")}</SelectItem>
-                 <SelectItem value="llm">{t("Structured LLM Node")}</SelectItem>
                  <SelectItem value="condition">{t("Router/Condition Node")}</SelectItem>
                  <SelectItem value="code">{t("Code Execution Node")}</SelectItem>
+                 <SelectItem value="loop">{t("Loop Node")}</SelectItem>
                  <SelectItem value="subworkflow">{t("SubWorkflow Node")}</SelectItem>
                  <SelectItem value="action">{t("Action Node")}</SelectItem>
                  <SelectItem value="transformation">{t("Data Transformation Node")}</SelectItem>
