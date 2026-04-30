@@ -8,12 +8,16 @@ import { ProfileView } from "@/components/profile/ProfileView";
 import { PromptGenerator } from "@/components/prompts/PromptGenerator";
 import { useAppStore } from "@/store/appStore";
 import { Toaster } from "@/components/ui/toaster";
+import { Bot } from "lucide-react";
+import { WorkflowNodePanel } from "@/components/layout/WorkflowNodePanel";
 
 type ViewMode = 'chat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'profile' | 'prompts';
 
 function App() {
   const activeSession = useAppStore(state => state.getActiveSession());
   const fetchInitialData = useAppStore(state => state.fetchInitialData);
+  const sidebarCollapsedBySession = useAppStore(state => state.workflowChatUI.sidebarCollapsedBySession);
+  const setWorkflowSidebarCollapsed = useAppStore(state => state.setWorkflowSidebarCollapsed);
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
 
   useEffect(() => {
@@ -56,6 +60,11 @@ function App() {
     }
   };
 
+  const isWorkflowChat = viewMode === 'chat' && activeSession?.mode === 'workflow';
+  const workflowSidebarCollapsed = activeSession
+    ? (sidebarCollapsedBySession[activeSession.id] ?? true)
+    : false;
+
   return (
     <AppShell currentView={viewMode} setCurrentView={(v) => setViewMode(v as ViewMode)}>
       <div className="flex flex-col h-full">
@@ -65,14 +74,25 @@ function App() {
             {getHeaderTitle()}
           </h1>
 
-          <div className="ml-auto flex items-center gap-4">
-            {/* Info button hidden as requested */}
+          <div className="ml-auto flex items-center gap-2">
+            {isWorkflowChat && workflowSidebarCollapsed && (
+              <button
+                onClick={() => setWorkflowSidebarCollapsed(activeSession!.id, false)}
+                className="p-1.5 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
+                title="Show workflow panel"
+              >
+                <Bot className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 relative overflow-hidden flex flex-col">
-          {renderContent()}
+        <div className="flex-1 relative overflow-hidden flex">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {renderContent()}
+          </div>
+          <WorkflowNodePanel currentView={viewMode} />
         </div>
       </div>
       <Toaster />

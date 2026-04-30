@@ -60,11 +60,15 @@ App shell divided into three primary zones using Flexbox/CSS Grid.
 
 ### 3.1 Buttons & Controls
 *   **Variants:** Default (Solid), Secondary (Subtle bg), Ghost (Hover only), Outline (Bordered), Icon-only.
+*   **State Matrix (Required):** 每个交互控件都必须定义并可区分 `default / hover / active / focus-visible / disabled` 五种状态。
 *   **Interaction:** `active:scale-[0.98]` for tactile click feedback. Subtle `transition-colors duration-200`. Use custom thin scrollbars (hide native Windows scrollbars).
+*   **Focus & Disabled:** Focus 使用清晰 ring（`focus-visible:ring-2`）；Disabled 需降低视觉权重并禁用交互（建议 opacity 0.45~0.6，cursor not-allowed）。
 
 ### 3.2 Inputs & Forms
 *   **Style:** Minimalist borders (`border-input`), focus ring (`focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`).
 *   **Feedback:** Clear error states (red border + helper text).
+*   **Validation UX:** 错误信息必须贴近字段展示；复杂字段需常驻 helper text，不仅依赖 placeholder。
+*   **Sizing:** 输入类控件高度建议不小于 40px，移动端或触屏优先 44px。
 
 ### 3.3 Chat Interface
 *   **User Bubble:** Right-aligned, solid subtle background (`bg-primary` or muted color).
@@ -79,12 +83,33 @@ App shell divided into three primary zones using Flexbox/CSS Grid.
 *   **Body:** Minimal summary of configuration (e.g., "GET /api/data") + Status indicator (Running, Success, Error).
 *   **Handles (Ports):** Clear targets (`w-3 h-3`).
 *   **Interaction:** Elevate on hover (`hover:shadow-md`), distinct border on select (`ring-2 ring-primary`). Smooth bezier curves for edges, animated dashes for data flow.
+*   **Execution State Semantics (Required):**
+    * Running: 主色高亮 + 轻微脉冲动画（可被 reduced-motion 关闭）。
+    * Success: 绿色状态标识，保持静态。
+    * Error: 红色状态标识 + 明确错误 icon。
+    * Skipped: 低饱和/低对比状态，表达“未执行”。
+    * Retrying: 琥珀色状态标识 + 次级脉冲节奏。
 
 ## 4. Interactions & UX Quality
 *   **Routing:** Subtle crossfade when switching main sidebar tabs.
 *   **Theme:** Full support for system Dark/Light modes with smooth color transitions.
-*   **Accessibility:** Proper aria-labels, focus management, and minimum touch/click target sizes (44px equivalent).
+*   **Accessibility (Required):**
+    * 正文文本对比度不低于 4.5:1。
+    * 大号文本（≥18px 或 14px bold）对比度不低于 3:1。
+    * 所有可交互元素最小点击区域不低于 44×44px。
+    * 键盘可达：主要交互链路支持 Tab 导航与可见 focus。
+    * 图标按钮必须提供可访问名称（aria-label）。
+*   **Motion:** 支持 `prefers-reduced-motion`，在该模式下关闭脉冲/大幅位移动画，仅保留必要淡入淡出。
 *   **Performance:** UI must not block main thread; use lazy loading for complex views (like the React Flow canvas).
+
+## 4.1 Responsive & Density Rules
+*   **Breakpoints:**
+    * `>=1280px`：三栏完整布局（Global Sidebar + Context Sidebar + Main）。
+    * `1024px - 1279px`：保留三栏，但 Context Sidebar 默认可折叠。
+    * `768px - 1023px`：优先双栏，Context Sidebar 默认收起为按钮入口。
+    * `<768px`：主内容优先，侧栏改为抽屉式。
+*   **Workflow Chat:** 在中小屏下优先保证节点图与对话窗口可用，窗口重叠数量应受限，避免遮挡核心操作。
+*   **Density:** 保持 4pt/8pt 间距节奏；紧凑模式仅用于信息密度高区域（如执行日志列表），默认页面使用舒适密度。
 
 ## 5. Handoff to Frontend Engineer
 - [ ] Initialize Vite/React project with `tailwindcss`, `lucide-react`, and `shadcn/ui`.

@@ -1,15 +1,15 @@
 import { useAppStore } from '@/store/appStore';
 import { WorkflowChatView } from './WorkflowChatView';
-import { AgentTopologyView } from './AgentTopologyView';
+import { SimpleChatView } from './SimpleChatView';
 
 export function ChatInterface() {
   const activeSession = useAppStore(state => state.getActiveSession());
 
-  if (!activeSession) return <div className="flex-1 flex items-center justify-center">暂无活动会话</div>;
+  if (!activeSession) return <div className="flex-1 flex items-center justify-center">No active session</div>;
 
   if (activeSession.mode === 'workflow') {
-    return <WorkflowChatView session={activeSession} />;
+    return <WorkflowChatView key={activeSession.id} session={activeSession} />;
   }
 
-  return <AgentTopologyView sessionId={activeSession.id} />;
+  return <SimpleChatView key={activeSession.id} session={activeSession} />;
 }

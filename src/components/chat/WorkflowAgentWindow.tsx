@@ -1,20 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { WorkflowConversationWindow } from '@/types/models';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Minus, RefreshCw, Send, X } from 'lucide-react';
+import { Send, X } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ChatMessageBubble } from './ChatMessageBubble';
+
+const DEFAULT_WIDTH = 420;
+const DEFAULT_HEIGHT = 480;
 
 export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConversationWindow }) {
   const [input, setInput] = useState('');
+  const pos = windowData.position;
+  const size = windowData.size || { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
   const { t } = useTranslation();
 
   const sessions = useAppStore(state => state.sessions);
   const agents = useAppStore(state => state.agents);
-  const focusWorkflowAgentWindow = useAppStore(state => state.focusWorkflowAgentWindow);
   const closeWorkflowAgentWindow = useAppStore(state => state.closeWorkflowAgentWindow);
-  const toggleWorkflowAgentWindowMinimized = useAppStore(state => state.toggleWorkflowAgentWindowMinimized);
   const sendToWorkflowAgent = useAppStore(state => state.sendToWorkflowAgent);
   const rerunAgentReply = useAppStore(state => state.rerunAgentReply);
   const rerunAndForwardAgentReply = useAppStore(state => state.rerunAndForwardAgentReply);
@@ -25,15 +30,23 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
 
   const messages = useMemo(() => {
     if (!session) return [];
-    return session.messages.filter(message => {
+    const msgs: typeof session.messages = [];
+    for (const message of session.messages) {
       if (message.role === 'user') {
-        return message.meta?.workflowNodeId === windowData.nodeId || message.meta?.targetAgentId === windowData.agentId;
+        if (!message.meta?.targetAgentId && !message.meta?.workflowNodeId) {
+          msgs.push(message);
+        } else if (message.meta?.workflowNodeId === windowData.nodeId || message.meta?.targetAgentId === windowData.agentId) {
+          msgs.push(message);
+        }
       }
-      if (message.role === 'assistant') {
-        return message.agentResponses?.some(response => response.agentId === windowData.agentId && response.nodeId === windowData.nodeId);
+      if (message.role === 'assistant' && message.agentResponses) {
+        const hasResponse = message.agentResponses.some(response => response.agentId === windowData.agentId && response.nodeId === windowData.nodeId);
+        if (hasResponse) {
+          msgs.push(message);
+        }
       }
-      return false;
-    });
+    }
+    return msgs;
   }, [session, windowData.nodeId, windowData.agentId]);
 
   const handleSend = async () => {
@@ -44,70 +57,92 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
 
   return (
     <div
-      className="absolute w-[420px] rounded-xl border bg-background shadow-xl"
-      style={{ left: windowData.position.x, top: windowData.position.y, zIndex: windowData.zIndex }}
-      onMouseDown={() => focusWorkflowAgentWindow(windowData.id)}
+      className="absolute rounded-xl border bg-background shadow-xl flex flex-col overflow-hidden"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        zIndex: windowData.zIndex,
+        width: size.width,
+        height: windowData.minimized ? 'auto' : size.height,
+      }}
     >
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold">{agent?.name || windowData.agentId}</div>
-          <div className="truncate text-xs text-muted-foreground">{t('Node')}: {windowData.nodeId}</div>
+      {/* Title bar */}
+      <div className="flex items-center justify-between border-b px-3 py-2 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar className="h-6 w-6 rounded-md shrink-0">
+            <AvatarImage src={agent?.avatar} />
+            <AvatarFallback className="rounded-md bg-primary/10 text-primary text-xs">
+              {agent?.name?.slice(0, 2) || 'A'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold">{agent?.name || windowData.agentId}</div>
+            <div className="truncate text-xs text-muted-foreground">{t('Node')}: {windowData.nodeId}</div>
+          </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleWorkflowAgentWindowMinimized(windowData.id)}>
-            <Minus className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => closeWorkflowAgentWindow(windowData.id)}>
-            <X className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label={t('Close')} onClick={() => closeWorkflowAgentWindow(windowData.id)}>
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {!windowData.minimized && (
         <>
-          <div className="max-h-[320px] overflow-auto p-3 space-y-2">
+          {/* Messages area */}
+          <div className="flex-1 overflow-auto p-3 space-y-3">
             {messages.length === 0 && (
-              <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">{t('No messages for this node yet.')}</div>
+              <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground text-center">
+                {t('No messages for this node yet.')}
+              </div>
             )}
 
             {messages.map(message => (
-              <div key={message.id} className="space-y-2">
-                {message.role === 'user' && (
-                  <div className="rounded-lg bg-primary/10 px-3 py-2 text-sm whitespace-pre-wrap">{message.content.text || t('Copied attachment')}</div>
-                )}
-
-                {message.role === 'assistant' && message.agentResponses
-                  ?.filter(response => response.agentId === windowData.agentId && response.nodeId === windowData.nodeId)
-                  .map((response, index) => (
-                    <div key={`${message.id}-${index}`} className="rounded-lg border px-3 py-2 text-sm whitespace-pre-wrap">
-                      <div>{response.content.text}</div>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        <Button size="sm" variant="outline" className="h-7" onClick={() => navigator.clipboard.writeText(response.content.text).catch(() => {})}>{t('Copy')}</Button>
-                        <Button size="sm" variant="outline" className="h-7" onClick={() => rerunAgentReply(windowData.sessionId, windowData.nodeId, response.content.text)}>
-                          <RefreshCw className="mr-1 h-3.5 w-3.5" />{t('Regenerate')}
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7" onClick={() => forwardAgentReplyToNext(windowData.sessionId, windowData.nodeId, message.id, windowData.agentId, 'manual')}>{t('Send to next')}</Button>
-                        <Button size="sm" variant="outline" className="h-7" onClick={() => rerunAndForwardAgentReply(windowData.sessionId, windowData.nodeId, response.content.text)}>{t('Retry and send')}</Button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
+              <ChatMessageBubble
+                key={message.id}
+                message={message}
+                agent={agent ? { name: agent.name, avatar: agent.avatar } : undefined}
+                agentId={windowData.agentId}
+                nodeId={windowData.nodeId}
+                emptyText={t('Copied attachment')}
+                actions={message.role === 'assistant' ? {
+                  canCopy: true,
+                  canRerun: true,
+                  canForward: true,
+                  canRerunAndForward: true,
+                  onRerun: () => {
+                    const text = message.agentResponses?.find(
+                      r => r.agentId === windowData.agentId && r.nodeId === windowData.nodeId
+                    )?.content.text;
+                    if (text) rerunAgentReply(windowData.sessionId, windowData.nodeId, text);
+                  },
+                  onForward: () => forwardAgentReplyToNext(windowData.sessionId, windowData.nodeId, message.id, windowData.agentId, 'manual'),
+                  onRerunAndForward: () => {
+                    const text = message.agentResponses?.find(
+                      r => r.agentId === windowData.agentId && r.nodeId === windowData.nodeId
+                    )?.content.text;
+                    if (text) rerunAndForwardAgentReply(windowData.sessionId, windowData.nodeId, text);
+                  },
+                } : undefined}
+              />
             ))}
           </div>
 
-          <div className="border-t p-3">
+          {/* Input area */}
+          <div className="border-t p-3 shrink-0">
             <div className="flex gap-2">
               <Textarea
                 value={input}
-                onChange={(event) => setInput(event.target.value)}
+                onChange={(e) => setInput(e.target.value)}
                 placeholder={t('Send to current node agent...')}
-                className="min-h-[64px]"
+                className="min-h-[64px] text-sm"
               />
-              <Button onClick={handleSend} disabled={!input.trim()} className="self-end">
+              <Button onClick={handleSend} disabled={!input.trim()} className="self-end h-11 w-11" aria-label={t('Send')}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
+
         </>
       )}
     </div>

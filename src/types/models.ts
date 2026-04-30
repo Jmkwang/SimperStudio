@@ -26,12 +26,53 @@ export interface Workspace {
   updatedAt: number;
 }
 
+export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router';
+
+export interface WorkflowNodePosition {
+  x: number;
+  y: number;
+}
+
+export interface WorkflowNodeDataBase {
+  label?: string;
+  description?: string;
+}
+
+export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {
+  agentId?: string;
+  prompt?: string;
+  autoSendToNext?: boolean;
+}
+
+export type WorkflowNodeData = WorkflowNodeDataBase &
+  Partial<WorkflowAgentNodeData> &
+  Record<string, unknown>;
+
+export interface WorkflowNode {
+  id: string;
+  type: WorkflowNodeType;
+  position: WorkflowNodePosition;
+  data: WorkflowNodeData;
+}
+
+export interface WorkflowEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+  type?: string;
+  animated?: boolean;
+  label?: string;
+  data?: Record<string, unknown>;
+}
+
 export interface Workflow {
   id: string;
   workspaceId: string;
   name: string;
-  nodes_data: any[];
-  edges_data: any[];
+  nodes_data: WorkflowNode[];
+  edges_data: WorkflowEdge[];
   status: 'active' | 'inactive';
   createdAt: number;
   updatedAt: number;
@@ -81,6 +122,7 @@ export interface AgentResponse {
   nodeId?: string;
   content: {
     text: string;
+    token?: number;
   };
   status: 'streaming' | 'complete' | 'error';
   timestamp: number;
@@ -120,6 +162,10 @@ export interface WorkflowConversationWindow {
     x: number;
     y: number;
   };
+  size?: {
+    width: number;
+    height: number;
+  };
   zIndex: number;
   minimized?: boolean;
 }
@@ -131,6 +177,10 @@ export interface AgentChatWindowData {
   position: {
     x: number;
     y: number;
+  };
+  size?: {
+    width: number;
+    height: number;
   };
   zIndex: number;
   minimized?: boolean;

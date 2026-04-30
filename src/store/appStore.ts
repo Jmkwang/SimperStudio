@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { Workspace, Agent, ChatSession, ChatMessage, Workflow, Settings, MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData } from '../types/models';
+import { Workspace, Agent, ChatSession, ChatMessage, Workflow, Settings, MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData, WorkflowNode, WorkflowEdge } from '../types/models';
 import { fetchFromModel } from '@/lib/api';
 import { v4 as uuidv4 } from 'uuid';
+import { createUserMessage, createStreamMessage, createAgentResponse } from '@/lib/messageService';
 import { invoke } from '@tauri-apps/api/core';
 
 type WorkflowChatUIState = {
@@ -20,29 +21,29 @@ function normalizeSession(session: ChatSession): ChatSession {
   };
 }
 
-function getAgentNode(workflow: Workflow | undefined, nodeId: string) {
-  return workflow?.nodes_data.find((node: any) => node.id === nodeId && node.type === 'agent');
+function getAgentNode(workflow: Workflow | undefined, nodeId: string): WorkflowNode | undefined {
+  return workflow?.nodes_data.find((node) => node.id === nodeId && node.type === 'agent');
 }
 
-function findNextAgentNode(workflow: Workflow | undefined, nodeId: string) {
+function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): WorkflowNode | undefined {
   if (!workflow) return undefined;
 
   const visited = new Set<string>();
   const queue = workflow.edges_data
-    .filter((edge: any) => edge.source === nodeId)
-    .map((edge: any) => edge.target);
+    .filter((edge) => edge.source === nodeId)
+    .map((edge) => edge.target);
 
   while (queue.length > 0) {
     const nextNodeId = queue.shift();
     if (!nextNodeId || visited.has(nextNodeId)) continue;
     visited.add(nextNodeId);
 
-    const node = workflow.nodes_data.find((item: any) => item.id === nextNodeId);
+    const node = workflow.nodes_data.find((item) => item.id === nextNodeId);
     if (node?.type === 'agent' && node.data?.agentId) return node;
 
     workflow.edges_data
-      .filter((edge: any) => edge.source === nextNodeId)
-      .forEach((edge: any) => queue.push(edge.target));
+      .filter((edge) => edge.source === nextNodeId)
+      .forEach((edge) => queue.push(edge.target));
   }
 
   return undefined;
@@ -188,7 +189,7 @@ interface AppState {
 
   // Workflow Actions
   createWorkflow: (name: string, workspaceId: string) => void;
-  saveWorkflow: (id: string, nodes: any[], edges: any[]) => void;
+  saveWorkflow: (id: string, nodes: WorkflowNode[], edges: WorkflowEdge[]) => void;
   deleteWorkflow: (id: string) => Promise<void>;
   setActiveWorkflow: (id: string | null) => void;
   setActiveAgent: (id: string | null) => void;
@@ -290,10 +291,46 @@ export const useAppStore = create<AppState>()(
           industry: 'Technology'
         },
         {
-          id: 'agent-werewolf-host',
-          name: '狼人杀法官',
-          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=werewolf-host',
-          systemPrompt: '你是狼人杀游戏法官。你负责维持游戏阶段、解释规则、汇总夜晚行动、发布白天信息，并且不能泄露玩家隐藏身份。输出要清晰、简短、可执行。',
+          id: 'ww-host',
+          name: '法官·铁面',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=host-judge',
+          systemPrompt: '你是狼人杀法官，性格铁面无私、语言简洁有力。你负责维持游戏阶段、解释规则、汇总夜晚行动、发布白天信息，并且不能泄露玩家隐藏身份。输出要清晰、简短、可执行。遇到违规行为直接警告。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.4,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'ww-wolf-shadow',
+          name: '狼人·暗影',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=shadow-wolf',
+          systemPrompt: '你是狼人阵营的"暗影"，性格阴险狡诈、善于伪装。你擅长在白天发言中装作无辜平民，喜欢嫁祸给可疑的玩家。夜晚袭击时你倾向于选择最有威胁的好人角色。输出结构化决策，包含 targetId 和详细 reason。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.85,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'ww-wolf-fury',
+          name: '狼人·狂怒',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=fury-wolf',
+          systemPrompt: '你是狼人阵营的"狂怒"，性格冲动好斗、喜欢激进策略。你不怕暴露身份，倾向于直接攻击发言最多的玩家。你的投票风格激进，喜欢带节奏。输出结构化决策，包含 targetId 和 reason。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.95,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'ww-seer',
+          name: '预言家·星眸',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=star-seer',
+          systemPrompt: '你是狼人杀预言家"星眸"，性格冷静理性、逻辑严密。你注重数据和推理，选择查验目标时关注高嫌疑或关键发言玩家。你的发言风格条理清晰，喜欢列举证据。只输出查验目标和理由，不泄露系统外信息。',
           modelProvider: 'local',
           modelId: 'default',
           temperature: 0.6,
@@ -302,10 +339,34 @@ export const useAppStore = create<AppState>()(
           industry: 'Game'
         },
         {
-          id: 'agent-werewolf-wolves',
-          name: '狼人阵营',
-          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=werewolves',
-          systemPrompt: '你代表狼人阵营进行策略决策。根据公开信息、存活玩家和历史发言选择夜晚袭击目标，并给出简短理由。只输出适合工作流解析的结构化决策。',
+          id: 'ww-witch',
+          name: '女巫·毒心',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=poison-witch',
+          systemPrompt: '你是狼人杀女巫"毒心"，性格精于算计、善于观察。你用药果断但不浪费，解药只在关键时刻使用，毒药留给高度确定的狼人。你善于从夜晚死亡信息推断狼人身份。输出 useHeal、poisonTargetId 和 reason。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.7,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'ww-guard',
+          name: '守卫·铁壁',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=iron-guard',
+          systemPrompt: '你是狼人杀守卫"铁壁"，性格忠诚守护、直觉敏锐。你倾向于保护关键角色（如预言家），连续两晚不守同一人。你善于从投票和发言中判断谁是狼人的目标。输出 protectTargetId 和 reason。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.65,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'ww-hunter',
+          name: '猎人·烈焰',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=flame-hunter',
+          systemPrompt: '你是狼人杀猎人"烈焰"，性格勇猛果断、不惧牺牲。你投票时直觉优先，喜欢投给看起来最可疑的人。如果你被杀，你会选择带走你认为最可疑的玩家。输出 voteTargetId 和 reason。',
           modelProvider: 'local',
           modelId: 'default',
           temperature: 0.8,
@@ -314,49 +375,13 @@ export const useAppStore = create<AppState>()(
           industry: 'Game'
         },
         {
-          id: 'agent-werewolf-seer',
-          name: '预言家',
-          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=seer',
-          systemPrompt: '你是狼人杀预言家。根据局势选择查验目标，关注高嫌疑或关键发言玩家。只输出查验目标和理由，不泄露系统外信息。',
+          id: 'ww-villager',
+          name: '平民·智者',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=sage-villager',
+          systemPrompt: '你是狼人杀平民"智者"，性格善于观察、逻辑清晰。你擅长从其他玩家的发言中找破绽和矛盾，喜欢用推理说服他人。你的投票基于发言分析，不轻易跟风。输出 voteTargetId 和详细的推理 reason。',
           modelProvider: 'local',
           modelId: 'default',
-          temperature: 0.7,
-          parameters: {},
-          createdAt: Date.now(),
-          industry: 'Game'
-        },
-        {
-          id: 'agent-werewolf-witch',
-          name: '女巫',
-          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=witch',
-          systemPrompt: '你是狼人杀女巫。根据夜晚死亡目标、药水状态和局势判断是否使用解药或毒药。决策要克制，避免无谓用药。',
-          modelProvider: 'local',
-          modelId: 'default',
-          temperature: 0.7,
-          parameters: {},
-          createdAt: Date.now(),
-          industry: 'Game'
-        },
-        {
-          id: 'agent-werewolf-speaker',
-          name: '白天发言玩家',
-          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=day-speaker',
-          systemPrompt: '你模拟狼人杀白天发言玩家。根据当前玩家身份、公开信息和历史记录生成一段自然发言。不要主动暴露隐藏身份，除非局势强烈需要。',
-          modelProvider: 'local',
-          modelId: 'default',
-          temperature: 0.9,
-          parameters: {},
-          createdAt: Date.now(),
-          industry: 'Game'
-        },
-        {
-          id: 'agent-werewolf-voter',
-          name: '放逐投票分析员',
-          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=voter',
-          systemPrompt: '你是狼人杀白天投票分析员。根据所有发言、夜晚结果和存活玩家判断最应该被放逐的目标，并给出简短理由。',
-          modelProvider: 'local',
-          modelId: 'default',
-          temperature: 0.7,
+          temperature: 0.75,
           parameters: {},
           createdAt: Date.now(),
           industry: 'Game'
@@ -382,21 +407,31 @@ export const useAppStore = create<AppState>()(
           ]
         },
         {
-          id: '2',
+          id: 'session-ui-design',
           workspaceId: 'default-workspace',
           title: 'UI Component Design',
           mode: 'workflow',
-          workflowId: 'w1',
+          workflowId: 'workflow-pipeline',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: []
         },
         {
-          id: '3',
+          id: 'session-general',
           workspaceId: 'default-workspace',
           title: 'General Inquiry',
           mode: 'workflow',
-          workflowId: 'w2',
+          workflowId: 'workflow-report',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          messages: []
+        },
+        {
+          id: 'session-werewolf',
+          workspaceId: 'default-workspace',
+          title: '狼人杀·标准局',
+          mode: 'workflow',
+          workflowId: 'werewolf-standard',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: []
@@ -408,50 +443,24 @@ export const useAppStore = create<AppState>()(
           workspaceId: 'default-workspace',
           name: 'My First Workflow',
           nodes_data: [
-             {
-               id: 'trigger-1',
-               type: 'trigger',
-               position: { x: 100, y: 250 },
-               data: { label: 'User Input' },
-             },
-             {
-               id: 'agent-organize',
-               type: 'agent',
-               position: { x: 400, y: 100 },
-               data: { label: '整理', agentId: 'agent-organize', prompt: '整理并组织用户输入的内容，使其结构清晰。' },
-             },
-             {
-               id: 'agent-summary',
-               type: 'agent',
-               position: { x: 400, y: 400 },
-               data: { label: '总结', agentId: 'agent-summary', prompt: '对用户输入的内容进行总结，提取关键信息。' },
-             },
-             {
-               id: 'output-1',
-               type: 'output',
-               position: { x: 750, y: 100 },
-               data: { label: '整理结果' },
-             },
-             {
-               id: 'output-2',
-               type: 'output',
-               position: { x: 750, y: 400 },
-               data: { label: '总结结果' },
-             },
+             { id: 'trigger-1', type: 'trigger', position: { x: 100, y: 250 }, data: { label: 'User Input' } },
+             { id: 'agent-organize', type: 'agent', position: { x: 400, y: 100 }, data: { label: '整理', agentId: 'agent-organize', prompt: '整理并组织用户输入的内容，使其结构清晰。' } },
+             { id: 'agent-summary', type: 'agent', position: { x: 400, y: 400 }, data: { label: '总结', agentId: 'agent-summary', prompt: '对用户输入的内容进行总结，提取关键信息。' } },
+             { id: 'output-1', type: 'output', position: { x: 750, y: 100 }, data: { label: '整理结果' } },
+             { id: 'output-2', type: 'output', position: { x: 750, y: 400 }, data: { label: '总结结果' } }
           ],
           edges_data: [
              { id: 'e-trigger-organize', source: 'trigger-1', target: 'agent-organize', animated: true },
              { id: 'e-trigger-summary', source: 'trigger-1', target: 'agent-summary', animated: true },
              { id: 'e-organize-output1', source: 'agent-organize', target: 'output-1', animated: true },
-             { id: 'e-summary-output2', source: 'agent-summary', target: 'output-2', animated: true },
+             { id: 'e-summary-output2', source: 'agent-summary', target: 'output-2', animated: true }
           ],
           status: 'active',
           createdAt: Date.now(),
           updatedAt: Date.now()
         },
         {
-          
-          id: 'w1',
+          id: 'workflow-pipeline',
           workspaceId: 'default-workspace',
           name: 'Data Processing Pipeline',
           nodes_data: [
@@ -468,8 +477,7 @@ export const useAppStore = create<AppState>()(
           updatedAt: Date.now()
         },
         {
-          
-          id: 'w2',
+          id: 'workflow-report',
           workspaceId: 'default-workspace',
           name: 'Weekly Report Generator',
           nodes_data: [
@@ -486,165 +494,131 @@ export const useAppStore = create<AppState>()(
           updatedAt: Date.now()
         },
         {
-          id: 'w4',
+          id: 'werewolf-standard',
           workspaceId: 'default-workspace',
-          name: 'Advanced Logic Loop',
+          name: '狼人杀·标准局',
           nodes_data: [
-             { id: 't1', type: 'trigger', position: { x: 50, y: 250 }, data: { label: 'Start Phase' } },
-             { id: 'r1', type: 'condition', position: { x: 250, y: 250 }, data: { label: 'Value Router', routes: [
-                 { id: 'route-high', condition: 'payload.value > 50' },
-                 { id: 'route-low', condition: 'payload.value <= 50' }
-               ]
-             }},
-             { id: 'llm-high', type: 'agent', position: { x: 550, y: 100 }, data: {
-                 label: 'High Value Processor',
-                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nProcess this high value data.',
-                 schema: '{"status": "string", "reason": "string"}'
-             }},
-             { id: 'code-high', type: 'code', position: { x: 850, y: 100 }, data: {
-                 label: 'Update High',
-                 code: 'payload.processed = true; payload.path = "high"; return payload;'
-             }},
-             { id: 'llm-low', type: 'agent', position: { x: 550, y: 400 }, data: {
-                 label: 'Low Value Processor',
-                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nProcess this low value data.',
-                 schema: '{"status": "string", "reason": "string"}'
-             }},
-             { id: 'code-low', type: 'code', position: { x: 850, y: 400 }, data: {
-                 label: 'Update Low',
-                 code: 'payload.processed = true; payload.path = "low"; return payload;'
-             }},
-             { id: 'out-high', type: 'output', position: { x: 1150, y: 100 }, data: { label: 'Result (High)' } },
-             { id: 'out-low', type: 'output', position: { x: 1150, y: 400 }, data: { label: 'Result (Low)' } }
+            { id: 'ww-trigger', type: 'trigger', position: { x: 50, y: 450 }, data: { label: '开始游戏' } },
+            { id: 'ww-init', type: 'code', position: { x: 380, y: 450 }, data: {
+                label: '初始化局势',
+                code: 'payload.players = Array.isArray(payload.players) && payload.players.length ? payload.players : [{id:"p1",name:"1号·暗影",role:"werewolf",status:"alive",personality:"shadow"},{id:"p2",name:"2号·狂怒",role:"werewolf",status:"alive",personality:"fury"},{id:"p3",name:"3号·星眸",role:"seer",status:"alive"},{id:"p4",name:"4号·毒心",role:"witch",status:"alive",potions:{heal:true,poison:true}},{id:"p5",name:"5号·铁壁",role:"guard",status:"alive",lastProtected:null},{id:"p6",name:"6号·烈焰",role:"hunter",status:"alive"},{id:"p7",name:"7号·智者",role:"villager",status:"alive"},{id:"p8",name:"8号·勇者",role:"villager",status:"alive"}]; payload.phase = payload.phase || "night"; payload.round = payload.round || 1; payload.gameStatus = payload.gameStatus || "playing"; payload.publicLog = payload.publicLog || []; payload.privateLog = payload.privateLog || []; payload.daySpeeches = payload.daySpeeches || []; payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
+            }},
+            { id: 'ww-controller', type: 'code', position: { x: 710, y: 450 }, data: {
+                label: '阶段控制器',
+                code: 'payload.alivePlayers = payload.players.filter(p => p.status === "alive"); const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; return payload;'
+            }},
+            { id: 'ww-router', type: 'condition', position: { x: 1040, y: 450 }, data: { label: '阶段路由', routes: [
+                { id: 'route-night', condition: 'payload.gameStatus === "playing" && payload.phase === "night"' },
+                { id: 'route-speech', condition: 'payload.gameStatus === "playing" && payload.phase === "day_speech"' },
+                { id: 'route-vote', condition: 'payload.gameStatus === "playing" && payload.phase === "day_vote"' },
+                { id: 'route-end', condition: 'payload.gameStatus !== "playing"' }
+              ]
+            }},
+            { id: 'ww-wolf-shadow', type: 'agent', position: { x: 1420, y: 50 }, data: {
+                label: '暗影·夜袭决策',
+                agentId: 'ww-wolf-shadow',
+                prompt: '你是狼人"暗影"。当前局势：{{JSON.stringify(payload.alivePlayers)}}\n历史记录：{{JSON.stringify(payload.publicLog)}}\n\n请选择今晚袭击目标，要选最有威胁的好人。输出 targetId 和 reason。',
+                schema: '{"targetId":"string","reason":"string"}'
+            }},
+            { id: 'ww-wolf-fury', type: 'agent', position: { x: 1420, y: 250 }, data: {
+                label: '狂怒·夜袭投票',
+                agentId: 'ww-wolf-fury',
+                prompt: '你是狼人"狂怒"。当前局势：{{JSON.stringify(payload.alivePlayers)}}\n历史记录：{{JSON.stringify(payload.publicLog)}}\n\n你倾向今晚袭击谁？输出 targetId 和 reason。',
+                schema: '{"targetId":"string","reason":"string"}'
+            }},
+            { id: 'ww-resolve-wolf', type: 'code', position: { x: 1780, y: 150 }, data: {
+                label: '结算狼人袭击',
+                code: 'payload.nightState = payload.nightState || {}; const shadowTarget = payload.llmResult?.targetId; const aliveNonWolves = payload.alivePlayers.filter(p => p.role !== "werewolf"); payload.nightState.wolfTarget = shadowTarget || aliveNonWolves[0]?.id; payload.privateLog.push({round:payload.round,phase:"night",actor:"wolves",action:"kill",targetId:payload.nightState.wolfTarget}); return payload;'
+            }},
+            { id: 'ww-seer', type: 'agent', position: { x: 2140, y: 50 }, data: {
+                label: '星眸·查验',
+                agentId: 'ww-seer',
+                prompt: '你是预言家"星眸"。当前存活玩家：{{JSON.stringify(payload.alivePlayers)}}\n历史记录：{{JSON.stringify(payload.privateLog)}}\n\n请选择一个玩家查验身份。输出 targetId 和 reason。',
+                schema: '{"targetId":"string","reason":"string"}'
+            }},
+            { id: 'ww-witch', type: 'agent', position: { x: 2140, y: 250 }, data: {
+                label: '毒心·用药',
+                agentId: 'ww-witch',
+                prompt: '你是女巫"毒心"。当前局势：{{JSON.stringify(payload.alivePlayers)}}\n今晚被袭击的是 {{payload.nightState?.wolfTarget}}\n你的药水状态：{{JSON.stringify(payload.players.find(p=>p.role==="witch")?.potions)}}\n\n是否使用解药或毒药？输出 useHeal、poisonTargetId 和 reason。',
+                schema: '{"useHeal":"boolean","poisonTargetId":"string|null","reason":"string"}'
+            }},
+            { id: 'ww-guard', type: 'agent', position: { x: 2500, y: 150 }, data: {
+                label: '铁壁·守护',
+                agentId: 'ww-guard',
+                prompt: '你是守卫"铁壁"。当前存活玩家：{{JSON.stringify(payload.alivePlayers)}}\n你上次守护的是 {{payload.players.find(p=>p.role==="guard")?.lastProtected || "无"}}\n\n请选择今晚守护的玩家（不能连续守同一人）。输出 protectTargetId 和 reason。',
+                schema: '{"protectTargetId":"string","reason":"string"}'
+            }},
+            { id: 'ww-resolve-night', type: 'code', position: { x: 2860, y: 150 }, data: {
+                label: '结算夜晚',
+                code: 'const s = payload.nightState || {}; const deaths = new Set(); if (s.wolfTarget && !s.witchHeal && s.wolfTarget !== s.protectTarget) deaths.add(s.wolfTarget); if (s.witchPoison) deaths.add(s.witchPoison); deaths.forEach(id => { const p = payload.players.find(pl => pl.id === id); if (p) p.status = "dead"; }); payload.lastNightDeaths = Array.from(deaths); payload.publicLog.push({round:payload.round,phase:"night_result",deaths:payload.lastNightDeaths}); const witch = payload.players.find(p => p.role === "witch"); if (witch && s.witchHeal) witch.potions = {...witch.potions,heal:false}; if (witch && s.witchPoison) witch.potions = {...witch.potions,poison:false}; const guard = payload.players.find(p => p.role === "guard"); if (guard) guard.lastProtected = s.protectTarget; const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; else payload.phase = "day_speech"; payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
+            }},
+            { id: 'ww-night-output', type: 'output', position: { x: 3220, y: 150 }, data: { label: '夜晚结果' } },
+            { id: 'ww-prepare-speech', type: 'code', position: { x: 1420, y: 480 }, data: {
+                label: '准备发言',
+                code: 'payload.alivePlayers = payload.players.filter(p => p.status === "alive"); payload.daySpeeches = []; payload.publicLog.push({round:payload.round,phase:"day_speech_start",alive:payload.alivePlayers.map(p=>p.id),lastNightDeaths:payload.lastNightDeaths||[]}); return payload;'
+            }},
+            { id: 'ww-speech-loop', type: 'loop', position: { x: 1780, y: 480 }, data: {
+                label: '逐人发言循环',
+                itemsPath: 'payload.alivePlayers',
+                itemAlias: 'currentSpeaker',
+                indexAlias: 'speakerIndex',
+                maxIterations: 10,
+                breakCondition: 'payload.gameStatus !== "playing"'
+            }},
+            { id: 'ww-villager', type: 'agent', position: { x: 2140, y: 480 }, data: {
+                label: '智者·白天发言',
+                agentId: 'ww-villager',
+                prompt: '你是平民"智者"，当前发言玩家：{{JSON.stringify(payload.currentSpeaker)}}\n公开信息：{{JSON.stringify(payload.publicLog)}}\n白天已发言：{{JSON.stringify(payload.daySpeeches)}}\n存活玩家：{{JSON.stringify(payload.alivePlayers)}}\n\n请生成该玩家的白天发言。输出 speech 和 suspicion。',
+                schema: '{"speech":"string","suspicion":"string"}'
+            }},
+            { id: 'ww-collect-speech', type: 'code', position: { x: 2500, y: 480 }, data: {
+                label: '记录发言',
+                code: 'payload.daySpeeches = payload.daySpeeches || []; payload.daySpeeches.push({playerId:payload.currentSpeaker?.id,playerName:payload.currentSpeaker?.name,speech:payload.llmResult?.speech||"发言略",suspicion:payload.llmResult?.suspicion||""}); payload.publicLog.push({round:payload.round,phase:"day_speech",playerId:payload.currentSpeaker?.id,speech:payload.llmResult?.speech||"发言略"}); payload.phase = "day_vote"; return payload;'
+            }},
+            { id: 'ww-speech-output', type: 'output', position: { x: 2860, y: 480 }, data: { label: '发言记录' } },
+            { id: 'ww-hunter', type: 'agent', position: { x: 1420, y: 730 }, data: {
+                label: '烈焰·投票',
+                agentId: 'ww-hunter',
+                prompt: '你是猎人"烈焰"。白天发言：{{JSON.stringify(payload.daySpeeches)}}\n存活玩家：{{JSON.stringify(payload.alivePlayers)}}\n\n请根据发言分析投票放逐目标。输出 voteTargetId 和 reason。',
+                schema: '{"voteTargetId":"string","reason":"string"}'
+            }},
+            { id: 'ww-resolve-vote', type: 'code', position: { x: 1780, y: 730 }, data: {
+                label: '结算投票',
+                code: 'const targetId = payload.llmResult?.voteTargetId || payload.alivePlayers.find(p => p.role === "werewolf")?.id || payload.alivePlayers[0]?.id; const target = payload.players.find(p => p.id === targetId); if (target) target.status = "dead"; payload.publicLog.push({round:payload.round,phase:"vote_result",exiled:targetId,reason:payload.llmResult?.reason||""}); const hunter = payload.players.find(p => p.role === "hunter" && p.id === targetId); if (hunter) { const wolfTarget = payload.alivePlayers.find(p => p.role === "werewolf"); if (wolfTarget) { wolfTarget.status = "dead"; payload.publicLog.push({round:payload.round,phase:"hunter_shoot",killed:wolfTarget.id}); } } const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; else { payload.phase = "night"; payload.round = (payload.round || 1) + 1; } payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
+            }},
+            { id: 'ww-vote-output', type: 'output', position: { x: 2140, y: 730 }, data: { label: '投票结果' } },
+            { id: 'ww-host', type: 'agent', position: { x: 1420, y: 950 }, data: {
+                label: '铁面·终局播报',
+                agentId: 'ww-host',
+                prompt: '游戏结束。最终局势：{{JSON.stringify(payload)}}\n\n请作为法官生成终局播报，说明获胜阵营、关键转折点、各角色表现和最终存活玩家。',
+                schema: '{"summary":"string"}'
+            }},
+            { id: 'ww-end-output', type: 'output', position: { x: 1780, y: 950 }, data: { label: '游戏结束' } }
           ],
           edges_data: [
-             { id: 'e1', source: 't1', target: 'r1', animated: true },
-             { id: 'e2', source: 'r1', sourceHandle: 'route-high', target: 'llm-high', animated: true },
-             { id: 'e3', source: 'r1', sourceHandle: 'route-low', target: 'llm-low', animated: true },
-             { id: 'e4', source: 'llm-high', target: 'code-high', animated: true },
-             { id: 'e5', source: 'code-high', target: 'out-high', animated: true },
-             { id: 'e6', source: 'llm-low', target: 'code-low', animated: true },
-             { id: 'e7', source: 'code-low', target: 'out-low', animated: true }
-          ],
-          status: 'active',
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        },
-        {
-          id: 'werewolf-standard-workflow',
-          workspaceId: 'default-workspace',
-          name: '狼人杀 · 标准局工作流',
-          nodes_data: [
-             { id: 'ww-trigger', type: 'trigger', position: { x: 50, y: 360 }, data: { label: '开始 / 输入局势' } },
-             { id: 'ww-init', type: 'code', position: { x: 300, y: 360 }, data: {
-                 label: '初始化局势',
-                 code: 'payload.players = Array.isArray(payload.players) && payload.players.length ? payload.players : [{id:"p1", name:"1号", role:"werewolf", status:"alive"}, {id:"p2", name:"2号", role:"werewolf", status:"alive"}, {id:"p3", name:"3号", role:"seer", status:"alive"}, {id:"p4", name:"4号", role:"witch", status:"alive", potions:{heal:true, poison:true}}, {id:"p5", name:"5号", role:"villager", status:"alive"}, {id:"p6", name:"6号", role:"villager", status:"alive"}]; payload.phase = payload.phase || "night"; payload.round = payload.round || 1; payload.gameStatus = payload.gameStatus || "playing"; payload.publicLog = payload.publicLog || []; payload.privateLog = payload.privateLog || []; payload.daySpeeches = payload.daySpeeches || []; payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
-             }},
-             { id: 'ww-phase-router', type: 'condition', position: { x: 570, y: 360 }, data: { label: '阶段路由', routes: [
-                 { id: 'route-night', condition: 'payload.gameStatus === "playing" && payload.phase === "night"' },
-                 { id: 'route-day-speech', condition: 'payload.gameStatus === "playing" && payload.phase === "day_speech"' },
-                 { id: 'route-day-vote', condition: 'payload.gameStatus === "playing" && payload.phase === "day_vote"' },
-                 { id: 'route-end', condition: 'payload.gameStatus !== "playing"' }
-               ]
-             }},
-             { id: 'ww-wolves', type: 'agent', position: { x: 900, y: 40 }, data: {
-                 label: '狼人夜袭',
-                 agentId: 'agent-werewolf-wolves',
-                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n请狼人阵营从存活玩家中选择夜晚袭击目标。输出 targetId 和 reason。',
-                 schema: '{"targetId":"string","reason":"string"}'
-             }},
-             { id: 'ww-save-wolves', type: 'code', position: { x: 1210, y: 40 }, data: {
-                 label: '记录夜袭',
-                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.wolfTarget = payload.llmResult?.targetId || payload.alivePlayers.find(p => p.role !== "werewolf")?.id; payload.privateLog.push({round: payload.round, phase:"night", actor:"werewolves", action:"kill", targetId: payload.nightState.wolfTarget, reason: payload.llmResult?.reason || ""}); return payload;'
-             }},
-             { id: 'ww-seer', type: 'agent', position: { x: 1520, y: 40 }, data: {
-                 label: '预言家查验',
-                 agentId: 'agent-werewolf-seer',
-                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n请预言家选择一个存活玩家查验身份。输出 targetId 和 reason。',
-                 schema: '{"targetId":"string","reason":"string"}'
-             }},
-             { id: 'ww-save-seer', type: 'code', position: { x: 1830, y: 40 }, data: {
-                 label: '记录查验',
-                 code: 'payload.nightState = payload.nightState || {}; const targetId = payload.llmResult?.targetId || payload.alivePlayers.find(p => p.role !== "seer")?.id; const target = payload.players.find(p => p.id === targetId); payload.nightState.seerCheck = targetId; payload.privateLog.push({round: payload.round, phase:"night", actor:"seer", action:"check", targetId, result: target?.role === "werewolf" ? "werewolf" : "good", reason: payload.llmResult?.reason || ""}); return payload;'
-             }},
-             { id: 'ww-witch', type: 'agent', position: { x: 2140, y: 40 }, data: {
-                 label: '女巫用药',
-                 agentId: 'agent-werewolf-witch',
-                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n狼人目标是 {{payload.nightState.wolfTarget}}。请女巫判断是否使用解药或毒药。输出 useHeal、poisonTargetId 和 reason。',
-                 schema: '{"useHeal":"boolean","poisonTargetId":"string|null","reason":"string"}'
-             }},
-             { id: 'ww-save-witch', type: 'code', position: { x: 2450, y: 40 }, data: {
-                 label: '记录女巫',
-                 code: 'payload.nightState = payload.nightState || {}; const witch = payload.players.find(p => p.role === "witch"); const canHeal = witch?.potions?.heal !== false; const canPoison = witch?.potions?.poison !== false; payload.nightState.witchHeal = Boolean(payload.llmResult?.useHeal && canHeal); payload.nightState.witchPoison = canPoison ? payload.llmResult?.poisonTargetId : null; if (witch && payload.nightState.witchHeal) witch.potions = {...witch.potions, heal:false}; if (witch && payload.nightState.witchPoison) witch.potions = {...witch.potions, poison:false}; payload.privateLog.push({round: payload.round, phase:"night", actor:"witch", action:"potion", heal: payload.nightState.witchHeal, poisonTargetId: payload.nightState.witchPoison, reason: payload.llmResult?.reason || ""}); return payload;'
-             }},
-             { id: 'ww-resolve-night', type: 'code', position: { x: 2760, y: 40 }, data: {
-                 label: '结算夜晚',
-                 code: 'const s = payload.nightState || {}; const deaths = new Set(); if (s.wolfTarget && !s.witchHeal) deaths.add(s.wolfTarget); if (s.witchPoison) deaths.add(s.witchPoison); deaths.forEach(id => { const player = payload.players.find(p => p.id === id); if (player) player.status = "dead"; }); payload.lastNightDeaths = Array.from(deaths); payload.publicLog.push({round: payload.round, phase:"night_result", deaths: payload.lastNightDeaths}); const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; else payload.phase = "day_speech"; payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
-             }},
-             { id: 'ww-night-output', type: 'output', position: { x: 3070, y: 40 }, data: { label: '夜晚结果' } },
-             { id: 'ww-prepare-speech', type: 'code', position: { x: 900, y: 350 }, data: {
-                 label: '准备逐人发言',
-                 code: 'payload.alivePlayers = payload.players.filter(p => p.status === "alive"); payload.daySpeeches = []; payload.publicLog.push({round: payload.round, phase:"day_speech_start", alivePlayers: payload.alivePlayers.map(p => p.id), lastNightDeaths: payload.lastNightDeaths || []}); return payload;'
-             }},
-             { id: 'ww-speech-loop', type: 'loop', position: { x: 1210, y: 350 }, data: {
-                 label: '存活玩家逐人发言',
-                 itemsPath: 'payload.alivePlayers',
-                 itemAlias: 'currentPlayer',
-                 indexAlias: 'speakerIndex',
-                 maxIterations: 12,
-                 breakCondition: 'payload.gameStatus !== "playing"'
-             }},
-             { id: 'ww-player-speech', type: 'agent', position: { x: 1520, y: 350 }, data: {
-                 label: '生成玩家发言',
-                 agentId: 'agent-werewolf-speaker',
-                 prompt: '当前发言玩家：{{JSON.stringify(payload.currentPlayer)}}\n当前公开局势：{{JSON.stringify(payload.publicLog)}}\n存活玩家：{{JSON.stringify(payload.alivePlayers)}}\n\n请生成该玩家白天发言。输出 speech 和 suspicion。',
-                 schema: '{"speech":"string","suspicion":"string"}'
-             }},
-             { id: 'ww-collect-speech', type: 'code', position: { x: 1830, y: 350 }, data: {
-                 label: '记录发言',
-                 code: 'payload.daySpeeches = payload.daySpeeches || []; payload.daySpeeches.push({playerId: payload.currentPlayer?.id, playerName: payload.currentPlayer?.name, speech: payload.llmResult?.speech || "发言略", suspicion: payload.llmResult?.suspicion || ""}); payload.publicLog.push({round: payload.round, phase:"day_speech", playerId: payload.currentPlayer?.id, speech: payload.llmResult?.speech || "发言略"}); payload.phase = "day_vote"; return payload;'
-             }},
-             { id: 'ww-speech-output', type: 'output', position: { x: 2140, y: 350 }, data: { label: '白天发言记录' } },
-             { id: 'ww-voter', type: 'agent', position: { x: 900, y: 660 }, data: {
-                 label: '放逐投票',
-                 agentId: 'agent-werewolf-voter',
-                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n请根据白天发言和公开信息，选择最应该被放逐的玩家。输出 targetId 和 reason。',
-                 schema: '{"targetId":"string","reason":"string"}'
-             }},
-             { id: 'ww-resolve-vote', type: 'code', position: { x: 1210, y: 660 }, data: {
-                 label: '结算放逐',
-                 code: 'const targetId = payload.llmResult?.targetId || payload.alivePlayers.find(p => p.role === "werewolf")?.id || payload.alivePlayers[0]?.id; const target = payload.players.find(p => p.id === targetId); if (target) target.status = "dead"; payload.publicLog.push({round: payload.round, phase:"vote", exiled: targetId, reason: payload.llmResult?.reason || ""}); const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; else { payload.phase = "night"; payload.round = (payload.round || 1) + 1; } payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
-             }},
-             { id: 'ww-vote-output', type: 'output', position: { x: 1520, y: 660 }, data: { label: '投票结果 / 下一夜' } },
-             { id: 'ww-host-summary', type: 'agent', position: { x: 900, y: 900 }, data: {
-                 label: '法官终局播报',
-                 agentId: 'agent-werewolf-host',
-                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n游戏已经结束。请作为法官生成终局播报，说明获胜阵营、关键死亡和最终存活玩家。',
-                 schema: '{"summary":"string"}'
-             }},
-             { id: 'ww-end-output', type: 'output', position: { x: 1210, y: 900 }, data: { label: '游戏结束' } }
-          ],
-          edges_data: [
-             { id: 'ww-e-start-init', source: 'ww-trigger', target: 'ww-init', animated: true },
-             { id: 'ww-e-init-router', source: 'ww-init', target: 'ww-phase-router', animated: true },
-             { id: 'ww-e-router-night', source: 'ww-phase-router', sourceHandle: 'route-night', target: 'ww-wolves', animated: true },
-             { id: 'ww-e-wolves-save', source: 'ww-wolves', target: 'ww-save-wolves', animated: true },
-             { id: 'ww-e-save-seer', source: 'ww-save-wolves', target: 'ww-seer', animated: true },
-             { id: 'ww-e-seer-save', source: 'ww-seer', target: 'ww-save-seer', animated: true },
-             { id: 'ww-e-save-witch', source: 'ww-save-seer', target: 'ww-witch', animated: true },
-             { id: 'ww-e-witch-save', source: 'ww-witch', target: 'ww-save-witch', animated: true },
-             { id: 'ww-e-save-resolve-night', source: 'ww-save-witch', target: 'ww-resolve-night', animated: true },
-             { id: 'ww-e-night-output', source: 'ww-resolve-night', target: 'ww-night-output', animated: true },
-             { id: 'ww-e-router-speech', source: 'ww-phase-router', sourceHandle: 'route-day-speech', target: 'ww-prepare-speech', animated: true },
-             { id: 'ww-e-prepare-loop', source: 'ww-prepare-speech', target: 'ww-speech-loop', animated: true },
-             { id: 'ww-e-loop-speech', source: 'ww-speech-loop', target: 'ww-player-speech', animated: true },
-             { id: 'ww-e-speech-collect', source: 'ww-player-speech', target: 'ww-collect-speech', animated: true },
-             { id: 'ww-e-collect-output', source: 'ww-collect-speech', target: 'ww-speech-output', animated: true },
-             { id: 'ww-e-router-vote', source: 'ww-phase-router', sourceHandle: 'route-day-vote', target: 'ww-voter', animated: true },
-             { id: 'ww-e-voter-resolve', source: 'ww-voter', target: 'ww-resolve-vote', animated: true },
-             { id: 'ww-e-vote-output', source: 'ww-resolve-vote', target: 'ww-vote-output', animated: true },
-             { id: 'ww-e-router-end', source: 'ww-phase-router', sourceHandle: 'route-end', target: 'ww-host-summary', animated: true },
-             { id: 'ww-e-end-output', source: 'ww-host-summary', target: 'ww-end-output', animated: true }
+            { id: 'ww-e1', source: 'ww-trigger', target: 'ww-init', animated: true },
+            { id: 'ww-e2', source: 'ww-init', target: 'ww-controller', animated: true },
+            { id: 'ww-e3', source: 'ww-controller', target: 'ww-router', animated: true },
+            { id: 'ww-e4', source: 'ww-router', sourceHandle: 'route-night', target: 'ww-wolf-shadow', animated: true },
+            { id: 'ww-e5', source: 'ww-router', sourceHandle: 'route-night', target: 'ww-wolf-fury', animated: true },
+            { id: 'ww-e6', source: 'ww-wolf-shadow', target: 'ww-resolve-wolf', animated: true },
+            { id: 'ww-e7', source: 'ww-wolf-fury', target: 'ww-resolve-wolf', animated: true },
+            { id: 'ww-e8', source: 'ww-resolve-wolf', target: 'ww-seer', animated: true },
+            { id: 'ww-e9', source: 'ww-resolve-wolf', target: 'ww-witch', animated: true },
+            { id: 'ww-e10', source: 'ww-seer', target: 'ww-guard', animated: true },
+            { id: 'ww-e11', source: 'ww-witch', target: 'ww-guard', animated: true },
+            { id: 'ww-e12', source: 'ww-guard', target: 'ww-resolve-night', animated: true },
+            { id: 'ww-e13', source: 'ww-resolve-night', target: 'ww-night-output', animated: true },
+            { id: 'ww-e14', source: 'ww-router', sourceHandle: 'route-speech', target: 'ww-prepare-speech', animated: true },
+            { id: 'ww-e15', source: 'ww-prepare-speech', target: 'ww-speech-loop', animated: true },
+            { id: 'ww-e16', source: 'ww-speech-loop', target: 'ww-villager', animated: true },
+            { id: 'ww-e17', source: 'ww-villager', target: 'ww-collect-speech', animated: true },
+            { id: 'ww-e18', source: 'ww-collect-speech', target: 'ww-speech-output', animated: true },
+            { id: 'ww-e19', source: 'ww-router', sourceHandle: 'route-vote', target: 'ww-hunter', animated: true },
+            { id: 'ww-e20', source: 'ww-hunter', target: 'ww-resolve-vote', animated: true },
+            { id: 'ww-e21', source: 'ww-resolve-vote', target: 'ww-vote-output', animated: true },
+            { id: 'ww-e22', source: 'ww-router', sourceHandle: 'route-end', target: 'ww-host', animated: true },
+            { id: 'ww-e23', source: 'ww-host', target: 'ww-end-output', animated: true }
           ],
           status: 'active',
           createdAt: Date.now(),
@@ -655,7 +629,6 @@ export const useAppStore = create<AppState>()(
       activeSessionId: 'default-session',
       activeWorkflowId: 'default-workflow',
       activeAgentId: 'agent-1',
-      
       workflowChatMode: false,
       workflowChatUI: {
         sidebarCollapsedBySession: {},
@@ -927,30 +900,23 @@ export const useAppStore = create<AppState>()(
       }),
 
       addUserMessage: async (sessionId, text, attachments = [], meta) => {
-        const newMessage: ChatMessage = {
-          id: uuidv4(),
-          sessionId,
-          role: 'user',
-          content: { text, attachments },
-          meta,
-          timestamp: Date.now()
-        };
+        const newMessage = createUserMessage(sessionId, text, attachments, meta);
+
+        set((state) => {
+            const sessions = state.sessions.map(s => {
+              if (s.id === sessionId) {
+                return { ...s, messages: [...s.messages, newMessage], updatedAt: Date.now() };
+              }
+              return s;
+            });
+            return { sessions };
+        });
 
         try {
             const msgToSave = {...newMessage, content: JSON.stringify(newMessage.content)};
             await invoke('add_chat_message', { message: msgToSave });
-            
-            set((state) => {
-                const sessions = state.sessions.map(s => {
-                  if (s.id === sessionId) {
-                    return { ...s, messages: [...s.messages, newMessage], updatedAt: Date.now() };
-                  }
-                  return s;
-                });
-                return { sessions };
-            });
         } catch (error) {
-            console.error('Failed to add user message:', error);
+            console.error('Failed to sync user message to backend:', error);
         }
       },
 
@@ -967,22 +933,8 @@ export const useAppStore = create<AppState>()(
                 assistantMsgIndex = messages.findIndex(m => m.id === messageId);
 
                 if (assistantMsgIndex === -1) {
-                   // Create new assistant message block
-                   newAssistantMsg = {
-                     id: messageId,
-                     sessionId,
-                     role: 'assistant',
-                     content: { text: '' },
-                     meta,
-                     agentResponses: [{
-                       agentId,
-                       nodeId,
-                       content: { text: textChunk },
-                       status: 'streaming',
-                       timestamp: Date.now()
-                     }],
-                     timestamp: Date.now()
-                   };
+                   newAssistantMsg = createStreamMessage(sessionId, agentId, nodeId, meta, messageId);
+                   newAssistantMsg.agentResponses![0].content.text = textChunk;
                    messages.push(newAssistantMsg);
                 } else {
                   // Update existing assistant message block
@@ -991,13 +943,7 @@ export const useAppStore = create<AppState>()(
 
                   const agentRespIndex = msg.agentResponses.findIndex(ar => ar.agentId === agentId && ar.nodeId === nodeId);
                   if (agentRespIndex === -1) {
-                    msg.agentResponses.push({
-                       agentId,
-                       nodeId,
-                       content: { text: textChunk },
-                       status: 'streaming',
-                       timestamp: Date.now()
-                    });
+                    msg.agentResponses.push(createAgentResponse(agentId, textChunk, nodeId, 'streaming'));
                   } else {
                     const resp = { ...msg.agentResponses[agentRespIndex] };
                     resp.content = { text: resp.content.text + textChunk };
@@ -1172,7 +1118,7 @@ export const useAppStore = create<AppState>()(
              const { workflows } = get();
              const wf = workflows.find(w => w.id === id);
              if (wf) {
-                 const cleanNodes = nodes.map((n: any) => ({
+                 const cleanNodes: WorkflowNode[] = nodes.map((n) => ({
                    id: n.id,
                    type: n.type,
                    position: n.position,
@@ -1190,7 +1136,7 @@ export const useAppStore = create<AppState>()(
                      autoSendToNext: n.data?.autoSendToNext
                    }
                  }));
-                 const cleanEdges = edges.map((e: any) => ({
+                 const cleanEdges: WorkflowEdge[] = edges.map((e) => ({
                    id: e.id,
                    source: e.source,
                    sourceHandle: e.sourceHandle,
@@ -1200,7 +1146,7 @@ export const useAppStore = create<AppState>()(
                  }));
                  const wfToSave = {...wf, nodes_data: JSON.stringify(cleanNodes), edges_data: JSON.stringify(cleanEdges), updatedAt: Date.now()};
                  await invoke('update_workflow', { workflow: wfToSave });
-                 
+
                  set((state) => {
                     const wfs = state.workflows.map(w => {
                         if (w.id === id) {
@@ -1405,6 +1351,7 @@ export const useAppStore = create<AppState>()(
         },
       })),
 
+
       sendToAgent: async (sessionId, agentId, prompt, options = {}) => {
         const { agents } = get();
         const agent = agents.find(a => a.id === agentId);
@@ -1537,7 +1484,7 @@ export const useAppStore = create<AppState>()(
                let parsedOutput = {};
                try {
                   if (node.data?.schema) {
-                     const schemaStr = node.data.schema;
+                     const schemaStr = String(node.data.schema || '');
                      if (schemaStr.includes('targetId')) parsedOutput = { targetId: 'player_3', reason: 'simulated logic' };
                      else parsedOutput = { result: 'simulated' };
 
@@ -1586,7 +1533,7 @@ export const useAppStore = create<AppState>()(
             if (node?.type === 'condition' && node.data?.routes) {
                let matchedRouteId = null;
 
-               for (const route of node.data.routes) {
+               for (const route of (node.data.routes as any[]) || []) {
                   try {
                      const isMatch = await evaluateExpression(route.condition || 'false', currentPayload, 2000);
                      if (isMatch) {
@@ -1607,14 +1554,14 @@ export const useAppStore = create<AppState>()(
                   }
                }
             } else if (node?.type === 'loop') {
-               const itemsPath = node.data?.itemsPath || 'payload.alivePlayers';
-               const itemAlias = node.data?.itemAlias || 'item';
-               const indexAlias = node.data?.indexAlias || 'index';
+               const itemsPath = String(node.data?.itemsPath || 'payload.alivePlayers');
+               const itemAlias = String(node.data?.itemAlias || 'item');
+               const indexAlias = String(node.data?.indexAlias || 'index');
                const maxIterationsValue = Number(node.data?.maxIterations);
                const maxIterations = maxIterationsValue > 0 ? maxIterationsValue : 20;
-               const breakCondition = node.data?.breakCondition?.trim();
+               const breakCondition = String(node.data?.breakCondition || '').trim();
 
-               const resolvedItems = getByPath(currentPayload, itemsPath);
+               const resolvedItems = getByPath(currentPayload, String(itemsPath));
                const items = Array.isArray(resolvedItems) ? resolvedItems : [];
                const total = items.length;
                const iterationCount = Math.min(total, maxIterations);
@@ -1628,7 +1575,7 @@ export const useAppStore = create<AppState>()(
                }
 
                for (let i = 0; i < iterationCount; i++) {
-                  const iterationPayload = structuredClone(currentPayload);
+                  const iterationPayload: any = structuredClone(currentPayload);
                   iterationPayload[itemAlias] = items[i];
                   iterationPayload[indexAlias] = i;
                   iterationPayload.loop = {

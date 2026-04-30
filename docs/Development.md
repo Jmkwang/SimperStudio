@@ -56,9 +56,18 @@ SimperStudio/
 │   │   │   └── ContextSidebar.tsx        # 上下文侧边栏
 │   │   │
 │   │   ├── chat/
-│   │   │   ├── ChatInterface.tsx         # 主聊天界面
-│   │   │   ├── DualAgentChatView.tsx     # 工作流模式聊天视图
-│   │   │   └── AgentResultCard.tsx       # Agent 结果卡片
+│   │   │   ├── ChatInterface.tsx         # 主聊天界面（路由会话视图）
+│   │   │   ├── AgentTopologyView.tsx    # 单智能体拓扑视图（Agent 节点）
+│   │   │   ├── WorkflowChatView.tsx     # 工作流拓扑视图（复用工作流节点样式）
+│   │   │   ├── AgentChatWindow.tsx      # Agent 对话窗口
+│   │   │   ├── WorkflowAgentWindow.tsx  # 工作流 Agent 对话窗口
+│   │   │   ├── ChatTriggerNode.tsx      # 拓扑图 Trigger 节点（只读样式）
+│   │   │   ├── ChatAgentNode.tsx        # 拓扑图 Agent 节点（可点击打开对话）
+│   │   │   ├── ChatOutputNode.tsx       # 拓扑图 Output 节点（只读样式）
+│   │   │   ├── ChatCodeNode.tsx         # 拓扑图 Code 节点（只读样式）
+│   │   │   ├── ChatLoopNode.tsx         # 拓扑图 Loop 节点（只读样式）
+│   │   │   ├── ChatRouterNode.tsx       # 拓扑图 Router 节点（只读样式）
+│   │   │   └── AgentResultCard.tsx      # Agent 结果卡片
 │   │   │
 │   │   ├── workflow/
 │   │   │   ├── WorkflowCanvas.tsx        # 工作流画布主组件
@@ -108,8 +117,10 @@ SimperStudio/
 │   └── tauri.conf.json                  # Tauri 配置
 │
 ├── docs/
+│   ├── Development.md                   # 开发文档
 │   ├── PRD.md                           # 产品需求文档
-│   └── Design_Specs.md                  # UI/UX 设计规范
+│   ├── Design_Specs.md                  # UI/UX 设计规范
+│   └── TODO.md                          # 任务清单与优先级
 │
 ├── public/                              # 静态资源
 ├── .claude/                             # Claude Code 工作区
@@ -206,6 +217,40 @@ interface AppState {
 - 后端通过 `invoke` 调用 Tauri 命令持久化
 - 实时更新本地 Zustand 状态
 - `agentResponses` 数组存储多 Agent 并发响应
+
+### 3.1 拓扑视图与节点组件复用
+
+Chats 区的拓扑视图复用 Workflow 工作流的节点视觉设计，保持全应用 UI 一致性。
+
+#### AgentTopologyView（单智能体会话）
+- 文件路径：`src/components/chat/AgentTopologyView.tsx`
+- 功能：展示所有智能体为节点，点击打开对话窗口
+- 使用 `ChatAgentNode` 组件渲染节点，样式与 Workflow 的 `AgentNode` 完全一致
+- 通过 `key={activeSession.id}` 强制切换会话时重新挂载，解决 React Flow `useNodesState` 不更新问题
+
+#### WorkflowChatView（工作流会话）
+- 文件路径：`src/components/chat/WorkflowChatView.tsx`
+- 功能：展示工作流拓扑图，所有节点使用与 WorkflowCanvas 一致的样式
+- 节点类型映射：
+  - `trigger` → `ChatTriggerNode`（绿色主题，Play 图标）
+  - `agent` → `ChatAgentNode`（主色主题，点击打开对话窗口）
+  - `output` → `ChatOutputNode`（灰蓝色主题，FileOutput 图标）
+  - `code` → `ChatCodeNode`（蓝色主题，Code2 图标）
+  - `loop` → `ChatLoopNode`（紫色主题，Repeat 图标）
+  - `router` → `ChatRouterNode`（橙色主题，SplitSquareHorizontal 图标）
+- 深色主题适配：`colorMode`、`Background` 点颜色、`Controls` 样式、`MiniMap` 节点和遮罩颜色
+
+#### Chat*Node 组件（只读节点）
+- 文件路径：`src/components/chat/Chat*Node.tsx`
+- 设计原则：与 `src/components/workflow/nodes/` 下的工作流节点 **视觉完全一致**，但去除编辑功能
+- 差异对比：
+  | 特性 | Workflow 节点 | Chat 节点 |
+  |------|--------------|-----------|
+  | 视觉样式 | 相同（边框、圆角、图标、颜色主题） | 相同 |
+  | 配置对话框 | 有（Dialog + Settings2 按钮） | 无（只读展示） |
+  | 点击行为 | 选中节点编辑 | Agent 节点打开对话窗口，其他节点无交互 |
+  | 内部状态 | useState 管理配置 | 无状态（纯展示） |
+- Agent 节点特殊处理：`data.onClick` 回调打开 `openAgentChatWindow` / `openWorkflowAgentWindow`
 
 ### 4. 狼人杀工作流 (Werewolf Game Logic)
 
@@ -366,13 +411,12 @@ CREATE TABLE workflows (
 - [x] Loop 节点 UI 与执行引擎实现
 - [x] Loop 节点数据汇总（`payload.loopResults`）
 
-### 下一步计划
-- [ ] 完善自定义节点属性面板
-- [ ] 实现 DAG 执行引擎（按顺序传递数据）
-- [ ] 狼人杀工作流完整适配（分阶段迁移）
-- [ ] 测试用例补充（Loop 节点、工作流执行）
-- [ ] 打包配置优化（Tauri build 体积）
-- [ ] 文档完善（中英文）
+### 下一步计划（按优先级）
+- [ ] P0：完成 Chat 页重构闭环（single/workflow 双模式、窗口编排、转发链路）。
+- [ ] P1：补齐可组合节点生态（HTTP、Set/Transform、IF/Switch、Merge、Wait、Webhook、Sub-workflow）。
+- [ ] P2：补齐可靠执行语义（schema 校验、重试/超时/失败分支、并发与断点续跑）。
+- [ ] P3：补齐可观测与运维能力（执行日志、节点快照、时间线、重跑、版本发布）。
+- [ ] P4：补齐测试与工程化（runtime 契约测试与节点测试）。
 
 ## 调试技巧 (Debugging Tips)
 

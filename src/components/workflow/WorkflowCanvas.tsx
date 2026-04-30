@@ -131,7 +131,7 @@ function Flow() {
 
   const handleSave = () => {
     if (activeWorkflow) {
-      saveWorkflow(activeWorkflow.id, nodes, edges);
+      saveWorkflow(activeWorkflow.id, nodes as any, edges as any);
       console.log('Workflow saved!');
       toast.success(t('Workflow saved successfully!'));
     }

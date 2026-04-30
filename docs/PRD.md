@@ -125,26 +125,34 @@ Below is a conceptual schema for the local SQLite database.
 
 ## 6. Development Phases
 
-### Phase 1: MVP (Minimum Viable Product)
+### Phase 1: MVP (Completed)
 *   Tauri + React + Vite setup.
 *   SQLite integration.
 *   Basic UI layout (Sidebar + Main Area).
 *   Agent configuration and single-agent chat.
 *   Basic Custom API setup (making REST calls from chat).
 
-### Phase 2: Workflow Integration
-*   Implement React Flow.
-*   Build basic Workflow Zone (create nodes, connect them).
-*   Implement a simple local execution engine for workflows.
-*   Connect workflows to Agents (Agents can trigger workflows, workflows can query Agents).
+### Phase 2: Chat Refactor & Workflow Chat (P0)
+*   Split chat sessions into single-agent mode and workflow mode.
+*   Add workflow conversation windows and agent-to-agent forwarding actions.
+*   Unify message metadata and chat/workflow orchestration actions.
 
-### Phase 3: Workspaces & Polish (Beta)
-*   Implement Workspace Zone for organization.
-*   Multi-agent collaborative chat features.
-*   UI/UX refinement and animation polish.
-*   User testing and bug fixing.
+### Phase 3: Composable Node Ecosystem (P1)
+*   Add core reusable nodes: HTTP Request, Set/Transform, IF/Switch, Merge, Wait/Delay, Webhook Trigger, Sub-workflow.
+*   Standardize node configuration contracts (schema, timeout, retry, error policy).
 
-### Phase 4: V1 Launch
+### Phase 4: Reliable Runtime Semantics (P2)
+*   Add node-level input/output schema validation.
+*   Add unified retry/timeout/error-branch semantics.
+*   Add concurrency control, idempotent execution keys, and resume-from-failure.
+
+### Phase 5: Observability & Operations (P3)
+*   Build execution history and node-level logs/snapshots.
+*   Support rerun (full run, from failed node, single-node debug rerun).
+*   Add workflow versioning (draft/published) and rollback.
+
+### Phase 6: Tests, Packaging, and V1 Launch (P4)
+*   Add runtime contract tests and critical chat/workflow interaction tests.
 *   Packaging for Windows, macOS, Linux.
 *   Documentation and landing page.
 *   Auto-updater implementation.

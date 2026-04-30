@@ -1,12 +1,16 @@
-import { useState } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/store/appStore"
 import { useTranslation } from "@/hooks/useTranslation"
-import { Bot, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react"
+import { ChevronLeft, Plus, Trash2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export function ContextSidebar({ currentView }: { currentView: string }) {
   const [showCreateSessionDialog, setShowCreateSessionDialog] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(256)
+  const [collapsed, setCollapsed] = useState(false)
+  const isResizing = useRef(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
   const setActiveSession = useAppStore(state => state.setActiveSession)
   const openWorkflowSession = useAppStore(state => state.openWorkflowSession)
   const createSession = useAppStore(state => state.createSession)
@@ -19,26 +23,51 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
   const sessions = useAppStore(state => state.sessions)
   const workflows = useAppStore(state => state.workflows)
   const agents = useAppStore(state => state.agents)
-  const openWorkflowAgentWindow = useAppStore(state => state.openWorkflowAgentWindow)
-  const setWorkflowSidebarCollapsed = useAppStore(state => state.setWorkflowSidebarCollapsed)
-  const sidebarCollapsedBySession = useAppStore(state => state.workflowChatUI.sidebarCollapsedBySession)
 
   const activeSessionId = useAppStore(state => state.activeSessionId)
   const activeWorkflowId = useAppStore(state => state.activeWorkflowId)
   const activeAgentId = useAppStore(state => state.activeAgentId)
   const { t } = useTranslation()
 
-  const activeSession = sessions.find(session => session.id === activeSessionId)
-  const isWorkflowChat = currentView === 'chat' && activeSession?.mode === 'workflow'
-  const workflowForActiveSession = activeSession?.workflowId
-    ? workflows.find(workflow => workflow.id === activeSession.workflowId)
-    : undefined
-  const workflowAgentNodes = (workflowForActiveSession?.nodes_data || []).filter(
-    node => node.type === 'agent' && node.data?.agentId
-  )
-  const workflowSidebarCollapsed = activeSession
-    ? (sidebarCollapsedBySession[activeSession.id] ?? true)
-    : false
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isResizing.current = true
+  }, [])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return
+      const newWidth = e.clientX
+      if (newWidth < 120) {
+        setCollapsed(true)
+        setSidebarWidth(0)
+      } else {
+        setCollapsed(false)
+        setSidebarWidth(Math.min(500, Math.max(180, newWidth)))
+      }
+    }
+
+    const handleMouseUp = () => {
+      isResizing.current = false
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
+  const toggleCollapse = () => {
+    if (collapsed) {
+      setCollapsed(false)
+      setSidebarWidth(256)
+    } else {
+      setCollapsed(true)
+      setSidebarWidth(0)
+    }
+  }
 
   const getSidebarContent = () => {
     switch (currentView) {
@@ -86,10 +115,10 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
       case 'chat':
       default:
         return {
-          title: t('Chats'),
+          title: t('Chat History'),
           items: sessions.map(s => ({
             id: s.id,
-            title: s.mode === 'workflow' ? `${s.title} · Workflow` : s.title,
+            title: s.title,
             active: activeSessionId === s.id,
             deletable: true,
           }))
@@ -154,94 +183,45 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
     await deleteSession(id);
   }
 
-  if (isWorkflowChat && activeSession) {
+  if (collapsed) {
     return (
-      <div className={cn(
-        "flex flex-col border-r bg-background/50 relative transition-all",
-        workflowSidebarCollapsed ? "w-14" : "w-72"
-      )}>
-        <div className="p-2 border-b h-14 flex items-center justify-between">
-          {!workflowSidebarCollapsed && (
-            <div className="min-w-0 px-2">
-              <div className="truncate text-sm font-semibold">{workflowForActiveSession?.name || 'Workflow'}</div>
-              <div className="text-[11px] text-muted-foreground">{workflowAgentNodes.length} {t('nodes')}</div>
-            </div>
-          )}
-          <button
-            onClick={() => setWorkflowSidebarCollapsed(activeSession.id, !workflowSidebarCollapsed)}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            title={workflowSidebarCollapsed ? t('Expand workflow sidebar') : t('Collapse workflow sidebar')}
-          >
-            {workflowSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-        </div>
-
-        {workflowSidebarCollapsed ? (
-          <div className="flex-1 p-2 flex flex-col items-center gap-2">
-            {workflowAgentNodes.slice(0, 8).map(node => {
-              const agentId = node.data?.agentId
-              if (!agentId) return null
-
-              return (
-                <button
-                  key={node.id}
-                  onClick={() => openWorkflowAgentWindow(activeSession.id, workflowForActiveSession!.id, node.id, agentId)}
-                  className="h-9 w-9 rounded-lg border bg-background hover:bg-muted flex items-center justify-center"
-                  title={node.data?.label || node.id}
-                >
-                  <Bot className="h-4 w-4" />
-                </button>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="flex-1 overflow-auto p-3">
-            <div className="mb-3 rounded-lg border bg-muted/30 p-3">
-              <div className="text-xs text-muted-foreground">{t('Workflow')}</div>
-              <div className="mt-1 text-sm font-medium truncate">{workflowForActiveSession?.name || t('Unlinked')}</div>
-            </div>
-
-            <div className="text-xs text-muted-foreground mb-2">{t('Agent Nodes')}</div>
-            <div className="flex flex-col gap-1">
-              {workflowAgentNodes.map(node => {
-                const agentId = node.data?.agentId
-                if (!agentId) return null
-
-                const agent = agents.find(item => item.id === agentId)
-                return (
-                  <button
-                    key={node.id}
-                    onClick={() => openWorkflowAgentWindow(activeSession.id, workflowForActiveSession!.id, node.id, agentId)}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted/70"
-                  >
-                    <Bot className="h-4 w-4 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium">{node.data?.label || node.id}</div>
-                      <div className="truncate text-[11px] text-muted-foreground">{agent?.name || agentId}</div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
+      <div className="relative flex-shrink-0 border-r bg-background/50">
+        <button
+          onClick={toggleCollapse}
+          className="h-full w-5 flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          title="Expand sidebar"
+        >
+          <ChevronLeft className="h-4 w-4 rotate-180" />
+        </button>
       </div>
     )
   }
 
   return (
-    <div className="flex w-64 flex-col border-r bg-background/50 relative">
+    <div className="flex flex-col border-r bg-background/50 relative"
+      ref={sidebarRef}
+      style={{ width: sidebarWidth, minWidth: sidebarWidth, maxWidth: sidebarWidth }}
+    >
       <div className="p-4 border-b h-14 flex items-center justify-between">
         <h2 className="font-semibold text-sm">{content.title}</h2>
-        {(currentView === 'chat' || !currentView || currentView === 'workflow') && (
+        <div className="flex items-center gap-1">
+          {(currentView === 'chat' || !currentView || currentView === 'workflow') && (
+            <button
+              onClick={handleCreateClick}
+              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
+              title={currentView === 'workflow' ? t("New Workflow") : t('Add Session')}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
           <button
-            onClick={handleCreateClick}
+            onClick={toggleCollapse}
             className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
-            title={currentView === 'workflow' ? t("New Workflow") : t('新建会话')}
+            title={t('Collapse sidebar')}
           >
-            <Plus className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
-        )}
+        </div>
       </div>
 
       <Dialog open={showCreateSessionDialog} onOpenChange={setShowCreateSessionDialog}>
@@ -310,6 +290,10 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
           </div>
         )}
       </div>
+      <div
+        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 transition-colors z-10"
+        onMouseDown={handleMouseDown}
+      />
     </div>
   )
 }
