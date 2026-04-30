@@ -84,5 +84,5 @@ In progress / next:
 ## Additional Docs
 
 - `README.zh-CN.md` – Chinese overview
-- `TODO.md` – Detailed progress and phased implementation checklist
+- `docs/TODO.md` – Detailed progress and phased implementation checklist
 - `docs/` – Product/design docs

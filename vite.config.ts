@@ -19,7 +19,7 @@ export default defineConfig(async () => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
-    port: 1420,
+    port: Number(process.env.VITE_REMOTE_PORT || process.env.SIMPER_REMOTE_PORT || 1420),
     strictPort: true,
     host: "0.0.0.0",
     hmr: host

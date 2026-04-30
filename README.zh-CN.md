@@ -84,5 +84,5 @@ npm run tauri dev
 ## 更多文档
 
 - `README.md` – English overview
-- `TODO.md` – 详细进度与分阶段实施清单
+- `docs/TODO.md` – 详细进度与分阶段实施清单
 - `docs/` – 产品与设计文档

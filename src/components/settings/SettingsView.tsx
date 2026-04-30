@@ -28,9 +28,12 @@ export function SettingsView() {
     setEditedXmlPreview(null);
   }, [localSettings.apiProvider, localSettings.customProtocol]);
 
-  const handleChange = (key: keyof typeof settings | string, value: string | boolean) => {
+  const handleChange = (key: keyof typeof settings | string, value: string | boolean | number) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }));
   };
+
+  const remotePort = Number(localSettings.remoteAccessPort || 1420);
+  const isRemotePortValid = Number.isInteger(remotePort) && remotePort >= 1 && remotePort <= 65535;
 
   const generateXmlPreview = () => {
     if (localSettings.apiProvider === 'openai') {
@@ -156,9 +159,9 @@ export function SettingsView() {
   };
 
   const handleSave = () => {
-    updateSettings(localSettings);
+    if (!isRemotePortValid) return;
+    updateSettings({ ...localSettings, remoteAccessPort: remotePort });
     setTheme(localSettings.theme as any);
-    // Optional: Add a toast notification here
     console.log("Settings saved:", localSettings);
   };
 
@@ -179,7 +182,7 @@ export function SettingsView() {
               <div className="space-y-0.5">
                 <Label>{t("Allow Remote Access")}</Label>
                 <div className="text-sm text-muted-foreground">
-                  Allow other devices on your local network to access this application (e.g. http://192.168.50.96:1420/).
+                  允许局域网内其他设备访问此应用，例如 http://本机IP:{remotePort || 1420}/。
                 </div>
               </div>
               <Switch 
@@ -189,16 +192,34 @@ export function SettingsView() {
             </div>
 
             <div className="space-y-2 mt-4">
+              <Label htmlFor="remote-access-port">远程访问端口</Label>
+              <Input
+                id="remote-access-port"
+                type="number"
+                min={1}
+                max={65535}
+                value={localSettings.remoteAccessPort || 1420}
+                disabled={!localSettings.allowRemoteAccess}
+                onChange={(e) => handleChange('remoteAccessPort', Number(e.target.value))}
+                className={!isRemotePortValid ? 'border-destructive focus-visible:ring-destructive' : undefined}
+              />
+              <div className="text-sm text-muted-foreground">
+                开发服务启动时可通过环境变量 VITE_REMOTE_PORT 使用该端口。
+              </div>
+              {!isRemotePortValid && <div className="text-sm text-destructive">端口必须是 1 到 65535 之间的整数。</div>}
+            </div>
+
+            <div className="space-y-2 mt-4">
               <Label>{t("Language")}</Label>
-              <div className="text-sm text-muted-foreground mb-2">Select application language.</div>
+              <div className="text-sm text-muted-foreground mb-2">选择应用语言。</div>
               <Select value={localSettings.language} onValueChange={(val) => handleChange('language', val)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select Language" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="zh">Chinese (中文)</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="zh">中文</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
                 </SelectContent>
               </Select>
             </div>

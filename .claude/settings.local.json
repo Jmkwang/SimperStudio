@@ -45,7 +45,9 @@
       "Bash(mkdir -p C:/Users/111/.claude/plans)",
       "Bash(cp /tmp/plan_for_claude.md C:/Users/111/.claude/plans/abundant-dancing-lake-agent-a23d5bbbdf7c71259.md)",
       "Bash(git add *)",
-      "Bash(npx kill-port *)"
+      "Bash(npx kill-port *)",
+      "Bash(mv \"G:/workspace/SimperStudio/CLAUDE.md\" \"G:/workspace/SimperStudio/docs/Development.md\")",
+      "Bash(mv \"G:/workspace/SimperStudio/TODO.md\" \"G:/workspace/SimperStudio/docs/TODO.md\")"
     ]
   }
 }

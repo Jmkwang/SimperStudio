@@ -5,7 +5,8 @@ use db::{
     get_workspaces, add_workspace, update_workspace, delete_workspace,
     get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
     get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,
-    get_workflows, add_workflow, update_workflow, delete_workflow
+    get_workflows, add_workflow, update_workflow, delete_workflow,
+    read_json_config, write_json_config
 };
 use std::sync::Mutex;
 
@@ -30,7 +31,8 @@ pub fn run() {
             get_workspaces, add_workspace, update_workspace, delete_workspace,
             get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
             get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,
-            get_workflows, add_workflow, update_workflow, delete_workflow
+            get_workflows, add_workflow, update_workflow, delete_workflow,
+            read_json_config, write_json_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

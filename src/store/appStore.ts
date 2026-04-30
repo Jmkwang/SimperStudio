@@ -1,7 +1,155 @@
 import { create } from 'zustand';
-import { Workspace, Agent, ChatSession, ChatMessage, Workflow } from '../types/models';
+import { Workspace, Agent, ChatSession, ChatMessage, Workflow, Settings, MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData } from '../types/models';
+import { fetchFromModel } from '@/lib/api';
 import { v4 as uuidv4 } from 'uuid';
 import { invoke } from '@tauri-apps/api/core';
+
+type WorkflowChatUIState = {
+  sidebarCollapsedBySession: Record<string, boolean>;
+  windows: WorkflowConversationWindow[];
+  agentChatWindows: AgentChatWindowData[];
+  activeWindowId: string | null;
+  zIndexCounter: number;
+};
+
+function normalizeSession(session: ChatSession): ChatSession {
+  return {
+    ...session,
+    mode: session.mode || (session.workflowId ? 'workflow' : 'single'),
+    messages: session.messages || [],
+  };
+}
+
+function getAgentNode(workflow: Workflow | undefined, nodeId: string) {
+  return workflow?.nodes_data.find((node: any) => node.id === nodeId && node.type === 'agent');
+}
+
+function findNextAgentNode(workflow: Workflow | undefined, nodeId: string) {
+  if (!workflow) return undefined;
+
+  const visited = new Set<string>();
+  const queue = workflow.edges_data
+    .filter((edge: any) => edge.source === nodeId)
+    .map((edge: any) => edge.target);
+
+  while (queue.length > 0) {
+    const nextNodeId = queue.shift();
+    if (!nextNodeId || visited.has(nextNodeId)) continue;
+    visited.add(nextNodeId);
+
+    const node = workflow.nodes_data.find((item: any) => item.id === nextNodeId);
+    if (node?.type === 'agent' && node.data?.agentId) return node;
+
+    workflow.edges_data
+      .filter((edge: any) => edge.source === nextNodeId)
+      .forEach((edge: any) => queue.push(edge.target));
+  }
+
+  return undefined;
+}
+
+async function runAgentResponse({
+  sessionId,
+  messageId,
+  agent,
+  prompt,
+  nodeId,
+  addAgentResponseStream,
+  completeAgentResponse,
+  getSettings,
+}: {
+  sessionId: string;
+  messageId: string;
+  agent: Agent;
+  prompt: string;
+  nodeId?: string;
+  addAgentResponseStream: AppState['addAgentResponseStream'];
+  completeAgentResponse: AppState['completeAgentResponse'];
+  getSettings: () => Settings;
+}) {
+  addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId);
+
+  try {
+    const settings = getSettings();
+    const providerToUse: string = settings.apiProvider === 'custom' ? 'custom' : agent.modelProvider;
+    const modelToUse = settings.apiProvider === 'custom' ? settings.customModelId : agent.modelId;
+    const hasKey = (providerToUse === 'openai' && settings.openaiKey) ||
+      (providerToUse === 'anthropic' && settings.anthropicKey) ||
+      (providerToUse === 'google' && settings.googleKey) ||
+      providerToUse === 'custom';
+
+    if (!hasKey) {
+      await simulateAgentStream({ sessionId, messageId, agent, prompt, nodeId, addAgentResponseStream, completeAgentResponse, settings, isCustom: providerToUse === 'custom' });
+      return;
+    }
+
+    const { textStream } = await fetchFromModel(providerToUse, modelToUse, prompt, settings, agent.systemPrompt);
+    for await (const textPart of textStream) {
+      addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId);
+    }
+    completeAgentResponse(sessionId, messageId, agent.id, nodeId);
+  } catch (e: any) {
+    addAgentResponseStream(sessionId, messageId, agent.id, `\n\n错误：模型请求失败。${e.message || e}`, nodeId);
+    completeAgentResponse(sessionId, messageId, agent.id, nodeId);
+  }
+}
+
+function simulateAgentStream({
+  sessionId,
+  messageId,
+  agent,
+  prompt,
+  nodeId,
+  addAgentResponseStream,
+  completeAgentResponse,
+  settings,
+  isCustom,
+}: {
+  sessionId: string;
+  messageId: string;
+  agent: Agent;
+  prompt: string;
+  nodeId?: string;
+  addAgentResponseStream: AppState['addAgentResponseStream'];
+  completeAgentResponse: AppState['completeAgentResponse'];
+  settings: Settings;
+  isCustom: boolean;
+}) {
+  return new Promise<void>((resolve) => {
+    const modelContext = isCustom ? `通过 ${settings.customBaseUrl} 使用 ${settings.customModelId}` : `使用 ${agent.modelProvider}/${agent.modelId}`;
+    const chunks = `你好，我是${agent.name}。我正在${modelContext}响应。你说：“${prompt}”。`.split('');
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      if (currentIndex < chunks.length) {
+        addAgentResponseStream(sessionId, messageId, agent.id, chunks[currentIndex], nodeId);
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        completeAgentResponse(sessionId, messageId, agent.id, nodeId);
+        resolve();
+      }
+    }, 30);
+  });
+}
+
+
+async function readConfig<T>(name: string): Promise<T | null> {
+  try {
+    const raw = await invoke<string>('read_json_config', { name });
+    return raw ? JSON.parse(raw) as T : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeConfig(name: string, value: unknown) {
+  try {
+    await invoke('write_json_config', { name, value: JSON.stringify(value) });
+  } catch (error) {
+    console.error(`Failed to write ${name}:`, error);
+  }
+}
 
 interface AppState {
   workspaces: Workspace[];
@@ -13,6 +161,7 @@ interface AppState {
   activeWorkflowId: string | null;
   activeAgentId: string | null;
   workflowChatMode: boolean;
+  workflowChatUI: WorkflowChatUIState;
 
   // Actions
   fetchInitialData: () => Promise<void>;
@@ -22,16 +171,25 @@ interface AppState {
   addAgent: (agent: Omit<Agent, 'id' | 'createdAt'>) => Promise<void>;
   updateAgent: (id: string, updates: Partial<Agent>) => void;
 
-  createSession: (title: string, workspaceId: string, workflowId?: string) => void;
+  createSession: (title: string, workspaceId: string, workflowId?: string, mode?: 'single' | 'workflow') => void;
+  createWorkflowBackedSession: (title: string, workspaceId: string) => Promise<void>;
+  openWorkflowSession: (workflowId: string) => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
   setActiveSession: (id: string) => void;
 
-  addUserMessage: (sessionId: string, text: string) => void;
-  addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string) => void;
-  completeAgentResponse: (sessionId: string, messageId: string, agentId: string) => void;
+  addUserMessage: (sessionId: string, text: string, attachments?: MessageAttachment[], meta?: MessageMeta) => void;
+  addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string, nodeId?: string, meta?: MessageMeta) => void;
+  completeAgentResponse: (sessionId: string, messageId: string, agentId: string, nodeId?: string) => void;
+  sendMessageToAgents: (sessionId: string, prompt: string, agents: Agent[], options?: { attachments?: MessageAttachment[]; nodeId?: string; meta?: MessageMeta; addUserMessage?: boolean }) => Promise<string | undefined>;
+  sendToWorkflowAgent: (sessionId: string, nodeId: string, prompt: string, options?: { addUserMessage?: boolean; triggeredBy?: MessageMeta['triggeredBy']; forwardFromMessageId?: string }) => Promise<string | undefined>;
+  forwardAgentReplyToNext: (sessionId: string, fromNodeId: string, messageId: string, agentId: string, triggeredBy?: MessageMeta['triggeredBy']) => Promise<void>;
+  rerunAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<string | undefined>;
+  rerunAndForwardAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<void>;
 
   // Workflow Actions
   createWorkflow: (name: string, workspaceId: string) => void;
   saveWorkflow: (id: string, nodes: any[], edges: any[]) => void;
+  deleteWorkflow: (id: string) => Promise<void>;
   setActiveWorkflow: (id: string | null) => void;
   setActiveAgent: (id: string | null) => void;
 
@@ -39,6 +197,18 @@ interface AppState {
   toggleWorkflowChatMode: (enabled: boolean) => void;
   linkWorkflowToSession: (sessionId: string, workflowId: string) => void;
   getWorkflowForSession: (sessionId: string) => Workflow | undefined;
+  setWorkflowSidebarCollapsed: (sessionId: string, collapsed: boolean) => void;
+  openWorkflowAgentWindow: (sessionId: string, workflowId: string, nodeId: string, agentId: string) => void;
+  focusWorkflowAgentWindow: (windowId: string) => void;
+  closeWorkflowAgentWindow: (windowId: string) => void;
+  toggleWorkflowAgentWindowMinimized: (windowId: string) => void;
+
+  // Agent Chat Windows (single sessions)
+  openAgentChatWindow: (sessionId: string, agentId: string) => void;
+  focusAgentChatWindow: (windowId: string) => void;
+  closeAgentChatWindow: (windowId: string) => void;
+  toggleAgentChatWindowMinimized: (windowId: string) => void;
+  sendToAgent: (sessionId: string, agentId: string, prompt: string, options?: { addUserMessage?: boolean }) => Promise<string | undefined>;
 
   // Workflow Execution State
   workflowExecution: {
@@ -51,21 +221,7 @@ interface AppState {
 
 
   // Settings Actions
-  settings: {
-    theme: string;
-    language: string;
-    apiProvider: string;
-    openaiKey: string;
-    anthropicKey: string;
-    googleKey: string;
-    customProtocol: string;
-    customBaseUrl: string;
-    customModelId: string;
-    customApiKey: string;
-    customHeader: string;
-    geminiKey: string;
-    allowRemoteAccess: boolean;
-  };
+  settings: Settings;
   updateSettings: (updates: Partial<AppState['settings']>) => void;
 
   // Helpers
@@ -132,6 +288,78 @@ export const useAppStore = create<AppState>()(
           parameters: {},
           createdAt: Date.now(),
           industry: 'Technology'
+        },
+        {
+          id: 'agent-werewolf-host',
+          name: '狼人杀法官',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=werewolf-host',
+          systemPrompt: '你是狼人杀游戏法官。你负责维持游戏阶段、解释规则、汇总夜晚行动、发布白天信息，并且不能泄露玩家隐藏身份。输出要清晰、简短、可执行。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.6,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'agent-werewolf-wolves',
+          name: '狼人阵营',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=werewolves',
+          systemPrompt: '你代表狼人阵营进行策略决策。根据公开信息、存活玩家和历史发言选择夜晚袭击目标，并给出简短理由。只输出适合工作流解析的结构化决策。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.8,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'agent-werewolf-seer',
+          name: '预言家',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=seer',
+          systemPrompt: '你是狼人杀预言家。根据局势选择查验目标，关注高嫌疑或关键发言玩家。只输出查验目标和理由，不泄露系统外信息。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.7,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'agent-werewolf-witch',
+          name: '女巫',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=witch',
+          systemPrompt: '你是狼人杀女巫。根据夜晚死亡目标、药水状态和局势判断是否使用解药或毒药。决策要克制，避免无谓用药。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.7,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'agent-werewolf-speaker',
+          name: '白天发言玩家',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=day-speaker',
+          systemPrompt: '你模拟狼人杀白天发言玩家。根据当前玩家身份、公开信息和历史记录生成一段自然发言。不要主动暴露隐藏身份，除非局势强烈需要。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.9,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
+        },
+        {
+          id: 'agent-werewolf-voter',
+          name: '放逐投票分析员',
+          avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=voter',
+          systemPrompt: '你是狼人杀白天投票分析员。根据所有发言、夜晚结果和存活玩家判断最应该被放逐的目标，并给出简短理由。',
+          modelProvider: 'local',
+          modelId: 'default',
+          temperature: 0.7,
+          parameters: {},
+          createdAt: Date.now(),
+          industry: 'Game'
         }
       ],
       sessions: [
@@ -139,6 +367,7 @@ export const useAppStore = create<AppState>()(
           id: 'default-session',
           workspaceId: 'default-workspace',
           title: 'My First Workflow',
+          mode: 'workflow',
           workflowId: 'default-workflow',
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -156,6 +385,7 @@ export const useAppStore = create<AppState>()(
           id: '2',
           workspaceId: 'default-workspace',
           title: 'UI Component Design',
+          mode: 'workflow',
           workflowId: 'w1',
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -165,6 +395,7 @@ export const useAppStore = create<AppState>()(
           id: '3',
           workspaceId: 'default-workspace',
           title: 'General Inquiry',
+          mode: 'workflow',
           workflowId: 'w2',
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -300,75 +531,120 @@ export const useAppStore = create<AppState>()(
           updatedAt: Date.now()
         },
         {
-          id: 'w5',
+          id: 'werewolf-standard-workflow',
           workspaceId: 'default-workspace',
-          name: 'Werewolf Game Logic',
+          name: '狼人杀 · 标准局工作流',
           nodes_data: [
-             { id: 't1', type: 'trigger', position: { x: 50, y: 350 }, data: { label: 'Start Phase' } },
-             { id: 'r-phase', type: 'condition', position: { x: 250, y: 350 }, data: { label: 'Phase Router', routes: [
-                 { id: 'route-night', condition: 'payload.phase === "night" && payload.gameStatus === "playing"' },
-                 { id: 'route-day', condition: 'payload.phase === "day" && payload.gameStatus === "playing"' },
+             { id: 'ww-trigger', type: 'trigger', position: { x: 50, y: 360 }, data: { label: '开始 / 输入局势' } },
+             { id: 'ww-init', type: 'code', position: { x: 300, y: 360 }, data: {
+                 label: '初始化局势',
+                 code: 'payload.players = Array.isArray(payload.players) && payload.players.length ? payload.players : [{id:"p1", name:"1号", role:"werewolf", status:"alive"}, {id:"p2", name:"2号", role:"werewolf", status:"alive"}, {id:"p3", name:"3号", role:"seer", status:"alive"}, {id:"p4", name:"4号", role:"witch", status:"alive", potions:{heal:true, poison:true}}, {id:"p5", name:"5号", role:"villager", status:"alive"}, {id:"p6", name:"6号", role:"villager", status:"alive"}]; payload.phase = payload.phase || "night"; payload.round = payload.round || 1; payload.gameStatus = payload.gameStatus || "playing"; payload.publicLog = payload.publicLog || []; payload.privateLog = payload.privateLog || []; payload.daySpeeches = payload.daySpeeches || []; payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
+             }},
+             { id: 'ww-phase-router', type: 'condition', position: { x: 570, y: 360 }, data: { label: '阶段路由', routes: [
+                 { id: 'route-night', condition: 'payload.gameStatus === "playing" && payload.phase === "night"' },
+                 { id: 'route-day-speech', condition: 'payload.gameStatus === "playing" && payload.phase === "day_speech"' },
+                 { id: 'route-day-vote', condition: 'payload.gameStatus === "playing" && payload.phase === "day_vote"' },
                  { id: 'route-end', condition: 'payload.gameStatus !== "playing"' }
                ]
              }},
-             { id: 'llm-wolf', type: 'agent', position: { x: 550, y: 50 }, data: {
-                 label: 'Werewolves Action',
-                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the werewolves kill tonight?',
-                 schema: '{"targetId": "string", "reason": "string"}'
+             { id: 'ww-wolves', type: 'agent', position: { x: 900, y: 40 }, data: {
+                 label: '狼人夜袭',
+                 agentId: 'agent-werewolf-wolves',
+                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n请狼人阵营从存活玩家中选择夜晚袭击目标。输出 targetId 和 reason。',
+                 schema: '{"targetId":"string","reason":"string"}'
              }},
-             { id: 'code-wolf', type: 'code', position: { x: 850, y: 50 }, data: {
-                 label: 'Save Wolf Target',
-                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.wolfTarget = payload.llmResult?.targetId; return payload;'
+             { id: 'ww-save-wolves', type: 'code', position: { x: 1210, y: 40 }, data: {
+                 label: '记录夜袭',
+                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.wolfTarget = payload.llmResult?.targetId || payload.alivePlayers.find(p => p.role !== "werewolf")?.id; payload.privateLog.push({round: payload.round, phase:"night", actor:"werewolves", action:"kill", targetId: payload.nightState.wolfTarget, reason: payload.llmResult?.reason || ""}); return payload;'
              }},
-             { id: 'llm-seer', type: 'agent', position: { x: 1150, y: 50 }, data: {
-                 label: 'Seer Action',
-                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the seer inspect?',
-                 schema: '{"targetId": "string", "reason": "string"}'
+             { id: 'ww-seer', type: 'agent', position: { x: 1520, y: 40 }, data: {
+                 label: '预言家查验',
+                 agentId: 'agent-werewolf-seer',
+                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n请预言家选择一个存活玩家查验身份。输出 targetId 和 reason。',
+                 schema: '{"targetId":"string","reason":"string"}'
              }},
-             { id: 'code-seer', type: 'code', position: { x: 1450, y: 50 }, data: {
-                 label: 'Save Seer Target',
-                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.seerTarget = payload.llmResult?.targetId; return payload;'
+             { id: 'ww-save-seer', type: 'code', position: { x: 1830, y: 40 }, data: {
+                 label: '记录查验',
+                 code: 'payload.nightState = payload.nightState || {}; const targetId = payload.llmResult?.targetId || payload.alivePlayers.find(p => p.role !== "seer")?.id; const target = payload.players.find(p => p.id === targetId); payload.nightState.seerCheck = targetId; payload.privateLog.push({round: payload.round, phase:"night", actor:"seer", action:"check", targetId, result: target?.role === "werewolf" ? "werewolf" : "good", reason: payload.llmResult?.reason || ""}); return payload;'
              }},
-             { id: 'llm-witch', type: 'agent', position: { x: 1750, y: 50 }, data: {
-                 label: 'Witch Action',
-                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWolf target is {{payload.nightState.wolfTarget}}. Witch has potions: {{JSON.stringify(payload.players.find(p=>p.role==="witch")?.potions)}}. Use heal on target? Or use poison on someone else?',
-                 schema: '{"useHeal": "boolean", "poisonTargetId": "string|null"}'
+             { id: 'ww-witch', type: 'agent', position: { x: 2140, y: 40 }, data: {
+                 label: '女巫用药',
+                 agentId: 'agent-werewolf-witch',
+                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n狼人目标是 {{payload.nightState.wolfTarget}}。请女巫判断是否使用解药或毒药。输出 useHeal、poisonTargetId 和 reason。',
+                 schema: '{"useHeal":"boolean","poisonTargetId":"string|null","reason":"string"}'
              }},
-             { id: 'code-witch', type: 'code', position: { x: 2050, y: 50 }, data: {
-                 label: 'Save Witch Action',
-                 code: 'payload.nightState = payload.nightState || {}; payload.nightState.witchHeal = payload.llmResult?.useHeal; payload.nightState.witchPoison = payload.llmResult?.poisonTargetId; return payload;'
+             { id: 'ww-save-witch', type: 'code', position: { x: 2450, y: 40 }, data: {
+                 label: '记录女巫',
+                 code: 'payload.nightState = payload.nightState || {}; const witch = payload.players.find(p => p.role === "witch"); const canHeal = witch?.potions?.heal !== false; const canPoison = witch?.potions?.poison !== false; payload.nightState.witchHeal = Boolean(payload.llmResult?.useHeal && canHeal); payload.nightState.witchPoison = canPoison ? payload.llmResult?.poisonTargetId : null; if (witch && payload.nightState.witchHeal) witch.potions = {...witch.potions, heal:false}; if (witch && payload.nightState.witchPoison) witch.potions = {...witch.potions, poison:false}; payload.privateLog.push({round: payload.round, phase:"night", actor:"witch", action:"potion", heal: payload.nightState.witchHeal, poisonTargetId: payload.nightState.witchPoison, reason: payload.llmResult?.reason || ""}); return payload;'
              }},
-             { id: 'code-night-resolve', type: 'code', position: { x: 2350, y: 50 }, data: {
-                 label: 'Resolve Night',
-                 code: 'const s = payload.nightState; const p = payload.players; let died = []; if (s.wolfTarget && !s.witchHeal) died.push(s.wolfTarget); if (s.witchPoison) died.push(s.witchPoison); died.forEach(id => { const player = p.find(x => x.id === id); if(player) player.status = "dead"; }); payload.phase = "day"; payload.nightState = {}; const wolves = p.filter(x => x.role === "werewolf" && x.status === "alive").length; const goods = p.filter(x => x.role !== "werewolf" && x.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; return payload;'
+             { id: 'ww-resolve-night', type: 'code', position: { x: 2760, y: 40 }, data: {
+                 label: '结算夜晚',
+                 code: 'const s = payload.nightState || {}; const deaths = new Set(); if (s.wolfTarget && !s.witchHeal) deaths.add(s.wolfTarget); if (s.witchPoison) deaths.add(s.witchPoison); deaths.forEach(id => { const player = payload.players.find(p => p.id === id); if (player) player.status = "dead"; }); payload.lastNightDeaths = Array.from(deaths); payload.publicLog.push({round: payload.round, phase:"night_result", deaths: payload.lastNightDeaths}); const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; else payload.phase = "day_speech"; payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
              }},
-             { id: 'out-day', type: 'output', position: { x: 2650, y: 50 }, data: { label: 'To Day Phase' } },
-             { id: 'llm-day-vote', type: 'agent', position: { x: 550, y: 450 }, data: {
-                 label: 'Town Vote',
-                 prompt: 'Current State: {{JSON.stringify(payload)}}\n\nWho should the town vote out today?',
-                 schema: '{"targetId": "string", "reason": "string"}'
+             { id: 'ww-night-output', type: 'output', position: { x: 3070, y: 40 }, data: { label: '夜晚结果' } },
+             { id: 'ww-prepare-speech', type: 'code', position: { x: 900, y: 350 }, data: {
+                 label: '准备逐人发言',
+                 code: 'payload.alivePlayers = payload.players.filter(p => p.status === "alive"); payload.daySpeeches = []; payload.publicLog.push({round: payload.round, phase:"day_speech_start", alivePlayers: payload.alivePlayers.map(p => p.id), lastNightDeaths: payload.lastNightDeaths || []}); return payload;'
              }},
-             { id: 'code-day-resolve', type: 'code', position: { x: 850, y: 450 }, data: {
-                 label: 'Resolve Day',
-                 code: 'if(payload.llmResult?.targetId) { const target = payload.players.find(p => p.id === payload.llmResult.targetId); if(target) target.status = "dead"; } payload.phase = "night"; payload.dayCount = (payload.dayCount || 0) + 1; const p = payload.players; const wolves = p.filter(x => x.role === "werewolf" && x.status === "alive").length; const goods = p.filter(x => x.role !== "werewolf" && x.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; return payload;'
+             { id: 'ww-speech-loop', type: 'loop', position: { x: 1210, y: 350 }, data: {
+                 label: '存活玩家逐人发言',
+                 itemsPath: 'payload.alivePlayers',
+                 itemAlias: 'currentPlayer',
+                 indexAlias: 'speakerIndex',
+                 maxIterations: 12,
+                 breakCondition: 'payload.gameStatus !== "playing"'
              }},
-             { id: 'out-night', type: 'output', position: { x: 1150, y: 450 }, data: { label: 'To Night Phase' } },
-             { id: 'out-end', type: 'output', position: { x: 550, y: 650 }, data: { label: 'Game Over' } }
+             { id: 'ww-player-speech', type: 'agent', position: { x: 1520, y: 350 }, data: {
+                 label: '生成玩家发言',
+                 agentId: 'agent-werewolf-speaker',
+                 prompt: '当前发言玩家：{{JSON.stringify(payload.currentPlayer)}}\n当前公开局势：{{JSON.stringify(payload.publicLog)}}\n存活玩家：{{JSON.stringify(payload.alivePlayers)}}\n\n请生成该玩家白天发言。输出 speech 和 suspicion。',
+                 schema: '{"speech":"string","suspicion":"string"}'
+             }},
+             { id: 'ww-collect-speech', type: 'code', position: { x: 1830, y: 350 }, data: {
+                 label: '记录发言',
+                 code: 'payload.daySpeeches = payload.daySpeeches || []; payload.daySpeeches.push({playerId: payload.currentPlayer?.id, playerName: payload.currentPlayer?.name, speech: payload.llmResult?.speech || "发言略", suspicion: payload.llmResult?.suspicion || ""}); payload.publicLog.push({round: payload.round, phase:"day_speech", playerId: payload.currentPlayer?.id, speech: payload.llmResult?.speech || "发言略"}); payload.phase = "day_vote"; return payload;'
+             }},
+             { id: 'ww-speech-output', type: 'output', position: { x: 2140, y: 350 }, data: { label: '白天发言记录' } },
+             { id: 'ww-voter', type: 'agent', position: { x: 900, y: 660 }, data: {
+                 label: '放逐投票',
+                 agentId: 'agent-werewolf-voter',
+                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n请根据白天发言和公开信息，选择最应该被放逐的玩家。输出 targetId 和 reason。',
+                 schema: '{"targetId":"string","reason":"string"}'
+             }},
+             { id: 'ww-resolve-vote', type: 'code', position: { x: 1210, y: 660 }, data: {
+                 label: '结算放逐',
+                 code: 'const targetId = payload.llmResult?.targetId || payload.alivePlayers.find(p => p.role === "werewolf")?.id || payload.alivePlayers[0]?.id; const target = payload.players.find(p => p.id === targetId); if (target) target.status = "dead"; payload.publicLog.push({round: payload.round, phase:"vote", exiled: targetId, reason: payload.llmResult?.reason || ""}); const wolves = payload.players.filter(p => p.role === "werewolf" && p.status === "alive").length; const goods = payload.players.filter(p => p.role !== "werewolf" && p.status === "alive").length; if (wolves === 0) payload.gameStatus = "good_wins"; else if (wolves >= goods) payload.gameStatus = "wolves_win"; else { payload.phase = "night"; payload.round = (payload.round || 1) + 1; } payload.alivePlayers = payload.players.filter(p => p.status === "alive"); return payload;'
+             }},
+             { id: 'ww-vote-output', type: 'output', position: { x: 1520, y: 660 }, data: { label: '投票结果 / 下一夜' } },
+             { id: 'ww-host-summary', type: 'agent', position: { x: 900, y: 900 }, data: {
+                 label: '法官终局播报',
+                 agentId: 'agent-werewolf-host',
+                 prompt: '当前局势：{{JSON.stringify(payload)}}\n\n游戏已经结束。请作为法官生成终局播报，说明获胜阵营、关键死亡和最终存活玩家。',
+                 schema: '{"summary":"string"}'
+             }},
+             { id: 'ww-end-output', type: 'output', position: { x: 1210, y: 900 }, data: { label: '游戏结束' } }
           ],
           edges_data: [
-             { id: 'e-start', source: 't1', target: 'r-phase', animated: true },
-             { id: 'e-night-1', source: 'r-phase', sourceHandle: 'route-night', target: 'llm-wolf', animated: true },
-             { id: 'e-night-2', source: 'llm-wolf', target: 'code-wolf', animated: true },
-             { id: 'e-night-3', source: 'code-wolf', target: 'llm-seer', animated: true },
-             { id: 'e-night-4', source: 'llm-seer', target: 'code-seer', animated: true },
-             { id: 'e-night-5', source: 'code-seer', target: 'llm-witch', animated: true },
-             { id: 'e-night-6', source: 'llm-witch', target: 'code-witch', animated: true },
-             { id: 'e-night-7', source: 'code-witch', target: 'code-night-resolve', animated: true },
-             { id: 'e-night-8', source: 'code-night-resolve', target: 'out-day', animated: true },
-             { id: 'e-day-1', source: 'r-phase', sourceHandle: 'route-day', target: 'llm-day-vote', animated: true },
-             { id: 'e-day-2', source: 'llm-day-vote', target: 'code-day-resolve', animated: true },
-             { id: 'e-day-3', source: 'code-day-resolve', target: 'out-night', animated: true },
-             { id: 'e-end-1', source: 'r-phase', sourceHandle: 'route-end', target: 'out-end', animated: true }
+             { id: 'ww-e-start-init', source: 'ww-trigger', target: 'ww-init', animated: true },
+             { id: 'ww-e-init-router', source: 'ww-init', target: 'ww-phase-router', animated: true },
+             { id: 'ww-e-router-night', source: 'ww-phase-router', sourceHandle: 'route-night', target: 'ww-wolves', animated: true },
+             { id: 'ww-e-wolves-save', source: 'ww-wolves', target: 'ww-save-wolves', animated: true },
+             { id: 'ww-e-save-seer', source: 'ww-save-wolves', target: 'ww-seer', animated: true },
+             { id: 'ww-e-seer-save', source: 'ww-seer', target: 'ww-save-seer', animated: true },
+             { id: 'ww-e-save-witch', source: 'ww-save-seer', target: 'ww-witch', animated: true },
+             { id: 'ww-e-witch-save', source: 'ww-witch', target: 'ww-save-witch', animated: true },
+             { id: 'ww-e-save-resolve-night', source: 'ww-save-witch', target: 'ww-resolve-night', animated: true },
+             { id: 'ww-e-night-output', source: 'ww-resolve-night', target: 'ww-night-output', animated: true },
+             { id: 'ww-e-router-speech', source: 'ww-phase-router', sourceHandle: 'route-day-speech', target: 'ww-prepare-speech', animated: true },
+             { id: 'ww-e-prepare-loop', source: 'ww-prepare-speech', target: 'ww-speech-loop', animated: true },
+             { id: 'ww-e-loop-speech', source: 'ww-speech-loop', target: 'ww-player-speech', animated: true },
+             { id: 'ww-e-speech-collect', source: 'ww-player-speech', target: 'ww-collect-speech', animated: true },
+             { id: 'ww-e-collect-output', source: 'ww-collect-speech', target: 'ww-speech-output', animated: true },
+             { id: 'ww-e-router-vote', source: 'ww-phase-router', sourceHandle: 'route-day-vote', target: 'ww-voter', animated: true },
+             { id: 'ww-e-voter-resolve', source: 'ww-voter', target: 'ww-resolve-vote', animated: true },
+             { id: 'ww-e-vote-output', source: 'ww-resolve-vote', target: 'ww-vote-output', animated: true },
+             { id: 'ww-e-router-end', source: 'ww-phase-router', sourceHandle: 'route-end', target: 'ww-host-summary', animated: true },
+             { id: 'ww-e-end-output', source: 'ww-host-summary', target: 'ww-end-output', animated: true }
           ],
           status: 'active',
           createdAt: Date.now(),
@@ -381,6 +657,13 @@ export const useAppStore = create<AppState>()(
       activeAgentId: 'agent-1',
       
       workflowChatMode: false,
+      workflowChatUI: {
+        sidebarCollapsedBySession: {},
+        windows: [],
+        agentChatWindows: [],
+        activeWindowId: null,
+        zIndexCounter: 20,
+      },
       workflowExecution: {
         status: 'idle',
         currentNodeId: null,
@@ -390,7 +673,7 @@ export const useAppStore = create<AppState>()(
 
       settings: {
         theme: 'system',
-        language: 'en',
+        language: 'zh',
         apiProvider: 'openai',
         openaiKey: '',
         openaiModelId: '',
@@ -405,13 +688,27 @@ export const useAppStore = create<AppState>()(
         geminiKey: '',
         geminiModelId: '',
         allowRemoteAccess: true,
+        remoteAccessPort: 1420,
       },
 
       fetchInitialData: async () => {
         try {
-          const agents = await invoke<Agent[]>('get_agents');
-          const parsedAgents = agents.map(a => ({...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters}));
-          set({ agents: parsedAgents });
+          const modelConfig = await readConfig<Settings>('model.json');
+          const agentsConfig = await readConfig<Agent[]>('agents.json');
+          const workflowsConfig = await readConfig<Workflow[]>('workflow.json');
+
+          if (modelConfig) {
+            set((state) => ({ settings: { ...state.settings, ...modelConfig } }));
+          }
+          if (agentsConfig?.length) {
+            set({ agents: agentsConfig });
+          } else {
+            const agents = await invoke<Agent[]>('get_agents');
+            if (agents.length) {
+              const parsedAgents = agents.map(a => ({...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters}));
+              set({ agents: parsedAgents });
+            }
+          }
 
           const workspaces = await invoke<Workspace[]>('get_workspaces');
           if (workspaces.length === 0) {
@@ -432,16 +729,20 @@ export const useAppStore = create<AppState>()(
             set({ activeWorkspaceId: defaultWorkspaceId });
 
             const sessions = await invoke<ChatSession[]>('get_chat_sessions', { workspaceId: defaultWorkspaceId });
-            
+
             for (let i = 0; i < sessions.length; i++) {
                 const messages = await invoke<ChatMessage[]>('get_chat_messages', { sessionId: sessions[i].id });
                 sessions[i].messages = messages.map(m => ({...m, content: JSON.parse(m.content as unknown as string)}));
             }
-            set({ sessions });
+            set({ sessions: sessions.map(normalizeSession) });
 
             const workflows = await invoke<Workflow[]>('get_workflows', { workspaceId: defaultWorkspaceId });
-            const parsedWorkflows = workflows.map(w => ({...w, nodes_data: JSON.parse(w.nodes_data as unknown as string), edges_data: JSON.parse(w.edges_data as unknown as string)}));
-            set({ workflows: parsedWorkflows });
+            if (workflowsConfig?.length) {
+              set({ workflows: workflowsConfig });
+            } else if (workflows.length) {
+              const parsedWorkflows = workflows.map(w => ({...w, nodes_data: JSON.parse(w.nodes_data as unknown as string), edges_data: JSON.parse(w.edges_data as unknown as string)}));
+              set({ workflows: parsedWorkflows });
+            }
           }
         } catch (error) {
           console.log('Running in browser mode without Tauri backend - using default data');
@@ -477,25 +778,29 @@ export const useAppStore = create<AppState>()(
           // Call Tauri backend to add the agent
           const agentToSave = {...newAgent, parameters: JSON.stringify(newAgent.parameters || {})};
           await invoke('add_agent', { agent: agentToSave });
-          // Update local state only if backend call succeeds
-          set((state) => ({ agents: [...state.agents, newAgent] }));
+          const nextAgents = [...get().agents, newAgent];
+          set({ agents: nextAgents });
+          await writeConfig('agents.json', nextAgents);
         } catch (error) {
           console.error('Failed to add agent:', error);
           throw error;
         }
       },
 
-      updateAgent: (id, updates) => set((state) => ({
-        agents: state.agents.map(agent => 
+      updateAgent: (id, updates) => set((state) => {
+        const nextAgents = state.agents.map(agent =>
           agent.id === id ? { ...agent, ...updates } : agent
-        )
-      })),
+        );
+        void writeConfig('agents.json', nextAgents);
+        return { agents: nextAgents };
+      }),
 
-      createSession: async (title, workspaceId, workflowId) => {
+      createSession: async (title, workspaceId, workflowId, mode) => {
         const newSession: ChatSession = {
           id: uuidv4(),
           workspaceId,
           title,
+          mode: mode || (workflowId ? 'workflow' : 'single'),
           workflowId,
           messages: [],
           createdAt: Date.now(),
@@ -509,14 +814,125 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      setActiveSession: (id) => set({ activeSessionId: id }),
+      createWorkflowBackedSession: async (title, workspaceId) => {
+        const now = Date.now();
+        const workflowId = uuidv4();
+        const sessionId = uuidv4();
+        const newWorkflow: Workflow = {
+          id: workflowId,
+          workspaceId,
+          name: title,
+          nodes_data: [],
+          edges_data: [],
+          status: 'active',
+          createdAt: now,
+          updatedAt: now
+        };
+        const newSession: ChatSession = {
+          id: sessionId,
+          workspaceId,
+          title,
+          mode: 'workflow',
+          workflowId,
+          messages: [],
+          createdAt: now,
+          updatedAt: now
+        };
 
-      addUserMessage: async (sessionId, text) => {
+        try {
+          const wfToSave = { ...newWorkflow, nodes_data: '[]', edges_data: '[]' };
+          await invoke('add_workflow', { workflow: wfToSave });
+          await invoke('add_chat_session', { session: newSession });
+        } catch (error) {
+          console.error('Failed to create workflow-backed session:', error);
+        }
+
+        set((state) => {
+          const nextWorkflows = [...state.workflows, newWorkflow];
+          void writeConfig('workflow.json', nextWorkflows);
+          return {
+            workflows: nextWorkflows,
+            sessions: [...state.sessions, newSession],
+            activeWorkflowId: workflowId,
+            activeSessionId: sessionId,
+          };
+        });
+      },
+
+      openWorkflowSession: async (workflowId) => {
+        const { workflows, sessions } = get();
+        const workflow = workflows.find(w => w.id === workflowId);
+        if (!workflow) return;
+
+        const existingSession = sessions.find(session => session.workflowId === workflowId);
+        if (existingSession) {
+          set((state) => ({
+            activeWorkflowId: workflowId,
+            activeSessionId: existingSession.id,
+            sessions: state.sessions.map(session => session.id === existingSession.id ? normalizeSession(session) : session),
+          }));
+          return;
+        }
+
+        const now = Date.now();
+        const newSession: ChatSession = {
+          id: uuidv4(),
+          workspaceId: workflow.workspaceId,
+          title: workflow.name,
+          mode: 'workflow',
+          workflowId,
+          messages: [],
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        try {
+          await invoke('add_chat_session', { session: newSession });
+        } catch (error) {
+          console.error('Failed to create workflow session:', error);
+        }
+
+        set((state) => ({
+          sessions: [...state.sessions, newSession],
+          activeWorkflowId: workflowId,
+          activeSessionId: newSession.id,
+        }));
+      },
+
+      deleteSession: async (id) => {
+        try {
+          await invoke('delete_chat_session', { id });
+        } catch (error) {
+          console.error('Failed to delete session:', error);
+        }
+
+        set((state) => {
+          const sessions = state.sessions.filter(session => session.id !== id);
+          const activeSessionId = state.activeSessionId === id ? sessions[0]?.id || null : state.activeSessionId;
+          const activeSession = sessions.find(session => session.id === activeSessionId);
+          return {
+            sessions,
+            activeSessionId,
+            activeWorkflowId: activeSession?.workflowId || state.activeWorkflowId,
+          };
+        });
+      },
+
+      setActiveSession: (id) => set((state) => {
+        const session = state.sessions.find(s => s.id === id);
+        return {
+          activeSessionId: id,
+          activeWorkflowId: session?.workflowId || state.activeWorkflowId,
+        };
+      }),
+
+      addUserMessage: async (sessionId, text, attachments = [], meta) => {
         const newMessage: ChatMessage = {
           id: uuidv4(),
           sessionId,
           role: 'user',
-          content: { text },
+          content: { text, attachments },
+          meta,
           timestamp: Date.now()
         };
 
@@ -538,7 +954,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      addAgentResponseStream: async (sessionId, messageId, agentId, textChunk) => {
+      addAgentResponseStream: async (sessionId, messageId, agentId, textChunk, nodeId, meta) => {
         let assistantMsgIndex = -1;
         let newAssistantMsg: ChatMessage | null = null;
         
@@ -556,9 +972,11 @@ export const useAppStore = create<AppState>()(
                      id: messageId,
                      sessionId,
                      role: 'assistant',
-                     content: { text: '' }, // Optional overall text
+                     content: { text: '' },
+                     meta,
                      agentResponses: [{
                        agentId,
+                       nodeId,
                        content: { text: textChunk },
                        status: 'streaming',
                        timestamp: Date.now()
@@ -571,10 +989,11 @@ export const useAppStore = create<AppState>()(
                   const msg = { ...messages[assistantMsgIndex] };
                   msg.agentResponses = [...(msg.agentResponses || [])];
 
-                  const agentRespIndex = msg.agentResponses.findIndex(ar => ar.agentId === agentId);
+                  const agentRespIndex = msg.agentResponses.findIndex(ar => ar.agentId === agentId && ar.nodeId === nodeId);
                   if (agentRespIndex === -1) {
                     msg.agentResponses.push({
                        agentId,
+                       nodeId,
                        content: { text: textChunk },
                        status: 'streaming',
                        timestamp: Date.now()
@@ -611,7 +1030,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      completeAgentResponse: (sessionId, messageId, agentId) => set((state) => {
+      completeAgentResponse: (sessionId, messageId, agentId, nodeId) => set((state) => {
         const sessions = state.sessions.map(s => {
            if (s.id === sessionId) {
              const messages = [...s.messages];
@@ -620,7 +1039,7 @@ export const useAppStore = create<AppState>()(
                const msg = { ...messages[msgIndex] };
                if (msg.agentResponses) {
                  msg.agentResponses = msg.agentResponses.map(ar =>
-                   ar.agentId === agentId ? { ...ar, status: 'complete' } : ar
+                   ar.agentId === agentId && ar.nodeId === nodeId ? { ...ar, status: 'complete' } : ar
                  );
                }
                messages[msgIndex] = msg;
@@ -631,6 +1050,95 @@ export const useAppStore = create<AppState>()(
         });
         return { sessions };
       }),
+
+      sendMessageToAgents: async (sessionId, prompt, agents, options = {}) => {
+        const session = get().sessions.find(item => item.id === sessionId);
+        if (!session || agents.length === 0) return undefined;
+
+        const messageId = uuidv4();
+        const promptWithAttachments = options.attachments?.length
+          ? `${prompt}\n\n附件：${options.attachments.map(file => `${file.name} (${file.mimeType})`).join('、')}`
+          : prompt;
+
+        if (options.addUserMessage !== false) {
+          get().addUserMessage(sessionId, prompt, options.attachments || [], options.meta);
+        }
+
+        await Promise.all(agents.map(agent => runAgentResponse({
+          sessionId,
+          messageId,
+          agent,
+          prompt: promptWithAttachments,
+          nodeId: options.nodeId,
+          addAgentResponseStream: get().addAgentResponseStream,
+          completeAgentResponse: get().completeAgentResponse,
+          getSettings: () => get().settings,
+        })));
+
+        return messageId;
+      },
+
+      sendToWorkflowAgent: async (sessionId, nodeId, prompt, options = {}) => {
+        const { workflows, agents, sessions } = get();
+        const session = sessions.find(item => item.id === sessionId);
+        const workflow = session?.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
+        const node = getAgentNode(workflow, nodeId);
+        const agent = agents.find(item => item.id === node?.data?.agentId);
+        if (!session || !workflow || !node || !agent) return undefined;
+
+        const nodePrompt = node.data?.prompt ? `${node.data.prompt}\n\n${prompt}` : prompt;
+        const messageId = await get().sendMessageToAgents(sessionId, nodePrompt, [agent], {
+          nodeId,
+          addUserMessage: options.addUserMessage !== false,
+          meta: {
+            workflowId: workflow.id,
+            workflowNodeId: nodeId,
+            targetAgentId: agent.id,
+            forwardFromMessageId: options.forwardFromMessageId,
+            triggeredBy: options.triggeredBy || 'user',
+          },
+        });
+
+        if (node.data?.autoSendToNext && messageId) {
+          await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, agent.id, 'auto');
+        }
+
+        return messageId;
+      },
+
+      forwardAgentReplyToNext: async (sessionId, fromNodeId, messageId, agentId, triggeredBy = 'manual') => {
+        const { sessions, workflows } = get();
+        const session = sessions.find(item => item.id === sessionId);
+        const workflow = session?.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
+        const currentMessage = session?.messages.find(message => message.id === messageId);
+        const currentResponse = currentMessage?.agentResponses?.find(response => response.agentId === agentId && response.nodeId === fromNodeId);
+        const nextNode = findNextAgentNode(workflow, fromNodeId);
+        if (!session || !workflow || !currentResponse || !nextNode?.data?.agentId) return;
+
+        await get().sendToWorkflowAgent(sessionId, nextNode.id, currentResponse.content.text, {
+          addUserMessage: true,
+          triggeredBy,
+          forwardFromMessageId: messageId,
+        });
+      },
+
+      rerunAgentReply: async (sessionId, nodeId, prompt) => {
+        return get().sendToWorkflowAgent(sessionId, nodeId, prompt, { addUserMessage: false, triggeredBy: 'reload' });
+      },
+
+      rerunAndForwardAgentReply: async (sessionId, nodeId, prompt) => {
+        const { sessions, workflows, agents } = get();
+        const session = sessions.find(item => item.id === sessionId);
+        const workflow = session?.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
+        const node = getAgentNode(workflow, nodeId);
+        const agent = agents.find(item => item.id === node?.data?.agentId);
+        if (!agent) return;
+
+        const messageId = await get().rerunAgentReply(sessionId, nodeId, prompt);
+        if (messageId) {
+          await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, agent.id, 'reload');
+        }
+      },
 
       getActiveSession: () => {
         const { sessions, activeSessionId } = get();
@@ -651,7 +1159,9 @@ export const useAppStore = create<AppState>()(
         try {
             const wfToSave = {...newWorkflow, nodes_data: "[]", edges_data: "[]"};
             await invoke('add_workflow', { workflow: wfToSave });
-            set((state) => ({ workflows: [...state.workflows, newWorkflow], activeWorkflowId: newWorkflow.id }));
+            const nextWorkflows = [...get().workflows, newWorkflow];
+            set({ workflows: nextWorkflows, activeWorkflowId: newWorkflow.id });
+            await writeConfig('workflow.json', nextWorkflows);
         } catch (error) {
             console.error("Failed to create workflow:", error);
         }
@@ -676,7 +1186,8 @@ export const useAppStore = create<AppState>()(
                      itemAlias: n.data?.itemAlias,
                      indexAlias: n.data?.indexAlias,
                      maxIterations: n.data?.maxIterations,
-                     breakCondition: n.data?.breakCondition
+                     breakCondition: n.data?.breakCondition,
+                     autoSendToNext: n.data?.autoSendToNext
                    }
                  }));
                  const cleanEdges = edges.map((e: any) => ({
@@ -697,6 +1208,7 @@ export const useAppStore = create<AppState>()(
                         }
                         return w;
                     });
+                    void writeConfig('workflow.json', wfs);
                     return { workflows: wfs };
                  });
              }
@@ -705,14 +1217,220 @@ export const useAppStore = create<AppState>()(
          }
       },
 
+      deleteWorkflow: async (id) => {
+        try {
+          await invoke('delete_workflow', { id });
+          const linkedSessions = get().sessions.filter(session => session.workflowId === id);
+          await Promise.all(linkedSessions.map(session => invoke('delete_chat_session', { id: session.id })));
+        } catch (error) {
+          console.error('Failed to delete workflow:', error);
+        }
+
+        set((state) => {
+          const workflows = state.workflows.filter(workflow => workflow.id !== id);
+          const sessions = state.sessions.filter(session => session.workflowId !== id);
+          const activeWorkflowId = state.activeWorkflowId === id ? workflows[0]?.id || null : state.activeWorkflowId;
+          const activeSessionId = state.sessions.find(session => session.id === state.activeSessionId)?.workflowId === id
+            ? sessions[0]?.id || null
+            : state.activeSessionId;
+          void writeConfig('workflow.json', workflows);
+          return {
+            workflows,
+            sessions,
+            activeWorkflowId,
+            activeSessionId,
+          };
+        });
+      },
+
       setActiveWorkflow: (id) => set({ activeWorkflowId: id }),
       setActiveAgent: (id) => set({ activeAgentId: id }),
 
       toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
 
+      setWorkflowSidebarCollapsed: (sessionId, collapsed) => set((state) => ({
+        workflowChatUI: {
+          ...state.workflowChatUI,
+          sidebarCollapsedBySession: {
+            ...state.workflowChatUI.sidebarCollapsedBySession,
+            [sessionId]: collapsed,
+          },
+        },
+      })),
+
+      openWorkflowAgentWindow: (sessionId, workflowId, nodeId, agentId) => set((state) => {
+        const existingWindow = state.workflowChatUI.windows.find(window => window.sessionId === sessionId && window.nodeId === nodeId);
+        const nextZIndex = state.workflowChatUI.zIndexCounter + 1;
+
+        if (existingWindow) {
+          return {
+            workflowChatUI: {
+              ...state.workflowChatUI,
+              windows: state.workflowChatUI.windows.map(window => window.id === existingWindow.id ? { ...window, zIndex: nextZIndex, minimized: false } : window),
+              activeWindowId: existingWindow.id,
+              zIndexCounter: nextZIndex,
+            },
+          };
+        }
+
+        const sessionWindows = state.workflowChatUI.windows.filter(window => window.sessionId === sessionId);
+        const newWindow: WorkflowConversationWindow = {
+          id: uuidv4(),
+          sessionId,
+          workflowId,
+          nodeId,
+          agentId,
+          position: {
+            x: 48 + (sessionWindows.length % 4) * 36,
+            y: 48 + (sessionWindows.length % 4) * 28,
+          },
+          zIndex: nextZIndex,
+          minimized: false,
+        };
+
+        return {
+          workflowChatUI: {
+            ...state.workflowChatUI,
+            windows: [...state.workflowChatUI.windows, newWindow],
+            activeWindowId: newWindow.id,
+            zIndexCounter: nextZIndex,
+          },
+        };
+      }),
+
+      focusWorkflowAgentWindow: (windowId) => set((state) => {
+        const nextZIndex = state.workflowChatUI.zIndexCounter + 1;
+        return {
+          workflowChatUI: {
+            ...state.workflowChatUI,
+            windows: state.workflowChatUI.windows.map(window => window.id === windowId ? { ...window, zIndex: nextZIndex } : window),
+            activeWindowId: windowId,
+            zIndexCounter: nextZIndex,
+          },
+        };
+      }),
+
+      closeWorkflowAgentWindow: (windowId) => set((state) => ({
+        workflowChatUI: {
+          ...state.workflowChatUI,
+          windows: state.workflowChatUI.windows.filter(window => window.id !== windowId),
+          activeWindowId: state.workflowChatUI.activeWindowId === windowId ? null : state.workflowChatUI.activeWindowId,
+        },
+      })),
+
+      toggleWorkflowAgentWindowMinimized: (windowId) => set((state) => ({
+        workflowChatUI: {
+          ...state.workflowChatUI,
+          windows: state.workflowChatUI.windows.map(window => window.id === windowId ? { ...window, minimized: !window.minimized } : window),
+        },
+      })),
+
+      // Agent Chat Windows (single sessions)
+      openAgentChatWindow: (sessionId, agentId) => set((state) => {
+        const existingWindow = state.workflowChatUI.agentChatWindows.find(
+          window => window.sessionId === sessionId && window.agentId === agentId
+        );
+        const nextZIndex = state.workflowChatUI.zIndexCounter + 1;
+
+        if (existingWindow) {
+          return {
+            workflowChatUI: {
+              ...state.workflowChatUI,
+              agentChatWindows: state.workflowChatUI.agentChatWindows.map(window =>
+                window.id === existingWindow.id ? { ...window, zIndex: nextZIndex, minimized: false } : window
+              ),
+              activeWindowId: existingWindow.id,
+              zIndexCounter: nextZIndex,
+            },
+          };
+        }
+
+        const sessionWindows = state.workflowChatUI.agentChatWindows.filter(
+          window => window.sessionId === sessionId
+        );
+        const newWindow: AgentChatWindowData = {
+          id: uuidv4(),
+          sessionId,
+          agentId,
+          position: {
+            x: 48 + (sessionWindows.length % 4) * 36,
+            y: 48 + (sessionWindows.length % 4) * 28,
+          },
+          zIndex: nextZIndex,
+          minimized: false,
+        };
+
+        return {
+          workflowChatUI: {
+            ...state.workflowChatUI,
+            agentChatWindows: [...state.workflowChatUI.agentChatWindows, newWindow],
+            activeWindowId: newWindow.id,
+            zIndexCounter: nextZIndex,
+          },
+        };
+      }),
+
+      focusAgentChatWindow: (windowId) => set((state) => {
+        const nextZIndex = state.workflowChatUI.zIndexCounter + 1;
+        return {
+          workflowChatUI: {
+            ...state.workflowChatUI,
+            agentChatWindows: state.workflowChatUI.agentChatWindows.map(window =>
+              window.id === windowId ? { ...window, zIndex: nextZIndex } : window
+            ),
+            activeWindowId: windowId,
+            zIndexCounter: nextZIndex,
+          },
+        };
+      }),
+
+      closeAgentChatWindow: (windowId) => set((state) => ({
+        workflowChatUI: {
+          ...state.workflowChatUI,
+          agentChatWindows: state.workflowChatUI.agentChatWindows.filter(
+            window => window.id !== windowId
+          ),
+          activeWindowId: state.workflowChatUI.activeWindowId === windowId
+            ? null
+            : state.workflowChatUI.activeWindowId,
+        },
+      })),
+
+      toggleAgentChatWindowMinimized: (windowId) => set((state) => ({
+        workflowChatUI: {
+          ...state.workflowChatUI,
+          agentChatWindows: state.workflowChatUI.agentChatWindows.map(window =>
+            window.id === windowId ? { ...window, minimized: !window.minimized } : window
+          ),
+        },
+      })),
+
+      sendToAgent: async (sessionId, agentId, prompt, options = {}) => {
+        const { agents } = get();
+        const agent = agents.find(a => a.id === agentId);
+        if (!agent) return undefined;
+
+        if (options.addUserMessage !== false) {
+          get().addUserMessage(sessionId, prompt, [], { targetAgentId: agentId });
+        }
+
+        const messageId = uuidv4();
+        await runAgentResponse({
+          sessionId,
+          messageId,
+          agent,
+          prompt,
+          addAgentResponseStream: get().addAgentResponseStream,
+          completeAgentResponse: get().completeAgentResponse,
+          getSettings: () => get().settings,
+        });
+
+        return messageId;
+      },
+
       linkWorkflowToSession: (sessionId, workflowId) => set((state) => ({
         sessions: state.sessions.map(s =>
-          s.id === sessionId ? { ...s, workflowId } : s
+          s.id === sessionId ? { ...s, workflowId, mode: 'workflow' } : s
         )
       })),
 
@@ -963,8 +1681,10 @@ export const useAppStore = create<AppState>()(
          return workflows.find(w => w.id === activeWorkflowId);
       },
 
-      updateSettings: (updates) => set((state) => ({
-        settings: { ...state.settings, ...updates }
-      }))
+      updateSettings: (updates) => set((state) => {
+        const settings = { ...state.settings, ...updates };
+        void writeConfig('model.json', settings);
+        return { settings };
+      })
     })
 );
