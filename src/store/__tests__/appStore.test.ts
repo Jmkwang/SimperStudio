@@ -20,7 +20,7 @@ beforeEach(() => {
 
 describe('addAgentResponseStream', () => {
   it('should create assistant message on first chunk', () => {
-    const { addAgentResponseStream, sessions } = useAppStore.getState();
+    const { addAgentResponseStream } = useAppStore.getState();
     addAgentResponseStream('test-session', 'msg-1', 'agent-1', 'Hello');
 
     const updated = useAppStore.getState().sessions.find(s => s.id === 'test-session')!;
