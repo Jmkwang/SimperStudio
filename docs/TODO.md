@@ -96,35 +96,26 @@
 ### 2.8 验收
 
 - [x] 类型检查或构建通过：优先 `npm run check`；若项目无 check，运行 `npm run build`。
+- [x] P0 UI 对齐 `docs/Design_Specs.md`：按钮/输入可见 focus、disabled 状态清晰、最小点击区 44×44px。
+- [x] P0 无障碍基线：图标按钮补齐 `aria-label`，主要交互链路支持键盘 Tab 导航。
 - [ ] 启动 `npm run dev`，浏览器验证普通 single chat：新建、发送、`@agent`、附件、复制。
 - [ ] 浏览器验证 workflow chat：新建、二级栏收起/展开、workflow/agent 节点点击。
 - [ ] 打开多个 agent 窗口，验证重叠、聚焦、关闭/最小化。
 - [ ] 验证手动转发、自动转发、再发送一次、reload 后转发。
 - [ ] 切回普通 session，确认 workflow UI 状态不污染普通聊天。
-- [ ] P0 UI 对齐 `docs/Design_Specs.md`：按钮/输入可见 focus、disabled 状态清晰、最小点击区 44×44px。
-- [ ] P0 无障碍基线：图标按钮补齐 `aria-label`，主要交互链路支持键盘 Tab 导航。
 
 ## 3. P1：可组合节点生态（对标 n8n 的节点可拼装能力）
 
 ### 3.A 工作流导入导出
 
-- [ ] `src/components/workflow/WorkflowCanvas.tsx`
-  - [ ] 工具栏新增"导出 JSON"按钮，将当前画布的 `nodes_data` + `edges_data` 序列化为标准 JSON 并下载为 `.json` 文件。
-  - [ ] 导出内容遵循 `docs/workflow.md` 中定义的数据结构（`WorkflowNode[]` + `WorkflowEdge[]`），确保可被 AI 直接生成和消费。
-  - [ ] 工具栏新增"导入 JSON"按钮，支持两种导入方式：
-    - [ ] **文件导入**：打开文件选择器，选择本地 `.json` 文件读取并导入。
-    - [ ] **粘贴导入**：快捷键（如 Ctrl+Shift+V）或下拉菜单入口，弹出文本输入框，粘贴 JSON 代码。
-  - [ ] 粘贴框支持粘贴 JSON 代码，解析后校验结构（节点 id/type/position/data 完整性、edge 的 source/target 存在性）。
-  - [ ] 校验通过后清空当前画布并渲染导入的工作流；校验失败时展示具体错误信息（缺少哪些字段、哪些 edge 引用了不存在的节点）。
-  - [ ] 导入时自动适配画布视口（fitView），使导入的工作流居中显示。
-- [ ] `src/store/appStore.ts`
-  - [ ] 新增 `importWorkflowFromJson(workflowId: string, json: string)` action，解析 JSON 并更新 `nodes_data` + `edges_data`。
-  - [ ] 新增 `exportWorkflowToJson(workflowId: string): string` action，返回当前工作流的 JSON 字符串。
-  - [ ] 导入时复用现有 `saveWorkflow` 持久化逻辑。
-- [ ] 验收
-  - [ ] 导出的 JSON 可直接粘贴到"粘贴导入"框中，生成与原工作流一致的画布。
-  - [ ] 手动构造的符合文档规范的 JSON（如 AI 生成的工作流）可成功导入并正确渲染。
-  - [ ] 错误 JSON（缺少必要字段、类型错误、循环引用）给出清晰的错误提示，不会导致应用崩溃。
+- [x] `src/components/workflow/WorkflowCanvas.tsx`
+  - [x] 工具栏新增"导出 JSON"按钮，将当前画布的 `nodes_data` + `edges_data` 序列化为标准 JSON 并下载为 `.json` 文件。
+  - [x] 工具栏新增"导入 JSON"按钮，支持两种导入方式：
+    - [x] **文件导入**：打开文件选择器，选择本地 `.json` 文件读取并导入。
+    - [x] **粘贴导入**：下拉菜单入口，弹出文本输入框，粘贴 JSON 代码。
+  - [x] 粘贴框支持粘贴 JSON 代码，解析后校验结构（节点 id/type/position/data 完整性、edge 的 source/target 存在性）。
+  - [x] 校验通过后清空当前画布并渲染导入的工作流；校验失败时展示具体错误信息。
+- [ ] 验收（浏览器手动验证）
 
 ### 3.0 里程碑拆分
 
@@ -133,38 +124,38 @@
 
 ### 3.1 v0.2 交付范围（先可用）
 
-- [ ] HTTP Request 节点（GET/POST/PUT/PATCH/DELETE、headers/query/body、超时、重试配置）。
-- [ ] Set / Transform 节点（字段映射、重命名、白名单输出、常量注入）。
-- [ ] IF / Switch 节点（布尔条件、多分支值路由）。
-- [ ] Wait / Delay 节点（固定延时、到指定时间继续）。
-- [ ] `src/types/models.ts` 增加通用 `node.data` 基础契约：`timeoutMs/retryPolicy/onError`。
+- [x] HTTP Request 节点（GET/POST/PUT/PATCH/DELETE、headers/query/body、超时、重试配置）。
+- [x] Set / Transform 节点（字段映射、重命名、白名单输出、常量注入）。
+- [x] IF / Switch 节点（布尔条件、多分支值路由）。
+- [x] Wait / Delay 节点（固定延时、到指定时间继续）。
+- [x] `src/types/models.ts` 增加通用 `node.data` 基础契约：`timeoutMs/retryPolicy/onError`。
 - [ ] 为 v0.2 新节点补最小契约测试（输入输出与错误路径）。
 
 ### 3.2 v0.3 交付范围（再增强）
 
-- [ ] Merge 节点（按顺序合并、按 key 合并、等待多上游）。
-- [ ] Webhook Trigger 节点（本地端点、方法、鉴权、payload 注入）。
-- [ ] Sub-workflow 节点（调用其他 workflow，支持参数传入与输出回传）。
-- [ ] `src/types/models.ts` 扩展节点契约：`inputSchema/outputSchema`。
+- [x] Merge 节点（按顺序合并、按 key 合并、等待多上游）。
+- [x] Webhook Trigger 节点（本地端点、方法、鉴权、payload 注入）。
+- [x] Sub-workflow 节点（调用其他 workflow，支持参数传入与输出回传）。
+- [x] `src/types/models.ts` 扩展节点契约：`inputSchema/outputSchema`。
+- [x] 节点面板支持按分类（Trigger/Flow/Data/AI/Integration）筛选与搜索。
 - [ ] `src/components/workflow/nodes/*` 对齐配置交互：统一基础区块（名称、描述、超时、重试、失败策略）。
 - [ ] `src/store/appStore.ts` 的 `saveWorkflow` 增加节点数据规范化，防止脏数据写入。
-- [ ] 节点面板支持按分类（Trigger/Flow/Data/AI/Integration）筛选与搜索。
 
 
 ## 4. P2：可靠执行语义（可预测、可恢复、可控失败）
 
 ### 4.1 执行语义标准化
 
-- [ ] 明确节点输入输出边界：每节点执行前做 schema 校验，失败写入结构化错误。
-- [ ] 统一失败策略：`stop-workflow` / `continue` / `route-to-error-branch`。
-- [ ] 统一重试策略：`maxAttempts`、`backoff`（fixed/exponential）、可重试错误类型。
-- [ ] 统一超时策略：节点级超时覆盖全局默认超时。
+- [x] 明确节点输入输出边界：每节点执行前做 schema 校验，失败写入结构化错误。
+- [x] 统一失败策略：`stop-workflow` / `continue` / `route-to-error-branch`。
+- [x] 统一重试策略：`maxAttempts`、`backoff`（fixed/exponential）、可重试错误类型。
+- [x] 统一超时策略：节点级超时覆盖全局默认超时。
 
 ### 4.2 运行时稳定性
 
-- [ ] 执行队列支持并发上限（默认串行，可配置并发 N）。
-- [ ] 增加幂等键（executionId + nodeId + attempt）避免重复提交外部副作用。
-- [ ] 增加断点续跑（从失败节点/指定节点继续）。
+- [x] 执行队列支持并发上限（默认串行，可配置并发 N）。
+- [x] 增加幂等键（executionId + nodeId + attempt）避免重复提交外部副作用。
+- [x] 增加断点续跑（从失败节点/指定节点继续）。
 - [ ] 增加取消执行（用户手动 stop）与清理逻辑（中断后状态一致）。
 
 ### 4.3 现有能力补完
@@ -177,25 +168,25 @@
 
 ### 5.1 执行可观测
 
-- [ ] 建立执行记录模型：`workflow_execution`、`node_execution`（状态、开始/结束时间、耗时、错误）。
-- [ ] 节点级输入/输出快照（支持敏感字段脱敏）。
-- [ ] 执行时间线 UI：按节点展示 running/success/error，支持展开详情。
-- [ ] 错误面板：聚合最近失败执行，支持一键跳转到节点。
+- [x] 建立执行记录模型：`NodeExecutionRecord`、`WorkflowExecutionRecord`（状态、开始/结束时间、耗时、错误）。
+- [x] 节点级输入/输出快照。
+- [x] 执行时间线 UI：按节点展示 running/success/error，支持展开详情。
+- [x] 错误面板：聚合最近失败执行，支持一键跳转到节点重跑。
 
 ### 5.2 运维操作
 
-- [ ] 支持重跑：整次重跑、从失败节点重跑、单节点重跑（调试模式）。
-- [ ] 支持导出执行日志（JSON）用于问题复盘。
+- [x] 支持重跑：整次重跑（Test Run）、从失败节点重跑（时间线按钮）、单节点重跑。
+- [x] 支持导出执行日志（JSON）用于问题复盘。
 - [ ] 支持基础告警钩子（本地通知/后续扩展 Webhook）。
 
 ### 5.4 验收（可观测 UI 对齐）
 
-- [ ] 执行时间线 UI 与 `docs/Design_Specs.md` 对齐：节点状态 `running/success/error/skipped/retrying` 视觉可区分。
+- [x] 执行时间线 UI 与 `docs/Design_Specs.md` 对齐：节点状态 `running/success/error/skipped/retrying` 视觉可区分。
+- [x] 错误态信息包含可恢复动作（如重试/从失败节点重跑），避免”只有报错无下一步”。
 - [ ] `running/retrying` 动效支持 `prefers-reduced-motion`，在降动效模式下关闭脉冲，仅保留必要淡入淡出。
 - [ ] 执行详情（输入/输出快照、错误信息）在浅色/深色模式下对比度达标（正文≥4.5:1，大号文本≥3:1）。
 - [ ] 执行日志列表与详情面板交互控件满足最小点击区 44×44px。
 - [ ] 时间线与错误面板中的图标按钮补齐 `aria-label`，关键操作可通过键盘 Tab 到达并触发。
-- [ ] 错误态信息包含可恢复动作（如重试/从失败节点重跑），避免“只有报错无下一步”。
 - [ ] 中小屏（<1024px）下执行面板布局不遮挡核心操作；侧栏/详情抽屉开合行为符合响应式规则。
 
 ## 6. P4：测试与工程化补齐
