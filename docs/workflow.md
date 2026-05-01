@@ -61,7 +61,18 @@ The payload is a plain JavaScript object that travels through the entire workflo
 
 ## Node Types Reference
 
-There are **6 node types** in the system. Each has a unique type identifier, visual style, and runtime behavior.
+There are **13 node types** in the system. Each has a unique type identifier, visual style, and runtime behavior.
+
+Nodes are organized into 5 categories:
+
+| Category | Node Types |
+|----------|-----------|
+| **Trigger** | trigger, webhook |
+| **Flow Control** | condition, switch, loop, wait, merge |
+| **Data** | code, set |
+| **AI** | agent |
+| **Integration** | http, subworkflow |
+| **Output** | output |
 
 ---
 
@@ -517,6 +528,185 @@ A workflow can have multiple output nodes. Each captures the payload at its poin
 
 ---
 
+### 7. HTTP Request Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `http` |
+| Color | Cyan |
+| Icon | Globe |
+| Target Handle | 1 (left) |
+| Source Handle | 1 (right) |
+
+Sends HTTP requests to external APIs. Supports GET/POST/PUT/PATCH/DELETE. Response data injected into `payload.httpData`, status into `payload.httpStatus`.
+
+**Data fields:** `method`, `url` (supports `{{expression}}`), `headers`, `body`, `timeoutMs`
+
+---
+
+### 8. Set / Transform Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `set` |
+| Color | Teal |
+| Icon | Shuffle |
+| Target Handle | 1 (left) |
+| Source Handle | 1 (right) |
+
+Field mapping, renaming, constant injection, and whitelist filtering. Pure data transformation without code execution.
+
+**Data fields:** `mappings` (sourcePath→targetPath), `constants` (JSON), `whitelist` (comma-separated paths)
+
+---
+
+### 9. IF / Switch Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `switch` |
+| Color | Amber |
+| Icon | GitBranch |
+| Target Handle | 1 (left) |
+| Source Handle | Dynamic (one per branch) |
+
+Evaluates multiple conditions and routes payload to the **first matching** branch. Similar to Condition but uses `branches` instead of `routes`.
+
+**Data fields:** `branches` (id, label, condition)
+
+---
+
+### 10. Wait / Delay Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `wait` |
+| Color | Violet |
+| Icon | Timer |
+| Target Handle | 1 (left) |
+| Source Handle | 1 (right) |
+
+Pauses workflow execution. Supports fixed delay or wait-until-condition mode.
+
+**Data fields:** `waitMode` (fixed/until), `delayMs`, `untilExpression`, `timeoutMs`
+
+---
+
+### 11. Merge Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `merge` |
+| Color | Pink |
+| Icon | Merge |
+| Target Handle | 2 (input-1, input-2) |
+| Source Handle | 1 (right) |
+
+Merges multiple upstream branches into one. Supports append, byKey, and waitForAll strategies.
+
+**Data fields:** `strategy` (append/byKey/waitForAll), `mergeKey`
+
+---
+
+### 12. Webhook Trigger Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `webhook` |
+| Color | Lime |
+| Icon | Webhook |
+| Target Handle | None |
+| Source Handle | 1 (right) |
+
+Triggers workflow via HTTP endpoint. External systems can start workflow execution with POST requests.
+
+**Data fields:** `method`, `path`, `authToken`
+
+---
+
+### 13. Sub-workflow Node
+
+| Property | Value |
+|----------|-------|
+| Type ID | `subworkflow` |
+| Color | Indigo |
+| Icon | Workflow |
+| Target Handle | 1 (left) |
+| Source Handle | 1 (right) |
+
+Calls another workflow with parameter passing and result return. Enables workflow modularization and reuse.
+
+**Data fields:** `subWorkflowId`, `inputMapping`
+
+---
+
+## Node Contracts (Common Fields)
+
+All node types share these common configuration fields:
+
+```typescript
+interface WorkflowNodeDataBase {
+  label?: string;           // Display name
+  description?: string;     // Node description
+  timeoutMs?: number;       // Per-node timeout (overrides default)
+  retryPolicy?: {           // Retry strategy
+    maxAttempts?: number;   //   Max attempts, default 1
+    backoff?: 'fixed' | 'exponential'; //   Backoff strategy
+    delayMs?: number;       //   Retry delay (ms)
+  };
+  onError?: 'stop' | 'continue' | 'route-to-error'; // Failure strategy
+  inputSchema?: string;     // Input JSON Schema
+  outputSchema?: string;    // Output JSON Schema
+}
+```
+
+### Failure Strategy (onError)
+
+| Strategy | Behavior |
+|----------|----------|
+| `stop` (default) | Stop workflow execution, set `status: 'error'` |
+| `continue` | Log error but continue executing downstream nodes |
+| `route-to-error` | Route to error branch (if exists) |
+
+---
+
+## Execution Records
+
+The engine tracks per-node execution state:
+
+```typescript
+interface NodeExecutionRecord {
+  nodeId: string;
+  status: 'pending' | 'running' | 'success' | 'error' | 'skipped' | 'retrying';
+  startTime?: number;
+  endTime?: number;
+  durationMs?: number;
+  attempts: number;
+  error?: string;
+  input?: unknown;
+  output?: unknown;
+}
+```
+
+### Cancel Execution
+
+Users can manually cancel during execution. The engine stops processing remaining nodes in the queue and resets status to `idle`.
+
+### Resume from Failure
+
+Supports starting from a specific node (`startNodeId` option), skipping upstream nodes. Useful for rerunning from failed nodes.
+
+---
+
+## Import/Export
+
+Workflows support JSON format import and export:
+
+- **Export:** Serialize current canvas `nodes_data` + `edges_data` to JSON file download.
+- **Import:** Support file picker or paste JSON code import. Validates node id/type/position/data integrity and edge source/target existence.
+
+---
+
 ## Edge and Connection Rules
 
 ### Edge Data Structure
@@ -536,27 +726,21 @@ interface WorkflowEdge {
 
 ### Connection Rules
 
-| From Node | To Node | Valid? | Notes |
-|-----------|---------|--------|-------|
-| trigger | code | Yes | |
-| trigger | agent | Yes | |
-| trigger | condition | Yes | |
-| trigger | loop | Yes | |
-| trigger | output | Yes | Rare, but valid |
-| code | code | Yes | Chain transformations |
-| code | agent | Yes | Prepare data for agent |
-| code | condition | Yes | Route based on computed state |
-| code | loop | Yes | Set up loop data |
-| code | output | Yes | Capture result |
-| agent | code | Yes | Process agent output |
-| agent | agent | Yes | Agent chaining |
-| agent | condition | Yes | Route based on agent output |
-| agent | output | Yes | Capture agent result |
-| condition | * | Yes | Via sourceHandle matching route id |
-| loop | code | Yes | Process each iteration |
-| loop | agent | Yes | Agent per iteration |
-| loop | output | Yes | Capture loop results |
-| output | * | No | Output has no source handle |
+| From \ To | code | agent | condition | switch | loop | wait | merge | http | set | subworkflow | output |
+|-----------|------|-------|-----------|--------|------|------|-------|------|-----|-------------|--------|
+| **trigger** | Yes | Yes | Yes | Yes | Yes | Yes | — | Yes | Yes | Yes | Yes |
+| **webhook** | Yes | Yes | Yes | Yes | Yes | Yes | — | Yes | Yes | Yes | Yes |
+| **code** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| **agent** | Yes | Yes | Yes | Yes | — | Yes | Yes | Yes | Yes | Yes | Yes |
+| **condition** | Via sourceHandle matching route id to any node |
+| **switch** | Via sourceHandle matching branch id to any node |
+| **loop** | Yes | Yes | — | — | — | Yes | Yes | Yes | Yes | Yes | Yes |
+| **wait** | Yes | Yes | Yes | Yes | Yes | — | Yes | Yes | Yes | Yes | Yes |
+| **merge** | Yes | Yes | Yes | Yes | Yes | Yes | — | Yes | Yes | Yes | Yes |
+| **http** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | — | Yes | Yes | Yes |
+| **set** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | — | Yes | Yes |
+| **subworkflow** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | — | Yes |
+| **output** | No | Output has no source handle |
 
 ### Multiple Inputs
 
@@ -601,6 +785,7 @@ The engine tracks execution state:
   status: 'idle' | 'running' | 'completed' | 'error';
   currentNodeId: string | null;  // Currently executing node
   results: Record<string, any>;  // Payload snapshot per node
+  nodeRecords: Record<string, NodeExecutionRecord>; // Per-node execution records
 }
 ```
 
@@ -611,8 +796,12 @@ The engine tracks execution state:
 | Code node execution | 10 seconds |
 | Condition evaluation (per route) | 2 seconds |
 | Loop break condition evaluation | 2 seconds |
+| HTTP request default | 30 seconds |
+| Wait until mode max | 60 seconds |
 | Agent node (real LLM) | Depends on model |
 | Inter-node delay | 400ms (visual pacing) |
+
+**Note:** All nodes support per-node timeout via `timeoutMs` field, which overrides the default.
 
 ---
 
@@ -625,10 +814,14 @@ These properties have special meaning in the system:
 | Property | Set By | Description |
 |----------|--------|-------------|
 | `payload.llmResult` | Agent node | The structured output from the last agent execution |
-| `payload._error` | Code/Loop | Error message if node execution failed |
+| `payload._error` | Any node | Error message if node execution failed |
 | `payload.loop` | Loop node | `{ currentItem, index, total }` during loop iterations |
 | `payload[itemAlias]` | Loop node | The current loop item (name depends on `itemAlias` config) |
 | `payload[indexAlias]` | Loop node | The current loop index (name depends on `indexAlias` config) |
+| `payload.httpStatus` | HTTP node | HTTP response status code |
+| `payload.httpData` | HTTP node | HTTP response data |
+| `payload.output` | Set/HTTP node | Node output data |
+| `payload.merged` | Merge node | Merged result |
 
 ### Custom Properties
 
@@ -682,7 +875,7 @@ Before creating nodes, plan:
 Each node needs:
 
 - `id` — a unique string identifier (use descriptive names like `"init-state"`, `"wolf-decision"`)
-- `type` — one of: `"trigger"`, `"code"`, `"agent"`, `"condition"`, `"loop"`, `"output"`
+- `type` — one of: `"trigger"`, `"webhook"`, `"code"`, `"agent"`, `"condition"`, `"switch"`, `"loop"`, `"wait"`, `"merge"`, `"http"`, `"set"`, `"subworkflow"`, `"output"`
 - `position` — `{ x: number, y: number }` for layout (x increases left-to-right, y increases top-to-bottom)
 - `data` — node-specific configuration (see each node type above)
 
@@ -903,7 +1096,8 @@ A workflow that cycles through phases until a win condition is met.
 ### WorkflowNode
 
 ```typescript
-type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output';
+type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output'
+  | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
 
 interface WorkflowNode {
   id: string;
@@ -912,14 +1106,32 @@ interface WorkflowNode {
   data: WorkflowNodeData;
 }
 
-type WorkflowNodeData = {
+interface NodeRetryPolicy {
+  maxAttempts?: number;
+  backoff?: 'fixed' | 'exponential';
+  delayMs?: number;
+}
+
+interface WorkflowNodeDataBase {
   label?: string;
   description?: string;
+  timeoutMs?: number;
+  retryPolicy?: NodeRetryPolicy;
+  onError?: 'stop' | 'continue' | 'route-to-error';
+  inputSchema?: string;
+  outputSchema?: string;
+}
+
+type WorkflowNodeData = WorkflowNodeDataBase & {
+  // Agent node
   agentId?: string;
   prompt?: string;
   autoSendToNext?: boolean;
+  schema?: string;
   // Condition node
   routes?: Array<{ id: string; condition: string }>;
+  // Switch node
+  branches?: Array<{ id: string; label?: string; condition: string }>;
   // Code node
   code?: string;
   // Loop node
@@ -928,8 +1140,28 @@ type WorkflowNodeData = {
   indexAlias?: string;
   maxIterations?: number;
   breakCondition?: string;
-  // Agent node
-  schema?: string;
+  // HTTP node
+  method?: string;
+  url?: string;
+  headers?: string;
+  body?: string;
+  // Set node
+  mappings?: Array<{ sourcePath: string; targetPath: string }>;
+  constants?: string;
+  whitelist?: string;
+  // Wait node
+  waitMode?: 'fixed' | 'until';
+  delayMs?: number;
+  untilExpression?: string;
+  // Merge node
+  strategy?: 'append' | 'byKey' | 'waitForAll';
+  mergeKey?: string;
+  // Webhook node
+  path?: string;
+  authToken?: string;
+  // Sub-workflow node
+  subWorkflowId?: string;
+  inputMapping?: string;
   // Open-ended for custom properties
   [key: string]: unknown;
 };
@@ -957,36 +1189,47 @@ interface WorkflowEdge {
 | Constraint | Value |
 |-----------|-------|
 | Maximum workflow steps per execution | 1000 |
-| Code node timeout | 10 seconds |
+| Code node timeout | 10 seconds (overridable via `timeoutMs`) |
 | Condition evaluation timeout (per route) | 2 seconds |
 | Loop break condition timeout | 2 seconds |
+| HTTP request default timeout | 30 seconds |
+| Wait until mode max wait | 60 seconds |
 | Default max loop iterations | 20 |
-| Loop max iterations cap | Configurable per node |
 | Trigger nodes per workflow | Exactly 1 |
 | Minimum output nodes | At least 1 recommended |
 | Inter-node visual delay | 400ms |
-| Edge sourceHandle for condition | Must match route `id` exactly |
-| Output node input connections | Limited to 1 |
+| Edge sourceHandle for condition/switch | Must match route/branch `id` exactly |
+| Merge node target handles | 2 (input-1, input-2) |
+| Max retry attempts | Configurable via `retryPolicy.maxAttempts` |
+| Exponential backoff | `backoff: 'exponential'`, delay doubles each attempt |
 
 ---
 
 ## Quick Reference: Node Type Map
 
 ```
-trigger   → Entry point, no input, one output
-code      → JavaScript execution, one input, one output
-agent     → LLM delegation, one input, one output
-condition → Conditional routing, one input, dynamic outputs (via routes)
-loop      → Array iteration, one input, one output (executed N times)
-output    → Terminal capture, one input, no output
+trigger     → Entry point, no input, one output
+webhook     → HTTP endpoint trigger, no input, one output
+code        → JavaScript execution, one input, one output
+agent       → LLM delegation, one input, one output
+condition   → Conditional routing, one input, dynamic outputs (via routes)
+switch      → Multi-branch routing, one input, dynamic outputs (via branches)
+loop        → Array iteration, one input, one output (executed N times)
+wait        → Delay/pause, one input, one output
+merge       → Merge upstream, two inputs, one output
+http        → HTTP request, one input, one output
+set         → Data transformation, one input, one output
+subworkflow → Sub-workflow call, one input, one output
+output      → Terminal capture, one input, no output
 ```
 
 ## Quick Reference: Edge sourceHandle
 
 ```
-Normal nodes:     sourceHandle is optional (or null)
-Condition nodes:  sourceHandle MUST match a route.id
-                  → determines which branch the condition takes
+Normal nodes:       sourceHandle is optional (or null)
+Condition nodes:    sourceHandle MUST match a route.id
+Switch nodes:       sourceHandle MUST match a branch.id
+                    → determines which branch to take
 ```
 
 ## Quick Reference: Payload Lifecycle
@@ -994,15 +1237,25 @@ Condition nodes:  sourceHandle MUST match a route.id
 ```
 User Input → { custom data }
     ↓
-Trigger → payload unchanged
+Trigger/Webhook → payload unchanged
     ↓
 Code → payload modified (add/compute/filter fields)
     ↓
+Set → payload field mapping / constant injection / whitelist filter
+    ↓
+HTTP → payload.httpStatus + payload.httpData + payload.output
+    ↓
 Agent → payload.llmResult = { structured agent output }
     ↓
-Condition → payload routed to ONE branch
+Condition/Switch → payload routed to ONE branch
+    ↓
+Wait → pause for specified time or until condition met
     ↓
 Loop → payload[itemAlias] = current item, payload[indexAlias] = current index
+    ↓
+Merge → payload.merged = merged result
+    ↓
+Sub-workflow → calls child workflow, result returned to payload
     ↓
 Output → payload captured as result
 ```

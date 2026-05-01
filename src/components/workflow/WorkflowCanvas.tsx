@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -22,9 +22,21 @@ import { OutputNode } from './nodes/OutputNode';
 import { RouterNode } from './nodes/RouterNode';
 import { CodeNode } from './nodes/CodeNode';
 import { LoopNode } from './nodes/LoopNode';
+import { HttpRequestNode } from './nodes/HttpRequestNode';
+import { SetTransformNode } from './nodes/SetTransformNode';
+import { IfSwitchNode } from './nodes/IfSwitchNode';
+import { WaitDelayNode } from './nodes/WaitDelayNode';
+import { MergeNode } from './nodes/MergeNode';
+import { WebhookTriggerNode } from './nodes/WebhookTriggerNode';
+import { SubWorkflowNode } from './nodes/SubWorkflowNode';
+import { ExecutionTimeline } from './ExecutionTimeline';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Trash2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus } from 'lucide-react';
+import { Save, Trash2, Download, Upload, ClipboardPaste } from 'lucide-react';
 
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/components/theme/ThemeProvider';
@@ -55,7 +67,13 @@ const GenericNode = ({ data, id }: any) => {
   condition: RouterNode,
   code: CodeNode,
   loop: LoopNode,
-  subworkflow: GenericNode,
+  http: HttpRequestNode,
+  set: SetTransformNode,
+  switch: IfSwitchNode,
+  wait: WaitDelayNode,
+  merge: MergeNode,
+  webhook: WebhookTriggerNode,
+  subworkflow: SubWorkflowNode,
   action: GenericNode,
   transformation: GenericNode
 };
@@ -67,6 +85,10 @@ function Flow() {
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPasteDialog, setShowPasteDialog] = useState(false);
+  const [pasteJson, setPasteJson] = useState('');
+  const [pasteError, setPasteError] = useState('');
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -81,7 +103,7 @@ function Flow() {
     if (activeWorkflow) {
       setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ 
         ...n, 
-        className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 animate-pulse' : '',
+        className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 motion-safe:animate-pulse' : '',
         data: { ...n.data, deleteNode } 
       })));
       setEdges(activeWorkflow.edges_data || []);
@@ -120,6 +142,39 @@ function Flow() {
       });
     }
 
+    if (type === 'http') {
+      Object.assign(baseData, { method: 'GET', url: '', headers: '', body: '', timeoutMs: 30000 });
+    }
+
+    if (type === 'set') {
+      Object.assign(baseData, { mappings: [{ sourcePath: 'payload.llmResult', targetPath: 'output' }], constants: '', whitelist: '' });
+    }
+
+    if (type === 'switch') {
+      Object.assign(baseData, {
+        branches: [
+          { id: 'true', label: 'True', condition: 'payload.value > 0' },
+          { id: 'false', label: 'False', condition: 'true' },
+        ]
+      });
+    }
+
+    if (type === 'wait') {
+      Object.assign(baseData, { waitMode: 'fixed', delayMs: 1000, untilExpression: '' });
+    }
+
+    if (type === 'merge') {
+      Object.assign(baseData, { strategy: 'append', mergeKey: 'id' });
+    }
+
+    if (type === 'webhook') {
+      Object.assign(baseData, { webhookMethod: 'POST', webhookPath: '/webhook/' + Date.now(), authToken: '' });
+    }
+
+    if (type === 'subworkflow') {
+      Object.assign(baseData, { subWorkflowId: '', inputMapping: '' });
+    }
+
     const newNode: Node = {
       id: `${type}-${nodes.length + 1}-${Date.now()}`,
       type: type,
@@ -135,6 +190,57 @@ function Flow() {
       console.log('Workflow saved!');
       toast.success(t('Workflow saved successfully!'));
     }
+  };
+
+  const handleExport = () => {
+    const exportData = {
+      nodes: nodes.map(n => ({ id: n.id, type: n.type, position: n.position, data: { ...n.data, deleteNode: undefined } })),
+      edges,
+    };
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeWorkflow?.name || 'workflow'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t('Workflow exported'));
+  };
+
+  const validateAndImport = (json: string) => {
+    setPasteError('');
+    try {
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed.nodes)) throw new Error('Missing "nodes" array');
+      if (!Array.isArray(parsed.edges)) throw new Error('Missing "edges" array');
+      for (const node of parsed.nodes) {
+        if (!node.id || !node.type || !node.position) throw new Error(`Node missing id/type/position: ${JSON.stringify(node)}`);
+      }
+      const nodeIds = new Set(parsed.nodes.map((n: any) => n.id));
+      for (const edge of parsed.edges) {
+        if (!edge.source || !edge.target) throw new Error(`Edge missing source/target: ${JSON.stringify(edge)}`);
+        if (!nodeIds.has(edge.source)) throw new Error(`Edge references non-existent source node: ${edge.source}`);
+        if (!nodeIds.has(edge.target)) throw new Error(`Edge references non-existent target node: ${edge.target}`);
+      }
+      const importNodes = parsed.nodes.map((n: any) => ({ ...n, data: { ...n.data, deleteNode } }));
+      setNodes(importNodes);
+      setEdges(parsed.edges);
+      setShowPasteDialog(false);
+      setPasteJson('');
+      toast.success(t('Workflow imported'));
+    } catch (e: any) {
+      setPasteError(e.message);
+    }
+  };
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => validateAndImport(reader.result as string);
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   // Re-sync local state when activeWorkflow changes
@@ -161,33 +267,46 @@ function Flow() {
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
         <Controls className="bg-card border shadow-sm rounded-lg" />
         <Panel position="top-right" className="flex gap-2">
-                      <div className="w-[180px]">
-             <Select 
-               onValueChange={(val) => {
-                 if(val) {
-                   addNode(val, 'New ' + val.charAt(0).toUpperCase() + val.slice(1));
-                   // To "reset" the select, we don't control its value here directly, 
-                   // but usually users just select and want to keep selecting, or it resets when losing focus/selecting same.
-                   // As it's uncontrolled here without a value prop, it just triggers onValueChange.
-                 }
-               }}
-             >
-               <SelectTrigger className="h-9 bg-secondary text-secondary-foreground border shadow-sm">
-                 <SelectValue placeholder={t("+ Add Node...")} />
-               </SelectTrigger>
-               <SelectContent>
-                 <SelectItem value="trigger">{t("Trigger Node")}</SelectItem>
-                 <SelectItem value="agent">{t("Agent Node")}</SelectItem>
-                 <SelectItem value="condition">{t("Router/Condition Node")}</SelectItem>
-                 <SelectItem value="code">{t("Code Execution Node")}</SelectItem>
-                 <SelectItem value="loop">{t("Loop Node")}</SelectItem>
-                 <SelectItem value="subworkflow">{t("SubWorkflow Node")}</SelectItem>
-                 <SelectItem value="action">{t("Action Node")}</SelectItem>
-                 <SelectItem value="transformation">{t("Data Transformation Node")}</SelectItem>
-                 <SelectItem value="output">{t("Output Node")}</SelectItem>
-               </SelectContent>
-             </Select>
-           </div>
+           <Popover>
+             <PopoverTrigger asChild>
+               <Button variant="secondary" size="sm" className="h-9 shadow-sm border">
+                 <Plus className="h-4 w-4 mr-1" /> {t("Add Node")}
+               </Button>
+             </PopoverTrigger>
+             <PopoverContent className="w-[260px] p-0" align="end">
+               <Command>
+                 <CommandInput placeholder={t("Search nodes...")} />
+                 <CommandList>
+                   <CommandEmpty>{t("No node found.")}</CommandEmpty>
+                   <CommandGroup heading={t("Trigger")}>
+                     <CommandItem onSelect={() => addNode('trigger', 'Trigger')}>{t("Trigger")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('webhook', 'Webhook Trigger')}>{t("Webhook Trigger")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Flow Control")}>
+                     <CommandItem onSelect={() => addNode('switch', 'IF / Switch')}>{t("IF / Switch")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('condition', 'Router')}>{t("Router / Condition")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('loop', 'Loop')}>{t("Loop")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('merge', 'Merge')}>{t("Merge")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('wait', 'Wait / Delay')}>{t("Wait / Delay")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Data")}>
+                     <CommandItem onSelect={() => addNode('http', 'HTTP Request')}>{t("HTTP Request")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('set', 'Set / Transform')}>{t("Set / Transform")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('code', 'Code Execution')}>{t("Code Execution")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("AI")}>
+                     <CommandItem onSelect={() => addNode('agent', 'Agent')}>{t("Agent")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Integration")}>
+                     <CommandItem onSelect={() => addNode('subworkflow', 'Sub-workflow')}>{t("Sub-workflow")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Output")}>
+                     <CommandItem onSelect={() => addNode('output', 'Output')}>{t("Output")}</CommandItem>
+                   </CommandGroup>
+                 </CommandList>
+               </Command>
+             </PopoverContent>
+           </Popover>
            <Button
              variant="outline"
              onClick={() => {
@@ -216,52 +335,39 @@ function Flow() {
            <Button onClick={handleSave} size="sm" className="shadow-sm">
              <Save className="h-4 w-4 mr-2" /> {t("Save Workflow")}
            </Button>
+           <Button onClick={handleExport} variant="outline" size="sm" className="shadow-sm">
+             <Download className="h-4 w-4 mr-1" /> {t("Export")}
+           </Button>
+           <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="shadow-sm">
+             <Upload className="h-4 w-4 mr-1" /> {t("Import")}
+           </Button>
+           <Button onClick={() => { setShowPasteDialog(true); setPasteJson(''); setPasteError(''); }} variant="outline" size="sm" className="shadow-sm">
+             <ClipboardPaste className="h-4 w-4 mr-1" /> {t("Paste")}
+           </Button>
+           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileImport} />
         </Panel>
       </ReactFlow>
-      {workflowExecution.status !== 'idle' && (
-        <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur border rounded-xl shadow-lg p-4 z-10 max-w-3xl mx-auto pointer-events-auto">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold text-sm flex items-center">
-              <div className={`w-2 h-2 rounded-full mr-2 ${
-                workflowExecution.status === 'running' ? 'bg-blue-500 animate-pulse' :
-                workflowExecution.status === 'completed' ? 'bg-emerald-500' : 'bg-red-500'
-              }`}></div>
-              Execution Result
-            </h3>
-            <div className="text-xs text-muted-foreground flex gap-4">
-              {workflowExecution.status === 'error' && <span className="text-red-500">Error executing workflow</span>}
-              <span>Current Node: {workflowExecution.currentNodeId || 'None'}</span>
-
-              <button 
-                className="hover:text-foreground underline ml-4 font-semibold text-primary" 
-                onClick={() => {
-                  const finalOutputId = Object.keys(workflowExecution.results).find(id => {
-                     const node = activeWorkflow?.nodes_data.find(n => n.id === id);
-                     return node && node.type === 'output';
-                  });
-                  const finalOutputPayload = finalOutputId ? workflowExecution.results[finalOutputId] : null;
-                  
-                  if (finalOutputPayload) {
-                     executeWorkflow(activeWorkflow!.id, finalOutputPayload);
-                  }
-                }}
-                disabled={workflowExecution.status === 'running'}
-              >
-                {workflowExecution.status === 'running' ? 'Running...' : 'Next Round (Loop)'}
-              </button>
-              <button 
-                className="hover:text-foreground underline" 
-                onClick={() => useAppStore.getState().setWorkflowExecutionState({ status: 'idle' })}
-              >
-                Clear
-              </button>
-            </div>
+      <ExecutionTimeline />
+      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+        <DialogContent className="sm:max-w-[600px] rounded-xl">
+          <DialogHeader>
+            <DialogTitle>{t("Paste Workflow JSON")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Textarea
+              value={pasteJson}
+              onChange={(e) => { setPasteJson(e.target.value); setPasteError(''); }}
+              placeholder='{"nodes": [...], "edges": [...]}'
+              className="font-mono text-xs h-[300px] resize-none"
+            />
+            {pasteError && <p className="text-sm text-red-500">{pasteError}</p>}
           </div>
-          <div className="text-xs font-mono bg-muted/50 p-2 rounded-md max-h-[250px] overflow-auto">
-            <pre>{JSON.stringify(workflowExecution.results[workflowExecution.currentNodeId || Object.keys(workflowExecution.results).pop() || ''] || {}, null, 2)}</pre>
-          </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasteDialog(false)}>{t("Cancel")}</Button>
+            <Button onClick={() => validateAndImport(pasteJson)}>{t("Import")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -26,16 +26,27 @@ export interface Workspace {
   updatedAt: number;
 }
 
-export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router';
+export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
 
 export interface WorkflowNodePosition {
   x: number;
   y: number;
 }
 
+export interface NodeRetryPolicy {
+  maxAttempts?: number;
+  backoff?: 'fixed' | 'exponential';
+  delayMs?: number;
+}
+
 export interface WorkflowNodeDataBase {
   label?: string;
   description?: string;
+  timeoutMs?: number;
+  retryPolicy?: NodeRetryPolicy;
+  onError?: 'stop' | 'continue' | 'route-to-error';
+  inputSchema?: string;
+  outputSchema?: string;
 }
 
 export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {
@@ -184,4 +195,29 @@ export interface AgentChatWindowData {
   };
   zIndex: number;
   minimized?: boolean;
+}
+
+export type NodeExecutionStatus = 'pending' | 'running' | 'success' | 'error' | 'skipped' | 'retrying';
+
+export interface NodeExecutionRecord {
+  nodeId: string;
+  status: NodeExecutionStatus;
+  startTime?: number;
+  endTime?: number;
+  durationMs?: number;
+  attempts: number;
+  error?: string;
+  input?: unknown;
+  output?: unknown;
+}
+
+export interface WorkflowExecutionRecord {
+  id: string;
+  workflowId: string;
+  status: 'running' | 'completed' | 'error' | 'cancelled';
+  startTime: number;
+  endTime?: number;
+  durationMs?: number;
+  nodeRecords: Record<string, NodeExecutionRecord>;
+  results: Record<string, unknown>;
 }

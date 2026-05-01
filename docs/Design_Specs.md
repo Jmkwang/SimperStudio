@@ -23,8 +23,18 @@ Tailwind CSS variables synced with `shadcn/ui` theme structure.
 *   **Primary/Accent:** Subtle branding color (e.g., Slate or Indigo).
 *   **Node Colors (Workflow):**
     *   Trigger: Emerald/Green
-    *   Action: Blue/Indigo
-    *   LLM/AI: Purple/Violet
+    *   Webhook Trigger: Lime
+    *   Code: Blue
+    *   Agent: Primary (theme color)
+    *   Condition: Orange
+    *   Switch: Amber
+    *   Loop: Violet
+    *   Wait/Delay: Violet
+    *   Merge: Pink
+    *   HTTP Request: Cyan
+    *   Set/Transform: Teal
+    *   Sub-workflow: Indigo
+    *   Output: Slate/Gray
 
 ### 1.3 Effects & Spacing
 *   **Shadows:** `shadow-sm` for cards, `shadow-lg` for modals/dropdowns. Very soft blur radius (e.g., `rgba(0,0,0,0.05)`).
@@ -80,15 +90,33 @@ App shell divided into three primary zones using Flexbox/CSS Grid.
 ### 3.4 Workflow Nodes (React Flow)
 *   **Design:** Card-like structure (`rounded-xl`, `shadow-sm`, `bg-card`).
 *   **Header:** Colored dot/icon indicating type + Title.
-*   **Body:** Minimal summary of configuration (e.g., "GET /api/data") + Status indicator (Running, Success, Error).
+*   **Body:** Minimal summary of configuration (e.g., “GET /api/data”) + Status indicator (Running, Success, Error).
 *   **Handles (Ports):** Clear targets (`w-3 h-3`).
 *   **Interaction:** Elevate on hover (`hover:shadow-md`), distinct border on select (`ring-2 ring-primary`). Smooth bezier curves for edges, animated dashes for data flow.
 *   **Execution State Semantics (Required):**
     * Running: 主色高亮 + 轻微脉冲动画（可被 reduced-motion 关闭）。
     * Success: 绿色状态标识，保持静态。
     * Error: 红色状态标识 + 明确错误 icon。
-    * Skipped: 低饱和/低对比状态，表达“未执行”。
+    * Skipped: 低饱和/低对比状态，表达”未执行”。
     * Retrying: 琥珀色状态标识 + 次级脉冲节奏。
+    * Cancelled: 灰色状态标识，表示用户手动取消。
+
+### 3.5 ExecutionTimeline Component
+*   **Position:** 浮动在画布底部，`absolute bottom-4`，最大宽度 `max-w-3xl`。
+*   **Header:** 执行状态指示器（running/completed/error）+ Export 按钮 + 关闭按钮。
+*   **Node List:** 按执行时间排序，每行显示：状态圆点 + 节点名称 + 状态文本 + 耗时 + 重试次数。
+*   **Expandable Details:** 点击节点展开：错误信息、尝试次数、输入/输出快照（JSON 格式化）。
+*   **Rerun Button:** 错误节点显示重跑按钮（RotateCcw 图标）。
+*   **Animations:** running/retrying 状态使用 `motion-safe:animate-pulse`，尊重 `prefers-reduced-motion`。
+
+### 3.6 Node Configuration Dialog
+*   **统一基础区块：** 所有节点配置对话框应包含以下通用区块：
+    * 名称（label）
+    * 描述（description）
+    * 超时设置（timeoutMs）
+    * 重试策略（retryPolicy: maxAttempts/backoff/delayMs）
+    * 失败策略（onError: stop/continue/route-to-error）
+*   **节点特定配置：** 在通用区块下方显示节点类型特定的配置字段。
 
 ## 4. Interactions & UX Quality
 *   **Routing:** Subtle crossfade when switching main sidebar tabs.
