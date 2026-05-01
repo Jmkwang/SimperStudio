@@ -26,76 +26,76 @@
 
 ### 2.2 类型与状态模型
 
-- [ ] `src/types/models.ts`
-  - [ ] `ChatSession` 增加 `mode?: 'single' | 'workflow'`；旧数据按 `workflowId` 兼容推断。
-  - [ ] `ChatMessage` 增加 `meta`：`workflowId`、`workflowNodeId`、`sourceAgentId`、`targetAgentId`、`forwardFromMessageId`、`triggeredBy`。
-  - [ ] `AgentResponse` 增加可选 `nodeId`。
-  - [ ] 新增 `WorkflowConversationWindow` 类型：`id/sessionId/workflowId/nodeId/agentId/position/zIndex/minimized`。
-  - [ ] workflow agent node `data` 增加 `autoSendToNext?: boolean` 约定。
-- [ ] `src/store/appStore.ts`
-  - [ ] `createSession`、`openWorkflowSession` 写入 `mode`。
-  - [ ] 读取旧 session 后补齐默认 `mode`。
-  - [ ] 新增 `workflowChatUI`：`sidebarCollapsedBySession`、`windows`、`activeWindowId`、`zIndexCounter`。
-  - [ ] 新增窗口动作：`openWorkflowAgentWindow`、`focusWorkflowAgentWindow`、`closeWorkflowAgentWindow`、`setWorkflowSidebarCollapsed`。
-  - [ ] 新增编排动作：`sendToWorkflowAgent`、`forwardAgentReplyToNext`、`rerunAgentReply`、`rerunAndForwardAgentReply`。
-  - [ ] 抽出并复用现有 agent 模型请求逻辑，避免 `ChatInterface` 和 workflow chat 各写一套请求代码。
+- [x] `src/types/models.ts`
+  - [x] `ChatSession` 增加 `mode?: 'single' | 'workflow'`；旧数据按 `workflowId` 兼容推断。
+  - [x] `ChatMessage` 增加 `meta`：`workflowId`、`workflowNodeId`、`sourceAgentId`、`targetAgentId`、`forwardFromMessageId`、`triggeredBy`。
+  - [x] `AgentResponse` 增加可选 `nodeId`。
+  - [x] 新增 `WorkflowConversationWindow` 类型：`id/sessionId/workflowId/nodeId/agentId/position/zIndex/minimized`。
+  - [x] workflow agent node `data` 增加 `autoSendToNext?: boolean` 约定。
+- [x] `src/store/appStore.ts`
+  - [x] `createSession`、`openWorkflowSession` 写入 `mode`。
+  - [x] 读取旧 session 后补齐默认 `mode`。
+  - [x] 新增 `workflowChatUI`：`sidebarCollapsedBySession`、`windows`、`activeWindowId`、`zIndexCounter`。
+  - [x] 新增窗口动作：`openWorkflowAgentWindow`、`focusWorkflowAgentWindow`、`closeWorkflowAgentWindow`、`setWorkflowSidebarCollapsed`。
+  - [x] 新增编排动作：`sendToWorkflowAgent`、`forwardAgentReplyToNext`、`rerunAgentReply`、`rerunAndForwardAgentReply`。
+  - [x] 抽出并复用现有 agent 模型请求逻辑，避免 `ChatInterface` 和 workflow chat 各写一套请求代码。
 
 ### 2.3 新建会话弹窗
 
-- [ ] `src/components/layout/ContextSidebar.tsx`
-  - [ ] 将当前 workflow picker 浮层替换为 shadcn `Dialog`。
-  - [ ] 弹窗顶部左右两项：左侧“单个智能体对话”，右侧“工作流对话”。
-  - [ ] 单智能体入口：选择 agent 后创建 `mode: 'single'` session，并设置 `activeAgentId`。
-  - [ ] 工作流入口：选择 workflow 后创建/打开 `mode: 'workflow'` session。
-  - [ ] chat 列表展示 session 时区分 single/workflow，可用 workflow 名称或小徽标标识。
+- [x] `src/components/layout/ContextSidebar.tsx`
+  - [x] 将当前 workflow picker 浮层替换为 shadcn `Dialog`。
+  - [x] 弹窗顶部左右两项：左侧"单个智能体对话"，右侧"工作流对话"。
+  - [x] 单智能体入口：选择 agent 后创建 `mode: 'single'` session，并设置 `activeAgentId`。
+  - [x] 工作流入口：选择 workflow 后创建/打开 `mode: 'workflow'` session。
+  - [x] chat 列表展示 session 时区分 single/workflow，可用 workflow 名称或小徽标标识。
 
 ### 2.4 ChatInterface 拆分
 
-- [ ] `src/components/chat/ChatInterface.tsx`
-  - [ ] 入口按 active session `mode` 分流：single 渲染普通聊天，workflow 渲染 `WorkflowChatView`。
-  - [ ] 保留普通聊天的输入框、mention、附件、群聊式消息流。
-  - [ ] 抽出通用消息气泡 `ChatMessageBubble`。
-  - [ ] 抽出 hover 操作组件 `MessageHoverActions`。
-- [ ] `src/components/chat/MessageHoverActions.tsx`
-  - [ ] 用户气泡 hover 支持复制。
-  - [ ] 智能体回复气泡 hover 支持复制、再发送一次、reload、发送给下一位、reload 后发送给下一位。
+- [x] `src/components/chat/ChatInterface.tsx`
+  - [x] 入口按 active session `mode` 分流：single 渲染普通聊天，workflow 渲染 `WorkflowChatView`。
+  - [x] 保留普通聊天的输入框、mention、附件、群聊式消息流。
+  - [x] 抽出通用消息气泡 `ChatMessageBubble`。
+  - [x] 抽出 hover 操作组件 `MessageHoverActions`。
+- [x] `src/components/chat/MessageHoverActions.tsx`
+  - [x] 用户气泡 hover 支持复制。
+  - [x] 智能体回复气泡 hover 支持复制、再发送一次、reload、发送给下一位、reload 后发送给下一位。
 
 ### 2.5 工作流对话视图
 
-- [ ] `src/components/chat/WorkflowChatView.tsx`
-  - [ ] 读取 active session 对应 workflow。
-  - [ ] 主区域展示 workflow agent 节点列表或简化流程视图。
-  - [ ] 点击 agent 节点打开对应浮动会话窗。
-  - [ ] 渲染多个 `WorkflowAgentWindow`，支持窗口重叠与 z-index 聚焦。
-- [ ] `src/components/chat/WorkflowAgentWindow.tsx`
-  - [ ] 显示当前 workflow node 对应 agent 的会话消息。
-  - [ ] 支持向当前 agent 发送消息。
-  - [ ] 支持回复 hover 操作：复制、再发送、reload、转发给下一位。
-  - [ ] 若当前 node `data.autoSendToNext === true`，回复完成后自动调用 `forwardAgentReplyToNext`。
-- [ ] `forwardAgentReplyToNext`
-  - [ ] 通过 `workflow.edges_data` 从当前 node 找后继 agent node。
-  - [ ] V1 支持线性/显式 agent 后继；condition/loop 复杂路由仍交给现有 `executeWorkflow`。
+- [x] `src/components/chat/WorkflowChatView.tsx`
+  - [x] 读取 active session 对应 workflow。
+  - [x] 主区域展示 workflow agent 节点列表或简化流程视图。
+  - [x] 点击 agent 节点打开对应浮动会话窗。
+  - [x] 渲染多个 `WorkflowAgentWindow`，支持窗口重叠与 z-index 聚焦。
+- [x] `src/components/chat/WorkflowAgentWindow.tsx`
+  - [x] 显示当前 workflow node 对应 agent 的会话消息。
+  - [x] 支持向当前 agent 发送消息。
+  - [x] 支持回复 hover 操作：复制、再发送、reload、转发给下一位。
+  - [x] 若当前 node `data.autoSendToNext === true`，回复完成后自动调用 `forwardAgentReplyToNext`。
+- [x] `forwardAgentReplyToNext`
+  - [x] 通过 `workflow.edges_data` 从当前 node 找后继 agent node。
+  - [x] V1 支持线性/显式 agent 后继；condition/loop 复杂路由仍交给现有 `executeWorkflow`。
 
 ### 2.6 工作流侧栏与菜单
 
-- [ ] `src/components/layout/AppShell.tsx`
-  - [ ] 当前 active session 为 workflow 时，二级栏默认收起为窄按钮。
-  - [ ] 普通 single chat 保持现有侧栏行为。
-- [ ] `src/components/layout/ContextSidebar.tsx`
-  - [ ] workflow chat 展开时，二级展示 workflow 名称/节点概览。
-  - [ ] 三级展示 agent 节点列表。
-  - [ ] 点击三级 agent 节点打开对应 `WorkflowAgentWindow`。
+- [x] `src/components/layout/AppShell.tsx`
+  - [x] 当前 active session 为 workflow 时，二级栏默认收起为窄按钮。
+  - [x] 普通 single chat 保持现有侧栏行为。
+- [x] `src/components/layout/ContextSidebar.tsx`
+  - [x] workflow chat 展开时，二级展示 workflow 名称/节点概览。
+  - [x] 三级展示 agent 节点列表。
+  - [x] 点击三级 agent 节点打开对应 `WorkflowAgentWindow`。
 
 ### 2.7 工作流设计端自动发送配置
 
-- [ ] `src/components/workflow/nodes/AgentNode.tsx`
-  - [ ] 在 agent node 编辑弹窗中增加 `autoSendToNext` 开关。
-- [ ] `src/store/appStore.ts`
-  - [ ] `saveWorkflow` 清洗节点 data 时保留 `autoSendToNext`。
+- [x] `src/components/workflow/nodes/AgentNode.tsx`
+  - [x] 在 agent node 编辑弹窗中增加 `autoSendToNext` 开关。
+- [x] `src/store/appStore.ts`
+  - [x] `saveWorkflow` 清洗节点 data 时保留 `autoSendToNext`。
 
 ### 2.8 验收
 
-- [ ] 类型检查或构建通过：优先 `npm run check`；若项目无 check，运行 `npm run build`。
+- [x] 类型检查或构建通过：优先 `npm run check`；若项目无 check，运行 `npm run build`。
 - [ ] 启动 `npm run dev`，浏览器验证普通 single chat：新建、发送、`@agent`、附件、复制。
 - [ ] 浏览器验证 workflow chat：新建、二级栏收起/展开、workflow/agent 节点点击。
 - [ ] 打开多个 agent 窗口，验证重叠、聚焦、关闭/最小化。

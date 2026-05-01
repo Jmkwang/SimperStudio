@@ -5,10 +5,16 @@ import { useTranslation } from "@/hooks/useTranslation"
 import { ChevronLeft, Plus, Trash2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-export function ContextSidebar({ currentView }: { currentView: string }) {
+export function ContextSidebar({
+  currentView,
+  defaultCollapsed = false,
+}: {
+  currentView: string
+  defaultCollapsed?: boolean
+}) {
   const [showCreateSessionDialog, setShowCreateSessionDialog] = useState(false)
-  const [sidebarWidth, setSidebarWidth] = useState(256)
-  const [collapsed, setCollapsed] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(defaultCollapsed ? 0 : 256)
+  const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const isResizing = useRef(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const setActiveSession = useAppStore(state => state.setActiveSession)
@@ -58,6 +64,13 @@ export function ContextSidebar({ currentView }: { currentView: string }) {
       document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
+
+  useEffect(() => {
+    if (defaultCollapsed) {
+      setCollapsed(true)
+      setSidebarWidth(0)
+    }
+  }, [defaultCollapsed])
 
   const toggleCollapse = () => {
     if (collapsed) {

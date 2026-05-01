@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 export function AgentNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
@@ -15,6 +16,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
 
   const [localPrompt, setLocalPrompt] = useState(data.prompt || '');
   const [selectedAgentId, setSelectedAgentId] = useState(data.agentId || agents[0]?.id);
+  const [localAutoSend, setLocalAutoSend] = useState(data.autoSendToNext || false);
   const [isOpen, setIsOpen] = useState(false);
 
   const activeAgent = agents.find(a => a.id === selectedAgentId);
@@ -29,6 +31,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               ...node.data,
               agentId: selectedAgentId,
               prompt: localPrompt,
+              autoSendToNext: localAutoSend,
             },
           };
         }
@@ -113,6 +116,16 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                   className="resize-none h-24"
                 />
               </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label>Auto Send to Next</Label>
+                  <p className="text-xs text-muted-foreground">Automatically forward this agent's reply to the next agent node.</p>
+                </div>
+                <Switch
+                  checked={localAutoSend}
+                  onCheckedChange={setLocalAutoSend}
+                />
+              </div>
             </div>
             <div className="flex justify-end">
               <Button onClick={handleSave}>Save Changes</Button>
@@ -125,6 +138,12 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
          <p className="text-xs text-muted-foreground line-clamp-2 italic">
             {data.prompt || 'Process input using assigned agent capabilities.'}
          </p>
+         {data.autoSendToNext && (
+           <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
+             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+             Auto-forward enabled
+           </p>
+         )}
       </div>
       <Handle
         type="source"
