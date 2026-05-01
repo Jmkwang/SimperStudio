@@ -165,7 +165,6 @@ describe('Merge node', () => {
 
 describe('Node retry policy', () => {
   it('should retry on failure with fixed backoff', async () => {
-    let attempt = 0;
     const wfId = setupWorkflow(
       [
         { id: 't1', type: 'trigger', position: { x: 0, y: 0 }, data: { label: 'Start' } },
