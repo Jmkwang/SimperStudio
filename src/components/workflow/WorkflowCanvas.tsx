@@ -30,9 +30,11 @@ import { MergeNode } from './nodes/MergeNode';
 import { WebhookTriggerNode } from './nodes/WebhookTriggerNode';
 import { SubWorkflowNode } from './nodes/SubWorkflowNode';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus } from 'lucide-react';
 import { Save, Trash2, Download, Upload, ClipboardPaste } from 'lucide-react';
 
 import { useAppStore } from '@/store/appStore';
@@ -264,40 +266,46 @@ function Flow() {
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
         <Controls className="bg-card border shadow-sm rounded-lg" />
         <Panel position="top-right" className="flex gap-2">
-                      <div className="w-[180px]">
-             <Select 
-               onValueChange={(val) => {
-                 if(val) {
-                   addNode(val, 'New ' + val.charAt(0).toUpperCase() + val.slice(1));
-                   // To "reset" the select, we don't control its value here directly, 
-                   // but usually users just select and want to keep selecting, or it resets when losing focus/selecting same.
-                   // As it's uncontrolled here without a value prop, it just triggers onValueChange.
-                 }
-               }}
-             >
-               <SelectTrigger className="h-9 bg-secondary text-secondary-foreground border shadow-sm">
-                 <SelectValue placeholder={t("+ Add Node...")} />
-               </SelectTrigger>
-               <SelectContent>
-                 <SelectItem value="trigger">{t("Trigger Node")}</SelectItem>
-                 <SelectItem value="agent">{t("Agent Node")}</SelectItem>
-                 <SelectItem value="http">{t("HTTP Request")}</SelectItem>
-                 <SelectItem value="set">{t("Set / Transform")}</SelectItem>
-                 <SelectItem value="switch">{t("IF / Switch")}</SelectItem>
-                 <SelectItem value="wait">{t("Wait / Delay")}</SelectItem>
-                 <SelectItem value="merge">{t("Merge")}</SelectItem>
-                 <SelectItem value="webhook">{t("Webhook Trigger")}</SelectItem>
-                 <SelectItem value="subworkflow">{t("Sub-workflow")}</SelectItem>
-                 <SelectItem value="condition">{t("Router/Condition Node")}</SelectItem>
-                 <SelectItem value="code">{t("Code Execution Node")}</SelectItem>
-                 <SelectItem value="loop">{t("Loop Node")}</SelectItem>
-                 <SelectItem value="subworkflow">{t("SubWorkflow Node")}</SelectItem>
-                 <SelectItem value="action">{t("Action Node")}</SelectItem>
-                 <SelectItem value="transformation">{t("Data Transformation Node")}</SelectItem>
-                 <SelectItem value="output">{t("Output Node")}</SelectItem>
-               </SelectContent>
-             </Select>
-           </div>
+           <Popover>
+             <PopoverTrigger asChild>
+               <Button variant="secondary" size="sm" className="h-9 shadow-sm border">
+                 <Plus className="h-4 w-4 mr-1" /> {t("Add Node")}
+               </Button>
+             </PopoverTrigger>
+             <PopoverContent className="w-[260px] p-0" align="end">
+               <Command>
+                 <CommandInput placeholder={t("Search nodes...")} />
+                 <CommandList>
+                   <CommandEmpty>{t("No node found.")}</CommandEmpty>
+                   <CommandGroup heading={t("Trigger")}>
+                     <CommandItem onSelect={() => addNode('trigger', 'Trigger')}>{t("Trigger")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('webhook', 'Webhook Trigger')}>{t("Webhook Trigger")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Flow Control")}>
+                     <CommandItem onSelect={() => addNode('switch', 'IF / Switch')}>{t("IF / Switch")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('condition', 'Router')}>{t("Router / Condition")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('loop', 'Loop')}>{t("Loop")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('merge', 'Merge')}>{t("Merge")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('wait', 'Wait / Delay')}>{t("Wait / Delay")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Data")}>
+                     <CommandItem onSelect={() => addNode('http', 'HTTP Request')}>{t("HTTP Request")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('set', 'Set / Transform')}>{t("Set / Transform")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('code', 'Code Execution')}>{t("Code Execution")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("AI")}>
+                     <CommandItem onSelect={() => addNode('agent', 'Agent')}>{t("Agent")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Integration")}>
+                     <CommandItem onSelect={() => addNode('subworkflow', 'Sub-workflow')}>{t("Sub-workflow")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("Output")}>
+                     <CommandItem onSelect={() => addNode('output', 'Output')}>{t("Output")}</CommandItem>
+                   </CommandGroup>
+                 </CommandList>
+               </Command>
+             </PopoverContent>
+           </Popover>
            <Button
              variant="outline"
              onClick={() => {
