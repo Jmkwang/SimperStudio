@@ -1126,16 +1126,53 @@ export const useAppStore = create<AppState>()(
                    position: n.position,
                    data: {
                      label: n.data?.label,
+                     description: n.data?.description,
+                     timeoutMs: n.data?.timeoutMs,
+                     retryPolicy: n.data?.retryPolicy,
+                     onError: n.data?.onError,
+                     inputSchema: n.data?.inputSchema,
+                     outputSchema: n.data?.outputSchema,
+                     // agent
                      agentId: n.data?.agentId,
                      prompt: n.data?.prompt,
+                     schema: n.data?.schema,
+                     autoSendToNext: n.data?.autoSendToNext,
+                     // condition/router
                      routes: n.data?.routes,
+                     // code
                      code: n.data?.code,
+                     // loop
                      itemsPath: n.data?.itemsPath,
                      itemAlias: n.data?.itemAlias,
                      indexAlias: n.data?.indexAlias,
                      maxIterations: n.data?.maxIterations,
                      breakCondition: n.data?.breakCondition,
-                     autoSendToNext: n.data?.autoSendToNext
+                     aggregationStrategy: n.data?.aggregationStrategy,
+                     // http
+                     method: n.data?.method,
+                     url: n.data?.url,
+                     headers: n.data?.headers,
+                     body: n.data?.body,
+                     // set/transform
+                     mappings: n.data?.mappings,
+                     constants: n.data?.constants,
+                     whitelist: n.data?.whitelist,
+                     // switch
+                     branches: n.data?.branches,
+                     // wait
+                     waitMode: n.data?.waitMode,
+                     delayMs: n.data?.delayMs,
+                     untilExpression: n.data?.untilExpression,
+                     // merge
+                     strategy: n.data?.strategy,
+                     mergeKey: n.data?.mergeKey,
+                     // webhook
+                     webhookMethod: n.data?.webhookMethod,
+                     webhookPath: n.data?.webhookPath,
+                     authToken: n.data?.authToken,
+                     // subworkflow
+                     subWorkflowId: n.data?.subWorkflowId,
+                     inputMapping: n.data?.inputMapping,
                    }
                  }));
                  const cleanEdges: WorkflowEdge[] = edges.map((e) => ({
