@@ -4,7 +4,7 @@ import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Send, X } from 'lucide-react';
+import { Minus, Send, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
@@ -20,6 +20,8 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
   const sessions = useAppStore(state => state.sessions);
   const agents = useAppStore(state => state.agents);
   const closeWorkflowAgentWindow = useAppStore(state => state.closeWorkflowAgentWindow);
+  const focusWorkflowAgentWindow = useAppStore(state => state.focusWorkflowAgentWindow);
+  const toggleWorkflowAgentWindowMinimized = useAppStore(state => state.toggleWorkflowAgentWindowMinimized);
   const sendToWorkflowAgent = useAppStore(state => state.sendToWorkflowAgent);
   const rerunAgentReply = useAppStore(state => state.rerunAgentReply);
   const rerunAndForwardAgentReply = useAppStore(state => state.rerunAndForwardAgentReply);
@@ -65,6 +67,7 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
         width: size.width,
         height: windowData.minimized ? 'auto' : size.height,
       }}
+      onMouseDown={() => focusWorkflowAgentWindow(windowData.id)}
     >
       {/* Title bar */}
       <div className="flex items-center justify-between border-b px-3 py-2 shrink-0">
@@ -81,6 +84,15 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-11 w-11"
+            aria-label={windowData.minimized ? t('Expand') : t('Minimize')}
+            onClick={() => toggleWorkflowAgentWindowMinimized(windowData.id)}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-11 w-11" aria-label={t('Close')} onClick={() => closeWorkflowAgentWindow(windowData.id)}>
             <X className="h-4 w-4" />
           </Button>

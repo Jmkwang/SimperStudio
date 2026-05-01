@@ -31,7 +31,7 @@ export function MessageHoverActions({
           type="button"
           aria-label={t("Copy")}
           onClick={onCopy}
-          className="inline-flex items-center justify-center h-7 min-w-[44px] px-2 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           <Copy className="mr-1 h-3 w-3" />{t("Copy")}
         </button>
@@ -41,7 +41,7 @@ export function MessageHoverActions({
           type="button"
           aria-label={t("Regenerate")}
           onClick={onRerun}
-          className="inline-flex items-center justify-center h-7 min-w-[44px] px-2 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           <RefreshCw className="mr-1 h-3 w-3" />{t("Regenerate")}
         </button>
@@ -51,7 +51,7 @@ export function MessageHoverActions({
           type="button"
           aria-label={t("Send to next")}
           onClick={onForward}
-          className="inline-flex items-center justify-center h-7 min-w-[44px] px-2 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           <Forward className="mr-1 h-3 w-3" />{t("Send to next")}
         </button>
@@ -61,7 +61,7 @@ export function MessageHoverActions({
           type="button"
           aria-label={t("Retry and send")}
           onClick={onRerunAndForward}
-          className="inline-flex items-center justify-center h-7 min-w-[44px] px-2 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           <RotateCcw className="mr-1 h-3 w-3" />{t("Retry and send")}
         </button>
