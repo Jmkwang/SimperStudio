@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -28,7 +28,9 @@ import { IfSwitchNode } from './nodes/IfSwitchNode';
 import { WaitDelayNode } from './nodes/WaitDelayNode';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Trash2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Save, Trash2, Download, Upload, ClipboardPaste } from 'lucide-react';
 
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/components/theme/ThemeProvider';
@@ -75,6 +77,10 @@ function Flow() {
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPasteDialog, setShowPasteDialog] = useState(false);
+  const [pasteJson, setPasteJson] = useState('');
+  const [pasteError, setPasteError] = useState('');
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -166,6 +172,57 @@ function Flow() {
     }
   };
 
+  const handleExport = () => {
+    const exportData = {
+      nodes: nodes.map(n => ({ id: n.id, type: n.type, position: n.position, data: { ...n.data, deleteNode: undefined } })),
+      edges,
+    };
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeWorkflow?.name || 'workflow'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t('Workflow exported'));
+  };
+
+  const validateAndImport = (json: string) => {
+    setPasteError('');
+    try {
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed.nodes)) throw new Error('Missing "nodes" array');
+      if (!Array.isArray(parsed.edges)) throw new Error('Missing "edges" array');
+      for (const node of parsed.nodes) {
+        if (!node.id || !node.type || !node.position) throw new Error(`Node missing id/type/position: ${JSON.stringify(node)}`);
+      }
+      const nodeIds = new Set(parsed.nodes.map((n: any) => n.id));
+      for (const edge of parsed.edges) {
+        if (!edge.source || !edge.target) throw new Error(`Edge missing source/target: ${JSON.stringify(edge)}`);
+        if (!nodeIds.has(edge.source)) throw new Error(`Edge references non-existent source node: ${edge.source}`);
+        if (!nodeIds.has(edge.target)) throw new Error(`Edge references non-existent target node: ${edge.target}`);
+      }
+      const importNodes = parsed.nodes.map((n: any) => ({ ...n, data: { ...n.data, deleteNode } }));
+      setNodes(importNodes);
+      setEdges(parsed.edges);
+      setShowPasteDialog(false);
+      setPasteJson('');
+      toast.success(t('Workflow imported'));
+    } catch (e: any) {
+      setPasteError(e.message);
+    }
+  };
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => validateAndImport(reader.result as string);
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   // Re-sync local state when activeWorkflow changes
   useEffect(() => {
     if (activeWorkflow) {
@@ -249,6 +306,16 @@ function Flow() {
            <Button onClick={handleSave} size="sm" className="shadow-sm">
              <Save className="h-4 w-4 mr-2" /> {t("Save Workflow")}
            </Button>
+           <Button onClick={handleExport} variant="outline" size="sm" className="shadow-sm">
+             <Download className="h-4 w-4 mr-1" /> {t("Export")}
+           </Button>
+           <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="shadow-sm">
+             <Upload className="h-4 w-4 mr-1" /> {t("Import")}
+           </Button>
+           <Button onClick={() => { setShowPasteDialog(true); setPasteJson(''); setPasteError(''); }} variant="outline" size="sm" className="shadow-sm">
+             <ClipboardPaste className="h-4 w-4 mr-1" /> {t("Paste")}
+           </Button>
+           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileImport} />
         </Panel>
       </ReactFlow>
       {workflowExecution.status !== 'idle' && (
@@ -295,6 +362,26 @@ function Flow() {
           </div>
         </div>
       )}
+      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+        <DialogContent className="sm:max-w-[600px] rounded-xl">
+          <DialogHeader>
+            <DialogTitle>{t("Paste Workflow JSON")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Textarea
+              value={pasteJson}
+              onChange={(e) => { setPasteJson(e.target.value); setPasteError(''); }}
+              placeholder='{"nodes": [...], "edges": [...]}'
+              className="font-mono text-xs h-[300px] resize-none"
+            />
+            {pasteError && <p className="text-sm text-red-500">{pasteError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasteDialog(false)}>{t("Cancel")}</Button>
+            <Button onClick={() => validateAndImport(pasteJson)}>{t("Import")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
