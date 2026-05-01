@@ -1472,6 +1472,24 @@ export const useAppStore = create<AppState>()(
          const MAX_WORKFLOW_STEPS = 1000;
          let stepCounter = 0;
 
+         const validateSchema = (data: any, schemaStr: string | undefined, label: string): string | null => {
+            if (!schemaStr) return null;
+            try {
+               const schema = JSON.parse(schemaStr);
+               for (const [key, type] of Object.entries(schema)) {
+                  const val = data?.[key];
+                  if (type === 'string' && typeof val !== 'string') return `${label}: "${key}" expected string, got ${typeof val}`;
+                  if (type === 'number' && typeof val !== 'number') return `${label}: "${key}" expected number, got ${typeof val}`;
+                  if (type === 'boolean' && typeof val !== 'boolean') return `${label}: "${key}" expected boolean, got ${typeof val}`;
+                  if (type === 'object' && (typeof val !== 'object' || val === null)) return `${label}: "${key}" expected object, got ${typeof val}`;
+                  if (type === 'array' && !Array.isArray(val)) return `${label}: "${key}" expected array, got ${typeof val}`;
+               }
+            } catch { /* ignore invalid schema */ }
+            return null;
+         };
+
+         const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
          while (queue.length > 0) {
             const frame = queue.shift()!;
             const nodeId = frame.nodeId;
@@ -1486,6 +1504,27 @@ export const useAppStore = create<AppState>()(
 
             setWorkflowExecutionState({ currentNodeId: nodeId, results });
 
+            const nodeEdges = workflow.edges_data.filter((e: any) => e.source === nodeId);
+            const inputError = validateSchema(currentPayload, node?.data?.inputSchema, 'Input');
+            if (inputError) {
+               currentPayload = { ...currentPayload, _error: inputError };
+               results[nodeId] = currentPayload;
+               if (node?.data?.onError === 'continue') { continue; }
+               if (node?.data?.onError === 'route-to-error') {
+                  const errorEdge = nodeEdges.find((e: any) => e.sourceHandle === 'error');
+                  if (errorEdge) { queue.push({ nodeId: errorEdge.target, payload: currentPayload }); }
+                  continue;
+               }
+               setWorkflowExecutionState({ status: 'error', currentNodeId: nodeId, results });
+               return currentPayload;
+            }
+
+            const nodeTimeoutMs = Number(node?.data?.timeoutMs) || 0;
+            const retryPolicy = node?.data?.retryPolicy || {};
+            const maxAttempts = Number(retryPolicy.maxAttempts) || 1;
+            const backoffType = retryPolicy.backoff || 'fixed';
+            const baseDelay = Number(retryPolicy.delayMs) || 1000;
+
             await new Promise(r => setTimeout(r, 400));
 
             if (node?.type === 'output') {
@@ -1494,146 +1533,97 @@ export const useAppStore = create<AppState>()(
                continue;
             }
 
-            if (node?.type === 'agent') {
-               console.log('Simulating Agent inference with prompt:', node.data?.prompt);
-               let parsedOutput = {};
-               try {
-                  if (node.data?.schema) {
-                     const schemaStr = String(node.data.schema || '');
-                     if (schemaStr.includes('targetId')) parsedOutput = { targetId: 'player_3', reason: 'simulated logic' };
-                     else parsedOutput = { result: 'simulated' };
+            let nodeExecError: string | null = null;
 
-                     currentPayload = {
-                        ...currentPayload,
-                        llmResult: parsedOutput
-                     };
-                  } else {
-                     currentPayload = {
-                        ...currentPayload,
-                        output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.`
-                     };
-                  }
-               } catch (e) {
-                  console.error('Agent execution error:', e);
-               }
-            } else if (node?.type === 'code') {
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                try {
-                  const jsCode = `
-                     try {
-                        ${node.data?.code || 'return payload;'}
-                     } catch(e) {
-                        console.error('Code node execution error:', e);
-                        return { ...payload, _error: e.message };
+                  const execPromise = (async () => {
+                     if (node?.type === 'agent') {
+                        console.log('Simulating Agent inference with prompt:', node.data?.prompt);
+                        let parsedOutput = {};
+                        if (node.data?.schema) {
+                           const schemaStr = String(node.data.schema || '');
+                           if (schemaStr.includes('targetId')) parsedOutput = { targetId: 'player_3', reason: 'simulated logic' };
+                           else parsedOutput = { result: 'simulated' };
+                           currentPayload = { ...currentPayload, llmResult: parsedOutput };
+                        } else {
+                           currentPayload = { ...currentPayload, output: `[Agent Output for ${node.data?.label || 'Agent'}]: processed input.` };
+                        }
+                     } else if (node?.type === 'code') {
+                        const jsCode = `try { ${node.data?.code || 'return payload;'} } catch(e) { return { ...payload, _error: e.message }; }`;
+                        const executeFn = new AsyncFunction('payload', jsCode);
+                        const resultPayload = await withTimeout(executeFn(structuredClone(currentPayload)), 10000, 'Code execution timed out after 10s');
+                        currentPayload = resultPayload || currentPayload;
+                     } else if (node?.type === 'http') {
+                        const method = String(node.data?.method || 'GET').toUpperCase();
+                        const urlRaw = String(node.data?.url || '');
+                        const url = urlRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => { try { return String(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return ''; } });
+                        const headersRaw = String(node.data?.headers || '');
+                        const headers = headersRaw ? JSON.parse(headersRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => { try { return JSON.stringify(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return '""'; } })) : {};
+                        const bodyRaw = String(node.data?.body || '');
+                        const body = bodyRaw ? bodyRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => { try { return JSON.stringify(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return '""'; } }) : undefined;
+                        const httpTimeout = Number(node.data?.timeoutMs) || 30000;
+                        const fetchOptions: RequestInit = { method, headers };
+                        if (body && method !== 'GET') fetchOptions.body = body;
+                        const response = await withTimeout(fetch(url, fetchOptions), httpTimeout, `HTTP ${method} timed out after ${httpTimeout}ms`);
+                        const contentType = response.headers.get('content-type') || '';
+                        let responseData: any;
+                        if (contentType.includes('application/json')) responseData = await response.json();
+                        else responseData = await response.text();
+                        currentPayload = { ...currentPayload, httpStatus: response.status, httpData: responseData, output: responseData };
+                     } else if (node?.type === 'set') {
+                        const mappings = (node.data?.mappings || []) as { sourcePath: string; targetPath: string }[];
+                        const constantsRaw = String(node.data?.constants || '');
+                        const whitelistRaw = String(node.data?.whitelist || '');
+                        let result: any = {};
+                        for (const m of mappings) { const val = getByPath(currentPayload, m.sourcePath); setByPath(result, m.targetPath, val); }
+                        if (constantsRaw) { try { result = { ...result, ...JSON.parse(constantsRaw) }; } catch {} }
+                        if (whitelistRaw) { const paths = whitelistRaw.split(',').map((s: string) => s.trim()).filter(Boolean); const filtered: any = {}; for (const p of paths) { const v = getByPath(result, p); if (v !== undefined) setByPath(filtered, p, v); } result = filtered; }
+                        currentPayload = { ...currentPayload, ...result, output: result };
+                     } else if (node?.type === 'switch') {
+                        // handled in edge routing below
+                     } else if (node?.type === 'wait') {
+                        const waitMode = node.data?.waitMode || 'fixed';
+                        if (waitMode === 'fixed') { await sleep(Number(node.data?.delayMs) || 1000); }
+                        else {
+                           const untilExpr = String(node.data?.untilExpression || 'true');
+                           const start = Date.now();
+                           while (Date.now() - start < 60000) { if (await evaluateExpression(untilExpr, currentPayload, 2000)) break; await sleep(500); }
+                        }
                      }
-                  `;
-                  const executeFn = new AsyncFunction('payload', jsCode);
-                  const safePayload = structuredClone(currentPayload);
+                  })();
 
-                  const resultPayload = await withTimeout(
-                     executeFn(safePayload),
-                     10000,
-                     'Code execution timed out after 10s'
-                  );
+                  if (nodeTimeoutMs > 0) { await withTimeout(execPromise, nodeTimeoutMs, `Node timed out after ${nodeTimeoutMs}ms`); }
+                  else await execPromise;
 
-                  currentPayload = resultPayload || currentPayload;
+                  nodeExecError = null;
+                  break;
                } catch (e: any) {
-                  console.error('Code compilation error:', e);
-                  currentPayload = { ...currentPayload, _error: e.message };
+                  nodeExecError = e.message;
+                  console.error(`Node ${nodeId} attempt ${attempt}/${maxAttempts} failed:`, e.message);
+                  if (attempt < maxAttempts) {
+                     const delay = backoffType === 'exponential' ? baseDelay * Math.pow(2, attempt - 1) : baseDelay;
+                     await sleep(delay);
+                  }
                }
-            } else if (node?.type === 'http') {
-               try {
-                  const method = String(node.data?.method || 'GET').toUpperCase();
-                  const urlRaw = String(node.data?.url || '');
-                  const url = urlRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => {
-                     try { return String(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return ''; }
-                  });
-                  const headersRaw = String(node.data?.headers || '');
-                  const headers = headersRaw ? JSON.parse(headersRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => {
-                     try { return JSON.stringify(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return '""'; }
-                  })) : {};
-                  const bodyRaw = String(node.data?.body || '');
-                  const body = bodyRaw ? bodyRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => {
-                     try { return JSON.stringify(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return '""'; }
-                  }) : undefined;
-                  const timeoutMs = Number(node.data?.timeoutMs) || 30000;
+            }
 
-                  const fetchOptions: RequestInit = { method, headers };
-                  if (body && method !== 'GET') fetchOptions.body = body;
-
-                  const response = await withTimeout(fetch(url, fetchOptions), timeoutMs, `HTTP ${method} timed out after ${timeoutMs}ms`);
-                  const contentType = response.headers.get('content-type') || '';
-                  let responseData: any;
-                  if (contentType.includes('application/json')) {
-                     responseData = await response.json();
-                  } else {
-                     responseData = await response.text();
-                  }
-                  currentPayload = {
-                     ...currentPayload,
-                     httpStatus: response.status,
-                     httpData: responseData,
-                     output: responseData,
-                  };
-               } catch (e: any) {
-                  console.error('HTTP Request error:', e);
-                  currentPayload = { ...currentPayload, _error: e.message };
+            if (nodeExecError) {
+               currentPayload = { ...currentPayload, _error: nodeExecError };
+               results[nodeId] = currentPayload;
+               if (node?.data?.onError === 'continue') { continue; }
+               if (node?.data?.onError === 'route-to-error') {
+                  const errorEdge = workflow.edges_data.find((e: any) => e.source === nodeId && e.sourceHandle === 'error');
+                  if (errorEdge) { queue.push({ nodeId: errorEdge.target, payload: currentPayload }); }
+                  continue;
                }
-            } else if (node?.type === 'set') {
-               try {
-                  const mappings = (node.data?.mappings || []) as { sourcePath: string; targetPath: string }[];
-                  const constantsRaw = String(node.data?.constants || '');
-                  const whitelistRaw = String(node.data?.whitelist || '');
-                  let result: any = {};
+               setWorkflowExecutionState({ status: 'error', currentNodeId: nodeId, results });
+               return currentPayload;
+            }
 
-                  for (const m of mappings) {
-                     const val = getByPath(currentPayload, m.sourcePath);
-                     setByPath(result, m.targetPath, val);
-                  }
-
-                  if (constantsRaw) {
-                     try {
-                        const constants = JSON.parse(constantsRaw);
-                        result = { ...result, ...constants };
-                     } catch { /* ignore parse error */ }
-                  }
-
-                  if (whitelistRaw) {
-                     const paths = whitelistRaw.split(',').map((s: string) => s.trim()).filter(Boolean);
-                     const filtered: any = {};
-                     for (const p of paths) {
-                        const v = getByPath(result, p);
-                        if (v !== undefined) setByPath(filtered, p, v);
-                     }
-                     result = filtered;
-                  }
-
-                  currentPayload = { ...currentPayload, ...result, output: result };
-               } catch (e: any) {
-                  console.error('Set/Transform error:', e);
-                  currentPayload = { ...currentPayload, _error: e.message };
-               }
-            } else if (node?.type === 'switch') {
-               // handled in edge routing below
-            } else if (node?.type === 'wait') {
-               try {
-                  const waitMode = node.data?.waitMode || 'fixed';
-                  if (waitMode === 'fixed') {
-                     const delayMs = Number(node.data?.delayMs) || 1000;
-                     await new Promise(r => setTimeout(r, delayMs));
-                  } else {
-                     const untilExpr = String(node.data?.untilExpression || 'true');
-                     const maxWait = 60000;
-                     const start = Date.now();
-                     while (Date.now() - start < maxWait) {
-                        const shouldContinue = await evaluateExpression(untilExpr, currentPayload, 2000);
-                        if (shouldContinue) break;
-                        await new Promise(r => setTimeout(r, 500));
-                     }
-                  }
-               } catch (e: any) {
-                  console.error('Wait/Delay error:', e);
-                  currentPayload = { ...currentPayload, _error: e.message };
-               }
+            const outputError = validateSchema(currentPayload, node?.data?.outputSchema, 'Output');
+            if (outputError) {
+               currentPayload = { ...currentPayload, _error: outputError };
             }
 
             results[nodeId] = currentPayload;

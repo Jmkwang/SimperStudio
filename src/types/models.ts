@@ -45,6 +45,8 @@ export interface WorkflowNodeDataBase {
   timeoutMs?: number;
   retryPolicy?: NodeRetryPolicy;
   onError?: 'stop' | 'continue' | 'route-to-error';
+  inputSchema?: string;
+  outputSchema?: string;
 }
 
 export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {
