@@ -48,7 +48,8 @@
       "Bash(npx kill-port *)",
       "Bash(mv \"G:/workspace/SimperStudio/CLAUDE.md\" \"G:/workspace/SimperStudio/docs/Development.md\")",
       "Bash(mv \"G:/workspace/SimperStudio/TODO.md\" \"G:/workspace/SimperStudio/docs/TODO.md\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git push *)"
     ]
   }
 }
