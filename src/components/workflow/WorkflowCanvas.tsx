@@ -26,6 +26,9 @@ import { HttpRequestNode } from './nodes/HttpRequestNode';
 import { SetTransformNode } from './nodes/SetTransformNode';
 import { IfSwitchNode } from './nodes/IfSwitchNode';
 import { WaitDelayNode } from './nodes/WaitDelayNode';
+import { MergeNode } from './nodes/MergeNode';
+import { WebhookTriggerNode } from './nodes/WebhookTriggerNode';
+import { SubWorkflowNode } from './nodes/SubWorkflowNode';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from '@/components/ui/textarea';
@@ -65,7 +68,9 @@ const GenericNode = ({ data, id }: any) => {
   set: SetTransformNode,
   switch: IfSwitchNode,
   wait: WaitDelayNode,
-  subworkflow: GenericNode,
+  merge: MergeNode,
+  webhook: WebhookTriggerNode,
+  subworkflow: SubWorkflowNode,
   action: GenericNode,
   transformation: GenericNode
 };
@@ -153,6 +158,18 @@ function Flow() {
 
     if (type === 'wait') {
       Object.assign(baseData, { waitMode: 'fixed', delayMs: 1000, untilExpression: '' });
+    }
+
+    if (type === 'merge') {
+      Object.assign(baseData, { strategy: 'append', mergeKey: 'id' });
+    }
+
+    if (type === 'webhook') {
+      Object.assign(baseData, { webhookMethod: 'POST', webhookPath: '/webhook/' + Date.now(), authToken: '' });
+    }
+
+    if (type === 'subworkflow') {
+      Object.assign(baseData, { subWorkflowId: '', inputMapping: '' });
     }
 
     const newNode: Node = {
@@ -268,6 +285,9 @@ function Flow() {
                  <SelectItem value="set">{t("Set / Transform")}</SelectItem>
                  <SelectItem value="switch">{t("IF / Switch")}</SelectItem>
                  <SelectItem value="wait">{t("Wait / Delay")}</SelectItem>
+                 <SelectItem value="merge">{t("Merge")}</SelectItem>
+                 <SelectItem value="webhook">{t("Webhook Trigger")}</SelectItem>
+                 <SelectItem value="subworkflow">{t("Sub-workflow")}</SelectItem>
                  <SelectItem value="condition">{t("Router/Condition Node")}</SelectItem>
                  <SelectItem value="code">{t("Code Execution Node")}</SelectItem>
                  <SelectItem value="loop">{t("Loop Node")}</SelectItem>

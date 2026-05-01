@@ -26,7 +26,7 @@ export interface Workspace {
   updatedAt: number;
 }
 
-export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait';
+export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
 
 export interface WorkflowNodePosition {
   x: number;

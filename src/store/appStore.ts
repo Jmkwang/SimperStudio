@@ -1639,6 +1639,27 @@ export const useAppStore = create<AppState>()(
             results[nodeId] = currentPayload;
             const edges = workflow.edges_data.filter((e: any) => e.source === nodeId);
 
+            if (node?.type === 'merge') {
+               const strategy = node.data?.strategy || 'append';
+               const mergeKey = node.data?.mergeKey || 'id';
+               const incomingResults: any[] = [];
+               for (const edge of edges) {
+                  if (results[edge.target]) incomingResults.push(results[edge.target]);
+               }
+               if (strategy === 'append') {
+                  currentPayload = { ...currentPayload, merged: incomingResults };
+               } else if (strategy === 'byKey') {
+                  const merged: Record<string, unknown> = {};
+                  for (const r of incomingResults) {
+                     const key = String(r[mergeKey as string] ?? '');
+                     if (key) merged[key] = r;
+                  }
+                  currentPayload = { ...currentPayload, merged };
+               } else {
+                  currentPayload = { ...currentPayload, merged: Object.assign({}, ...incomingResults) as Record<string, unknown> };
+               }
+            }
+
             if (node?.type === 'condition' && node.data?.routes) {
                let matchedRouteId = null;
 
