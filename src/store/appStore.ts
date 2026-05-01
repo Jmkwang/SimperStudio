@@ -218,7 +218,7 @@ interface AppState {
      results: Record<string, any>;
   };
   setWorkflowExecutionState: (state: Partial<AppState['workflowExecution']>) => void;
-  executeWorkflow: (workflowId: string, initialPayload: Record<string, any>) => Promise<Record<string, any>>;
+  executeWorkflow: (workflowId: string, initialPayload: Record<string, any>, options?: { startNodeId?: string; concurrency?: number }) => Promise<Record<string, any>>;
 
 
   // Settings Actions
@@ -1386,17 +1386,23 @@ export const useAppStore = create<AppState>()(
         workflowExecution: { ...state.workflowExecution, ...updates }
       })),
 
-      executeWorkflow: async (workflowId, initialPayload) => {
+      executeWorkflow: async (workflowId, initialPayload, options) => {
          const { workflows, setWorkflowExecutionState } = get();
          const workflow = workflows.find(w => w.id === workflowId);
+         const executionId = `exec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+         void (options?.concurrency ?? 1); // reserved for future concurrent execution
+         const executedKeys = new Set<string>();
 
          if (!workflow) return initialPayload;
 
          setWorkflowExecutionState({ status: 'running', currentNodeId: null, results: {} });
 
-         const triggerNode = workflow.nodes_data.find((n: any) => n.type === 'trigger');
+         const startNodeId = options?.startNodeId;
+         const startNode = startNodeId
+            ? workflow.nodes_data.find((n: any) => n.id === startNodeId)
+            : workflow.nodes_data.find((n: any) => n.type === 'trigger');
 
-         if (!triggerNode) {
+         if (!startNode) {
             setWorkflowExecutionState({ status: 'error' });
             return initialPayload;
          }
@@ -1407,11 +1413,11 @@ export const useAppStore = create<AppState>()(
          };
 
          let queue: ExecutionFrame[] = [
-            { nodeId: triggerNode.id, payload: structuredClone(initialPayload) }
+            { nodeId: startNode.id, payload: structuredClone(initialPayload) }
          ];
 
          let results: Record<string, any> = {
-            [triggerNode.id]: structuredClone(initialPayload)
+            [startNode.id]: structuredClone(initialPayload)
          };
 
          let finalPayload = structuredClone(initialPayload);
@@ -1495,6 +1501,10 @@ export const useAppStore = create<AppState>()(
             const nodeId = frame.nodeId;
             const node = workflow.nodes_data.find((n: any) => n.id === nodeId);
             let currentPayload = structuredClone(frame.payload);
+
+            const idempotentKey = `${executionId}:${nodeId}`;
+            if (executedKeys.has(idempotentKey)) { continue; }
+            executedKeys.add(idempotentKey);
 
             stepCounter += 1;
             if (stepCounter > MAX_WORKFLOW_STEPS) {
