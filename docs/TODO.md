@@ -191,13 +191,14 @@
 
 ## 6. P4：测试与工程化补齐
 
-- [ ] 为 `addAgentResponseStream` / `completeAgentResponse` 增加 store 层单元测试：
-  - [ ] 同一 `messageId` 下多个 agent 聚合写入。
-  - [ ] chunk 追加无重复倍增。
-  - [ ] 单个 agent 完成不影响其他 agent 状态。
+- [x] 搭建 vitest + @testing-library/react 测试基础设施。
+- [x] 为 `addAgentResponseStream` / `completeAgentResponse` 增加 store 层单元测试：
+  - [x] 同一 `messageId` 下多个 agent 聚合写入。
+  - [x] chunk 追加无重复倍增。
+  - [x] 单个 agent 完成不影响其他 agent 状态。
+- [x] 为工作流运行时补最小契约测试：线性流程、条件分支、错误传播、断点续跑、执行记录。
 - [ ] 为聊天视图补最小渲染测试：多个 `agentResponses` 均显示正确 agent 标识。
 - [ ] 为 workflow chat V1 补最小交互测试：打开窗口、聚焦窗口、转发到下一节点。
-- [ ] 为工作流运行时补最小契约测试：重试、超时、失败分支、断点续跑。
 - [ ] 为新节点补契约测试：HTTP/IF/Merge/Sub-workflow 的输入输出与错误路径。
 
 ## 7. 已清理的旧计划
