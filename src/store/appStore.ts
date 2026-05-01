@@ -216,6 +216,7 @@ interface AppState {
      status: 'idle' | 'running' | 'completed' | 'error';
      currentNodeId: string | null;
      results: Record<string, any>;
+     nodeRecords: Record<string, { status: string; startTime?: number; endTime?: number; durationMs?: number; attempts: number; error?: string }>;
   };
   setWorkflowExecutionState: (state: Partial<AppState['workflowExecution']>) => void;
   executeWorkflow: (workflowId: string, initialPayload: Record<string, any>, options?: { startNodeId?: string; concurrency?: number }) => Promise<Record<string, any>>;
@@ -640,7 +641,8 @@ export const useAppStore = create<AppState>()(
       workflowExecution: {
         status: 'idle',
         currentNodeId: null,
-        results: {}
+        results: {},
+        nodeRecords: {}
       },
 
 
@@ -1395,7 +1397,7 @@ export const useAppStore = create<AppState>()(
 
          if (!workflow) return initialPayload;
 
-         setWorkflowExecutionState({ status: 'running', currentNodeId: null, results: {} });
+         setWorkflowExecutionState({ status: 'running', currentNodeId: null, results: {}, nodeRecords: {} });
 
          const startNodeId = options?.startNodeId;
          const startNode = startNodeId
@@ -1505,6 +1507,20 @@ export const useAppStore = create<AppState>()(
             const idempotentKey = `${executionId}:${nodeId}`;
             if (executedKeys.has(idempotentKey)) { continue; }
             executedKeys.add(idempotentKey);
+
+            const nodeStartTime = Date.now();
+            const updateNodeRecord = (status: string, extra?: Record<string, unknown>) => {
+               set((state) => ({
+                  workflowExecution: {
+                     ...state.workflowExecution,
+                     nodeRecords: {
+                        ...state.workflowExecution.nodeRecords,
+                        [nodeId]: { ...state.workflowExecution.nodeRecords[nodeId], status, ...extra }
+                     }
+                  }
+               }));
+            };
+            updateNodeRecord('running', { startTime: nodeStartTime, attempts: 0 });
 
             stepCounter += 1;
             if (stepCounter > MAX_WORKFLOW_STEPS) {
@@ -1619,6 +1635,8 @@ export const useAppStore = create<AppState>()(
             }
 
             if (nodeExecError) {
+               const nodeEndTime = Date.now();
+               updateNodeRecord('error', { endTime: nodeEndTime, durationMs: nodeEndTime - nodeStartTime, error: nodeExecError, attempts: maxAttempts });
                currentPayload = { ...currentPayload, _error: nodeExecError };
                results[nodeId] = currentPayload;
                if (node?.data?.onError === 'continue') { continue; }
@@ -1635,6 +1653,9 @@ export const useAppStore = create<AppState>()(
             if (outputError) {
                currentPayload = { ...currentPayload, _error: outputError };
             }
+
+            const nodeEndTime = Date.now();
+            updateNodeRecord('success', { endTime: nodeEndTime, durationMs: nodeEndTime - nodeStartTime, attempts: maxAttempts });
 
             results[nodeId] = currentPayload;
             const edges = workflow.edges_data.filter((e: any) => e.source === nodeId);

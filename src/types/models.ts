@@ -196,3 +196,28 @@ export interface AgentChatWindowData {
   zIndex: number;
   minimized?: boolean;
 }
+
+export type NodeExecutionStatus = 'pending' | 'running' | 'success' | 'error' | 'skipped' | 'retrying';
+
+export interface NodeExecutionRecord {
+  nodeId: string;
+  status: NodeExecutionStatus;
+  startTime?: number;
+  endTime?: number;
+  durationMs?: number;
+  attempts: number;
+  error?: string;
+  input?: unknown;
+  output?: unknown;
+}
+
+export interface WorkflowExecutionRecord {
+  id: string;
+  workflowId: string;
+  status: 'running' | 'completed' | 'error' | 'cancelled';
+  startTime: number;
+  endTime?: number;
+  durationMs?: number;
+  nodeRecords: Record<string, NodeExecutionRecord>;
+  results: Record<string, unknown>;
+}
