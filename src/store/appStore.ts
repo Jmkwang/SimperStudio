@@ -1454,6 +1454,21 @@ export const useAppStore = create<AppState>()(
             );
          };
 
+         const evaluateExpressionSync = (expression: string, payload: any) => {
+            const fn = new Function('payload', `with(payload) { return ${expression}; }`);
+            return fn(payload);
+         };
+
+         const setByPath = (obj: any, path: string, value: any) => {
+            const keys = path.split('.');
+            let cur = obj;
+            for (let i = 0; i < keys.length - 1; i++) {
+               if (cur[keys[i]] === undefined || cur[keys[i]] === null) cur[keys[i]] = {};
+               cur = cur[keys[i]];
+            }
+            cur[keys[keys.length - 1]] = value;
+         };
+
          const MAX_WORKFLOW_STEPS = 1000;
          let stepCounter = 0;
 
@@ -1525,6 +1540,100 @@ export const useAppStore = create<AppState>()(
                   console.error('Code compilation error:', e);
                   currentPayload = { ...currentPayload, _error: e.message };
                }
+            } else if (node?.type === 'http') {
+               try {
+                  const method = String(node.data?.method || 'GET').toUpperCase();
+                  const urlRaw = String(node.data?.url || '');
+                  const url = urlRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => {
+                     try { return String(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return ''; }
+                  });
+                  const headersRaw = String(node.data?.headers || '');
+                  const headers = headersRaw ? JSON.parse(headersRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => {
+                     try { return JSON.stringify(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return '""'; }
+                  })) : {};
+                  const bodyRaw = String(node.data?.body || '');
+                  const body = bodyRaw ? bodyRaw.replace(/\{\{(.*?)\}\}/g, (_: string, expr: string) => {
+                     try { return JSON.stringify(evaluateExpressionSync(expr.trim(), currentPayload)); } catch { return '""'; }
+                  }) : undefined;
+                  const timeoutMs = Number(node.data?.timeoutMs) || 30000;
+
+                  const fetchOptions: RequestInit = { method, headers };
+                  if (body && method !== 'GET') fetchOptions.body = body;
+
+                  const response = await withTimeout(fetch(url, fetchOptions), timeoutMs, `HTTP ${method} timed out after ${timeoutMs}ms`);
+                  const contentType = response.headers.get('content-type') || '';
+                  let responseData: any;
+                  if (contentType.includes('application/json')) {
+                     responseData = await response.json();
+                  } else {
+                     responseData = await response.text();
+                  }
+                  currentPayload = {
+                     ...currentPayload,
+                     httpStatus: response.status,
+                     httpData: responseData,
+                     output: responseData,
+                  };
+               } catch (e: any) {
+                  console.error('HTTP Request error:', e);
+                  currentPayload = { ...currentPayload, _error: e.message };
+               }
+            } else if (node?.type === 'set') {
+               try {
+                  const mappings = (node.data?.mappings || []) as { sourcePath: string; targetPath: string }[];
+                  const constantsRaw = String(node.data?.constants || '');
+                  const whitelistRaw = String(node.data?.whitelist || '');
+                  let result: any = {};
+
+                  for (const m of mappings) {
+                     const val = getByPath(currentPayload, m.sourcePath);
+                     setByPath(result, m.targetPath, val);
+                  }
+
+                  if (constantsRaw) {
+                     try {
+                        const constants = JSON.parse(constantsRaw);
+                        result = { ...result, ...constants };
+                     } catch { /* ignore parse error */ }
+                  }
+
+                  if (whitelistRaw) {
+                     const paths = whitelistRaw.split(',').map((s: string) => s.trim()).filter(Boolean);
+                     const filtered: any = {};
+                     for (const p of paths) {
+                        const v = getByPath(result, p);
+                        if (v !== undefined) setByPath(filtered, p, v);
+                     }
+                     result = filtered;
+                  }
+
+                  currentPayload = { ...currentPayload, ...result, output: result };
+               } catch (e: any) {
+                  console.error('Set/Transform error:', e);
+                  currentPayload = { ...currentPayload, _error: e.message };
+               }
+            } else if (node?.type === 'switch') {
+               // handled in edge routing below
+            } else if (node?.type === 'wait') {
+               try {
+                  const waitMode = node.data?.waitMode || 'fixed';
+                  if (waitMode === 'fixed') {
+                     const delayMs = Number(node.data?.delayMs) || 1000;
+                     await new Promise(r => setTimeout(r, delayMs));
+                  } else {
+                     const untilExpr = String(node.data?.untilExpression || 'true');
+                     const maxWait = 60000;
+                     const start = Date.now();
+                     while (Date.now() - start < maxWait) {
+                        const shouldContinue = await evaluateExpression(untilExpr, currentPayload, 2000);
+                        if (shouldContinue) break;
+                        await new Promise(r => setTimeout(r, 500));
+                     }
+                  }
+               } catch (e: any) {
+                  console.error('Wait/Delay error:', e);
+                  currentPayload = { ...currentPayload, _error: e.message };
+               }
             }
 
             results[nodeId] = currentPayload;
@@ -1547,6 +1656,29 @@ export const useAppStore = create<AppState>()(
 
                if (matchedRouteId) {
                   const matchingEdge = edges.find((e: any) => e.sourceHandle === matchedRouteId);
+                  if (matchingEdge) {
+                     const nextPayload = structuredClone(currentPayload);
+                     results[matchingEdge.target] = nextPayload;
+                     queue.push({ nodeId: matchingEdge.target, payload: nextPayload });
+                  }
+               }
+            } else if (node?.type === 'switch' && node.data?.branches) {
+               let matchedBranchId = null;
+
+               for (const branch of (node.data.branches as any[]) || []) {
+                  try {
+                     const isMatch = await evaluateExpression(branch.condition || 'false', currentPayload, 2000);
+                     if (isMatch) {
+                        matchedBranchId = branch.id;
+                        break;
+                     }
+                  } catch (e) {
+                     console.error('Branch evaluation error:', e);
+                  }
+               }
+
+               if (matchedBranchId) {
+                  const matchingEdge = edges.find((e: any) => e.sourceHandle === matchedBranchId);
                   if (matchingEdge) {
                      const nextPayload = structuredClone(currentPayload);
                      results[matchingEdge.target] = nextPayload;

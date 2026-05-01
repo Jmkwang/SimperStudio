@@ -22,6 +22,10 @@ import { OutputNode } from './nodes/OutputNode';
 import { RouterNode } from './nodes/RouterNode';
 import { CodeNode } from './nodes/CodeNode';
 import { LoopNode } from './nodes/LoopNode';
+import { HttpRequestNode } from './nodes/HttpRequestNode';
+import { SetTransformNode } from './nodes/SetTransformNode';
+import { IfSwitchNode } from './nodes/IfSwitchNode';
+import { WaitDelayNode } from './nodes/WaitDelayNode';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from 'lucide-react';
@@ -55,6 +59,10 @@ const GenericNode = ({ data, id }: any) => {
   condition: RouterNode,
   code: CodeNode,
   loop: LoopNode,
+  http: HttpRequestNode,
+  set: SetTransformNode,
+  switch: IfSwitchNode,
+  wait: WaitDelayNode,
   subworkflow: GenericNode,
   action: GenericNode,
   transformation: GenericNode
@@ -120,6 +128,27 @@ function Flow() {
       });
     }
 
+    if (type === 'http') {
+      Object.assign(baseData, { method: 'GET', url: '', headers: '', body: '', timeoutMs: 30000 });
+    }
+
+    if (type === 'set') {
+      Object.assign(baseData, { mappings: [{ sourcePath: 'payload.llmResult', targetPath: 'output' }], constants: '', whitelist: '' });
+    }
+
+    if (type === 'switch') {
+      Object.assign(baseData, {
+        branches: [
+          { id: 'true', label: 'True', condition: 'payload.value > 0' },
+          { id: 'false', label: 'False', condition: 'true' },
+        ]
+      });
+    }
+
+    if (type === 'wait') {
+      Object.assign(baseData, { waitMode: 'fixed', delayMs: 1000, untilExpression: '' });
+    }
+
     const newNode: Node = {
       id: `${type}-${nodes.length + 1}-${Date.now()}`,
       type: type,
@@ -178,6 +207,10 @@ function Flow() {
                <SelectContent>
                  <SelectItem value="trigger">{t("Trigger Node")}</SelectItem>
                  <SelectItem value="agent">{t("Agent Node")}</SelectItem>
+                 <SelectItem value="http">{t("HTTP Request")}</SelectItem>
+                 <SelectItem value="set">{t("Set / Transform")}</SelectItem>
+                 <SelectItem value="switch">{t("IF / Switch")}</SelectItem>
+                 <SelectItem value="wait">{t("Wait / Delay")}</SelectItem>
                  <SelectItem value="condition">{t("Router/Condition Node")}</SelectItem>
                  <SelectItem value="code">{t("Code Execution Node")}</SelectItem>
                  <SelectItem value="loop">{t("Loop Node")}</SelectItem>

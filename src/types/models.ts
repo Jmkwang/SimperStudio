@@ -26,16 +26,25 @@ export interface Workspace {
   updatedAt: number;
 }
 
-export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router';
+export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait';
 
 export interface WorkflowNodePosition {
   x: number;
   y: number;
 }
 
+export interface NodeRetryPolicy {
+  maxAttempts?: number;
+  backoff?: 'fixed' | 'exponential';
+  delayMs?: number;
+}
+
 export interface WorkflowNodeDataBase {
   label?: string;
   description?: string;
+  timeoutMs?: number;
+  retryPolicy?: NodeRetryPolicy;
+  onError?: 'stop' | 'continue' | 'route-to-error';
 }
 
 export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {
