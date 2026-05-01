@@ -4,6 +4,9 @@ dist/
 dist-ssr/
 *.local
 
+# claude
+.claude/worktrees/
+
 # tauri
 src-tauri/target/
 src-tauri/Cargo.lock
