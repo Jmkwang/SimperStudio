@@ -103,7 +103,7 @@ function Flow() {
     if (activeWorkflow) {
       setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ 
         ...n, 
-        className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 animate-pulse' : '',
+        className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 motion-safe:animate-pulse' : '',
         data: { ...n.data, deleteNode } 
       })));
       setEdges(activeWorkflow.edges_data || []);

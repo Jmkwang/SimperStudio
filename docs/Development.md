@@ -71,13 +71,21 @@ SimperStudio/
 │   │   │
 │   │   ├── workflow/
 │   │   │   ├── WorkflowCanvas.tsx        # 工作流画布主组件
+│   │   │   ├── ExecutionTimeline.tsx     # 执行时间线面板
 │   │   │   └── nodes/
 │   │   │       ├── TriggerNode.tsx       # 触发器节点
 │   │   │       ├── AgentNode.tsx         # Agent 节点
 │   │   │       ├── OutputNode.tsx        # 输出节点
 │   │   │       ├── RouterNode.tsx        # 条件路由节点
 │   │   │       ├── CodeNode.tsx          # 代码执行节点
-│   │   │       └── LoopNode.tsx          # 循环迭代节点
+│   │   │       ├── LoopNode.tsx          # 循环迭代节点
+│   │   │       ├── HttpRequestNode.tsx   # HTTP 请求节点
+│   │   │       ├── SetTransformNode.tsx  # 数据转换节点
+│   │   │       ├── IfSwitchNode.tsx      # 多分支路由节点
+│   │   │       ├── WaitDelayNode.tsx     # 延时等待节点
+│   │   │       ├── MergeNode.tsx         # 合并节点
+│   │   │       ├── WebhookTriggerNode.tsx # Webhook 触发器节点
+│   │   │       └── SubWorkflowNode.tsx   # 子工作流节点
 │   │   │
 │   │   ├── prompts/
 │   │   │   └── PromptGenerator.tsx       # 提示词生成器
@@ -154,6 +162,7 @@ interface AppState {
     status: 'idle' | 'running' | 'completed' | 'error';
     currentNodeId: string | null;
     results: Record<string, any>;
+    nodeRecords: Record<string, NodeExecutionRecord>; // 每个节点的执行记录
   };
 }
 ```
@@ -162,8 +171,9 @@ interface AppState {
 - **fetchInitialData()**：初始化数据（从 SQLite 加载）
 - **createSession/updateSession**：会话管理
 - **addAgentResponseStream/completeAgentResponse**：流式响应处理
-- **executeWorkflow()**：工作流执行引擎
-- **saveWorkflow()**：工作流持久化
+- **executeWorkflow()**：工作流执行引擎（支持 startNodeId 断点续跑）
+- **cancelWorkflowExecution()**：取消正在执行的工作流
+- **saveWorkflow()**：工作流持久化（含节点数据规范化）
 
 ### 2. 工作流执行引擎 (executeWorkflow)
 
@@ -175,19 +185,31 @@ interface AppState {
 - **上下文传递**：通过 `payload` 对象在节点间传递数据
 - **循环保护**：`MAX_WORKFLOW_STEPS = 1000` 防止无限循环
 
-#### 节点类型支持
-1. **Trigger (触发器)**：工作流入口点
-2. **Agent (AI 节点)**：LLM 调用，支持结构化输出（Schema）
-3. **Code (代码节点)**：JS 表达式执行，支持异步和超时（10s）
-4. **Condition (条件路由)**：JS 表达式评估，多分支分发
-5. **Loop (循环节点)**：数组遍历，支持：
-   - `itemsPath`：数据源路径（如 `payload.alivePlayers`）
-   - `itemAlias/indexAlias`：迭代变量别名
-   - `maxIterations`：最大迭代次数（默认 20）
-   - `breakCondition`：中断条件表达式
-   - `aggregationStrategy`：结果聚合策略（append/replace）
-   - **结果存储**：`payload.loopResults[nodeId]`
-6. **Output (输出节点)**：标记工作流输出点
+#### 节点类型支持（13 种）
+
+| 分类 | 节点 | 说明 |
+|------|------|------|
+| **Trigger** | trigger | 工作流入口点 |
+| **Trigger** | webhook | HTTP 端点触发 |
+| **Data** | code | JS 代码执行，支持异步和超时 |
+| **Data** | set | 字段映射、常量注入、白名单过滤 |
+| **AI** | agent | LLM 调用，支持结构化输出 |
+| **Flow Control** | condition | JS 表达式评估，多分支分发 |
+| **Flow Control** | switch | 多条件路由（first match wins） |
+| **Flow Control** | loop | 数组遍历，支持 itemsPath/breakCondition |
+| **Flow Control** | wait | 固定延时或条件等待 |
+| **Flow Control** | merge | 多上游结果合并 |
+| **Integration** | http | HTTP 请求（GET/POST/PUT/PATCH/DELETE） |
+| **Integration** | subworkflow | 调用其他工作流 |
+| **Output** | output | 终止节点，捕获结果 |
+
+#### 节点契约（通用字段）
+
+所有节点支持以下通用配置：
+- `timeoutMs`：节点级超时
+- `retryPolicy`：重试策略（maxAttempts/backoff/delayMs）
+- `onError`：失败策略（stop/continue/route-to-error）
+- `inputSchema/outputSchema`：输入输出 Schema 校验
 
 #### 循环节点实现细节
 ```typescript
@@ -410,13 +432,19 @@ CREATE TABLE workflows (
 - [x] 默认数据注入（3 个工作流 + 3 个会话）
 - [x] Loop 节点 UI 与执行引擎实现
 - [x] Loop 节点数据汇总（`payload.loopResults`）
+- [x] P0：Chat 页重构闭环（single/workflow 双模式、窗口编排、转发链路）
+- [x] P1：可组合节点生态（HTTP、Set/Transform、IF/Switch、Merge、Wait、Webhook、Sub-workflow）
+- [x] P1：工作流导入导出（JSON 文件/粘贴导入）
+- [x] P2：可靠执行语义（schema 校验、重试/超时/失败分支、断点续跑、取消执行）
+- [x] P3：执行可观测（NodeExecutionRecord、ExecutionTimeline、错误面板、重跑、导出日志）
+- [x] P4：测试基础设施（vitest + @testing-library/react，41 个测试用例）
 
-### 下一步计划（按优先级）
-- [ ] P0：完成 Chat 页重构闭环（single/workflow 双模式、窗口编排、转发链路）。
-- [ ] P1：补齐可组合节点生态（HTTP、Set/Transform、IF/Switch、Merge、Wait、Webhook、Sub-workflow）。
-- [ ] P2：补齐可靠执行语义（schema 校验、重试/超时/失败分支、并发与断点续跑）。
-- [ ] P3：补齐可观测与运维能力（执行日志、节点快照、时间线、重跑、版本发布）。
-- [ ] P4：补齐测试与工程化（runtime 契约测试与节点测试）。
+### 剩余待办
+- [ ] 浏览器手动验证（single chat、workflow chat、窗口交互、转发链路）
+- [ ] 节点配置交互对齐（统一基础区块：名称、描述、超时、重试、失败策略）
+- [ ] P2 运行时语义补完（loop 聚合、职责边界、狼人杀回归）
+- [ ] P3 告警钩子（本地通知/Webhook）
+- [ ] P3 无障碍/UI 对比度（对比度达标、点击区 44×44px、aria-label、响应式布局）
 
 ## 调试技巧 (Debugging Tips)
 
@@ -442,6 +470,41 @@ SELECT * FROM chat_sessions;
 ```
 Simulating API call for [AgentName] because no API key is configured
 ```
+
+## 测试 (Testing)
+
+项目使用 **vitest** + **@testing-library/react** 进行测试。
+
+### 运行测试
+
+```bash
+# 运行所有测试
+npm test
+
+# 监听模式
+npm run test:watch
+```
+
+### 测试文件结构
+
+```
+src/
+├── store/__tests__/
+│   ├── appStore.test.ts          # 流式响应 store 测试
+│   ├── workflowExecution.test.ts # 工作流执行引擎测试
+│   ├── workflowChat.test.ts      # 工作流聊天窗口交互测试
+│   └── nodeContracts.test.ts     # 节点契约测试（HTTP/IF/Switch/Merge/Wait/Retry/Timeout）
+└── components/chat/__tests__/
+    └── ChatMessageBubble.test.tsx # 聊天气泡渲染测试
+```
+
+### 测试覆盖范围
+
+- Store 层：addAgentResponseStream、completeAgentResponse
+- 执行引擎：线性流程、条件分支、错误传播、断点续跑、执行记录
+- 节点契约：IF/Switch 路由、Set/Transform 映射、Wait/Delay 延时、Merge 合并、HTTP 请求、重试策略、超时
+- 交互：窗口打开/聚焦/关闭/最小化、forwardAgentReplyToNext 路由
+- 渲染：多 agentResponses 过滤显示
 
 ## 常见问题 (FAQ)
 

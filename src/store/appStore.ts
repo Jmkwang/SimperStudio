@@ -220,6 +220,7 @@ interface AppState {
   };
   setWorkflowExecutionState: (state: Partial<AppState['workflowExecution']>) => void;
   executeWorkflow: (workflowId: string, initialPayload: Record<string, any>, options?: { startNodeId?: string; concurrency?: number }) => Promise<Record<string, any>>;
+  cancelWorkflowExecution: () => void;
 
 
   // Settings Actions
@@ -1425,6 +1426,12 @@ export const useAppStore = create<AppState>()(
         workflowExecution: { ...state.workflowExecution, ...updates }
       })),
 
+      _cancelRequested: false,
+
+      cancelWorkflowExecution: () => {
+        set({ _cancelRequested: true } as any);
+      },
+
       executeWorkflow: async (workflowId, initialPayload, options) => {
          const { workflows, setWorkflowExecutionState } = get();
          const workflow = workflows.find(w => w.id === workflowId);
@@ -1536,6 +1543,13 @@ export const useAppStore = create<AppState>()(
          const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
          while (queue.length > 0) {
+            // Cancel check: if user requested cancellation, break out of execution loop
+            if ((get() as any)._cancelRequested) {
+              setWorkflowExecutionState({ status: 'idle', currentNodeId: null });
+              set({ _cancelRequested: false } as any);
+              return finalPayload;
+            }
+
             const frame = queue.shift()!;
             const nodeId = frame.nodeId;
             const node = workflow.nodes_data.find((n: any) => n.id === nodeId);

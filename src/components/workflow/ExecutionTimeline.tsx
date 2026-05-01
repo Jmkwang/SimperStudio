@@ -5,12 +5,12 @@ import { X, RotateCcw, Download, ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react';
 
 const statusColors: Record<string, string> = {
-  running: 'bg-blue-500 animate-pulse',
+  running: 'bg-blue-500 motion-safe:animate-pulse',
   success: 'bg-emerald-500',
   error: 'bg-red-500',
   skipped: 'bg-muted-foreground/30',
   pending: 'bg-muted-foreground/20',
-  retrying: 'bg-amber-500 animate-pulse',
+  retrying: 'bg-amber-500 motion-safe:animate-pulse',
 };
 
 const statusTextColors: Record<string, string> = {
@@ -68,7 +68,7 @@ export function ExecutionTimeline() {
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           <div className={cn('w-2 h-2 rounded-full', {
-            'bg-blue-500 animate-pulse': workflowExecution.status === 'running',
+            'bg-blue-500 motion-safe:animate-pulse': workflowExecution.status === 'running',
             'bg-emerald-500': workflowExecution.status === 'completed',
             'bg-red-500': workflowExecution.status === 'error',
           })} />

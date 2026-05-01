@@ -66,7 +66,18 @@ Payload 是一个普通的 JavaScript 对象，在整个工作流中传递。每
 
 ## 节点类型参考
 
-系统中共有 **6 种节点类型**。每种类型都有唯一的类型标识、视觉样式和运行时行为。
+系统中共有 **13 种节点类型**。每种类型都有唯一的类型标识、视觉样式和运行时行为。
+
+节点分为 5 个分类：
+
+| 分类 | 节点类型 |
+|------|---------|
+| **Trigger（触发）** | trigger, webhook |
+| **Flow Control（流程控制）** | condition, switch, loop, wait, merge |
+| **Data（数据）** | code, set |
+| **AI（智能体）** | agent |
+| **Integration（集成）** | http, subworkflow |
+| **Output（输出）** | output |
 
 ---
 
@@ -522,6 +533,432 @@ Output 节点是一个**终止节点**，它将当前 payload 作为工作流结
 
 ---
 
+### 7. HTTP Request 节点（HTTP 请求）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `http` |
+| 颜色主题 | 青色（cyan） |
+| 图标 | Globe |
+| 目标连接点 | 1 个（左侧） |
+| 源连接点 | 1 个（右侧） |
+| 宽度 | 220px |
+
+#### 用途
+
+HTTP Request 节点向外部 API 发送 HTTP 请求，支持 GET/POST/PUT/PATCH/DELETE 方法。响应数据注入到 payload 中。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;       // 显示名称
+  method?: string;      // HTTP 方法，默认 "GET"
+  url?: string;         // 请求 URL，支持 {{expression}} 模板
+  headers?: string;     // JSON 格式的请求头
+  body?: string;        // 请求体（非 GET 时），支持 {{expression}} 模板
+  timeoutMs?: number;   // 请求超时，默认 30000ms
+}
+```
+
+#### 运行时行为
+
+1. 解析 URL 和 headers 中的 `{{expression}}` 模板插值。
+2. 发送 HTTP 请求。
+3. 响应数据注入到 `payload.httpData`，状态码注入到 `payload.httpStatus`。
+4. 同时设置 `payload.output` 为响应数据。
+
+#### 示例
+
+```json
+{
+  "id": "api-call",
+  "type": "http",
+  "position": { "x": 300, "y": 200 },
+  "data": {
+    "label": "获取用户信息",
+    "method": "GET",
+    "url": "https://api.example.com/users/{{payload.userId}}",
+    "headers": "{\"Authorization\": \"Bearer {{payload.token}}\"}",
+    "timeoutMs": 5000
+  }
+}
+```
+
+---
+
+### 8. Set / Transform 节点（数据转换）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `set` |
+| 颜色主题 | 青绿色（teal） |
+| 图标 | Shuffle |
+| 目标连接点 | 1 个（左侧） |
+| 源连接点 | 1 个（右侧） |
+| 宽度 | 220px |
+
+#### 用途
+
+Set 节点用于字段映射、重命名、常量注入和白名单过滤。它是纯数据转换节点，不执行代码。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;       // 显示名称
+  mappings?: Array<{    // 字段映射列表
+    sourcePath: string; //   源路径（如 "payload.name"）
+    targetPath: string; //   目标路径（如 "userName"）
+  }>;
+  constants?: string;   // JSON 格式的常量，合并到结果中
+  whitelist?: string;   // 逗号分隔的白名单路径，只保留这些字段
+}
+```
+
+#### 运行时行为
+
+1. 按 `mappings` 从 payload 提取字段并映射到新路径。
+2. 合并 `constants` 中的常量值。
+3. 如果设置了 `whitelist`，只保留白名单中的字段。
+4. 结果合并到 payload 并设置 `payload.output`。
+
+#### 示例
+
+```json
+{
+  "id": "transform",
+  "type": "set",
+  "position": { "x": 300, "y": 200 },
+  "data": {
+    "label": "提取用户字段",
+    "mappings": [
+      { "sourcePath": "payload.user.name", "targetPath": "userName" },
+      { "sourcePath": "payload.user.email", "targetPath": "userEmail" }
+    ],
+    "constants": "{\"version\": 2}",
+    "whitelist": "output.userName, output.userEmail, output.version"
+  }
+}
+```
+
+---
+
+### 9. IF / Switch 节点（多分支路由）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `switch` |
+| 颜色主题 | 琥珀色（amber） |
+| 图标 | GitBranch |
+| 目标连接点 | 1 个（左侧） |
+| 源连接点 | 动态多个（每个分支一个） |
+| 宽度 | 240px |
+
+#### 用途
+
+Switch 节点评估多个条件表达式，将 payload 路由到**第一个匹配**的分支。与 Condition 节点类似，但使用 `branches` 而非 `routes`。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;       // 显示名称
+  branches?: Array<{    // 分支列表
+    id: string;         //   分支 ID（用作 sourceHandle）
+    label?: string;     //   分支显示名称
+    condition: string;  //   条件表达式
+  }>;
+}
+```
+
+#### 运行时行为
+
+1. 按顺序评估每个分支的 `condition`。
+2. 第一个评估为 `true` 的分支被选中。
+3. 通过 edge 的 `sourceHandle` 匹配分支 `id` 路由到下游节点。
+
+#### 示例
+
+```json
+{
+  "id": "priority-switch",
+  "type": "switch",
+  "position": { "x": 300, "y": 200 },
+  "data": {
+    "label": "优先级路由",
+    "branches": [
+      { "id": "b-high", "label": "高", "condition": "payload.value > 100" },
+      { "id": "b-mid", "label": "中", "condition": "payload.value > 50" },
+      { "id": "b-low", "label": "低", "condition": "true" }
+    ]
+  }
+}
+```
+
+---
+
+### 10. Wait / Delay 节点（延时等待）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `wait` |
+| 颜色主题 | 紫罗兰（violet） |
+| 图标 | Timer |
+| 目标连接点 | 1 个（左侧） |
+| 源连接点 | 1 个（右侧） |
+| 宽度 | 220px |
+
+#### 用途
+
+Wait 节点暂停工作流执行，支持固定延时或等待直到条件满足。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;          // 显示名称
+  waitMode?: 'fixed' | 'until'; // 等待模式，默认 "fixed"
+  delayMs?: number;        // 固定延时（毫秒），默认 1000
+  untilExpression?: string; // 等待模式为 "until" 时的条件表达式
+  timeoutMs?: number;      // 最大等待时间
+}
+```
+
+#### 运行时行为
+
+- **fixed 模式**：等待指定毫秒后继续。
+- **until 模式**：每 500ms 评估一次条件，条件为 `true` 时继续（最多 60 秒）。
+
+#### 示例
+
+```json
+{
+  "id": "delay",
+  "type": "wait",
+  "position": { "x": 300, "y": 200 },
+  "data": {
+    "label": "等待 2 秒",
+    "waitMode": "fixed",
+    "delayMs": 2000
+  }
+}
+```
+
+---
+
+### 11. Merge 节点（合并）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `merge` |
+| 颜色主题 | 粉色（pink） |
+| 图标 | Merge |
+| 目标连接点 | 2 个（input-1, input-2） |
+| 源连接点 | 1 个（右侧） |
+| 宽度 | 220px |
+
+#### 用途
+
+Merge 节点将多个上游分支的结果合并为一个。支持按顺序、按 key 或等待所有输入完成。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;           // 显示名称
+  strategy?: 'append' | 'byKey' | 'waitForAll'; // 合并策略
+  mergeKey?: string;        // byKey 策略时的合并键
+}
+```
+
+#### 运行时行为
+
+- **append**：将所有上游结果追加为数组。
+- **byKey**：按 `mergeKey` 字段值分组合并。
+- **waitForAll**：等待所有输入就绪后合并。
+
+#### 示例
+
+```json
+{
+  "id": "merge-results",
+  "type": "merge",
+  "position": { "x": 500, "y": 200 },
+  "data": {
+    "label": "合并结果",
+    "strategy": "byKey",
+    "mergeKey": "source"
+  }
+}
+```
+
+---
+
+### 12. Webhook Trigger 节点（Webhook 触发器）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `webhook` |
+| 颜色主题 | 青柠色（lime） |
+| 图标 | Webhook |
+| 目标连接点 | 无 |
+| 源连接点 | 1 个（右侧） |
+| 宽度 | 220px |
+
+#### 用途
+
+Webhook Trigger 通过 HTTP 端点触发工作流。外部系统可以通过 POST 请求启动工作流执行。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;       // 显示名称
+  method?: string;      // HTTP 方法，默认 "POST"
+  path?: string;        // Webhook 路径
+  authToken?: string;   // 鉴权令牌
+}
+```
+
+#### 示例
+
+```json
+{
+  "id": "webhook-in",
+  "type": "webhook",
+  "position": { "x": 50, "y": 200 },
+  "data": {
+    "label": "接收 Webhook",
+    "method": "POST",
+    "path": "/api/webhook/order",
+    "authToken": "secret-token"
+  }
+}
+```
+
+---
+
+### 13. Sub-workflow 节点（子工作流）
+
+| 属性 | 值 |
+|------|-----|
+| 类型 ID | `subworkflow` |
+| 颜色主题 | 靛蓝色（indigo） |
+| 图标 | Workflow |
+| 目标连接点 | 1 个（左侧） |
+| 源连接点 | 1 个（右侧） |
+| 宽度 | 220px |
+
+#### 用途
+
+Sub-workflow 节点调用另一个工作流，支持参数传入与输出回传。实现工作流的模块化和复用。
+
+#### 数据字段
+
+```typescript
+{
+  label?: string;          // 显示名称
+  subWorkflowId?: string;  // 要调用的工作流 ID
+  inputMapping?: string;   // 输入参数映射（JSON 表达式）
+}
+```
+
+#### 示例
+
+```json
+{
+  "id": "sub-wf",
+  "type": "subworkflow",
+  "position": { "x": 300, "y": 200 },
+  "data": {
+    "label": "调用子流程",
+    "subWorkflowId": "wf-process-order",
+    "inputMapping": "{\"orderId\": \"payload.orderId\"}"
+  }
+}
+```
+
+---
+
+## 节点契约（通用字段）
+
+所有节点类型共享以下通用配置字段：
+
+```typescript
+interface WorkflowNodeDataBase {
+  label?: string;           // 显示名称
+  description?: string;     // 节点描述
+  timeoutMs?: number;       // 节点级超时（覆盖默认超时）
+  retryPolicy?: {           // 重试策略
+    maxAttempts?: number;   //   最大尝试次数，默认 1
+    backoff?: 'fixed' | 'exponential'; //   退避策略
+    delayMs?: number;       //   重试间隔（毫秒）
+  };
+  onError?: 'stop' | 'continue' | 'route-to-error'; // 失败策略
+  inputSchema?: string;     // 输入 JSON Schema
+  outputSchema?: string;    // 输出 JSON Schema
+}
+```
+
+### 失败策略（onError）
+
+| 策略 | 行为 |
+|------|------|
+| `stop`（默认） | 停止工作流执行，设置 `status: 'error'` |
+| `continue` | 记录错误但继续执行下游节点 |
+| `route-to-error` | 路由到错误分支（如有） |
+
+---
+
+## 执行记录
+
+引擎跟踪每个节点的执行状态：
+
+```typescript
+interface NodeExecutionRecord {
+  nodeId: string;           // 节点 ID
+  status: 'pending' | 'running' | 'success' | 'error' | 'skipped' | 'retrying';
+  startTime?: number;       // 开始时间戳
+  endTime?: number;         // 结束时间戳
+  durationMs?: number;      // 执行耗时（毫秒）
+  attempts: number;         // 尝试次数
+  error?: string;           // 错误信息
+  input?: unknown;          // 输入快照
+  output?: unknown;         // 输出快照
+}
+
+interface WorkflowExecutionRecord {
+  id: string;               // 执行 ID
+  workflowId: string;       // 工作流 ID
+  status: 'running' | 'completed' | 'error' | 'cancelled';
+  startTime: number;        // 开始时间
+  endTime?: number;         // 结束时间
+  durationMs?: number;      // 总耗时
+  nodeRecords: Record<string, NodeExecutionRecord>; // 每个节点的执行记录
+  results: Record<string, unknown>; // 每个节点的输出
+}
+```
+
+### 取消执行
+
+用户可以在执行过程中手动取消。取消后引擎停止处理队列中的剩余节点，状态重置为 `idle`。
+
+### 断点续跑
+
+支持从指定节点开始执行（`startNodeId` 选项），跳过上游节点。适用于从失败节点重跑的场景。
+
+---
+
+## 导入导出
+
+工作流支持 JSON 格式的导入和导出：
+
+- **导出**：将当前画布的 `nodes_data` + `edges_data` 序列化为 JSON 文件下载。
+- **导入**：支持文件选择器导入或粘贴 JSON 代码导入。导入时校验节点 id/type/position/data 完整性以及 edge 的 source/target 存在性。
+
+---
+
 ## 连线与连接规则
 
 ### 连线数据结构
@@ -541,13 +978,20 @@ interface WorkflowEdge {
 
 ### 连接规则
 
-| 从 \ 到 | code | agent | condition | loop | output |
-|---------|------|-------|-----------|------|--------|
-| **trigger** | 可以 | 可以 | 可以 | 可以 | 可以（少见） |
-| **code** | 可以 | 可以 | 可以 | 可以 | 可以 |
-| **agent** | 可以 | 可以 | 可以 | — | 可以 |
+| 从 \ 到 | code | agent | condition | switch | loop | wait | merge | http | set | subworkflow | output |
+|---------|------|-------|-----------|--------|------|------|-------|------|-----|-------------|--------|
+| **trigger** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 | 可以 | 可以 |
+| **webhook** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 | 可以 | 可以 |
+| **code** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 |
+| **agent** | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 |
 | **condition** | 通过 sourceHandle 匹配路由 id 连接到任意节点 |
-| **loop** | 可以 | 可以 | — | — | 可以 |
+| **switch** | 通过 sourceHandle 匹配分支 id 连接到任意节点 |
+| **loop** | 可以 | 可以 | — | — | — | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 |
+| **wait** | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 | 可以 | 可以 | 可以 |
+| **merge** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 | 可以 | 可以 |
+| **http** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 | 可以 |
+| **set** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 | 可以 |
+| **subworkflow** | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | 可以 | — | 可以 |
 | **output** | 不可以（Output 没有源连接点） |
 
 ### 多输入
@@ -593,6 +1037,7 @@ Output    → 将 payload 存为结果，无下游
   status: 'idle' | 'running' | 'completed' | 'error';  // 空闲/运行中/完成/错误
   currentNodeId: string | null;   // 当前正在执行的节点
   results: Record<string, any>;   // 每个节点的 payload 快照
+  nodeRecords: Record<string, NodeExecutionRecord>; // 每个节点的执行记录
 }
 ```
 
@@ -603,8 +1048,12 @@ Output    → 将 payload 存为结果，无下游
 | Code 节点执行 | 10 秒 |
 | Condition 条件评估（每个路由） | 2 秒 |
 | Loop 中断条件评估 | 2 秒 |
+| HTTP 请求默认超时 | 30 秒 |
+| Wait until 模式最大等待 | 60 秒 |
 | Agent 节点（真实 LLM） | 取决于模型 |
 | 节点间视觉延迟 | 400ms（动画节奏） |
+
+**注意**：所有节点支持通过 `timeoutMs` 字段设置节点级超时，覆盖默认值。
 
 ---
 
@@ -617,10 +1066,14 @@ Output    → 将 payload 存为结果，无下游
 | 属性 | 设置者 | 描述 |
 |------|--------|------|
 | `payload.llmResult` | Agent 节点 | 最后一次 Agent 执行的结构化输出 |
-| `payload._error` | Code/Loop 节点 | 节点执行失败时的错误信息 |
+| `payload._error` | 任意节点 | 节点执行失败时的错误信息 |
 | `payload.loop` | Loop 节点 | 循环迭代期间的 `{ currentItem, index, total }` |
 | `payload[itemAlias]` | Loop 节点 | 当前循环项（名称取决于 `itemAlias` 配置） |
 | `payload[indexAlias]` | Loop 节点 | 当前循环索引（名称取决于 `indexAlias` 配置） |
+| `payload.httpStatus` | HTTP 节点 | HTTP 响应状态码 |
+| `payload.httpData` | HTTP 节点 | HTTP 响应数据 |
+| `payload.output` | Set/HTTP 节点 | 节点输出数据 |
+| `payload.merged` | Merge 节点 | 合并后的结果 |
 
 ### 自定义属性
 
@@ -674,7 +1127,7 @@ Output:         捕获完整 payload 作为 "夜晚结果"
 每个节点需要：
 
 - `id` — 唯一字符串标识（使用描述性名称，如 `"init-state"`、`"wolf-decision"`）
-- `type` — 以下之一：`"trigger"`、`"code"`、`"agent"`、`"condition"`、`"loop"`、`"output"`
+- `type` — 以下之一：`"trigger"`、`"webhook"`、`"code"`、`"agent"`、`"condition"`、`"switch"`、`"loop"`、`"wait"`、`"merge"`、`"http"`、`"set"`、`"subworkflow"`、`"output"`
 - `position` — `{ x: number, y: number }` 用于布局（x 从左到右递增，y 从上到下递增）
 - `data` — 节点特定的配置（参见上面各节点类型的说明）
 
@@ -895,7 +1348,8 @@ Output:         捕获完整 payload 作为 "夜晚结果"
 ### WorkflowNode
 
 ```typescript
-type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output';
+type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output'
+  | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
 
 interface WorkflowNode {
   id: string;                          // 节点唯一标识
@@ -904,24 +1358,64 @@ interface WorkflowNode {
   data: WorkflowNodeData;              // 节点配置数据
 }
 
-type WorkflowNodeData = {
-  label?: string;           // 显示名称
-  description?: string;     // 节点描述
-  agentId?: string;         // Agent 节点：绑定的 Agent ID
-  prompt?: string;          // Agent 节点：提示词模板
-  autoSendToNext?: boolean; // Agent 节点：是否自动转发给下一个 Agent
-  schema?: string;          // Agent 节点：JSON Schema（结构化输出）
-  routes?: Array<{          // Condition 节点：路由列表
-    id: string;             //   路由 ID（用作 sourceHandle）
-    condition: string;      //   条件表达式
-  }>;
-  code?: string;            // Code 节点：JavaScript 代码体
-  itemsPath?: string;       // Loop 节点：数组路径
-  itemAlias?: string;       // Loop 节点：当前项变量名
-  indexAlias?: string;      // Loop 节点：索引变量名
-  maxIterations?: number;   // Loop 节点：最大迭代次数
-  breakCondition?: string;  // Loop 节点：提前退出条件
-  [key: string]: unknown;   // 开放索引签名，允许自定义属性
+interface NodeRetryPolicy {
+  maxAttempts?: number;                // 最大尝试次数
+  backoff?: 'fixed' | 'exponential';   // 退避策略
+  delayMs?: number;                    // 重试间隔（毫秒）
+}
+
+interface WorkflowNodeDataBase {
+  label?: string;                      // 显示名称
+  description?: string;                // 节点描述
+  timeoutMs?: number;                  // 节点级超时
+  retryPolicy?: NodeRetryPolicy;       // 重试策略
+  onError?: 'stop' | 'continue' | 'route-to-error'; // 失败策略
+  inputSchema?: string;                // 输入 JSON Schema
+  outputSchema?: string;               // 输出 JSON Schema
+}
+
+type WorkflowNodeData = WorkflowNodeDataBase & {
+  // Agent 节点
+  agentId?: string;
+  prompt?: string;
+  autoSendToNext?: boolean;
+  schema?: string;
+  // Condition 节点
+  routes?: Array<{ id: string; condition: string }>;
+  // Switch 节点
+  branches?: Array<{ id: string; label?: string; condition: string }>;
+  // Code 节点
+  code?: string;
+  // Loop 节点
+  itemsPath?: string;
+  itemAlias?: string;
+  indexAlias?: string;
+  maxIterations?: number;
+  breakCondition?: string;
+  // HTTP 节点
+  method?: string;
+  url?: string;
+  headers?: string;
+  body?: string;
+  // Set 节点
+  mappings?: Array<{ sourcePath: string; targetPath: string }>;
+  constants?: string;
+  whitelist?: string;
+  // Wait 节点
+  waitMode?: 'fixed' | 'until';
+  delayMs?: number;
+  untilExpression?: string;
+  // Merge 节点
+  strategy?: 'append' | 'byKey' | 'waitForAll';
+  mergeKey?: string;
+  // Webhook 节点
+  path?: string;
+  authToken?: string;
+  // Sub-workflow 节点
+  subWorkflowId?: string;
+  inputMapping?: string;
+  // 开放索引签名
+  [key: string]: unknown;
 };
 ```
 
@@ -947,28 +1441,38 @@ interface WorkflowEdge {
 | 约束 | 值 |
 |------|-----|
 | 单次执行最大步数 | 1000 |
-| Code 节点超时 | 10 秒 |
+| Code 节点超时 | 10 秒（可通过 `timeoutMs` 覆盖） |
 | Condition 条件评估超时（每个路由） | 2 秒 |
 | Loop 中断条件评估超时 | 2 秒 |
+| HTTP 请求默认超时 | 30 秒 |
+| Wait until 模式最大等待 | 60 秒 |
 | 默认最大循环迭代次数 | 20 |
-| Loop 最大迭代次数上限 | 每个节点可配置 |
 | 每个工作流的 Trigger 节点数 | 恰好 1 个 |
 | 最少 Output 节点数 | 建议至少 1 个 |
 | 节点间视觉延迟 | 400ms |
-| Condition 的 Edge sourceHandle | 必须精确匹配路由 `id` |
-| Output 节点输入连接数 | 限制为 1 个 |
+| Condition/Switch 的 Edge sourceHandle | 必须精确匹配路由/分支 `id` |
+| Merge 节点目标连接点 | 2 个（input-1, input-2） |
+| 重试最大次数 | 由 `retryPolicy.maxAttempts` 配置 |
+| 指数退避 | `backoff: 'exponential'`，间隔按 2 的幂递增 |
 
 ---
 
 ## 速查：节点类型一览
 
 ```
-trigger   → 入口点，无输入，1 个输出
-code      → JavaScript 执行，1 个输入，1 个输出
-agent     → LLM 委派，1 个输入，1 个输出
-condition → 条件路由，1 个输入，动态多个输出（通过路由）
-loop      → 数组迭代，1 个输入，1 个输出（执行 N 次）
-output    → 终止捕获，1 个输入，无输出
+trigger    → 入口点，无输入，1 个输出
+webhook    → HTTP 端点触发，无输入，1 个输出
+code       → JavaScript 执行，1 个输入，1 个输出
+agent      → LLM 委派，1 个输入，1 个输出
+condition  → 条件路由，1 个输入，动态多个输出（通过路由）
+switch     → 多分支路由，1 个输入，动态多个输出（通过分支）
+loop       → 数组迭代，1 个输入，1 个输出（执行 N 次）
+wait       → 延时等待，1 个输入，1 个输出
+merge      → 合并上游，2 个输入，1 个输出
+http       → HTTP 请求，1 个输入，1 个输出
+set        → 数据转换，1 个输入，1 个输出
+subworkflow → 子工作流调用，1 个输入，1 个输出
+output     → 终止捕获，1 个输入，无输出
 ```
 
 ## 速查：Edge 的 sourceHandle
@@ -984,15 +1488,25 @@ Condition 节点：sourceHandle 必须匹配 route.id
 ```
 用户输入 → { 自定义数据 }
     ↓
-Trigger → payload 不变
+Trigger/Webhook → payload 不变
     ↓
 Code → payload 被修改（添加/计算/过滤字段）
     ↓
+Set → payload 字段映射/常量注入/白名单过滤
+    ↓
+HTTP → payload.httpStatus + payload.httpData + payload.output
+    ↓
 Agent → payload.llmResult = { 结构化 Agent 输出 }
     ↓
-Condition → payload 路由到一条分支
+Condition/Switch → payload 路由到一条分支
+    ↓
+Wait → 暂停指定时间或直到条件满足
     ↓
 Loop → payload[itemAlias] = 当前项，payload[indexAlias] = 当前索引
+    ↓
+Merge → payload.merged = 合并结果
+    ↓
+Sub-workflow → 调用子工作流，结果回传到 payload
     ↓
 Output → payload 被捕获为结果
 ```

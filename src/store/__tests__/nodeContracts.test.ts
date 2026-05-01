@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useAppStore } from '../appStore';
 
 function setupWorkflow(nodes: any[], edges: any[]) {
@@ -250,5 +250,97 @@ describe('Execution records', () => {
     expect(records['w1']).toBeDefined();
     expect(records['w1'].status).toBe('error');
     expect(records['w1'].error).toBeDefined();
+  });
+});
+
+describe('HTTP Request node', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('should capture response data and status', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      status: 200,
+      headers: new Map([['content-type', 'application/json']]),
+      json: () => Promise.resolve({ ok: true, message: 'success' }),
+    });
+
+    const wfId = setupWorkflow(
+      [
+        { id: 't1', type: 'trigger', position: { x: 0, y: 0 }, data: { label: 'Start' } },
+        { id: 'h1', type: 'http', position: { x: 200, y: 0 }, data: {
+          label: 'API Call',
+          method: 'GET',
+          url: 'https://api.example.com/data',
+          headers: '{}',
+          body: '',
+          timeoutMs: 5000,
+        }},
+        { id: 'o1', type: 'output', position: { x: 400, y: 0 }, data: { label: 'End' } },
+      ],
+      [
+        { id: 'e1', source: 't1', target: 'h1' },
+        { id: 'e2', source: 'h1', target: 'o1' },
+      ]
+    );
+
+    const result = await useAppStore.getState().executeWorkflow(wfId, {});
+    expect(result.httpStatus).toBe(200);
+    expect(result.httpData).toEqual({ ok: true, message: 'success' });
+    expect(result.output).toEqual({ ok: true, message: 'success' });
+  });
+
+  it('should set _error when fetch fails', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+
+    const wfId = setupWorkflow(
+      [
+        { id: 't1', type: 'trigger', position: { x: 0, y: 0 }, data: { label: 'Start' } },
+        { id: 'h1', type: 'http', position: { x: 200, y: 0 }, data: {
+          label: 'Fail API',
+          method: 'GET',
+          url: 'https://api.example.com/fail',
+          headers: '{}',
+          body: '',
+          timeoutMs: 5000,
+        }},
+        { id: 'o1', type: 'output', position: { x: 400, y: 0 }, data: { label: 'End' } },
+      ],
+      [
+        { id: 'e1', source: 't1', target: 'h1' },
+        { id: 'e2', source: 'h1', target: 'o1' },
+      ]
+    );
+
+    const result = await useAppStore.getState().executeWorkflow(wfId, {});
+    expect(result._error).toContain('Network error');
+  });
+
+  it('should timeout when request takes too long', async () => {
+    global.fetch = vi.fn().mockImplementation(() => new Promise(() => {})); // never resolves
+
+    const wfId = setupWorkflow(
+      [
+        { id: 't1', type: 'trigger', position: { x: 0, y: 0 }, data: { label: 'Start' } },
+        { id: 'h1', type: 'http', position: { x: 200, y: 0 }, data: {
+          label: 'Slow API',
+          method: 'GET',
+          url: 'https://api.example.com/slow',
+          headers: '{}',
+          body: '',
+          timeoutMs: 100,
+        }},
+        { id: 'o1', type: 'output', position: { x: 400, y: 0 }, data: { label: 'End' } },
+      ],
+      [
+        { id: 'e1', source: 't1', target: 'h1' },
+        { id: 'e2', source: 'h1', target: 'o1' },
+      ]
+    );
+
+    const result = await useAppStore.getState().executeWorkflow(wfId, {});
+    expect(result._error).toBeDefined();
   });
 });

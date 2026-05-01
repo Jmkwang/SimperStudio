@@ -49,7 +49,9 @@
       "Bash(mv \"G:/workspace/SimperStudio/CLAUDE.md\" \"G:/workspace/SimperStudio/docs/Development.md\")",
       "Bash(mv \"G:/workspace/SimperStudio/TODO.md\" \"G:/workspace/SimperStudio/docs/TODO.md\")",
       "Bash(npx tsc *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npx vitest *)",
+      "Bash(node -e \"try { require\\('@testing-library/react'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")"
     ]
   }
 }

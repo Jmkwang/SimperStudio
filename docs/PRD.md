@@ -132,27 +132,36 @@ Below is a conceptual schema for the local SQLite database.
 *   Agent configuration and single-agent chat.
 *   Basic Custom API setup (making REST calls from chat).
 
-### Phase 2: Chat Refactor & Workflow Chat (P0)
+### Phase 2: Chat Refactor & Workflow Chat (P0) — Completed
 *   Split chat sessions into single-agent mode and workflow mode.
 *   Add workflow conversation windows and agent-to-agent forwarding actions.
 *   Unify message metadata and chat/workflow orchestration actions.
+*   New session dialog with single/workflow mode selection.
+*   Workflow sidebar collapse/expand behavior.
 
-### Phase 3: Composable Node Ecosystem (P1)
-*   Add core reusable nodes: HTTP Request, Set/Transform, IF/Switch, Merge, Wait/Delay, Webhook Trigger, Sub-workflow.
-*   Standardize node configuration contracts (schema, timeout, retry, error policy).
+### Phase 3: Composable Node Ecosystem (P1) — Completed
+*   Added 7 new node types: HTTP Request, Set/Transform, IF/Switch, Merge, Wait/Delay, Webhook Trigger, Sub-workflow.
+*   Standardized node configuration contracts: `timeoutMs`, `retryPolicy`, `onError`, `inputSchema/outputSchema`.
+*   Workflow import/export (JSON file and paste import).
+*   Categorized node panel with search (Trigger/Flow Control/Data/AI/Integration/Output).
 
-### Phase 4: Reliable Runtime Semantics (P2)
-*   Add node-level input/output schema validation.
-*   Add unified retry/timeout/error-branch semantics.
-*   Add concurrency control, idempotent execution keys, and resume-from-failure.
+### Phase 4: Reliable Runtime Semantics (P2) — Completed
+*   Node-level input/output schema validation.
+*   Unified retry/timeout/error-branch semantics (`stop`/`continue`/`route-to-error`).
+*   Idempotent execution keys (`executionId:nodeId`).
+*   Resume from failure (`startNodeId` option).
+*   Cancel execution support.
 
-### Phase 5: Observability & Operations (P3)
-*   Build execution history and node-level logs/snapshots.
-*   Support rerun (full run, from failed node, single-node debug rerun).
-*   Add workflow versioning (draft/published) and rollback.
+### Phase 5: Observability & Operations (P3) — Mostly Completed
+*   Execution history with `NodeExecutionRecord` (status, startTime, endTime, durationMs, attempts, error).
+*   Node-level input/output snapshots.
+*   ExecutionTimeline UI component with expandable details.
+*   Rerun support (full run, from failed node, single-node debug rerun).
+*   Export execution logs (JSON).
+*   `prefers-reduced-motion` support for animations.
+*   Remaining: alert hooks, accessibility polish (contrast, click targets, aria-labels, responsive layout).
 
-### Phase 6: Tests, Packaging, and V1 Launch (P4)
-*   Add runtime contract tests and critical chat/workflow interaction tests.
-*   Packaging for Windows, macOS, Linux.
-*   Documentation and landing page.
-*   Auto-updater implementation.
+### Phase 6: Tests, Packaging, and V1 Launch (P4) — In Progress
+*   vitest + @testing-library/react test infrastructure.
+*   41 test cases covering: store layer, workflow execution, node contracts, chat rendering, workflow chat interactions.
+*   Remaining: packaging, documentation landing page, auto-updater.

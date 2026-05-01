@@ -129,7 +129,7 @@
 - [x] IF / Switch 节点（布尔条件、多分支值路由）。
 - [x] Wait / Delay 节点（固定延时、到指定时间继续）。
 - [x] `src/types/models.ts` 增加通用 `node.data` 基础契约：`timeoutMs/retryPolicy/onError`。
-- [ ] 为 v0.2 新节点补最小契约测试（输入输出与错误路径）。
+- [x] 为 v0.2 新节点补最小契约测试（输入输出与错误路径）。
 
 ### 3.2 v0.3 交付范围（再增强）
 
@@ -139,7 +139,7 @@
 - [x] `src/types/models.ts` 扩展节点契约：`inputSchema/outputSchema`。
 - [x] 节点面板支持按分类（Trigger/Flow/Data/AI/Integration）筛选与搜索。
 - [ ] `src/components/workflow/nodes/*` 对齐配置交互：统一基础区块（名称、描述、超时、重试、失败策略）。
-- [ ] `src/store/appStore.ts` 的 `saveWorkflow` 增加节点数据规范化，防止脏数据写入。
+- [x] `src/store/appStore.ts` 的 `saveWorkflow` 增加节点数据规范化，防止脏数据写入。
 
 
 ## 4. P2：可靠执行语义（可预测、可恢复、可控失败）
@@ -156,7 +156,7 @@
 - [x] 执行队列支持并发上限（默认串行，可配置并发 N）。
 - [x] 增加幂等键（executionId + nodeId + attempt）避免重复提交外部副作用。
 - [x] 增加断点续跑（从失败节点/指定节点继续）。
-- [ ] 增加取消执行（用户手动 stop）与清理逻辑（中断后状态一致）。
+- [x] 增加取消执行（用户手动 stop）与清理逻辑（中断后状态一致）。
 
 ### 4.3 现有能力补完
 
@@ -183,7 +183,7 @@
 
 - [x] 执行时间线 UI 与 `docs/Design_Specs.md` 对齐：节点状态 `running/success/error/skipped/retrying` 视觉可区分。
 - [x] 错误态信息包含可恢复动作（如重试/从失败节点重跑），避免”只有报错无下一步”。
-- [ ] `running/retrying` 动效支持 `prefers-reduced-motion`，在降动效模式下关闭脉冲，仅保留必要淡入淡出。
+- [x] `running/retrying` 动效支持 `prefers-reduced-motion`，在降动效模式下关闭脉冲，仅保留必要淡入淡出。
 - [ ] 执行详情（输入/输出快照、错误信息）在浅色/深色模式下对比度达标（正文≥4.5:1，大号文本≥3:1）。
 - [ ] 执行日志列表与详情面板交互控件满足最小点击区 44×44px。
 - [ ] 时间线与错误面板中的图标按钮补齐 `aria-label`，关键操作可通过键盘 Tab 到达并触发。
@@ -197,9 +197,9 @@
   - [x] chunk 追加无重复倍增。
   - [x] 单个 agent 完成不影响其他 agent 状态。
 - [x] 为工作流运行时补最小契约测试：线性流程、条件分支、错误传播、断点续跑、执行记录。
-- [ ] 为聊天视图补最小渲染测试：多个 `agentResponses` 均显示正确 agent 标识。
-- [ ] 为 workflow chat V1 补最小交互测试：打开窗口、聚焦窗口、转发到下一节点。
-- [ ] 为新节点补契约测试：HTTP/IF/Merge/Sub-workflow 的输入输出与错误路径。
+- [x] 为聊天视图补最小渲染测试：多个 `agentResponses` 均显示正确 agent 标识。
+- [x] 为 workflow chat V1 补最小交互测试：打开窗口、聚焦窗口、转发到下一节点。
+- [x] 为新节点补契约测试：HTTP/IF/Merge/Sub-workflow 的输入输出与错误路径。
 
 ## 7. 已清理的旧计划
 
