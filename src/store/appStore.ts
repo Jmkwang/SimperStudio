@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Workspace, Agent, ChatSession, ChatMessage, Workflow, Settings, MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData, WorkflowNode, WorkflowEdge } from '../types/models';
+import { Workspace, Agent, ChatSession, ChatMessage, Workflow, Settings, MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData, WorkflowNode, WorkflowEdge, ModelProvider } from '../types/models';
 import { fetchFromModel } from '@/lib/api';
 import { v4 as uuidv4 } from 'uuid';
 import { createUserMessage, createStreamMessage, createAgentResponse } from '@/lib/messageService';
@@ -22,14 +22,14 @@ function normalizeSession(session: ChatSession): ChatSession {
 }
 
 function getAgentNode(workflow: Workflow | undefined, nodeId: string): WorkflowNode | undefined {
-  return workflow?.nodes_data.find((node) => node.id === nodeId && node.type === 'agent');
+  return workflow?.nodesData.find((node) => node.id === nodeId && node.type === 'agent');
 }
 
 function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): WorkflowNode | undefined {
   if (!workflow) return undefined;
 
   const visited = new Set<string>();
-  const queue = workflow.edges_data
+  const queue = workflow.edgesData
     .filter((edge) => edge.source === nodeId)
     .map((edge) => edge.target);
 
@@ -38,10 +38,10 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
     if (!nextNodeId || visited.has(nextNodeId)) continue;
     visited.add(nextNodeId);
 
-    const node = workflow.nodes_data.find((item) => item.id === nextNodeId);
+    const node = workflow.nodesData.find((item) => item.id === nextNodeId);
     if (node?.type === 'agent' && node.data?.agentId) return node;
 
-    workflow.edges_data
+    workflow.edgesData
       .filter((edge) => edge.source === nextNodeId)
       .forEach((edge) => queue.push(edge.target));
   }
@@ -72,19 +72,27 @@ async function runAgentResponse({
 
   try {
     const settings = getSettings();
-    const providerToUse: string = settings.apiProvider === 'custom' ? 'custom' : agent.modelProvider;
-    const modelToUse = settings.apiProvider === 'custom' ? settings.customModelId : agent.modelId;
-    const hasKey = (providerToUse === 'openai' && settings.openaiKey) ||
-      (providerToUse === 'anthropic' && settings.anthropicKey) ||
-      (providerToUse === 'google' && settings.googleKey) ||
-      providerToUse === 'custom';
+    const activeProvider = settings.activeProviderId ? settings.providers.find(p => p.id === settings.activeProviderId) : null;
+    const defaultModel = activeProvider?.models.find(m => m.isDefault) || activeProvider?.models[0];
+    const providerToUse: string = activeProvider
+      ? activeProvider.type
+      : (settings.apiProvider === 'custom' ? 'custom' : agent.modelProvider);
+    const modelToUse = activeProvider
+      ? (defaultModel?.modelId || '')
+      : (settings.apiProvider === 'custom' ? settings.customModelId : agent.modelId);
+    const hasKey = activeProvider
+      ? !!activeProvider.apiKey
+      : (providerToUse === 'openai' && settings.openaiKey) ||
+        (providerToUse === 'anthropic' && settings.anthropicKey) ||
+        (providerToUse === 'google' && settings.googleKey) ||
+        providerToUse === 'custom';
 
     if (!hasKey) {
       await simulateAgentStream({ sessionId, messageId, agent, prompt, nodeId, addAgentResponseStream, completeAgentResponse, settings, isCustom: providerToUse === 'custom' });
       return;
     }
 
-    const { textStream } = await fetchFromModel(providerToUse, modelToUse, prompt, settings, agent.systemPrompt);
+    const { textStream } = await fetchFromModel(providerToUse, modelToUse || '', prompt, settings, agent.systemPrompt);
     for await (const textPart of textStream) {
       addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId);
     }
@@ -147,8 +155,8 @@ async function readConfig<T>(name: string): Promise<T | null> {
 async function writeConfig(name: string, value: unknown) {
   try {
     await invoke('write_json_config', { name, value: JSON.stringify(value) });
-  } catch (error) {
-    console.error(`Failed to write ${name}:`, error);
+  } catch {
+    // Tauri backend not available
   }
 }
 
@@ -163,6 +171,10 @@ interface AppState {
   activeAgentId: string | null;
   workflowChatMode: boolean;
   workflowChatUI: WorkflowChatUIState;
+  contextSidebarTab: 'workflows' | 'sessions';
+  setContextSidebarTab: (tab: 'workflows' | 'sessions') => void;
+  selectedChatWorkflowId: string | null;
+  setSelectedChatWorkflowId: (id: string | null) => void;
 
   // Actions
   fetchInitialData: () => Promise<void>;
@@ -226,6 +238,10 @@ interface AppState {
   // Settings Actions
   settings: Settings;
   updateSettings: (updates: Partial<AppState['settings']>) => void;
+  addProvider: (provider: ModelProvider) => void;
+  updateProvider: (id: string, updates: Partial<ModelProvider>) => void;
+  deleteProvider: (id: string) => void;
+  setActiveProvider: (id: string) => void;
 
   // Helpers
   getActiveSession: () => ChatSession | undefined;
@@ -444,14 +460,14 @@ export const useAppStore = create<AppState>()(
           id: 'default-workflow',
           workspaceId: 'default-workspace',
           name: 'My First Workflow',
-          nodes_data: [
+          nodesData: [
              { id: 'trigger-1', type: 'trigger', position: { x: 100, y: 250 }, data: { label: 'User Input' } },
              { id: 'agent-organize', type: 'agent', position: { x: 400, y: 100 }, data: { label: '整理', agentId: 'agent-organize', prompt: '整理并组织用户输入的内容，使其结构清晰。' } },
              { id: 'agent-summary', type: 'agent', position: { x: 400, y: 400 }, data: { label: '总结', agentId: 'agent-summary', prompt: '对用户输入的内容进行总结，提取关键信息。' } },
              { id: 'output-1', type: 'output', position: { x: 750, y: 100 }, data: { label: '整理结果' } },
              { id: 'output-2', type: 'output', position: { x: 750, y: 400 }, data: { label: '总结结果' } }
           ],
-          edges_data: [
+          edgesData: [
              { id: 'e-trigger-organize', source: 'trigger-1', target: 'agent-organize', animated: true },
              { id: 'e-trigger-summary', source: 'trigger-1', target: 'agent-summary', animated: true },
              { id: 'e-organize-output1', source: 'agent-organize', target: 'output-1', animated: true },
@@ -465,12 +481,12 @@ export const useAppStore = create<AppState>()(
           id: 'workflow-pipeline',
           workspaceId: 'default-workspace',
           name: 'Data Processing Pipeline',
-          nodes_data: [
+          nodesData: [
              { id: 't1', type: 'trigger', position: { x: 50, y: 150 }, data: { label: 'Data Input' } },
              { id: 'a1', type: 'agent', position: { x: 300, y: 150 }, data: { label: 'Data Cleaner', agentId: 'agent-1', prompt: 'Clean this data' } },
              { id: 'o1', type: 'output', position: { x: 550, y: 150 }, data: { label: 'Cleaned Data' } }
           ],
-          edges_data: [
+          edgesData: [
              { id: 'e1', source: 't1', target: 'a1', animated: true },
              { id: 'e2', source: 'a1', target: 'o1', animated: true }
           ],
@@ -482,12 +498,12 @@ export const useAppStore = create<AppState>()(
           id: 'workflow-report',
           workspaceId: 'default-workspace',
           name: 'Weekly Report Generator',
-          nodes_data: [
+          nodesData: [
              { id: 't2', type: 'trigger', position: { x: 100, y: 100 }, data: { label: 'Start Report' } },
              { id: 'a2', type: 'agent', position: { x: 350, y: 100 }, data: { label: 'Report Writer', agentId: 'agent-summary', prompt: 'Generate report' } },
              { id: 'o2', type: 'output', position: { x: 600, y: 100 }, data: { label: 'Final Report' } }
           ],
-          edges_data: [
+          edgesData: [
              { id: 'e3', source: 't2', target: 'a2', animated: true },
              { id: 'e4', source: 'a2', target: 'o2', animated: true }
           ],
@@ -499,7 +515,7 @@ export const useAppStore = create<AppState>()(
           id: 'werewolf-standard',
           workspaceId: 'default-workspace',
           name: '狼人杀·标准局',
-          nodes_data: [
+          nodesData: [
             { id: 'ww-trigger', type: 'trigger', position: { x: 50, y: 450 }, data: { label: '开始游戏' } },
             { id: 'ww-init', type: 'code', position: { x: 380, y: 450 }, data: {
                 label: '初始化局势',
@@ -597,7 +613,7 @@ export const useAppStore = create<AppState>()(
             }},
             { id: 'ww-end-output', type: 'output', position: { x: 1780, y: 950 }, data: { label: '游戏结束' } }
           ],
-          edges_data: [
+          edgesData: [
             { id: 'ww-e1', source: 'ww-trigger', target: 'ww-init', animated: true },
             { id: 'ww-e2', source: 'ww-init', target: 'ww-controller', animated: true },
             { id: 'ww-e3', source: 'ww-controller', target: 'ww-router', animated: true },
@@ -639,6 +655,8 @@ export const useAppStore = create<AppState>()(
         activeWindowId: null,
         zIndexCounter: 20,
       },
+      contextSidebarTab: 'workflows',
+      selectedChatWorkflowId: null,
       workflowExecution: {
         status: 'idle',
         currentNodeId: null,
@@ -650,19 +668,46 @@ export const useAppStore = create<AppState>()(
       settings: {
         theme: 'system',
         language: 'zh',
-        apiProvider: 'openai',
-        openaiKey: '',
-        openaiModelId: '',
-        anthropicKey: '',
-        anthropicModelId: '',
-        googleKey: '',
-        customProtocol: 'openai-compatible',
-        customBaseUrl: '',
-        customModelId: '',
-        customApiKey: '',
-        customHeader: '',
-        geminiKey: '',
-        geminiModelId: '',
+        providers: [
+          {
+            id: 'openai-default',
+            name: 'OpenAI',
+            type: 'openai',
+            apiKey: '',
+            baseUrl: 'https://api.openai.com/v1',
+            isEnabled: true,
+            models: [
+              { id: 'openai-gpt4o', name: 'GPT-4o', modelId: 'gpt-4o', isDefault: true },
+              { id: 'openai-gpt4o-mini', name: 'GPT-4o Mini', modelId: 'gpt-4o-mini' },
+              { id: 'openai-gpt4-turbo', name: 'GPT-4 Turbo', modelId: 'gpt-4-turbo' },
+            ],
+          },
+          {
+            id: 'anthropic-default',
+            name: 'Anthropic',
+            type: 'anthropic',
+            apiKey: '',
+            baseUrl: 'https://api.anthropic.com/v1',
+            isEnabled: true,
+            models: [
+              { id: 'anthropic-sonnet', name: 'Claude 3.5 Sonnet', modelId: 'claude-3-5-sonnet-20240620', isDefault: true },
+              { id: 'anthropic-haiku', name: 'Claude 3 Haiku', modelId: 'claude-3-haiku-20240307' },
+            ],
+          },
+          {
+            id: 'gemini-default',
+            name: 'Gemini',
+            type: 'gemini',
+            apiKey: '',
+            baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+            isEnabled: true,
+            models: [
+              { id: 'gemini-pro', name: 'Gemini 1.5 Pro', modelId: 'gemini-1.5-pro-latest', isDefault: true },
+              { id: 'gemini-flash', name: 'Gemini 1.5 Flash', modelId: 'gemini-1.5-flash-latest' },
+            ],
+          },
+        ],
+        activeProviderId: 'openai-default',
         allowRemoteAccess: true,
         remoteAccessPort: 1420,
       },
@@ -674,7 +719,13 @@ export const useAppStore = create<AppState>()(
           const workflowsConfig = await readConfig<Workflow[]>('workflow.json');
 
           if (modelConfig) {
-            set((state) => ({ settings: { ...state.settings, ...modelConfig } }));
+            set((state) => ({
+              settings: {
+                ...state.settings,
+                ...modelConfig,
+                providers: modelConfig.providers?.length ? modelConfig.providers : state.settings.providers,
+              }
+            }));
           }
           if (agentsConfig?.length) {
             set({ agents: agentsConfig });
@@ -714,9 +765,14 @@ export const useAppStore = create<AppState>()(
 
             const workflows = await invoke<Workflow[]>('get_workflows', { workspaceId: defaultWorkspaceId });
             if (workflowsConfig?.length) {
-              set({ workflows: workflowsConfig });
+              const migratedConfig = workflowsConfig.map((w: any) => ({
+                ...w,
+                nodesData: w.nodesData ?? w.nodes_data ?? [],
+                edgesData: w.edgesData ?? w.edges_data ?? [],
+              }));
+              set({ workflows: migratedConfig });
             } else if (workflows.length) {
-              const parsedWorkflows = workflows.map(w => ({...w, nodes_data: JSON.parse(w.nodes_data as unknown as string), edges_data: JSON.parse(w.edges_data as unknown as string)}));
+              const parsedWorkflows = workflows.map(w => ({...w, nodesData: JSON.parse(w.nodesData as unknown as string), edgesData: JSON.parse(w.edgesData as unknown as string)}));
               set({ workflows: parsedWorkflows });
             }
           }
@@ -798,8 +854,8 @@ export const useAppStore = create<AppState>()(
           id: workflowId,
           workspaceId,
           name: title,
-          nodes_data: [],
-          edges_data: [],
+          nodesData: [],
+          edgesData: [],
           status: 'active',
           createdAt: now,
           updatedAt: now
@@ -816,7 +872,7 @@ export const useAppStore = create<AppState>()(
         };
 
         try {
-          const wfToSave = { ...newWorkflow, nodes_data: '[]', edges_data: '[]' };
+          const wfToSave = { ...newWorkflow, nodesData: '[]', edgesData: '[]' };
           await invoke('add_workflow', { workflow: wfToSave });
           await invoke('add_chat_session', { session: newSession });
         } catch (error) {
@@ -1099,21 +1155,21 @@ export const useAppStore = create<AppState>()(
            id: uuidv4(),
            workspaceId,
            name,
-           nodes_data: [],
-           edges_data: [],
+           nodesData: [],
+           edgesData: [],
            status: 'active',
            createdAt: Date.now(),
            updatedAt: Date.now()
         };
         try {
-            const wfToSave = {...newWorkflow, nodes_data: "[]", edges_data: "[]"};
+            const wfToSave = {...newWorkflow, nodesData: "[]", edgesData: "[]"};
             await invoke('add_workflow', { workflow: wfToSave });
-            const nextWorkflows = [...get().workflows, newWorkflow];
-            set({ workflows: nextWorkflows, activeWorkflowId: newWorkflow.id });
-            await writeConfig('workflow.json', nextWorkflows);
-        } catch (error) {
-            console.error("Failed to create workflow:", error);
+        } catch {
+            // Tauri backend not available (browser mode)
         }
+        const nextWorkflows = [...get().workflows, newWorkflow];
+        set({ workflows: nextWorkflows, activeWorkflowId: newWorkflow.id });
+        try { await writeConfig('workflow.json', nextWorkflows); } catch {}
       },
 
       saveWorkflow: async (id, nodes, edges) => {
@@ -1184,13 +1240,13 @@ export const useAppStore = create<AppState>()(
                    targetHandle: e.targetHandle,
                    animated: e.animated
                  }));
-                 const wfToSave = {...wf, nodes_data: JSON.stringify(cleanNodes), edges_data: JSON.stringify(cleanEdges), updatedAt: Date.now()};
+                 const wfToSave = {...wf, nodesData: JSON.stringify(cleanNodes), edgesData: JSON.stringify(cleanEdges), updatedAt: Date.now()};
                  await invoke('update_workflow', { workflow: wfToSave });
 
                  set((state) => {
                     const wfs = state.workflows.map(w => {
                         if (w.id === id) {
-                            return { ...w, nodes_data: cleanNodes, edges_data: cleanEdges, updatedAt: Date.now() };
+                            return { ...w, nodesData: cleanNodes, edgesData: cleanEdges, updatedAt: Date.now() };
                         }
                         return w;
                     });
@@ -1231,6 +1287,8 @@ export const useAppStore = create<AppState>()(
 
       setActiveWorkflow: (id) => set({ activeWorkflowId: id }),
       setActiveAgent: (id) => set({ activeAgentId: id }),
+      setContextSidebarTab: (tab) => set({ contextSidebarTab: tab }),
+      setSelectedChatWorkflowId: (id) => set({ selectedChatWorkflowId: id }),
 
       toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
 
@@ -1445,8 +1503,8 @@ export const useAppStore = create<AppState>()(
 
          const startNodeId = options?.startNodeId;
          const startNode = startNodeId
-            ? workflow.nodes_data.find((n: any) => n.id === startNodeId)
-            : workflow.nodes_data.find((n: any) => n.type === 'trigger');
+            ? workflow.nodesData.find((n: any) => n.id === startNodeId)
+            : workflow.nodesData.find((n: any) => n.type === 'trigger');
 
          if (!startNode) {
             setWorkflowExecutionState({ status: 'error' });
@@ -1552,7 +1610,7 @@ export const useAppStore = create<AppState>()(
 
             const frame = queue.shift()!;
             const nodeId = frame.nodeId;
-            const node = workflow.nodes_data.find((n: any) => n.id === nodeId);
+            const node = workflow.nodesData.find((n: any) => n.id === nodeId);
             let currentPayload = structuredClone(frame.payload);
 
             const idempotentKey = `${executionId}:${nodeId}`;
@@ -1581,7 +1639,7 @@ export const useAppStore = create<AppState>()(
 
             setWorkflowExecutionState({ currentNodeId: nodeId, results });
 
-            const nodeEdges = workflow.edges_data.filter((e: any) => e.source === nodeId);
+            const nodeEdges = workflow.edgesData.filter((e: any) => e.source === nodeId);
             const inputError = validateSchema(currentPayload, node?.data?.inputSchema, 'Input');
             if (inputError) {
                currentPayload = { ...currentPayload, _error: inputError };
@@ -1692,7 +1750,7 @@ export const useAppStore = create<AppState>()(
                results[nodeId] = currentPayload;
                if (node?.data?.onError === 'continue') { continue; }
                if (node?.data?.onError === 'route-to-error') {
-                  const errorEdge = workflow.edges_data.find((e: any) => e.source === nodeId && e.sourceHandle === 'error');
+                  const errorEdge = workflow.edgesData.find((e: any) => e.source === nodeId && e.sourceHandle === 'error');
                   if (errorEdge) { queue.push({ nodeId: errorEdge.target, payload: currentPayload }); }
                   continue;
                }
@@ -1709,7 +1767,7 @@ export const useAppStore = create<AppState>()(
             updateNodeRecord('success', { endTime: nodeEndTime, durationMs: nodeEndTime - nodeStartTime, attempts: maxAttempts });
 
             results[nodeId] = currentPayload;
-            const edges = workflow.edges_data.filter((e: any) => e.source === nodeId);
+            const edges = workflow.edgesData.filter((e: any) => e.source === nodeId);
 
             if (node?.type === 'merge') {
                const strategy = node.data?.strategy || 'append';
@@ -1857,6 +1915,43 @@ export const useAppStore = create<AppState>()(
         const settings = { ...state.settings, ...updates };
         void writeConfig('model.json', settings);
         return { settings };
-      })
+      }),
+
+      addProvider: (provider) => set((state) => {
+        const settings: Settings = {
+          ...state.settings,
+          providers: [...state.settings.providers, provider],
+        };
+        void writeConfig('model.json', settings);
+        return { settings };
+      }),
+
+      updateProvider: (id, updates) => set((state) => {
+        const settings: Settings = {
+          ...state.settings,
+          providers: state.settings.providers.map(p => p.id === id ? { ...p, ...updates } : p),
+        };
+        void writeConfig('model.json', settings);
+        return { settings };
+      }),
+
+      deleteProvider: (id) => set((state) => {
+        const newProviders = state.settings.providers.filter(p => p.id !== id);
+        const settings: Settings = {
+          ...state.settings,
+          providers: newProviders,
+          activeProviderId: state.settings.activeProviderId === id
+            ? (newProviders[0]?.id || null)
+            : state.settings.activeProviderId,
+        };
+        void writeConfig('model.json', settings);
+        return { settings };
+      }),
+
+      setActiveProvider: (id) => set((state) => {
+        const settings: Settings = { ...state.settings, activeProviderId: id };
+        void writeConfig('model.json', settings);
+        return { settings };
+      }),
     })
 );

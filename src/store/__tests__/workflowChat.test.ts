@@ -145,11 +145,11 @@ describe('forwardAgentReplyToNext', () => {
         id: 'wf-1',
         workspaceId: 'default-workspace',
         name: 'Test WF',
-        nodes_data: [
+        nodesData: [
           { id: 'n1', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'A1', agentId: 'agent-1' } },
           { id: 'n2', type: 'agent', position: { x: 200, y: 0 }, data: { label: 'A2', agentId: 'agent-2' } },
         ],
-        edges_data: [
+        edgesData: [
           { id: 'e1', source: 'n1', target: 'n2' },
         ],
         status: 'active',
@@ -200,11 +200,11 @@ describe('forwardAgentReplyToNext', () => {
         id: 'wf-1',
         workspaceId: 'default-workspace',
         name: 'Test WF',
-        nodes_data: [
+        nodesData: [
           { id: 'n1', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'A1', agentId: 'agent-1' } },
           { id: 'n2', type: 'output', position: { x: 200, y: 0 }, data: { label: 'End' } },
         ],
-        edges_data: [
+        edgesData: [
           { id: 'e1', source: 'n1', target: 'n2' },
         ],
         status: 'active',

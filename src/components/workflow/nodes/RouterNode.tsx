@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Settings2, SplitSquareHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function RouterNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   
-  const [localLabel, setLocalLabel] = useState(data.label || 'Router');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Router'));
   // Default to two routes if none provided
   const [routes, setRoutes] = useState<{id: string, condition: string}[]>(
     data.routes || [
@@ -31,7 +32,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, label: localLabel, routes: routes },
+            data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), routes: routes },
           };
         }
         return node;
@@ -77,7 +78,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted">
+            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure router node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -86,15 +87,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Router</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="label">Node Label</Label>
-                <Input
-                  id="label"
-                  value={localLabel}
-                  onChange={(e) => setLocalLabel(e.target.value)}
-                  placeholder="Router Name"
-                />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               
               <div className="grid gap-2 mt-2">
                 <div className="flex items-center justify-between">

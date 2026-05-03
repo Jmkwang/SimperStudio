@@ -1,17 +1,16 @@
 import { Handle, Position, useNodeConnections, useReactFlow } from '@xyflow/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { FileOutput } from 'lucide-react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 
 export function OutputNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const connections = useNodeConnections({ handleType: "target" });
-  const [localLabel, setLocalLabel] = useState(data.label || 'Output');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Output'));
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSave = () => {
@@ -20,7 +19,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, label: localLabel },
+            data: applyNodeBaseConfigDraft(node.data, baseConfig),
           };
         }
         return node;
@@ -50,7 +49,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
       </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted">
+            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure output node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -59,15 +58,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Output</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="label">Node Label</Label>
-                <Input
-                  id="label"
-                  value={localLabel}
-                  onChange={(e) => setLocalLabel(e.target.value)}
-                  placeholder="Output Name"
-                />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
             </div>
             <div className="flex justify-end">
               <Button onClick={handleSave}>Save Changes</Button>

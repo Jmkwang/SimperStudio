@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Repeat, Settings2 } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function LoopNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'Loop');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Loop'));
   const [itemsPath, setItemsPath] = useState(data.itemsPath || 'payload.alivePlayers');
   const [itemAlias, setItemAlias] = useState(data.itemAlias || 'item');
   const [indexAlias, setIndexAlias] = useState(data.indexAlias || 'index');
@@ -24,8 +25,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
           return {
             ...node,
             data: {
-              ...node.data,
-              label: localLabel,
+              ...applyNodeBaseConfigDraft(node.data, baseConfig),
               itemsPath,
               itemAlias,
               indexAlias,
@@ -61,7 +61,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted">
+            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure loop node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -70,15 +70,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Loop Node</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="loop-label">Node Label</Label>
-                <Input
-                  id="loop-label"
-                  value={localLabel}
-                  onChange={(e) => setLocalLabel(e.target.value)}
-                  placeholder="Loop"
-                />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
 
               <div className="grid gap-2">
                 <Label htmlFor="items-path">Items Path</Label>

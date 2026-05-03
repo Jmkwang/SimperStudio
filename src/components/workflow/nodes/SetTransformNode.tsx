@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Settings2, Shuffle, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 interface FieldMapping {
   sourcePath: string;
@@ -16,7 +17,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'Set / Transform');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Set / Transform'));
   const [mappings, setMappings] = useState<FieldMapping[]>(
     data.mappings || [{ sourcePath: 'payload.llmResult', targetPath: 'output' }]
   );
@@ -29,7 +30,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, label: localLabel, mappings, constants, whitelist },
+            data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), mappings, constants, whitelist },
           };
         }
         return node;
@@ -68,10 +69,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Set / Transform</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label>Field Mappings</Label>

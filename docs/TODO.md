@@ -182,14 +182,172 @@
 ### 5.4 验收（可观测 UI 对齐）
 
 - [x] 执行时间线 UI 与 `docs/Design_Specs.md` 对齐：节点状态 `running/success/error/skipped/retrying` 视觉可区分。
-- [x] 错误态信息包含可恢复动作（如重试/从失败节点重跑），避免”只有报错无下一步”。
+- [x] 错误态信息包含可恢复动作（如重试/从失败节点重跑），避免"只有报错无下一步"。
 - [x] `running/retrying` 动效支持 `prefers-reduced-motion`，在降动效模式下关闭脉冲，仅保留必要淡入淡出。
 - [ ] 执行详情（输入/输出快照、错误信息）在浅色/深色模式下对比度达标（正文≥4.5:1，大号文本≥3:1）。
 - [ ] 执行日志列表与详情面板交互控件满足最小点击区 44×44px。
 - [ ] 时间线与错误面板中的图标按钮补齐 `aria-label`，关键操作可通过键盘 Tab 到达并触发。
 - [ ] 中小屏（<1024px）下执行面板布局不遮挡核心操作；侧栏/详情抽屉开合行为符合响应式规则。
 
-## 6. P4：测试与工程化补齐
+## 6. P4：多服务商模型管理
+
+### 6.1 目标
+
+将原来的单 API Provider 设置改为支持多服务商、每服务商多模型的配置系统。
+
+### 6.2 数据模型更新
+
+- [x] `src/types/models.ts`
+  - [x] 新增 `ProviderModel` 类型：`id`, `name`, `modelId`, `isDefault`
+  - [x] 新增 `ModelProvider` 类型：`id`, `name`, `type`, `apiKey`, `baseUrl`, `isEnabled`, `customHeader`, `models: ProviderModel[]`
+  - [x] `Settings` 更新：`providers: ModelProvider[]`, `activeProviderId: string | null`
+  - [x] 保留旧字段向后兼容
+
+### 6.3 Store 操作
+
+- [x] `src/store/appStore.ts`
+  - [x] `addProvider`: 添加新服务商（自动生成默认模型）
+  - [x] `updateProvider`: 更新服务商配置
+  - [x] `deleteProvider`: 删除服务商（自动切换 activeProvider）
+  - [x] `setActiveProvider`: 设置当前使用的服务商
+  - [x] 默认初始化 3 个服务商：OpenAI、Anthropic、Gemini，每个含多个默认模型
+
+### 6.4 设置页重新设计
+
+- [x] `src/components/settings/SettingsView.tsx`
+  - [x] 左侧标签栏：General / Appearance / Models
+  - [x] Models 标签页：左侧服务商列表 + 右侧详情面板
+  - [x] 服务商列表：显示名称、Base URL、启用状态（ON 标签）
+  - [x] 服务商详情：名称、Base URL、API Key、Custom Header 编辑
+  - [x] 模型列表：展示该服务商下所有模型，支持添加/删除/设为默认（星标）
+  - [x] 操作按钮：启用/禁用、删除服务商、设为当前服务商
+  - [x] "添加服务商"表单验证：必填字段为空时红色边框+错误提示
+  - [x] 按服务商类型自动填充默认名称和 Base URL
+  - [x] 添加成功后自动选中新服务商进入详情页
+  - [x] 语言设置和远程访问设置分离为独立卡片
+
+### 6.5 API 层更新
+
+- [x] `src/lib/api.ts`
+  - [x] `fetchFromModel`: 优先查找 `activeProvider`，使用其 `type` 和默认模型
+  - [x] `fetchFromProvider`: 根据 `ModelProvider` 创建对应 AI SDK client
+
+### 6.6 其他更新
+
+- [x] `src/components/prompts/PromptGenerator.tsx`: 使用 activeProvider 进行 API 调用
+- [x] `src/store/appStore.ts` `sendMessageToAgents`: 使用 activeProvider 进行 Agent 调用
+- [x] `src/hooks/useTranslation.ts`: 添加新 UI 所需翻译键
+
+## 7. P5：UI/UX 设计对齐（基于 Design Specs 对比检查）
+
+### 7.1 侧边栏重构（已完成）
+
+- [x] **ContextSidebar 按视图区分内容**
+  - [x] 聊天视图：顶部标签切换「工作流/会话」，单列显示
+  - [x] 工作流视图：仅显示工作流列表
+  - [x] 智能体视图：显示智能体列表
+  - [x] 其他视图（提示词/设置/个人资料）：不显示侧边栏
+  - [x] 文件：`src/components/layout/ContextSidebar.tsx`, `src/components/layout/AppShell.tsx`
+
+- [x] **聊天视图双列合并为单列+标签切换**
+  - [x] 原双列布局（左工作流+右会话）改为单列，顶部「工作流/会话」标签切换
+  - [x] 点击工作流后自动切换到会话标签
+  - [x] 文件：`src/components/layout/ContextSidebar.tsx`
+
+- [x] **新建会话功能修复**
+  - [x] 使用 `createSession` 替代 `openWorkflowSession`，确保每次点击都创建新会话
+  - [x] 文件：`src/components/layout/ContextSidebar.tsx`
+
+### 7.2 工作流画布（已完成）
+
+- [x] **添加 MiniMap**
+  - [x] WorkflowCanvas 添加 MiniMap 组件
+  - [x] 支持 dark/light 主题颜色适配
+  - [x] 文件：`src/components/workflow/WorkflowCanvas.tsx`
+
+### 7.3 工作流聊天视图（已完成）
+
+- [x] **Bot 按钮移至标题栏**
+  - [x] 将 App.tsx headerRightContent 中的 Bot 按钮移到 WorkflowChatView 标题栏右侧
+  - [x] 仅在工作流会话且侧边栏折叠时显示
+  - [x] 文件：`src/components/chat/WorkflowChatView.tsx`, `src/App.tsx`, `src/components/layout/AppShell.tsx`
+
+- [x] **多 Agent 模式切换按钮文案**
+  - [x] 按钮文案从"单Agent/多Agent"改为"拓扑/聊天"
+  - [x] 文件：`src/components/chat/WorkflowChatView.tsx`
+
+### 7.4 设置页（已完成）
+
+- [x] **自定义协议选择器简化**
+  - [x] 仅保留 "OpenAI 兼容" 一个选项
+  - [x] 文件：`src/components/settings/SettingsView.tsx`
+
+- [x] **多服务商模型管理**
+  - [x] 左列表+右详情布局
+  - [x] 支持多个 OpenAI/Anthropic/Gemini/Custom 服务商
+  - [x] 每个服务商下支持多个模型
+  - [x] 文件：`src/components/settings/SettingsView.tsx`, `src/types/models.ts`, `src/store/appStore.ts`
+
+### 7.5 剩余待办
+
+- [ ] **会话列表顶部添加固定 "+ 新增会话" 按钮**
+  - 目标：会话列表第一条固定为 "+ 新建会话"，点击后打开新建会话弹窗
+  - 当前：已有新建按钮，但可优化为更明显的固定入口
+  - 文件：`src/components/layout/ContextSidebar.tsx`
+
+- [ ] **列表项添加头像/图标**
+  - 目标：列表项采用「头像/图标 + 助手名称」的形式
+  - 当前：`ContextItem` 组件已添加图标，但可进一步美化
+  - 文件：`src/components/layout/ContextSidebar.tsx`
+
+- [ ] **单个列表项添加三点菜单（编辑/删除/更多）**
+  - 目标：列表右侧的「三点菜单」，支持对单个助手进行更多操作（编辑、删除等）
+  - 当前：已有删除按钮，可扩展为三点菜单
+  - 文件：`src/components/layout/ContextSidebar.tsx`
+
+### 7.6 右侧：主对话区（SimpleChatView / ChatMessageBubble）
+
+- [ ] **面包屑栏添加对话时间显示**
+  - 目标：在模型名称下方附带对话时间（如 04/19 21:06）
+  - 当前：面包屑栏只有话题名 > 模型名 | Local，无时间
+  - 文件：`src/components/chat/SimpleChatView.tsx`
+
+- [ ] **单条消息 Token 显示增加 ↑↓ 分项**
+  - 目标：Tokens: 总token ↑上传token ↓下载token，上传下载数字前有 ↑↓ 符号
+  - 当前：只显示 `totalTokens tokens`，无分项
+  - 文件：`src/components/chat/ChatMessageBubble.tsx`（AssistantBubble）
+
+- [ ] **AI 回复去除左边框线，改为无明显气泡框**
+  - 目标：AI 回复左对齐，无明显气泡框，直接在深色背景上显示文字
+  - 当前：使用了 `border-l-2 border-muted-foreground/20 pl-3` 左边框引用样式
+  - 文件：`src/components/chat/ChatMessageBubble.tsx`（AssistantBubble）
+
+- [ ] **模型来源根据 agent.modelProvider 动态显示**
+  - 目标：模型来源显示实际 provider（OpenAI/Anthropic/Local 等）
+  - 当前：面包屑中固定硬编码为 `t("Local")`
+  - 文件：`src/components/chat/SimpleChatView.tsx`
+
+### 7.7 多模型对比卡片（MultiModelComparison / AgentResultCard）
+
+- [ ] **对比卡片添加快捷操作栏**
+  - 目标：卡片底部提供一排功能图标（复制、刷新、引用、点赞、收藏、删除、更多）
+  - 当前：MultiModelComparison 只有 "Select" 按钮；AgentResultCard 无任何操作栏
+  - 文件：`src/components/chat/MultiModelComparison.tsx`、`src/components/chat/AgentResultCard.tsx`
+  - 说明：`MessageHoverActions.tsx` 已实现完整操作按钮集，可复用或参考
+
+- [ ] **对比卡片添加状态图标和时间**
+  - 目标：每个卡片顶部重复模型名称、状态图标（如绿色星星）、时间和 Token 信息
+  - 当前：只有模型名称和 Token 总数
+  - 文件：`src/components/chat/MultiModelComparison.tsx`
+
+### 7.8 全局导航栏（GlobalSidebar）
+
+- [ ] **底部导航精简为仅暗色模式和设置**
+  - 目标：底部是暗色模式和设置图标（从上到下）
+  - 当前：底部有暗色模式 → Settings → Profile 三个图标，多了一个 Profile
+  - 文件：`src/components/layout/GlobalSidebar.tsx`
+
+## 8. P6：测试与工程化补齐
 
 - [x] 搭建 vitest + @testing-library/react 测试基础设施。
 - [x] 为 `addAgentResponseStream` / `completeAgentResponse` 增加 store 层单元测试：
@@ -201,11 +359,11 @@
 - [x] 为 workflow chat V1 补最小交互测试：打开窗口、聚焦窗口、转发到下一节点。
 - [x] 为新节点补契约测试：HTTP/IF/Merge/Sub-workflow 的输入输出与错误路径。
 
-## 7. 已清理的旧计划
+## 9. 已清理的旧计划
 
 以下内容已被当前优先级方案覆盖，不再单独维护：
 
-- 旧“多小窗并发验证矩阵”。新方案不再以多小窗并列作为主要聊天形态，而是在 workflow chat 中使用可重叠节点窗口。
-- 旧“群聊版会话窗口 V1 草稿”。其核心目标已并入 single chat 普通群聊式消息流与通用气泡组件。
-- 旧“2~4 周里程碑”。当前改为按 P0/P1/P2/P3/P4 优先级推进。
+- 旧"多小窗并发验证矩阵"。新方案不再以多小窗并列作为主要聊天形态，而是在 workflow chat 中使用可重叠节点窗口。
+- 旧"群聊版会话窗口 V1 草稿"。其核心目标已并入 single chat 普通群聊式消息流与通用气泡组件。
+- 旧"2~4 周里程碑"。当前改为按 P0/P1/P2/P3/P4/P5/P6 优先级推进。
 - 旧狼人杀多版设计全文。保留仍需执行的规则回归与 loop/runtime 相关项。

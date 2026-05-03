@@ -1,20 +1,20 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const workflows = useAppStore(state => state.workflows);
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'Sub-workflow');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Sub-workflow'));
   const [subWorkflowId, setSubWorkflowId] = useState(data.subWorkflowId || '');
   const [inputMapping, setInputMapping] = useState(data.inputMapping || '');
 
@@ -24,7 +24,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
-          return { ...node, data: { ...node.data, label: localLabel, subWorkflowId, inputMapping } };
+          return { ...node, data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), subWorkflowId, inputMapping } };
         }
         return node;
       })
@@ -56,10 +56,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Sub-workflow</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>Target Workflow</Label>
                 <Select value={subWorkflowId} onValueChange={setSubWorkflowId}>

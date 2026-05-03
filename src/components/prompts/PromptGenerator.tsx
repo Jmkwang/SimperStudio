@@ -43,10 +43,12 @@ export function PromptGenerator() {
     setIsLoading(true);
 
     try {
-      const providerToUse = settings.apiProvider === 'custom' ? 'custom' : 'openai';
-      const modelToUse = settings.apiProvider === 'custom' ? settings.customModelId : '';
-      
-      const { textStream } = await fetchFromModel(providerToUse, modelToUse, userMessage, settings, metaPrompt);
+      const activeProvider = settings.activeProviderId ? settings.providers.find(p => p.id === settings.activeProviderId) : null;
+      const defaultModel = activeProvider?.models.find(m => m.isDefault) || activeProvider?.models[0];
+      const providerToUse = activeProvider ? activeProvider.type : (settings.apiProvider === 'custom' ? 'custom' : 'openai');
+      const modelToUse = activeProvider ? (defaultModel?.modelId || '') : (settings.apiProvider === 'custom' ? settings.customModelId : '');
+
+      const { textStream } = await fetchFromModel(providerToUse, modelToUse || '', userMessage, settings, metaPrompt);
       
       let fullText = '';
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);

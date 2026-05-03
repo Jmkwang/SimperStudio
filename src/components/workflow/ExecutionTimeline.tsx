@@ -32,7 +32,7 @@ export function ExecutionTimeline() {
   if (workflowExecution.status === 'idle') return null;
 
   const nodeRecords = workflowExecution.nodeRecords || {};
-  const nodes = activeWorkflow?.nodes_data || [];
+  const nodes = activeWorkflow?.nodesData || [];
   const sortedNodes = nodes.filter(n => nodeRecords[n.id]).sort((a, b) => {
     const ta = nodeRecords[a.id]?.startTime || 0;
     const tb = nodeRecords[b.id]?.startTime || 0;

@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2, Merge } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function MergeNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'Merge');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Merge'));
   const [strategy, setStrategy] = useState(data.strategy || 'append');
   const [mergeKey, setMergeKey] = useState(data.mergeKey || 'id');
 
@@ -19,7 +20,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
-          return { ...node, data: { ...node.data, label: localLabel, strategy, mergeKey } };
+          return { ...node, data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), strategy, mergeKey } };
         }
         return node;
       })
@@ -52,10 +53,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Merge</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>Merge Strategy</Label>
                 <Select value={strategy} onValueChange={setStrategy}>

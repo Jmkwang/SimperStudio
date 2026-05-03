@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   Controls,
   Background,
+  MiniMap,
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
@@ -31,17 +32,12 @@ import { WebhookTriggerNode } from './nodes/WebhookTriggerNode';
 import { SubWorkflowNode } from './nodes/SubWorkflowNode';
 import { ExecutionTimeline } from './ExecutionTimeline';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus } from 'lucide-react';
-import { Save, Trash2, Download, Upload, ClipboardPaste } from 'lucide-react';
-
+import { Plus, Save, Trash2, Download, PlayCircle } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useTranslation } from '@/hooks/useTranslation';
-import { PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
@@ -85,10 +81,6 @@ function Flow() {
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showPasteDialog, setShowPasteDialog] = useState(false);
-  const [pasteJson, setPasteJson] = useState('');
-  const [pasteError, setPasteError] = useState('');
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -101,12 +93,12 @@ function Flow() {
   // Load active workflow into canvas
   useEffect(() => {
     if (activeWorkflow) {
-      setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ 
+      setNodes((activeWorkflow.nodesData || []).map((n: any) => ({ 
         ...n, 
         className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 motion-safe:animate-pulse' : '',
         data: { ...n.data, deleteNode } 
       })));
-      setEdges(activeWorkflow.edges_data || []);
+      setEdges(activeWorkflow.edgesData || []);
     }
   }, [activeWorkflow?.id]);
 
@@ -208,46 +200,11 @@ function Flow() {
     toast.success(t('Workflow exported'));
   };
 
-  const validateAndImport = (json: string) => {
-    setPasteError('');
-    try {
-      const parsed = JSON.parse(json);
-      if (!Array.isArray(parsed.nodes)) throw new Error('Missing "nodes" array');
-      if (!Array.isArray(parsed.edges)) throw new Error('Missing "edges" array');
-      for (const node of parsed.nodes) {
-        if (!node.id || !node.type || !node.position) throw new Error(`Node missing id/type/position: ${JSON.stringify(node)}`);
-      }
-      const nodeIds = new Set(parsed.nodes.map((n: any) => n.id));
-      for (const edge of parsed.edges) {
-        if (!edge.source || !edge.target) throw new Error(`Edge missing source/target: ${JSON.stringify(edge)}`);
-        if (!nodeIds.has(edge.source)) throw new Error(`Edge references non-existent source node: ${edge.source}`);
-        if (!nodeIds.has(edge.target)) throw new Error(`Edge references non-existent target node: ${edge.target}`);
-      }
-      const importNodes = parsed.nodes.map((n: any) => ({ ...n, data: { ...n.data, deleteNode } }));
-      setNodes(importNodes);
-      setEdges(parsed.edges);
-      setShowPasteDialog(false);
-      setPasteJson('');
-      toast.success(t('Workflow imported'));
-    } catch (e: any) {
-      setPasteError(e.message);
-    }
-  };
-
-  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => validateAndImport(reader.result as string);
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
   // Re-sync local state when activeWorkflow changes
   useEffect(() => {
     if (activeWorkflow) {
-      setNodes((activeWorkflow.nodes_data || []).map((n: any) => ({ ...n, data: { ...n.data, deleteNode } })));
-      setEdges(activeWorkflow.edges_data || []);
+      setNodes((activeWorkflow.nodesData || []).map((n: any) => ({ ...n, data: { ...n.data, deleteNode } })));
+      setEdges(activeWorkflow.edgesData || []);
     }
   }, [activeWorkflow]);
 
@@ -266,10 +223,16 @@ function Flow() {
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
         <Controls className="bg-card border shadow-sm rounded-lg" />
-        <Panel position="top-right" className="flex gap-2">
+        <MiniMap
+          bgColor={theme === 'dark' ? '#111827' : '#ffffff'}
+          maskColor={theme === 'dark' ? 'rgba(17, 24, 39, 0.65)' : 'rgba(240, 240, 240, 0.65)'}
+          nodeColor={theme === 'dark' ? '#374151' : '#e5e7eb'}
+          maskStrokeColor={theme === 'dark' ? '#374151' : '#d1d5db'}
+        />
+        <Panel position="top-right" className="flex gap-2 items-start">
            <Popover>
              <PopoverTrigger asChild>
-               <Button variant="secondary" size="sm" className="h-9 shadow-sm border">
+               <Button variant="outline" size="sm" className="h-8 shadow-sm">
                  <Plus className="h-4 w-4 mr-1" /> {t("Add Node")}
                </Button>
              </PopoverTrigger>
@@ -311,9 +274,9 @@ function Flow() {
              variant="outline"
              onClick={() => {
                const isWerewolf = activeWorkflow?.name === 'Werewolf Game Logic';
-               const initialPayload = isWerewolf 
-                 ? { 
-                     phase: "night", 
+               const initialPayload = isWerewolf
+                 ? {
+                     phase: "night",
                      gameStatus: "playing",
                      players: [
                        { id: "p1", role: "werewolf", status: "alive" },
@@ -321,53 +284,30 @@ function Flow() {
                        { id: "p3", role: "witch", status: "alive" },
                        { id: "p4", role: "villager", status: "alive" }
                      ]
-                   } 
+                   }
                  : { text: "Hello from test input!", value: 75 };
                executeWorkflow(activeWorkflow!.id, initialPayload);
              }}
              size="sm"
-             className="shadow-sm mr-2"
+             className="h-8 shadow-sm"
              disabled={workflowExecution.status === 'running'}
            >
-             <PlayCircle className="h-4 w-4 mr-2" />
+             <PlayCircle className="h-4 w-4 mr-1" />
              {workflowExecution.status === 'running' ? 'Running...' : 'Test Run'}
            </Button>
-           <Button onClick={handleSave} size="sm" className="shadow-sm">
-             <Save className="h-4 w-4 mr-2" /> {t("Save Workflow")}
-           </Button>
-           <Button onClick={handleExport} variant="outline" size="sm" className="shadow-sm">
-             <Download className="h-4 w-4 mr-1" /> {t("Export")}
-           </Button>
-           <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="shadow-sm">
-             <Upload className="h-4 w-4 mr-1" /> {t("Import")}
-           </Button>
-           <Button onClick={() => { setShowPasteDialog(true); setPasteJson(''); setPasteError(''); }} variant="outline" size="sm" className="shadow-sm">
-             <ClipboardPaste className="h-4 w-4 mr-1" /> {t("Paste")}
-           </Button>
-           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileImport} />
+           <div className="relative group">
+             <Button onClick={handleSave} size="sm" className="h-8 shadow-sm">
+               <Save className="h-4 w-4 mr-1" /> {t("Save")}
+             </Button>
+             <div className="absolute top-full left-0 right-0 pt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+               <Button onClick={handleExport} variant="outline" size="sm" className="h-8 w-full shadow-md bg-card">
+                 <Download className="h-4 w-4 mr-1" /> {t("Export")}
+               </Button>
+             </div>
+           </div>
         </Panel>
       </ReactFlow>
       <ExecutionTimeline />
-      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
-        <DialogContent className="sm:max-w-[600px] rounded-xl">
-          <DialogHeader>
-            <DialogTitle>{t("Paste Workflow JSON")}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Textarea
-              value={pasteJson}
-              onChange={(e) => { setPasteJson(e.target.value); setPasteError(''); }}
-              placeholder='{"nodes": [...], "edges": [...]}'
-              className="font-mono text-xs h-[300px] resize-none"
-            />
-            {pasteError && <p className="text-sm text-red-500">{pasteError}</p>}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPasteDialog(false)}>{t("Cancel")}</Button>
-            <Button onClick={() => validateAndImport(pasteJson)}>{t("Import")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

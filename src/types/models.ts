@@ -82,17 +82,40 @@ export interface Workflow {
   id: string;
   workspaceId: string;
   name: string;
-  nodes_data: WorkflowNode[];
-  edges_data: WorkflowEdge[];
+  nodesData: WorkflowNode[];
+  edgesData: WorkflowEdge[];
   status: 'active' | 'inactive';
   createdAt: number;
   updatedAt: number;
 }
 
+export interface ProviderModel {
+  id: string;
+  name: string;
+  modelId: string;
+  isDefault?: boolean;
+}
+
+export interface ModelProvider {
+  id: string;
+  name: string;
+  type: 'openai' | 'anthropic' | 'gemini' | 'custom';
+  apiKey: string;
+  baseUrl: string;
+  isEnabled: boolean;
+  customHeader?: string;
+  models: ProviderModel[];
+}
+
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
   language: string;
-  apiProvider: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
+  providers: ModelProvider[];
+  activeProviderId: string | null;
+  allowRemoteAccess: boolean;
+  remoteAccessPort: number;
+  // Legacy fields for backward compatibility
+  apiProvider?: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
   openaiKey?: string;
   openaiModelId?: string;
   anthropicKey?: string;
@@ -100,13 +123,11 @@ export interface Settings {
   googleKey?: string;
   geminiKey?: string;
   geminiModelId?: string;
-  customProtocol: string;
-  customBaseUrl: string;
-  customModelId: string;
+  customProtocol?: string;
+  customBaseUrl?: string;
+  customModelId?: string;
   customApiKey?: string;
   customHeader?: string;
-  allowRemoteAccess: boolean;
-  remoteAccessPort: number;
   customXmlTemplate?: string;
 }
 
@@ -128,15 +149,30 @@ export interface MessageMeta {
   triggeredBy?: 'user' | 'auto' | 'manual' | 'reload';
 }
 
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
 export interface AgentResponse {
   agentId: string;
   nodeId?: string;
+  modelId?: string;
+  modelProvider?: string;
   content: {
     text: string;
     token?: number;
   };
+  tokenUsage?: TokenUsage;
   status: 'streaming' | 'complete' | 'error';
   timestamp: number;
+}
+
+export interface MultiModelComparison {
+  models: string[];
+  responses: Record<string, AgentResponse>;
+  selectedResponseId?: string;
 }
 
 export interface ChatMessage {
@@ -150,6 +186,7 @@ export interface ChatMessage {
   timestamp: number;
   meta?: MessageMeta;
   agentResponses?: AgentResponse[];
+  multiModelComparison?: MultiModelComparison;
 }
 
 export interface ChatSession {

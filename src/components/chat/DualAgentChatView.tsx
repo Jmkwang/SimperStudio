@@ -21,7 +21,7 @@ export function DualAgentChatView({ workflow }: DualAgentChatViewProps) {
 
   const [mainInput, setMainInput] = useState('');
 
-  const agentNodes = workflow.nodes_data?.filter(node => node.type === 'agent') || [];
+  const agentNodes = workflow.nodesData?.filter(node => node.type === 'agent') || [];
   const linkedAgents = agentNodes
     .map(node => agents.find(a => a.id === node.data.agentId))
     .filter(Boolean) as Agent[];

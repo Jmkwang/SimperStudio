@@ -17,7 +17,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
   const workflowForActiveSession = activeSession?.workflowId
     ? workflows.find(w => w.id === activeSession.workflowId)
     : undefined
-  const workflowAgentNodes = (workflowForActiveSession?.nodes_data || []).filter(
+  const workflowAgentNodes = (workflowForActiveSession?.nodesData || []).filter(
     node => node.type === 'agent' && node.data?.agentId
   )
   const collapsed = activeSession

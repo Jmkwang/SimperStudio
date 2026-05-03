@@ -50,8 +50,13 @@
       "Bash(mv \"G:/workspace/SimperStudio/TODO.md\" \"G:/workspace/SimperStudio/docs/TODO.md\")",
       "Bash(npx tsc *)",
       "Bash(git push *)",
-      "Bash(npx vitest *)",
-      "Bash(node -e \"try { require\\('@testing-library/react'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")"
+      "Bash(gh pr create --title 'feat: P0-P4 路线图实现 + 文档全面更新' --body ' *)",
+      "Bash(where gh *)",
+      "Read(//c/Program Files/GitHub CLI//**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Bash(cmd.exe /c \"where gh\")",
+      "Bash(npm list *)",
+      "Bash(npm test *)"
     ]
   }
 }

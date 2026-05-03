@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2, Globe } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
@@ -14,12 +15,11 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'HTTP Request');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'HTTP Request'));
   const [method, setMethod] = useState(data.method || 'GET');
   const [url, setUrl] = useState(data.url || '');
   const [headers, setHeaders] = useState(data.headers || '');
   const [body, setBody] = useState(data.body || '');
-  const [timeoutMs, setTimeoutMs] = useState(data.timeoutMs ?? 30000);
 
   const handleSave = () => {
     setNodes((nds) =>
@@ -27,7 +27,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, label: localLabel, method, url, headers, body, timeoutMs },
+            data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), method, url, headers, body },
           };
         }
         return node;
@@ -60,10 +60,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure HTTP Request</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} placeholder="HTTP Request" />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid grid-cols-4 gap-2">
                 <div className="col-span-1">
                   <Label>Method</Label>
@@ -89,10 +86,6 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
                   <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder='{"key": "value"}' className="font-mono text-xs h-20 resize-none" />
                 </div>
               )}
-              <div className="grid gap-2">
-                <Label>Timeout (ms)</Label>
-                <Input type="number" value={timeoutMs} onChange={(e) => setTimeoutMs(Number(e.target.value))} />
-              </div>
             </div>
             <div className="flex justify-end">
               <Button onClick={handleSave}>Save Changes</Button>

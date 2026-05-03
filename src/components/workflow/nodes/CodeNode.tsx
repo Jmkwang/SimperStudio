@@ -1,15 +1,15 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Settings2, Code2 } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function CodeNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   
-  const [localLabel, setLocalLabel] = useState(data.label || 'Code Snippet');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Code Snippet'));
   const [code, setCode] = useState(data.code || 'return payload;');
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,7 +19,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, label: localLabel, code: code },
+            data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), code: code },
           };
         }
         return node;
@@ -48,7 +48,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted">
+            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure code node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -57,15 +57,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Code Node</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="label">Node Label</Label>
-                <Input
-                  id="label"
-                  value={localLabel}
-                  onChange={(e) => setLocalLabel(e.target.value)}
-                  placeholder="Code Name"
-                />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               
               <div className="grid gap-2 mt-2">
                 <div className="flex items-center justify-between">

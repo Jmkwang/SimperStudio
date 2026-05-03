@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Settings2, GitBranch, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function IfSwitchNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'IF / Switch');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'IF / Switch'));
   const [branches, setBranches] = useState<{ id: string; label: string; condition: string }[]>(
     data.branches || [
       { id: 'true', label: 'True', condition: 'payload.value > 0' },
@@ -25,7 +26,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
-          return { ...node, data: { ...node.data, label: localLabel, branches } };
+          return { ...node, data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), branches } };
         }
         return node;
       })
@@ -63,10 +64,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure IF / Switch</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label>Branches (first match wins)</Label>

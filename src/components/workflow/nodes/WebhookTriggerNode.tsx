@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2, Webhook } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'Webhook Trigger');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Webhook Trigger'));
   const [method, setMethod] = useState(data.webhookMethod || 'POST');
   const [path, setPath] = useState(data.webhookPath || '/webhook/' + id);
   const [authToken, setAuthToken] = useState(data.authToken || '');
@@ -20,7 +21,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
-          return { ...node, data: { ...node.data, label: localLabel, webhookMethod: method, webhookPath: path, authToken } };
+          return { ...node, data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), webhookMethod: method, webhookPath: path, authToken } };
         }
         return node;
       })
@@ -51,10 +52,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Webhook Trigger</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>HTTP Method</Label>
                 <Select value={method} onValueChange={setMethod}>

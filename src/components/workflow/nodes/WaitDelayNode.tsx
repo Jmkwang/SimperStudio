@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2, Timer } from 'lucide-react';
 import { useState } from 'react';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function WaitDelayNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [localLabel, setLocalLabel] = useState(data.label || 'Wait / Delay');
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Wait / Delay'));
   const [mode, setMode] = useState<'fixed' | 'until'>(data.waitMode || 'fixed');
   const [delayMs, setDelayMs] = useState(data.delayMs ?? 1000);
   const [untilExpression, setUntilExpression] = useState(data.untilExpression || '');
@@ -22,7 +23,7 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, label: localLabel, waitMode: mode, delayMs, untilExpression },
+            data: { ...applyNodeBaseConfigDraft(node.data, baseConfig), waitMode: mode, delayMs, untilExpression },
           };
         }
         return node;
@@ -55,10 +56,7 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Wait / Delay</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Node Label</Label>
-                <Input value={localLabel} onChange={(e) => setLocalLabel(e.target.value)} />
-              </div>
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>Wait Mode</Label>
                 <Select value={mode} onValueChange={(v) => setMode(v as 'fixed' | 'until')}>

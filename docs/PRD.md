@@ -18,9 +18,10 @@
 *   Support for multiple LLM providers (OpenAI, Anthropic, Gemini, local models via Ollama).
 *   Ability to switch agents mid-conversation or have agents collaborate.
 *   Thread management (history, branching, context pruning).
+*   **Workflow-based sessions:** Each workflow can have unlimited chat sessions.
 
 ### 2.2 Custom APIs & Integrations
-*   Global API configuration settings.
+*   **Multi-provider model management:** Support configuring multiple providers (OpenAI, Anthropic, Gemini, Custom), each with multiple models.
 *   Ability to define custom REST endpoints as tools for agents or nodes in workflows.
 *   Secure local credential storage.
 
@@ -30,6 +31,7 @@
 *   Action nodes (API calls, data transformation, logic gates).
 *   LLM integration nodes (prompting an agent within a workflow).
 *   Execution history and debugging tools.
+*   **MiniMap:** Visual overview of the workflow canvas.
 
 ### 2.4 Workspace Zone
 *   Project-based organization.
@@ -41,15 +43,26 @@
 *   Define system prompts, assign specific tools (from Custom APIs), and set model parameters (temperature, max tokens).
 *   Agent library/marketplace for sharing and importing agent configurations.
 
+### 2.6 Model Provider Management
+*   **Provider List:** Left panel showing all configured providers with name, type, base URL, and enable status.
+*   **Provider Detail:** Right panel showing selected provider's configuration:
+    *   Basic info: Name, Type, Base URL, API Key, Custom Header
+    *   **Model List:** Multiple models per provider, each with name and model ID
+    *   **Default Model:** Star-marked default model for the provider
+    *   Actions: Add/Delete models, Enable/Disable provider, Set as active provider
+*   **Active Provider:** One provider is designated as "active" and used for all AI calls.
+*   **Add Provider UX:** Form validation with red border + error text on required fields. Auto-fill default name and base URL by provider type. Auto-select newly created provider.
+*   **Settings Organization:** Language and Remote Access settings are separated into individual cards for clarity.
+
 ---
 
 ## 3. Technical Architecture
 
 *   **App Framework:** Tauri (Rust backend, web frontend) for a lightweight footprint and native desktop capabilities.
-*   **Frontend Framework:** React 18+ with Vite for rapid development and HMR.
-*   **State Management:** Zustand (preferred) or Redux Toolkit.
+*   **Frontend Framework:** React 19+ with Vite for rapid development and HMR.
+*   **State Management:** Zustand 5.
 *   **UI Components:** Radix UI / shadcn/ui or similar headless components styled with Tailwind CSS.
-*   **Workflow Engine (UI):** React Flow for the visual node editor.
+*   **Workflow Engine (UI):** React Flow (@xyflow/react) for the visual node editor.
 *   **Database:** Local SQLite (via Tauri SQL plugin) for persistent storage.
 
 ---
@@ -79,6 +92,8 @@ Below is a conceptual schema for the local SQLite database.
 *   `id` (UUID, Primary Key)
 *   `workspace_id` (UUID, Foreign Key)
 *   `title` (String)
+*   `mode` (String: 'single' | 'workflow')
+*   `workflow_id` (UUID, Foreign Key, Nullable)
 *   `created_at` (Timestamp)
 *   `updated_at` (Timestamp)
 
@@ -108,17 +123,32 @@ Below is a conceptual schema for the local SQLite database.
 *   `headers` (JSON)
 *   `body_template` (Text)
 
+### `ModelProviders` (Settings)
+*   `id` (UUID, Primary Key)
+*   `name` (String)
+*   `type` (String: openai, anthropic, gemini, custom)
+*   `api_key` (String)
+*   `base_url` (String)
+*   `is_enabled` (Boolean)
+*   `custom_header` (String, Nullable)
+*   `models` (JSON - Array of {id, name, modelId, isDefault})
+
 ---
 
 ## 5. UI/UX Guidelines for the UI Designer
 
 *   **Aesthetic:** "Small & Beautiful." Think modern macOS or refined minimalist Windows 11. High whitespace, subtle shadows, crisp typography (Inter or system UI fonts).
 *   **Layout:**
-    *   Left Sidebar: Navigation (Chats, Workspaces, Agents, Workflows, Settings).
+    *   Left Sidebar: Navigation (Chats, Workflows, Agents, Prompts, Settings).
     *   Main Content Area: Dynamic based on selection.
     *   Right Sidebar (Optional/Collapsible): Context, Agent Settings, or Node Properties.
+*   **Context Sidebar Behavior:**
+    *   **Chat view:** Shows workflow list (left) + sessions for selected workflow (right), toggle via top tabs.
+    *   **Workflow view:** Shows workflow list only.
+    *   **Agents view:** Shows agent list.
+    *   **Prompts/Settings/Profile:** No sidebar.
 *   **Theming:** Full Support for System Dark/Light modes with smooth transitions.
-*   **Workflow Editor:** Needs to feel snappy. Nodes should be clearly legible, with distinct colors for different node types (Trigger, Action, LLM). Connections must be easily manageable.
+*   **Workflow Editor:** Needs to feel snappy. Nodes should be clearly legible, with distinct colors for different node types (Trigger, Action, LLM). Connections must be easily manageable. MiniMap for canvas overview.
 *   **Interactions:** Hover states, subtle click animations, and keyboard shortcuts for power users.
 
 ---
@@ -138,12 +168,14 @@ Below is a conceptual schema for the local SQLite database.
 *   Unify message metadata and chat/workflow orchestration actions.
 *   New session dialog with single/workflow mode selection.
 *   Workflow sidebar collapse/expand behavior.
+*   Context sidebar shows different content per view (chat/workflow/agents).
 
 ### Phase 3: Composable Node Ecosystem (P1) — Completed
 *   Added 7 new node types: HTTP Request, Set/Transform, IF/Switch, Merge, Wait/Delay, Webhook Trigger, Sub-workflow.
 *   Standardized node configuration contracts: `timeoutMs`, `retryPolicy`, `onError`, `inputSchema/outputSchema`.
 *   Workflow import/export (JSON file and paste import).
 *   Categorized node panel with search (Trigger/Flow Control/Data/AI/Integration/Output).
+*   MiniMap on workflow canvas.
 
 ### Phase 4: Reliable Runtime Semantics (P2) — Completed
 *   Node-level input/output schema validation.
@@ -161,7 +193,18 @@ Below is a conceptual schema for the local SQLite database.
 *   `prefers-reduced-motion` support for animations.
 *   Remaining: alert hooks, accessibility polish (contrast, click targets, aria-labels, responsive layout).
 
-### Phase 6: Tests, Packaging, and V1 Launch (P4) — In Progress
+### Phase 6: Multi-Provider Model Management (P4) — Completed
+*   Replaced single API provider settings with multi-provider system.
+*   Each provider supports multiple models with default model selection.
+*   Settings page redesigned: left provider list + right detail panel.
+*   Provider CRUD: Add, update, delete, enable/disable, set active.
+*   Model CRUD per provider: Add, delete, set default.
+*   API layer updated to use active provider and default model.
+*   Add Provider UX: validation feedback, auto-fill defaults, auto-select new provider.
+*   Settings organization: Language and Remote Access separated into individual cards.
+*   Multi-agent mode toggle: button text changed to "拓扑/聊天".
+
+### Phase 7: Tests, Packaging, and V1 Launch (P5) — In Progress
 *   vitest + @testing-library/react test infrastructure.
 *   41 test cases covering: store layer, workflow execution, node contracts, chat rendering, workflow chat interactions.
 *   Remaining: packaging, documentation landing page, auto-updater.

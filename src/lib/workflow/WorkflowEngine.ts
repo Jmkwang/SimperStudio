@@ -12,14 +12,14 @@ export class WorkflowEngine {
 
     private initializeGraph() {
         // 1. Initialize data structures
-        this.workflow.nodes_data.forEach(node => {
+        this.workflow.nodesData.forEach(node => {
             this.executionContext[node.id] = { output: null, status: 'pending' };
             this.edgeMap[node.id] = [];
             this.inDegreeMap[node.id] = 0;
         });
 
         // 2. Build adjacency list and in-degrees
-        this.workflow.edges_data.forEach(edge => {
+        this.workflow.edgesData.forEach(edge => {
             if (this.edgeMap[edge.source]) {
                 this.edgeMap[edge.source].push(edge.target);
             }
@@ -36,7 +36,7 @@ export class WorkflowEngine {
         let processedCount = 0;
 
         // 1. Find trigger nodes (in-degree 0)
-        this.workflow.nodes_data.forEach(node => {
+        this.workflow.nodesData.forEach(node => {
             if (this.inDegreeMap[node.id] === 0 && node.type === 'trigger') {
                 queue.push(node.id);
                 this.executionContext[node.id].output = initialInput; // Inject starting data
@@ -50,14 +50,14 @@ export class WorkflowEngine {
             queue.length = 0; // clear queue
 
             const executionPromises = currentLevel.map(async (nodeId) => {
-                const nodeData = this.workflow.nodes_data.find(n => n.id === nodeId);
+                const nodeData = this.workflow.nodesData.find(n => n.id === nodeId);
                 if (!nodeData) return;
 
                 this.executionContext[nodeId].status = 'running';
 
                 try {
                     // Gather inputs from parent nodes
-                    const parentEdges = this.workflow.edges_data.filter(e => e.target === nodeId);
+                    const parentEdges = this.workflow.edgesData.filter(e => e.target === nodeId);
                     const parentOutputs = parentEdges.map(e => this.executionContext[e.source].output);
 
                     // Execute Node Strategy
@@ -86,7 +86,7 @@ export class WorkflowEngine {
         }
 
         // 3. Cycle Detection Check
-        if (processedCount < this.workflow.nodes_data.length) {
+        if (processedCount < this.workflow.nodesData.length) {
             throw new Error("Workflow execution halted: Cycle detected in graph.");
         }
 

@@ -1,15 +1,27 @@
-import { Copy, RefreshCw, Forward, RotateCcw } from "lucide-react";
+import { Copy, RefreshCw, Forward, RotateCcw, Quote, ThumbsUp, ThumbsDown, Bookmark, Trash2, MoreHorizontal } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export interface MessageHoverActionsProps {
   canCopy?: boolean;
   canRerun?: boolean;
   canForward?: boolean;
   canRerunAndForward?: boolean;
+  canQuote?: boolean;
+  canLike?: boolean;
+  canDislike?: boolean;
+  canBookmark?: boolean;
+  canDelete?: boolean;
   onCopy?: () => void;
   onRerun?: () => void;
   onForward?: () => void;
   onRerunAndForward?: () => void;
+  onQuote?: () => void;
+  onLike?: () => void;
+  onDislike?: () => void;
+  onBookmark?: () => void;
+  onDelete?: () => void;
 }
 
 export function MessageHoverActions({
@@ -17,54 +29,124 @@ export function MessageHoverActions({
   canRerun,
   canForward,
   canRerunAndForward,
+  canQuote,
+  canLike,
+  canDislike,
+  canBookmark,
+  canDelete,
   onCopy,
   onRerun,
   onForward,
   onRerunAndForward,
+  onQuote,
+  onLike,
+  onDislike,
+  onBookmark,
+  onDelete,
 }: MessageHoverActionsProps) {
   const { t } = useTranslation();
 
   return (
     <div className="mt-2 flex flex-wrap gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
       {canCopy && (
-        <button
-          type="button"
-          aria-label={t("Copy")}
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onCopy}
-          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+          aria-label={t("Copy")}
+          className="h-8 px-2"
         >
-          <Copy className="mr-1 h-3 w-3" />{t("Copy")}
-        </button>
+          <Copy className="h-3 w-3" />
+        </Button>
       )}
       {canRerun && (
-        <button
-          type="button"
-          aria-label={t("Regenerate")}
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onRerun}
-          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+          aria-label={t("Regenerate")}
+          className="h-8 px-2"
         >
-          <RefreshCw className="mr-1 h-3 w-3" />{t("Regenerate")}
-        </button>
+          <RefreshCw className="h-3 w-3" />
+        </Button>
       )}
-      {canForward && (
-        <button
-          type="button"
-          aria-label={t("Send to next")}
-          onClick={onForward}
-          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+      {canQuote && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onQuote}
+          aria-label={t("Quote")}
+          className="h-8 px-2"
         >
-          <Forward className="mr-1 h-3 w-3" />{t("Send to next")}
-        </button>
+          <Quote className="h-3 w-3" />
+        </Button>
       )}
-      {canRerunAndForward && (
-        <button
-          type="button"
-          aria-label={t("Retry and send")}
-          onClick={onRerunAndForward}
-          className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 rounded-md border bg-background text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+      {canLike && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onLike}
+          aria-label={t("Like")}
+          className="h-8 px-2"
         >
-          <RotateCcw className="mr-1 h-3 w-3" />{t("Retry and send")}
-        </button>
+          <ThumbsUp className="h-3 w-3" />
+        </Button>
+      )}
+      {canDislike && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDislike}
+          aria-label={t("Dislike")}
+          className="h-8 px-2"
+        >
+          <ThumbsDown className="h-3 w-3" />
+        </Button>
+      )}
+      {canBookmark && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBookmark}
+          aria-label={t("Bookmark")}
+          className="h-8 px-2"
+        >
+          <Bookmark className="h-3 w-3" />
+        </Button>
+      )}
+      {canDelete && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          aria-label={t("Delete")}
+          className="h-8 px-2 text-destructive"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      )}
+      {(canForward || canRerunAndForward) && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 px-2">
+              <MoreHorizontal className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {canForward && (
+              <DropdownMenuItem onClick={onForward}>
+                <Forward className="mr-2 h-3 w-3" />
+                {t("Send to next")}
+              </DropdownMenuItem>
+            )}
+            {canRerunAndForward && (
+              <DropdownMenuItem onClick={onRerunAndForward}>
+                <RotateCcw className="mr-2 h-3 w-3" />
+                {t("Retry and send")}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );

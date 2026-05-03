@@ -9,14 +9,17 @@ import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function AgentNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const agents = useAppStore(state => state.agents);
 
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Agent Node'));
   const [localPrompt, setLocalPrompt] = useState(data.prompt || '');
   const [selectedAgentId, setSelectedAgentId] = useState(data.agentId || agents[0]?.id);
   const [localAutoSend, setLocalAutoSend] = useState(data.autoSendToNext || false);
+  const [localSchema, setLocalSchema] = useState(data.schema || '');
   const [isOpen, setIsOpen] = useState(false);
 
   const activeAgent = agents.find(a => a.id === selectedAgentId);
@@ -28,10 +31,11 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
           return {
             ...node,
             data: {
-              ...node.data,
+              ...applyNodeBaseConfigDraft(node.data, baseConfig),
               agentId: selectedAgentId,
               prompt: localPrompt,
               autoSendToNext: localAutoSend,
+              schema: localSchema,
             },
           };
         }
@@ -74,6 +78,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               <DialogTitle>Configure Agent Node</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>Assigned Agent</Label>
                 <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
@@ -91,17 +96,8 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 <Label htmlFor="schema">Output Schema (JSON)</Label>
                 <Textarea
                   id="schema"
-                  value={data.schema || ""}
-                  onChange={(e) => {
-                    setNodes((nds) =>
-                      nds.map((node) => {
-                        if (node.id === id) {
-                          return { ...node, data: { ...node.data, schema: e.target.value } };
-                        }
-                        return node;
-                      })
-                    );
-                  }}
+                  value={localSchema}
+                  onChange={(e) => setLocalSchema(e.target.value)}
                   placeholder='{"targetId": "string"}'
                   className="resize-none h-20 font-mono text-xs"
                 />
