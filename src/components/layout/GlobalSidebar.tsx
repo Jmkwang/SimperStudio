@@ -10,14 +10,13 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
 
   return (
     <TooltipProvider delayDuration={3000}>
-      <div className="flex w-16 flex-col items-center justify-between bg-[#1e1e1e] py-4">
-        <div className="flex flex-col items-center gap-4">
-          {/* App Logo */}
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <span className="font-bold">S</span>
+      <div className="flex w-[60px] flex-col items-center justify-between py-5 m-1.5 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
+        <div className="flex flex-col items-center gap-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-lunar-300/15 to-lunar-500/5 border border-lunar-300/8 glow-sm">
+            <span className="font-semibold text-sm tracking-wider text-lunar-200">S</span>
           </div>
 
-          <nav className="flex flex-col gap-2 mt-4">
+          <nav className="flex flex-col gap-1.5">
             <NavIcon icon={MessageSquare} label={t("Chats")} active={currentView === 'chat'} onClick={() => setCurrentView('chat')} />
             <NavIcon icon={Workflow} label={t("Workflows")} active={currentView === 'workflow'} onClick={() => setCurrentView('workflow')} />
             <NavIcon icon={Users} label={t("Agents")} active={currentView === 'agents'} onClick={() => setCurrentView('agents')} />
@@ -25,15 +24,15 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
           </nav>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1.5">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="relative flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-white/10 active:scale-[0.98] text-gray-400"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent hover:border-foreground/[0.06] hover:bg-hover transition-all duration-400 ease-out text-muted-foreground hover:text-foreground"
               >
-                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" strokeWidth={1.5} />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" strokeWidth={1.5} />
                 <span className="sr-only">Toggle theme</span>
               </button>
             </TooltipTrigger>
@@ -56,11 +55,13 @@ function NavIcon({ icon: Icon, label, active = false, onClick }: { icon: any, la
         <button
           onClick={onClick}
           className={cn(
-            "flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-white/10 active:scale-[0.98]",
-            active ? "bg-white/20 text-white" : "text-gray-400"
+            "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-400 ease-out",
+            active
+              ? "bg-lunar-300/10 text-lunar-200 border border-lunar-300/12 glow-sm"
+              : "border border-transparent text-muted-foreground hover:text-foreground hover:bg-hover hover:border-foreground/[0.06]"
           )}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
           <span className="sr-only">{label}</span>
         </button>
       </TooltipTrigger>

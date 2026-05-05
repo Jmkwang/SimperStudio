@@ -74,6 +74,29 @@ const GenericNode = ({ data, id }: any) => {
   transformation: GenericNode
 };
 
+const nodeDefaultDataBuilders: Record<string, () => Record<string, any>> = {
+  agent: () => ({ agentId: '', prompt: 'Configure me.' }),
+  loop: () => ({
+    itemsPath: 'payload.alivePlayers',
+    itemAlias: 'item',
+    indexAlias: 'index',
+    maxIterations: 20,
+    breakCondition: ''
+  }),
+  http: () => ({ method: 'GET', url: '', headers: '', body: '', timeoutMs: 30000 }),
+  set: () => ({ mappings: [{ sourcePath: 'payload.llmResult', targetPath: 'output' }], constants: '', whitelist: '' }),
+  switch: () => ({
+    branches: [
+      { id: 'true', label: 'True', condition: 'payload.value > 0' },
+      { id: 'false', label: 'False', condition: 'true' },
+    ]
+  }),
+  wait: () => ({ waitMode: 'fixed', delayMs: 1000, untilExpression: '' }),
+  merge: () => ({ strategy: 'append', mergeKey: 'id' }),
+  webhook: () => ({ webhookMethod: 'POST', webhookPath: '/webhook/' + Date.now(), authToken: '' }),
+  subworkflow: () => ({ subWorkflowId: '', inputMapping: '' })
+};
+
 function Flow() {
   const activeWorkflow = useAppStore(state => state.getActiveWorkflow());
   const saveWorkflow = useAppStore(state => state.saveWorkflow);
@@ -118,60 +141,14 @@ function Flow() {
   );
 
   const addNode = (type: string, label: string) => {
-    const baseData: Record<string, any> = { label, deleteNode };
-
-    if (type === 'agent') {
-      Object.assign(baseData, { agentId: '', prompt: 'Configure me.' });
-    }
-
-    if (type === 'loop') {
-      Object.assign(baseData, {
-        itemsPath: 'payload.alivePlayers',
-        itemAlias: 'item',
-        indexAlias: 'index',
-        maxIterations: 20,
-        breakCondition: ''
-      });
-    }
-
-    if (type === 'http') {
-      Object.assign(baseData, { method: 'GET', url: '', headers: '', body: '', timeoutMs: 30000 });
-    }
-
-    if (type === 'set') {
-      Object.assign(baseData, { mappings: [{ sourcePath: 'payload.llmResult', targetPath: 'output' }], constants: '', whitelist: '' });
-    }
-
-    if (type === 'switch') {
-      Object.assign(baseData, {
-        branches: [
-          { id: 'true', label: 'True', condition: 'payload.value > 0' },
-          { id: 'false', label: 'False', condition: 'true' },
-        ]
-      });
-    }
-
-    if (type === 'wait') {
-      Object.assign(baseData, { waitMode: 'fixed', delayMs: 1000, untilExpression: '' });
-    }
-
-    if (type === 'merge') {
-      Object.assign(baseData, { strategy: 'append', mergeKey: 'id' });
-    }
-
-    if (type === 'webhook') {
-      Object.assign(baseData, { webhookMethod: 'POST', webhookPath: '/webhook/' + Date.now(), authToken: '' });
-    }
-
-    if (type === 'subworkflow') {
-      Object.assign(baseData, { subWorkflowId: '', inputMapping: '' });
-    }
+    const defaultDataBuilder = nodeDefaultDataBuilders[type];
+    const defaultData = defaultDataBuilder ? defaultDataBuilder() : {};
 
     const newNode: Node = {
       id: `${type}-${nodes.length + 1}-${Date.now()}`,
       type: type,
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-      data: baseData,
+      data: { label, deleteNode, ...defaultData },
     };
     setNodes((nds) => [...nds, newNode]);
   };

@@ -90,7 +90,6 @@ App shell divided into three primary zones using Flexbox/CSS Grid.
 *   **Input Area:** Sticky bottom, auto-expanding textarea. Floating `@` mention popover for agent selection (keyboard navigable).
 *   **Generative UI (Skills):** Render custom UI responses within clean `Card` components with subtle drop shadows.
 *   **Breadcrumb Bar:** Topic Name > Model Name | Provider (dynamic). Show conversation timestamp below model name.
-*   **Multi-Agent Mode Toggle:** In workflow chat, a toggle button switches between "拓扑" (topology view) and "聊天" (chat view). Only visible when workflow has multiple agents.
 
 ### 3.4 Workflow Nodes (React Flow)
 *   **Design:** Card-like structure (`rounded-xl`, `shadow-sm`, `bg-card`).
@@ -126,9 +125,6 @@ App shell divided into three primary zones using Flexbox/CSS Grid.
 
 ### 3.7 Settings - Model Provider Management
 *   **Layout:** Left sidebar tabs (General / Appearance / Models) + Right content area.
-*   **General Tab:**
-    *   **Language Card:** Language selector (English/中文/Español) + Save button.
-    *   **Remote Access Card:** Enable/disable toggle + port input. Separated from Language for clarity.
 *   **Models Tab:**
     *   **Left Panel (Provider List):** Provider name, type badge, base URL, ON/OFF status badge. Click to select.
     *   **Right Panel (Provider Detail):**
@@ -136,10 +132,6 @@ App shell divided into three primary zones using Flexbox/CSS Grid.
         *   Basic Info: Name input, Base URL input, API Key input (password), Custom Header input (for custom type).
         *   **Models Section:** List of models with name, model ID, default star indicator. Add new model row (name + model ID inputs + add button).
         *   Actions: "Set as Active" button (disabled when already active).
-    *   **Add Provider Form:**
-        *   Validation: Required fields (name, base URL) show red border + error text when empty.
-        *   Auto-fill: Default name and base URL populated by provider type.
-        *   Auto-select: Newly created provider automatically selected after creation.
 
 ## 4. Interactions & UX Quality
 *   **Routing:** Subtle crossfade when switching main sidebar tabs.

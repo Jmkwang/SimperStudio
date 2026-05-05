@@ -1,6 +1,5 @@
 import { GlobalSidebar } from "./GlobalSidebar"
 import { ContextSidebar, ContextSidebarHeader } from "./ContextSidebar"
-import { useAppStore } from "@/store/appStore"
 
 const VIEWS_WITHOUT_SIDEBAR = new Set(['prompts', 'settings', 'profile'])
 
@@ -13,16 +12,12 @@ export function AppShell({
   currentView: string,
   setCurrentView: (v: string) => void,
 }) {
-  const sessions = useAppStore(state => state.sessions)
-  const activeSessionId = useAppStore(state => state.activeSessionId)
-  const activeSession = sessions.find(s => s.id === activeSessionId)
-  const isWorkflowSession = currentView === 'chat' && activeSession?.mode === 'workflow'
   const showSidebar = !VIEWS_WITHOUT_SIDEBAR.has(currentView)
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
       <GlobalSidebar currentView={currentView} setCurrentView={setCurrentView} />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden rounded-l-2xl border-l border-border bg-background m-1.5 ml-0">
         {showSidebar && (
           <ContextSidebarHeader />
         )}
@@ -30,10 +25,10 @@ export function AppShell({
           {showSidebar && (
             <ContextSidebar
               currentView={currentView}
-              defaultCollapsed={isWorkflowSession}
+              defaultCollapsed={false}
             />
           )}
-          <main className="flex-1 overflow-hidden bg-background flex flex-col relative">
+          <main className="flex-1 overflow-hidden bg-background flex flex-col relative rounded-r-2xl">
             {children}
           </main>
         </div>

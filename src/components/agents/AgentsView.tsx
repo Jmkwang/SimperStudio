@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,6 +38,15 @@ export function AgentsView() {
   };
 
   const [formData, setFormData] = useState(defaultAgentState);
+
+  useEffect(() => {
+    if (activeAgentId === '__create_new__') {
+      setEditingId(null);
+      setFormData(defaultAgentState);
+      setIsOpen(true);
+      setActiveAgent(null);
+    }
+  }, [activeAgentId, setActiveAgent]);
 
   const handleSave = () => {
     if (formData.name && formData.systemPrompt) {
@@ -285,17 +294,17 @@ export function AgentsView() {
           ) : (
             <div className="space-y-8">
               {Object.entries(
-                agents.reduce((acc, agent) => {
-                  const industry = agent.industry || 'General';
-                  if (!acc[industry]) acc[industry] = [];
-                  acc[industry].push(agent);
+                agents.reduce((acc: Record<string, typeof agents>, agent: typeof agents[0]) => {
+                  const category = agent.category || agent.industry || 'General';
+                  if (!acc[category]) acc[category] = [];
+                  acc[category].push(agent);
                   return acc;
                 }, {} as Record<string, typeof agents>)
-              ).map(([industry, industryAgents]) => (
-                <div key={industry} className="space-y-4">
-                  <h3 className="text-xl font-semibold border-b pb-2">{industry}</h3>
+              ).map(([category, categoryAgents]) => (
+                <div key={category} className="space-y-4">
+                  <h3 className="text-xl font-semibold border-b pb-2">{category}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {industryAgents.map(agent => (
+                    {categoryAgents.map(agent => (
                       <div 
                         key={agent.id} 
                         className="bg-card rounded-xl border p-4 flex flex-col shadow-sm cursor-pointer hover:border-primary transition-colors"

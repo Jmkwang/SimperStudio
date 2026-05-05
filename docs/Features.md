@@ -187,21 +187,38 @@
 ## 4. 智能体管理
 
 ### 4.1 智能体视图（AgentsView）
-- **网格视图**：卡片网格展示，按行业分组，支持新建按钮
+- **网格视图**：卡片网格展示，按分类分组，支持新建按钮
 - **详情视图**：头像 + 名称 + 属性编辑表单 + 返回按钮
 - **CRUD 操作**：创建、查看、编辑、删除
 
-### 4.2 智能体属性
+### 4.2 智能体侧边栏（ContextSidebar - Agents 模式）
+- **分类列表**：按 `category` 或 `industry` 字段分组展示
+- **层级导航**：
+  - 第一层：分类列表（显示分类名称 + 助手数量）
+  - 第二层：点击分类进入该分类下的智能体列表
+  - 点击智能体弹出详情/编辑弹窗
+- **添加新助手**：置顶「添加新助手」按钮
+- **智能体详情弹窗**：点击智能体右侧弹出，展示完整配置并支持编辑
+  - 基本信息：头像、名称、描述
+  - System Prompt（可编辑）
+  - 模型配置：Provider、Model ID
+  - 参数：Temperature、Max Tokens
+  - API 设置：API Key（脱敏）、Base URL（如有）
+
+### 4.3 智能体属性
 - Name（名称）
 - Description（描述）
 - Avatar URL（头像链接）
+- Category（分类，新增字段，用于侧边栏分组）
 - Industry（行业分类：General/Product/Engineering/Data/Marketing/Design/Research/Finance）
 - System Prompt（系统提示词，多行文本）
 - Model Provider（模型供应商）
+- Model ID（模型标识符）
 - Temperature（温度滑块 0-2，默认 0.7）
 - Max Tokens（最大 token 数）
+- API Key / Base URL（自定义 API 设置）
 
-### 4.3 预置智能体（12 个）
+### 4.4 预置智能体（12 个）
 - organize-assistant（整理助手）、summary-assistant（总结助手）
 - architect（架构师）、reviewer（代码审查员）
 - host（狼人杀主持人）、wolf-shadow（暗影狼人）、wolf-fury（狂怒狼人）
@@ -238,10 +255,16 @@
 - Theme 切换：Light / Dark / System
 
 #### Models 标签
-- **服务商列表**（左面板）：名称、类型、Base URL、启用状态
+- **服务商列表**（左面板）：名称、类型、Base URL、启用状态（ON 标识）
 - **服务商详情**（右面板）：
-  - 基本信息编辑：Name、Base URL、API Key、Custom Header
-  - 模型列表：展示所有模型，支持添加/删除/设为默认（星标）
+  - 基本信息编辑：Name、Base URL、API Key（密码输入，支持显示/隐藏）、Custom Header
+  - 模型管理：
+    - **分组展示**：按模型 ID 前缀自动分组（如 `deepseek-ai/xxx` 归入 `deepseek-ai`）
+    - 分组可折叠/展开，显示组内模型数量
+    - 每个模型显示：Bot 图标、名称、Model ID、默认标记（星标）、删除按钮
+  - **测试连接**：发送 "hello" 测试服务商连接状态（测试中/连接正常/连接失败）
+  - **获取模型列表**：调用服务商 `/v1/models` API 获取可用模型列表，支持勾选批量添加
+  - **手动添加模型**：弹窗输入模型 ID（必填）和名称（可选）
   - 操作：启用/禁用、删除服务商（带确认）、设为当前活跃服务商
 - **添加服务商表单**：
   - 表单验证：必填字段为空时红色边框 + 错误提示
@@ -258,11 +281,15 @@
 
 ## 7. 主题与国际化
 
-### 7.1 主题系统
+### 7.1 主题系统（Deep Space Minimalism）
 - Light / Dark / System 三模式
+- **深色模式**：深空灰黑背景 + 月白/淡紫强调色 + 环境光晕效果
+- **浅色模式**：月白灰背景 + 深紫/靛蓝强调色
 - 系统主题检测：matchMedia('(prefers-color-scheme: dark)')
 - localStorage 持久化（key: simper-studio-theme）
-- Tailwind CSS 变量驱动
+- Tailwind CSS 变量驱动，独立的浅色/深色配色系统
+- 圆角设计：核心容器 rounded-2xl，按钮 rounded-xl
+- 悬停效果：基于 `--hover` CSS 变量的主题化悬停背景
 
 ### 7.2 多语言
 - English / 中文 / Español
@@ -280,21 +307,53 @@
 
 ---
 
-## 9. 预置数据
+## 9. 技术栈
 
-### 9.1 预置工作流（4 个）
+- **前端框架**：React 19 + TypeScript
+- **构建工具**：Vite 6
+- **状态管理**：Zustand（持久化到 localStorage）
+- **样式方案**：Tailwind CSS 4 + shadcn/ui
+- **路由**：React Router v7（Hash 模式）
+- **AI SDK**：Vercel AI SDK（流式响应）
+- **图标**：Lucide React
+- **国际化**：自定义 useTranslation Hook
+- **测试**：Vitest + React Testing Library + jsdom
+- **代码质量**：ESLint + TypeScript 严格模式
+
+## 10. 项目结构
+
+```
+src/
+├── components/        # UI 组件
+│   ├── ui/           # shadcn/ui 基础组件
+│   ├── layout/       # 布局组件（AppShell、侧边栏）
+│   ├── chat/         # 聊天相关组件
+│   ├── agents/       # 智能体相关组件
+│   ├── settings/     # 设置相关组件
+│   └── theme/        # 主题相关组件
+├── hooks/            # 自定义 Hooks
+├── lib/              # 工具函数 + API 调用
+├── store/            # Zustand Store
+├── types/            # TypeScript 类型定义
+├── locales/          # 国际化翻译文件
+└── globals.css       # 全局样式 + Tailwind 导入 + CSS 变量
+```
+
+## 11. 预置数据
+
+### 11.1 预置工作流（4 个）
 - default-workflow（默认工作流）
 - pipeline-workflow（管线工作流）
 - report-workflow（报告工作流）
 - werewolf-standard（狼人杀标准流程）
 
-### 9.2 预置会话（4 个）
+### 11.2 预置会话（4 个）
 - session-1：organize-assistant 单 Agent
 - session-2：architect 单 Agent
 - session-3：organize-assistant + summary-assistant 双 Agent
 - dual-compare-1：双模型对比
 
-### 9.3 预置模型配置
+### 11.3 预置模型配置
 - **OpenAI**：GPT-4o、GPT-4o-mini
 - **Anthropic**：Claude 3.5 Sonnet
 - **Google**：Gemini 1.5 Pro、Gemini 1.5 Flash
@@ -302,7 +361,7 @@
 
 ---
 
-## 10. 测试覆盖
+## 12. 测试覆盖
 
 - 测试框架：vitest + @testing-library/react
 - 41 个测试用例覆盖：

@@ -6,6 +6,7 @@ export interface Agent {
   avatar: string;
   systemPrompt: string;
   industry?: string;
+  category?: string;
   modelProvider: 'local' | 'openai' | 'anthropic' | 'google' | 'custom';
   modelId: string;
   isActive?: boolean;

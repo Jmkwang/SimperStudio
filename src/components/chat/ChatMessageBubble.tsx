@@ -23,7 +23,7 @@ function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: 
   return (
     <div className="flex justify-end gap-2">
       <div className="max-w-[80%] flex flex-col items-end">
-        <div className="rounded-2xl rounded-tr-md bg-black/10 dark:bg-white/10 px-3 py-2 text-sm whitespace-pre-wrap break-words">
+        <div className="rounded-2xl rounded-tr-md bg-foreground/10 px-3 py-2 text-sm whitespace-pre-wrap break-words">
           {message.content.text || emptyText || ""}
         </div>
         <span className="text-[10px] text-muted-foreground mt-0.5 mr-1">
