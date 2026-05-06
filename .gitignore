@@ -14,6 +14,9 @@ src-tauri/Cargo.lock
 # database
 src-tauri/simperstudio.db
 
+# config (contains API keys)
+config/
+
 # logs
 npm-debug.log*
 yarn-debug.log*

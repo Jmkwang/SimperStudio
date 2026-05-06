@@ -143,12 +143,19 @@ function simulateAgentStream({
 }
 
 
+const LS_KEY = 'simper_config';
+
 async function readConfig<T>(name: string): Promise<T | null> {
   try {
     const raw = await invoke<string>('read_json_config', { name });
     return raw ? JSON.parse(raw) as T : null;
   } catch {
-    return null;
+    try {
+      const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+      return (all[name] as T) || null;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -156,7 +163,11 @@ async function writeConfig(name: string, value: unknown) {
   try {
     await invoke('write_json_config', { name, value: JSON.stringify(value) });
   } catch {
-    // Tauri backend not available
+    try {
+      const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+      all[name] = value;
+      localStorage.setItem(LS_KEY, JSON.stringify(all));
+    } catch { /* quota exceeded */ }
   }
 }
 
@@ -675,7 +686,8 @@ export const useAppStore = create<AppState>()(
             type: 'openai',
             apiKey: '',
             baseUrl: 'https://api.openai.com/v1',
-            isEnabled: true,
+            isEnabled: false,
+            apiFormat: 'openai-responses',
             models: [
               { id: 'openai-gpt4o', name: 'GPT-4o', modelId: 'gpt-4o', isDefault: true },
               { id: 'openai-gpt4o-mini', name: 'GPT-4o Mini', modelId: 'gpt-4o-mini' },
@@ -688,7 +700,7 @@ export const useAppStore = create<AppState>()(
             type: 'anthropic',
             apiKey: '',
             baseUrl: 'https://api.anthropic.com/v1',
-            isEnabled: true,
+            isEnabled: false,
             models: [
               { id: 'anthropic-sonnet', name: 'Claude 3.5 Sonnet', modelId: 'claude-3-5-sonnet-20240620', isDefault: true },
               { id: 'anthropic-haiku', name: 'Claude 3 Haiku', modelId: 'claude-3-haiku-20240307' },
@@ -700,14 +712,39 @@ export const useAppStore = create<AppState>()(
             type: 'gemini',
             apiKey: '',
             baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-            isEnabled: true,
+            isEnabled: false,
             models: [
               { id: 'gemini-pro', name: 'Gemini 1.5 Pro', modelId: 'gemini-1.5-pro-latest', isDefault: true },
               { id: 'gemini-flash', name: 'Gemini 1.5 Flash', modelId: 'gemini-1.5-flash-latest' },
             ],
           },
+          {
+            id: 'deepseek-default',
+            name: 'DeepSeek',
+            type: 'deepseek',
+            apiKey: '',
+            baseUrl: 'https://api.deepseek.com',
+            isEnabled: false,
+            apiFormat: 'openai-chat',
+            models: [
+              { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', modelId: 'deepseek-v4-flash', isDefault: true },
+              { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', modelId: 'deepseek-v4-pro' },
+            ],
+          },
+          {
+            id: 'siliconflow-default',
+            name: '硅基流动',
+            type: 'siliconflow',
+            apiKey: '',
+            baseUrl: 'https://api.siliconflow.cn',
+            isEnabled: false,
+            apiFormat: 'openai-chat',
+            models: [
+              { id: 'siliconflow-deepseek-v3-2', name: 'DeepSeek-V3.2', modelId: 'deepseek-ai/DeepSeek-V3.2', isDefault: true },
+            ],
+          },
         ],
-        activeProviderId: 'openai-default',
+        activeProviderId: 'siliconflow-default',
         allowRemoteAccess: true,
         remoteAccessPort: 1420,
       },
@@ -840,10 +877,10 @@ export const useAppStore = create<AppState>()(
         };
         try {
           await invoke('add_chat_session', { session: newSession });
-          set((state) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
-        } catch (error) {
-          console.error('Failed to create session:', error);
+        } catch {
+          // Tauri backend not available (browser mode)
         }
+        set((state) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
       },
 
       createWorkflowBackedSession: async (title, workspaceId) => {

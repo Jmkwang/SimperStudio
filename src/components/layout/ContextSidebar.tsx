@@ -30,6 +30,7 @@ export function ContextSidebar({
   const deleteSession = useAppStore(state => state.deleteSession)
   const deleteWorkflow = useAppStore(state => state.deleteWorkflow)
   const setActiveWorkflow = useAppStore(state => state.setActiveWorkflow)
+  const openWorkflowSession = useAppStore(state => state.openWorkflowSession)
   const createWorkflow = useAppStore(state => state.createWorkflow)
   const createSession = useAppStore(state => state.createSession)
   const activeWorkspaceId = useAppStore(state => state.activeWorkspaceId)
@@ -122,7 +123,7 @@ export function ContextSidebar({
           selectedChatWorkflowId={selectedChatWorkflowId}
           setSelectedChatWorkflowId={setSelectedChatWorkflowId}
           setActiveSession={setActiveSession}
-          setActiveWorkflow={setActiveWorkflow}
+          openWorkflowSession={openWorkflowSession}
           createSession={createSession}
           deleteSession={deleteSession}
           activeWorkspaceId={activeWorkspaceId}
@@ -178,7 +179,7 @@ function ChatSidebarContent({
   selectedChatWorkflowId,
   setSelectedChatWorkflowId,
   setActiveSession,
-  setActiveWorkflow,
+  openWorkflowSession,
   createSession,
   deleteSession,
   activeWorkspaceId,
@@ -191,7 +192,7 @@ function ChatSidebarContent({
   selectedChatWorkflowId: string | null
   setSelectedChatWorkflowId: (id: string | null) => void
   setActiveSession: (id: string) => void
-  setActiveWorkflow: (id: string) => void
+  openWorkflowSession: (id: string) => Promise<void>
   createSession: (title: string, workspaceId: string, workflowId?: string, mode?: 'single' | 'workflow') => void
   deleteSession: (id: string) => Promise<void>
   activeWorkspaceId: string | null
@@ -205,7 +206,7 @@ function ChatSidebarContent({
 
   const handleWorkflowSelect = (workflowId: string) => {
     setSelectedChatWorkflowId(workflowId)
-    setActiveWorkflow(workflowId)
+    openWorkflowSession(workflowId)
     setChatTab('sessions')
   }
 

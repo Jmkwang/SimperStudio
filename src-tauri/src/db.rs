@@ -385,27 +385,37 @@ pub fn delete_workflow(id: String, state: tauri::State<DbState>) -> Result<(), S
 
 #[tauri::command]
 pub fn read_json_config(name: String) -> Result<String, String> {
-    let path = config_path(&name)?;
+    let path = config_path();
     if !path.exists() {
         return Ok(String::new());
     }
-    fs::read_to_string(path).map_err(|e| e.to_string())
+    let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let all: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    if let Some(val) = all.get(&name) {
+        Ok(serde_json::to_string(val).map_err(|e| e.to_string())?)
+    } else {
+        Ok(String::new())
+    }
 }
 
 #[tauri::command]
 pub fn write_json_config(name: String, value: String) -> Result<(), String> {
-    let path = config_path(&name)?;
+    let path = config_path();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    let json: serde_json::Value = serde_json::from_str(&value).map_err(|e| e.to_string())?;
-    let pretty = serde_json::to_string_pretty(&json).map_err(|e| e.to_string())?;
+    let val: serde_json::Value = serde_json::from_str(&value).map_err(|e| e.to_string())?;
+    let mut all: serde_json::Value = if path.exists() {
+        let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        serde_json::from_str(&raw).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+    all[&name] = val;
+    let pretty = serde_json::to_string_pretty(&all).map_err(|e| e.to_string())?;
     fs::write(path, pretty).map_err(|e| e.to_string())
 }
 
-fn config_path(name: &str) -> Result<PathBuf, String> {
-    match name {
-        "model.json" | "agents.json" | "workflow.json" => Ok(PathBuf::from("config").join(name)),
-        _ => Err("Unsupported config file".to_string()),
-    }
+fn config_path() -> PathBuf {
+    PathBuf::from("config").join("config.json")
 }

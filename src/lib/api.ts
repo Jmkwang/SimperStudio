@@ -4,6 +4,17 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import type { ModelProvider } from '@/types/models';
 
+/** 自动拼 /v1：用户只需填域名，程序补全版本路径 */
+function ensureV1(url: string): string {
+    const cleaned = url.trim().replace(/\/+$/, '');
+    if (cleaned.endsWith('/v1')) return cleaned;
+    return `${cleaned}/v1`;
+}
+
+function apiBase(provider: ModelProvider): string {
+    return ensureV1(provider.baseUrl);
+}
+
 export async function fetchFromModel(provider: string, modelId: string, prompt: string, settings: any, systemPrompt?: string) {
     // New multi-provider system
     if (settings.providers && settings.activeProviderId) {
@@ -17,13 +28,13 @@ export async function fetchFromModel(provider: string, modelId: string, prompt: 
     let model;
     if (provider === 'custom') {
         const customProvider = createOpenAI({
-            baseURL: settings.customBaseUrl,
+            baseURL: ensureV1(settings.customBaseUrl || ''),
             apiKey: settings.customApiKey || 'sk-custom',
         });
-        model = customProvider(modelId || settings.customModelId || 'default');
+        model = customProvider.chat(modelId || settings.customModelId || 'default');
     } else if (provider === 'openai') {
         const openai = createOpenAI({ apiKey: settings.openaiKey || '' });
-        model = openai(modelId);
+        model = openai.chat(modelId);
     } else if (provider === 'anthropic') {
         const anthropic = createAnthropic({ apiKey: settings.anthropicKey || '' });
         model = anthropic(modelId);
@@ -46,14 +57,27 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
     const defaultModel = provider.models.find(m => m.isDefault) || provider.models[0];
     const finalModelId = modelId || defaultModel?.modelId || '';
 
-    if (provider.type === 'openai' || provider.type === 'custom') {
-        const openai = createOpenAI({
-            baseURL: provider.baseUrl,
-            apiKey: provider.apiKey || 'sk-custom',
-        });
-        model = openai(finalModelId);
+    if (provider.type === 'openai' || provider.type === 'custom' || provider.type === 'siliconflow' || provider.type === 'deepseek') {
+        if (provider.apiFormat === 'anthropic-messages') {
+            const anthropic = createAnthropic({
+                baseURL: apiBase(provider),
+                apiKey: provider.apiKey || '',
+            });
+            model = anthropic(finalModelId);
+        } else {
+            const openai = createOpenAI({
+                baseURL: apiBase(provider),
+                apiKey: provider.apiKey || 'sk-custom',
+            });
+            if (provider.apiFormat === 'openai-responses') {
+                model = openai(finalModelId);
+            } else {
+                model = openai.chat(finalModelId);
+            }
+        }
     } else if (provider.type === 'anthropic') {
         const anthropic = createAnthropic({
+            baseURL: apiBase(provider),
             apiKey: provider.apiKey || '',
         });
         model = anthropic(finalModelId);

@@ -359,6 +359,53 @@
 - [x] 为 workflow chat V1 补最小交互测试：打开窗口、聚焦窗口、转发到下一节点。
 - [x] 为新节点补契约测试：HTTP/IF/Merge/Sub-workflow 的输入输出与错误路径。
 
+## 8.A SettingsView 组件化重构
+
+### 目标
+
+将 `SettingsView.tsx`（1100+ 行）拆分为三个独立页签组件 + 一个路由壳，彻底解决对话框跨作用域导致的黑屏问题。
+
+### 拆分方案
+```
+src/components/settings/
+├── SettingsView.tsx              ← 薄壳：左侧标签栏 + 页签路由
+├── SettingsGeneralTab.tsx        ← 通用设置（语言、远程访问）
+├── SettingsAppearanceTab.tsx     ← 外观设置（主题切换）
+└── SettingsModelsTab.tsx         ← 模型管理（服务商 CRUD、模型测试、API 格式、对话框）
+```
+
+### 实施
+
+- [x] 创建 `SettingsGeneralTab.tsx` — 语言选择 + 远程访问，独立 `local` 状态
+- [x] 创建 `SettingsAppearanceTab.tsx` — 主题切换，独立 `theme` 状态
+- [x] 创建 `SettingsModelsTab.tsx` — 服务商管理 + 模型测试 + 对话框，全部内聚
+- [x] 精简 `SettingsView.tsx` 为标签栏 + 页签路由
+- [x] TypeScript 编译验证
+- [x] Vite build 验证
+- [ ] 浏览器功能回归（三个页签完整测试）
+
+## 8.B 配置持久化
+
+- [x] Rust `db.rs` — 统一单文件 `config/config.json`，按 key 读写（settings / agents / workflows）
+- [x] 前端 `appStore.ts` — `readConfig`/`writeConfig` 新增 `localStorage` 回退（键 `simper_config`）
+- [x] 浏览器 `npm run dev` 刷新后持久化恢复
+- [x] 移除服务商类型下拉框
+
+### 8.C Bug 修复
+
+- [x] 聊天侧边栏选中工作流后主聊天区拓扑不切换 — `handleWorkflowSelect` 改用 `openWorkflowSession` 替代 `setActiveWorkflow`
+- [x] 新建会话按钮浏览器模式无效 — `createSession` 的 `set()` 移出 try 块，Tauri 失败不影响前端状态
+- [x] 深色模式 SelectItem 悬停对比度差 — `focus:bg-hover` 改为 `focus:bg-primary/15 focus:text-primary`
+- [x] 删除服务商黑屏 — 对话框移入 models 条件块内
+- [x] 配置持久化：Rust 统一单文件 `config/config.json`，浏览器 localStorage 回退
+- [x] `.gitignore` 排除 `config/` 目录防止 API Key 泄露
+
+### 验收
+
+- [ ] 页签切换无黑屏
+- [ ] 通用/外观设置可正常编辑和保存
+- [ ] 模型管理全部功能正常（服务商 CRUD、模型增删、测试、获取列表）
+
 ## 9. 已清理的旧计划
 
 以下内容已被当前优先级方案覆盖，不再单独维护：

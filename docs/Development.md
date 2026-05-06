@@ -18,7 +18,7 @@
 - 🎨 **提示词生成器**：独立的提示词打磨与生成页面（AI 辅助）
 - 💾 **本地持久化**：基于 Tauri Rust 后端的 JSON 配置文件存储
 - 🌓 **深色/浅色主题**：系统级主题适配（Light/Dark/System），Tailwind CSS 驱动
-- 🔧 **多服务商模型管理**：支持配置多个 OpenAI/Anthropic/Gemini/Custom 服务商，每个服务商下可配置多个模型
+- 🔧 **多服务商模型管理**：支持配置多个 OpenAI/Anthropic/Gemini/DeepSeek/SiliconFlow/Custom 服务商，每个服务商下可配置多个模型，支持 API 格式切换（Chat Completions / Responses / Anthropic Messages）、模型连通性测试、模型分组管理
 - 📊 **执行监控**：实时执行时间线、节点状态/耗时统计、日志导出、从指定节点重跑
 - 🛡️ **节点容错**：超时控制、重试策略（固定/指数退避）、错误处理（停止/继续/路由到错误分支）
 - ✅ **Schema 验证**：输入/输出 JSON Schema 类型校验
@@ -50,6 +50,8 @@
 - OpenAI API (含兼容端点)
 - Anthropic API
 - Google Gemini API
+- DeepSeek API (OpenAI 兼容)
+- SiliconFlow API (OpenAI 兼容)
 - 自定义 OpenAI 兼容端点
 - 本地模型 (Ollama/LM Studio)
 
@@ -116,7 +118,10 @@ SimperStudio/
 │   │   │   └── AgentsView.tsx            # Agent 管理视图
 │   │   │
 │   │   ├── settings/
-│   │   │   └── SettingsView.tsx          # 设置页面（多服务商模型管理）
+│   │   │   ├── SettingsView.tsx           # 设置页壳（标签栏 + 路由）
+│   │   │   ├── SettingsGeneralTab.tsx     # 通用设置（语言、远程访问）
+│   │   │   ├── SettingsAppearanceTab.tsx  # 外观设置（主题切换）
+│   │   │   └── SettingsModelsTab.tsx      # 模型管理（服务商 CRUD、测试、对话框）
 │   │   │
 │   │   ├── profile/
 │   │   │   └── ProfileView.tsx           # 个人资料视图
@@ -217,16 +222,18 @@ interface ProviderModel {
   name: string;
   modelId: string;
   isDefault?: boolean;
+  group?: string;              // 自定义分组名，未设置则自动从 modelId 前缀提取
 }
 
 interface ModelProvider {
   id: string;
   name: string;
-  type: 'openai' | 'anthropic' | 'gemini' | 'custom';
+  type: 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'siliconflow' | 'custom';
   apiKey: string;
   baseUrl: string;
   isEnabled: boolean;
   customHeader?: string;
+  apiFormat?: 'openai-responses' | 'openai-chat' | 'anthropic-messages';  // API 格式
   models: ProviderModel[];  // 一个服务商下可配置多个模型
 }
 
@@ -244,17 +251,24 @@ interface Settings {
 }
 ```
 
-#### 设置页布局 (SettingsView)
-- **左侧标签栏**：General / Appearance / Models
-- **Models 标签页**：
-  - 左侧：服务商列表（名称、Base URL、启用状态 ON/OFF）
+#### 设置页布局
+组件化架构：`SettingsView`（壳，~70 行）负责标签栏和页签路由，三个页签各自独立组件。
+
+- **左侧标签栏**：General / Appearance / Models，点击切换渲染对应组件
+- **SettingsGeneralTab**：语言选择、远程访问开关 + 端口配置
+- **SettingsAppearanceTab**：主题切换（Light / Dark / System）
+- **SettingsModelsTab**：
+  - 左侧：服务商列表（名称、Base URL、启用状态），点击 **+ Add** 直接在列表新增一行，右侧即时编辑
   - 右侧：选中服务商的详情编辑
-    - 基础信息：名称、Base URL、API Key、Custom Header
-    - 模型列表：展示该服务商下的所有模型，支持添加/删除/设为默认
-    - 操作按钮：启用/禁用、删除服务商、设为当前服务商
+    - 基础信息：名称、服务商类型（下拉切换）、API 格式（Chat Completions / Responses / Anthropic Messages）、Base URL（自动补全 `/v1`）、API Key（按住 👁 显示明文）
+    - 模型列表：按分组折叠/展开，分组名可点击修改；每个模型前有 ▶ 测试按钮（成功 ✓ / 失败 ⚠+错误详情），星标设默认，减号删除
+    - 操作按钮：启用/禁用、删除服务商、设为当前服务商、「测试」按钮（弹出费用提示后逐模型测试全部）、「获取模型列表」按钮（弹窗拉取 API 可用模型，支持重新获取）
 
 #### API 调用 (api.ts)
 ```typescript
+// ensureV1(url): 自动补全 /v1 版本路径，用户只需填域名（如 https://api.siliconflow.cn）
+// → https://api.siliconflow.cn/v1
+
 // 优先使用新的多服务商系统
 fetchFromModel(provider, modelId, prompt, settings, systemPrompt)
   -> 查找 activeProvider
@@ -262,7 +276,11 @@ fetchFromModel(provider, modelId, prompt, settings, systemPrompt)
   -> 使用默认模型（isDefault=true）或指定 modelId
 
 fetchFromProvider(provider, modelId, prompt, systemPrompt)
-  -> 直接根据 ModelProvider 创建 client 并调用
+  -> ensureV1(baseUrl) 自动补全 /v1
+  -> 根据 apiFormat 切换调用方式：
+     - 'openai-responses': openai(modelId) → /v1/responses
+     - 'openai-chat' (默认): openai.chat(modelId) → /v1/chat/completions
+     - 'anthropic-messages': createAnthropic() → /v1/messages
 ```
 
 ### 3. 布局架构 (AppShell)
@@ -561,6 +579,13 @@ CREATE TABLE workflows (
 - [x] "添加服务商"按钮修复：表单验证（红色边框+错误提示）、按类型自动填充默认名称/URL、添加后自动选中新服务商
 - [x] 设置页语言和远程访问设置分离为独立卡片
 - [x] 多 Agent 模式切换按钮文案改为"拓扑/聊天"
+- [x] API 格式支持：Chat Completions / Responses / Anthropic Messages 三种格式切换，自动拼接 /v1
+- [x] DeepSeek 服务商支持（deepseek-chat / deepseek-reasoner）
+- [x] 添加服务商改为行内添加（去除弹窗），右侧面板类型可切换
+- [x] API Key 按住 👁 显示明文，松开恢复隐藏
+- [x] 模型分组名支持点击修改
+- [x] 获取模型列表弹窗支持重新获取，自动补全 /v1
+- [x] 默认服务商全部不启用
 
 ### 剩余待办
 - [ ] 浏览器手动验证（single chat、workflow chat、窗口交互、转发链路）
@@ -688,6 +713,22 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ## 版本历史
 
+### v0.3.0 (2026-05-07)
+- API 格式支持：三种格式切换（OpenAI Chat Completions / Responses / Anthropic Messages），自动补全 `/v1`
+- DeepSeek 服务商支持，默认模型 deepseek-v4-flash / deepseek-v4-pro
+- SiliconFlow 服务商接入完成（连通性测试、获取模型列表、聊天测试）
+- 服务商管理优化：行内添加（去除弹窗）、类型可切换、默认全部不启用
+- API Key 显示/隐藏按钮（按住 👁 显示明文，松开恢复）
+- 模型连通性测试：单个模型 ▶ 测试 + 全部模型批量测试（费用提示弹窗），精确错误信息
+- 模型分组名支持点击修改
+- 获取模型列表弹窗支持重新获取
+- 修复 @ai-sdk/openai v3 默认走 Responses API 导致兼容服务商 404 的问题
+- SettingsView 组件化重构：拆分为 SettingsView(壳) + SettingsGeneralTab + SettingsAppearanceTab + SettingsModelsTab，对话框内聚在对应页签内，根除跨作用域黑屏
+- 配置持久化：Rust 统一单文件 `config/config.json`，浏览器 `localStorage.simper_config` 回退
+- 修复聊天侧边栏选中工作流后主聊天区拓扑不切换
+- 修复新建会话按钮在浏览器模式下无效
+- 深色模式 SelectItem 悬停对比度修复
+
 ### v0.2.0 (2026-05-04)
 - 多服务商模型管理：支持配置多个 OpenAI/Anthropic/Gemini/Custom 服务商
 - 每个服务商下可配置多个模型，支持设置默认模型
@@ -717,7 +758,8 @@ A: 进入 "Settings" → "Models" 标签页：
 
 #### 多服务商模型管理
 - `src/types/models.ts` - ModelProvider / ProviderModel / Settings 类型定义
-- `src/components/settings/SettingsView.tsx` - 设置页 UI（左列表+右详情）
+- `src/components/settings/SettingsView.tsx` - 设置页壳（标签栏 + 路由）
+- `src/components/settings/SettingsModelsTab.tsx` - 模型管理页签（服务商 CRUD、模型测试、对话框）
 - `src/lib/api.ts` - fetchFromModel / fetchFromProvider API 封装
 
 #### 布局组件
@@ -813,5 +855,5 @@ get_workflows, add_workflow, update_workflow, delete_workflow
 ---
 
 **文档维护**：本文件随项目更新自动维护。
-**最后更新**：2026-05-04
-**版本**：v0.2.0
+**最后更新**：2026-05-07
+**版本**：v0.3.0

@@ -7,7 +7,7 @@ export interface Agent {
   systemPrompt: string;
   industry?: string;
   category?: string;
-  modelProvider: 'local' | 'openai' | 'anthropic' | 'google' | 'custom';
+  modelProvider: 'local' | 'openai' | 'anthropic' | 'google' | 'siliconflow' | 'custom';
   modelId: string;
   isActive?: boolean;
   type?: 'general' | 'coder' | 'reviewer' | 'planner';
@@ -95,16 +95,18 @@ export interface ProviderModel {
   name: string;
   modelId: string;
   isDefault?: boolean;
+  group?: string;
 }
 
 export interface ModelProvider {
   id: string;
   name: string;
-  type: 'openai' | 'anthropic' | 'gemini' | 'custom';
+  type: 'openai' | 'anthropic' | 'gemini' | 'siliconflow' | 'deepseek' | 'custom';
   apiKey: string;
   baseUrl: string;
   isEnabled: boolean;
   customHeader?: string;
+  apiFormat?: 'openai-responses' | 'openai-chat' | 'anthropic-messages';
   models: ProviderModel[];
 }
 
