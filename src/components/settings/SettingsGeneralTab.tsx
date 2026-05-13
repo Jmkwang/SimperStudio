@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 
 export function SettingsGeneralTab() {

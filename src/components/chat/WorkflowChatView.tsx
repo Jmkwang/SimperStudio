@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChatSession, WorkflowNode, WorkflowNodeData, Agent } from '@/types/models';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import {
   ReactFlow,
   Background,
@@ -23,7 +23,7 @@ import { ChatRouterNode } from './ChatRouterNode';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bot, Users, Send } from 'lucide-react';
+import { Bot, Users, Send, LayoutGrid, List } from 'lucide-react';
 
 export function WorkflowChatView({ session }: { session: ChatSession }) {
   const workflows = useAppStore(state => state.workflows);
@@ -32,10 +32,12 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const workflowChatUI = useAppStore(state => state.workflowChatUI);
   const setWorkflowSidebarCollapsed = useAppStore(state => state.setWorkflowSidebarCollapsed);
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
+  const chatLayoutMode = useAppStore(state => state.chatLayoutMode);
+  const setChatLayoutMode = useAppStore(state => state.setChatLayoutMode);
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const [multiAgentMode, setMultiAgentMode] = useState(false);
+  const [multiAgentMode, setMultiAgentMode] = useState(true);
   const [input, setInput] = useState("");
 
   const workflow = session.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
@@ -115,6 +117,20 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
       <div className="p-6 pb-2 shrink-0 h-[80px] flex items-center justify-between">
         <h2 className="text-lg font-semibold">{workflow.name}</h2>
         <div className="flex items-center gap-2">
+          {hasMultipleAgents && multiAgentMode && (
+            <button
+              onClick={() => setChatLayoutMode(chatLayoutMode === 'A' ? 'B' : 'A')}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
+                chatLayoutMode === 'B'
+                  ? "bg-primary/15 text-primary border border-primary/20"
+                  : "bg-muted hover:bg-muted/70 text-muted-foreground border border-transparent"
+              }`}
+              title={chatLayoutMode === 'B' ? t("切换为并排视图") : t("切换为竖直视图")}
+            >
+              {chatLayoutMode === 'B' ? <List className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
+              {chatLayoutMode === 'B' ? 'B' : 'A'}
+            </button>
+          )}
           {hasMultipleAgents && (
             <button
               onClick={() => setMultiAgentMode(!multiAgentMode)}
@@ -155,6 +171,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
               <ChatMessageBubble
                 key={message.id}
                 message={message}
+                layoutMode={chatLayoutMode}
                 actions={message.role === "assistant" ? {
                   canCopy: true,
                 } : undefined}

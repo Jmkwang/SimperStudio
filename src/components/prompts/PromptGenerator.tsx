@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
+import { DebugBadge } from '@/components/debug/DebugBadge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { fetchFromModel } from "@/lib/api";
@@ -82,7 +83,8 @@ const handleKeyDown = (e: React.KeyboardEvent) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="relative flex flex-col h-full bg-background">
+      <DebugBadge id="PromptGenerator" />
       {/* Top Area: Meta Prompt Editor */}
       <div className="p-4 border-b shrink-0 bg-muted/20">
         <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">

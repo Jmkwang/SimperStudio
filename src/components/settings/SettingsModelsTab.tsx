@@ -6,7 +6,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import {

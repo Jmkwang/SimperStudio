@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useAppStore } from '../appStore';
+import { useAppStore } from '../../stores';
 
 function setupWorkflow(nodes: any[], edges: any[]) {
   const wfId = 'test-wf';

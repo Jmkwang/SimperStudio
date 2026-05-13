@@ -1,4 +1,4 @@
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X, RotateCcw, Download, ChevronDown, ChevronRight } from 'lucide-react';

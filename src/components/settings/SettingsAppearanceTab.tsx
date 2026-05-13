@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore } from '@/stores';
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useTranslation } from "@/hooks/useTranslation";
 

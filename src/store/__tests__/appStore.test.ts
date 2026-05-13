@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useAppStore } from '../appStore';
+import { useAppStore } from '../../stores';
 
 beforeEach(() => {
   useAppStore.setState({

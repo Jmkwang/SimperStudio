@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio — Design Prototype v2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+       AURORA DESIGN SYSTEM — CSS Variables
+       ═══════════════════════════════════════════ */
+    :root {
+      /* ── Brand ── */
+      --brand: #0891B2;
+      --brand-light: #22D3EE;
+      --brand-soft: rgba(8, 145, 178, 0.08);
+      --brand-glow: rgba(8, 145, 178, 0.25);
+
+      /* ── Backgrounds (Light: warm paper) ── */
+      --bg-base: #F5F5F0;
+      --bg-surface: #FAFAF8;
+      --bg-elevated: #FFFFFF;
+      --bg-hover: #EEEDE8;
+      --bg-active: #E5E4DF;
+      --bg-inset: #EBEAE5;
+
+      /* ── Text ── */
+      --text-primary: #1C1917;
+      --text-secondary: #44403C;
+      --text-tertiary: #78716C;
+      --text-quaternary: #A8A29E;
+      --text-inverse: #FAFAF8;
+
+      /* ── Borders ── */
+      --border-subtle: rgba(28, 25, 23, 0.06);
+      --border-light: rgba(28, 25, 23, 0.10);
+      --border-medium: rgba(28, 25, 23, 0.15);
+      --border-strong: rgba(28, 25, 23, 0.22);
+
+      /* ── Shadows (layered for realism) ── */
+      --shadow-xs: 0 1px 2px rgba(0,0,0,0.03);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -4px rgba(0,0,0,0.03);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.07), 0 8px 10px -6px rgba(0,0,0,0.04);
+      --shadow-glow: 0 0 20px var(--brand-glow);
+
+      /* ── Radius ── */
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-xl: 18px;
+      --r-2xl: 24px;
+      --r-full: 999px;
+
+      /* ── Node Colors (refined) ── */
+      --c-trigger: #10B981; --c-trigger-soft: rgba(16,185,129,0.10);
+      --c-webhook: #84CC16; --c-webhook-soft: rgba(132,204,22,0.10);
+      --c-code: #3B82F6;    --c-code-soft: rgba(59,130,246,0.10);
+      --c-agent: #0891B2;   --c-agent-soft: rgba(8,145,178,0.10);
+      --c-condition: #F59E0B; --c-condition-soft: rgba(245,158,11,0.10);
+      --c-switch: #D97706;  --c-switch-soft: rgba(217,119,6,0.10);
+      --c-loop: #8B5CF6;    --c-loop-soft: rgba(139,92,246,0.10);
+      --c-wait: #6366F1;    --c-wait-soft: rgba(99,102,241,0.10);
+      --c-merge: #EC4899;   --c-merge-soft: rgba(236,72,153,0.10);
+      --c-http: #06B6D4;    --c-http-soft: rgba(6,182,212,0.10);
+      --c-set: #14B8A6;     --c-set-soft: rgba(20,184,166,0.10);
+      --c-sub: #8B5CF6;     --c-sub-soft: rgba(139,92,246,0.10);
+      --c-output: #64748B;  --c-output-soft: rgba(100,116,139,0.10);
+
+      /* ── States ── */
+      --s-running: #0891B2;
+      --s-success: #10B981;
+      --s-error: #EF4444;
+      --s-warning: #F59E0B;
+      --s-skipped: #A8A29E;
+      --s-cancelled: #78716C;
+
+      /* ── Spacing scale ── */
+      --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+      --space-4: 16px; --space-5: 20px; --space-6: 24px;
+      --space-8: 32px; --space-10: 40px; --space-12: 48px;
+    }
+
+    [data-theme="dark"] {
+      /* ── Backgrounds (Dark: deep space) ── */
+      --bg-base: #0C0E12;
+      --bg-surface: #13151B;
+      --bg-elevated: #1A1D24;
+      --bg-hover: #20242D;
+      --bg-active: #282C36;
+      --bg-inset: #0A0C10;
+
+      /* ── Text ── */
+      --text-primary: #F2F0EC;
+      --text-secondary: #C4C0B8;
+      --text-tertiary: #9A958C;
+      --text-quaternary: #6B665E;
+      --text-inverse: #0C0E12;
+
+      /* ── Borders ── */
+      --border-subtle: rgba(242, 240, 236, 0.04);
+      --border-light: rgba(242, 240, 236, 0.07);
+      --border-medium: rgba(242, 240, 236, 0.11);
+      --border-strong: rgba(242, 240, 236, 0.16);
+
+      /* ── Shadows (glow-centric in dark) ── */
+      --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -2px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.3);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.6), 0 8px 10px -6px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 30px rgba(34, 211, 238, 0.15), 0 0 60px rgba(34, 211, 238, 0.05);
+
+      --brand: #22D3EE;
+      --brand-light: #67E8F9;
+      --brand-soft: rgba(34, 211, 238, 0.10);
+      --brand-glow: rgba(34, 211, 238, 0.30);
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: var(--bg-base);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    ::selection {
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+
+    /* Scrollbar — minimal */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+    /* ═══════════════════════════════════════════
+       ANIMATIONS
+       ═══════════════════════════════════════════ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(-16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 var(--brand-glow); }
+      50% { box-shadow: 0 0 12px 3px var(--brand-glow); }
+    }
+    @keyframes dash-flow {
+      to { stroke-dashoffset: -20; }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+      30% { opacity: 1; transform: scale(1); }
+    }
+
+    .anim-fadeUp { animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .anim-fadeIn { animation: fadeIn 0.25s ease forwards; }
+    .anim-scaleIn { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .anim-slideRight { animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    .stagger-1 { animation-delay: 0.04s; opacity: 0; }
+    .stagger-2 { animation-delay: 0.08s; opacity: 0; }
+    .stagger-3 { animation-delay: 0.12s; opacity: 0; }
+    .stagger-4 { animation-delay: 0.16s; opacity: 0; }
+    .stagger-5 { animation-delay: 0.20s; opacity: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .anim-fadeUp, .anim-fadeIn, .anim-scaleIn, .anim-slideRight {
+        animation: none; opacity: 1; transform: none;
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       UTILITIES
+       ═══════════════════════════════════════════ */
+    .bg-base { background-color: var(--bg-base); }
+    .bg-surface { background-color: var(--bg-surface); }
+    .bg-elevated { background-color: var(--bg-elevated); }
+    .bg-hover:hover { background-color: var(--bg-hover); }
+    .bg-active { background-color: var(--bg-active); }
+    .bg-inset { background-color: var(--bg-inset); }
+    .bg-brand-soft { background-color: var(--brand-soft); }
+
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-tertiary { color: var(--text-tertiary); }
+    .text-quaternary { color: var(--text-quaternary); }
+    .text-brand { color: var(--brand); }
+
+    .border-subtle { border-color: var(--border-subtle); }
+    .border-light { border-color: var(--border-light); }
+    .border-medium { border-color: var(--border-medium); }
+
+    /* ═══════════════════════════════════════════
+       PATTERNS — Dot Grid Texture
+       ═══════════════════════════════════════════ */
+    .texture-grid {
+      background-image: radial-gradient(circle, var(--border-medium) 0.5px, transparent 0.5px);
+      background-size: 24px 24px;
+    }
+
+    /* ═══════════════════════════════════════════
+       COMPONENTS
+       ═══════════════════════════════════════════ */
+
+    /* ── Button ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 16px; font-size: 13px; font-weight: 500; letter-spacing: -0.01em;
+      border-radius: var(--r-md); border: 1px solid transparent;
+      cursor: pointer; transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      min-height: 36px; white-space: nowrap; position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      opacity: 0; transition: opacity 0.18s;
+      background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
+    }
+    .btn:hover::after { opacity: 1; }
+    .btn:active { transform: scale(0.97); transition-duration: 0.08s; }
+    .btn:focus-visible {
+      outline: none; box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--brand);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand) 0%, #0E7490 100%);
+      color: var(--text-inverse); box-shadow: var(--shadow-sm), 0 0 0 1px rgba(255,255,255,0.08) inset;
+    }
+    .btn-primary:hover { box-shadow: var(--shadow-md), var(--shadow-glow), 0 0 0 1px rgba(255,255,255,0.12) inset; transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: var(--bg-elevated); color: var(--text-primary);
+      border-color: var(--border-light); box-shadow: var(--shadow-xs);
+    }
+    .btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-medium); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent; color: var(--text-tertiary);
+    }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .btn-icon { padding: 8px; min-height: 36px; min-width: 36px; }
+    .btn-sm { padding: 6px 12px; min-height: 30px; font-size: 12px; }
+
+    /* ── Input ── */
+    .input {
+      width: 100%; padding: 9px 14px; font-size: 13px; font-family: inherit;
+      color: var(--text-primary); background: var(--bg-elevated);
+      border: 1px solid var(--border-light); border-radius: var(--r-md);
+      outline: none; transition: all 0.2s; min-height: 40px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02) inset;
+    }
+    .input:hover { border-color: var(--border-medium); }
+    .input:focus {
+      border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft), 0 1px 2px rgba(0,0,0,0.02) inset;
+    }
+    .input::placeholder { color: var(--text-quaternary); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--bg-elevated); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; font-size: 11px; font-weight: 600;
+      border-radius: var(--r-full); letter-spacing: 0.02em; line-height: 1.4;
+    }
+
+    /* ── Nav Item ── */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-radius: var(--r-md);
+      color: var(--text-tertiary); cursor: pointer;
+      transition: all 0.15s ease; font-size: 13px; font-weight: 500;
+      position: relative;
+    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active {
+      background: var(--brand-soft); color: var(--brand);
+    }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 18px; border-radius: 0 3px 3px 0;
+      background: var(--brand); box-shadow: 0 0 8px var(--brand-glow);
+    }
+
+    /* ── Tab ── */
+    .tab {
+      padding: 8px 16px; font-size: 13px; font-weight: 500;
+      color: var(--text-tertiary); border-bottom: 2px solid transparent;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+      position: relative;
+    }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+    /* ── Tooltip ── */
+    .tip { position: relative; }
+    .tip::after {
+      content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px);
+      transform: translateX(-50%); padding: 5px 10px;
+      background: var(--text-primary); color: var(--bg-elevated);
+      font-size: 11px; font-weight: 500; border-radius: var(--r-sm);
+      white-space: nowrap; opacity: 0; pointer-events: none;
+      transition: all 0.15s; z-index: 100; box-shadow: var(--shadow-lg);
+    }
+    .tip:hover::after { opacity: 1; }
+
+    /* ═══════════════════════════════════════════
+       NODE SYSTEM (Redesigned)
+       ═══════════════════════════════════════════ */
+    .node {
+      background: var(--bg-elevated); border: 1px solid var(--border-light);
+      border-radius: var(--r-xl); box-shadow: var(--shadow-sm);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .node::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: var(--r-xl) var(--r-xl) 0 0;
+    }
+    .node::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      opacity: 0; transition: opacity 0.25s;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+    }
+    .node:hover {
+      box-shadow: var(--shadow-lg); transform: translateY(-3px) scale(1.01);
+      border-color: var(--border-medium);
+    }
+    .node:hover::after { opacity: 1; }
+    .node.selected {
+      border-color: var(--brand); box-shadow: var(--shadow-md), var(--shadow-glow);
+    }
+
+    .node-trigger::before { background: var(--c-trigger); }
+    .node-agent::before   { background: var(--c-agent); }
+    .node-code::before    { background: var(--c-code); }
+    .node-condition::before { background: var(--c-condition); }
+    .node-loop::before    { background: var(--c-loop); }
+    .node-http::before    { background: var(--c-http); }
+    .node-output::before  { background: var(--c-output); }
+    .node-merge::before   { background: var(--c-merge); }
+    .node-set::before     { background: var(--c-set); }
+    .node-wait::before    { background: var(--c-wait); }
+
+    /* Node Handle */
+    .handle {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--bg-elevated); border: 2px solid var(--border-medium);
+      position: absolute; top: 50%; transform: translateY(-50%);
+      transition: all 0.15s ease; z-index: 2;
+    }
+    .handle:hover { border-color: var(--brand); background: var(--brand-soft); transform: translateY(-50%) scale(1.3); }
+    .handle-in { left: -5px; }
+    .handle-out { right: -5px; }
+
+    /* ═══════════════════════════════════════════
+       CHAT MESSAGES (Redesigned)
+       ═══════════════════════════════════════════ */
+    .msg-user {
+      align-self: flex-end; max-width: 78%;
+      background: linear-gradient(135deg, var(--brand) 0%, #0E7490 100%);
+      color: var(--text-inverse); padding: 10px 16px;
+      border-radius: var(--r-lg); border-bottom-right-radius: 4px;
+      font-size: 14px; line-height: 1.65; box-shadow: var(--shadow-sm);
+    }
+
+    .msg-agent {
+      align-self: flex-start; max-width: 85%;
+      color: var(--text-primary); font-size: 14.5px; line-height: 1.7;
+    }
+    .msg-agent .content { padding: 2px 0; }
+    .msg-agent p { margin-bottom: 0.6em; }
+    .msg-agent p:last-child { margin-bottom: 0; }
+    .msg-agent ol, .msg-agent ul { padding-left: 1.2em; margin: 0.5em 0; }
+    .msg-agent li { margin-bottom: 0.3em; }
+    .msg-agent code {
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      padding: 2px 6px; border-radius: var(--r-sm);
+      background: var(--bg-inset); color: var(--brand);
+    }
+
+    /* ═══════════════════════════════════════════
+       EXECUTION STATES
+       ═══════════════════════════════════════════ */
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-run { background: var(--s-running); box-shadow: 0 0 0 3px var(--brand-soft); animation: pulse-glow 2s infinite; }
+    .dot-ok { background: var(--s-success); }
+    .dot-err { background: var(--s-error); }
+    .dot-skip { background: var(--s-skipped); opacity: 0.5; }
+    .dot-warn { background: var(--s-warning); animation: pulse-glow 1.5s infinite; }
+
+    /* ═══════════════════════════════════════════
+       TIMELINE
+       ═══════════════════════════════════════════ */
+    .timeline-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 0; position: relative; padding-left: 20px;
+    }
+    .timeline-row::before {
+      content: ''; position: absolute; left: 5px; top: 18px; bottom: -10px;
+      width: 1.5px; background: var(--border-light);
+    }
+    .timeline-row:last-child::before { display: none; }
+    .timeline-row .dot { position: absolute; left: 0; top: 14px; z-index: 1; }
+
+    /* ═══════════════════════════════════════════
+       FLOAT WINDOW
+       ═══════════════════════════════════════════ */
+    .float-win {
+      background: var(--bg-elevated); border: 1px solid var(--border-light);
+      border-radius: var(--r-xl); box-shadow: var(--shadow-xl);
+      overflow: hidden; display: flex; flex-direction: column;
+      backdrop-filter: blur(20px);
+    }
+    .float-win-header {
+      padding: 10px 14px; border-bottom: 1px solid var(--border-subtle);
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: grab; background: var(--bg-surface);
+    }
+
+    /* ═══════════════════════════════════════════
+       GLOBAL SIDEBAR NAV BUTTON
+       ═══════════════════════════════════════════ */
+    .gnav-btn {
+      width: 44px; height: 44px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-quaternary); cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative; border: none; background: transparent;
+    }
+    .gnav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .gnav-btn.active {
+      background: var(--brand-soft); color: var(--brand);
+      box-shadow: 0 0 0 1px var(--brand) inset, var(--shadow-glow);
+    }
+    .gnav-btn.active::before {
+      content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; border-radius: 0 3px 3px 0;
+      background: var(--brand); box-shadow: 0 0 10px var(--brand-glow);
+    }
+
+    /* ═══════════════════════════════════════════
+       TOGGLE SWITCH
+       ═══════════════════════════════════════════ */
+    .toggle {
+      width: 40px; height: 22px; border-radius: var(--r-full);
+      background: var(--bg-active); position: relative; cursor: pointer;
+      transition: background 0.2s; border: none;
+    }
+    .toggle.on { background: linear-gradient(135deg, var(--brand) 0%, #0E7490 100%); }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--bg-elevated); box-shadow: var(--shadow-sm);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toggle.on::after { transform: translateX(18px); }
+
+    /* ═══════════════════════════════════════════
+       AVATAR
+       ═══════════════════════════════════════════ */
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; flex-shrink: 0;
+    }
+    .avatar-lg { width: 40px; height: 40px; font-size: 14px; }
+    .avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+
+    /* ═══════════════════════════════════════════
+       CODE BLOCK
+       ═══════════════════════════════════════════ */
+    .code-block {
+      font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7;
+      background: var(--bg-inset); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md); padding: 14px 16px;
+      overflow-x: auto; color: var(--text-secondary);
+    }
+
+    /* ═══════════════════════════════════════════
+       SHIMMER LOADING
+       ═══════════════════════════════════════════ */
+    .shimmer {
+      background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-elevated) 50%, var(--bg-hover) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+      border-radius: var(--r-sm);
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .ctx-sidebar { width: 220px; }
+    }
+
+    /* Icon sizing */
+    .ic { width: 18px; height: 18px; flex-shrink: 0; }
+    .ic-sm { width: 14px; height: 14px; }
+    .ic-lg { width: 20px; height: 20px; }
+  </style>
+</head>
+<body class="flex h-screen w-screen overflow-hidden">
+
+  <!-- ═══════════════════════════════════════════
+       GLOBAL SIDEBAR
+       ═══════════════════════════════════════════ -->
+  <aside class="flex flex-col items-center py-3 border-r border-light flex-shrink-0 bg-surface" style="width: 64px;">
+    <!-- Logo -->
+    <div class="mb-5 tip" data-tip="SimperStudio">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--brand) 0%, #0E7490 100%); box-shadow: var(--shadow-glow);">
+        <svg class="ic text-inverse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex flex-col items-center gap-1.5 flex-1">
+      <button class="gnav-btn active tip" data-view="chat" data-tip="聊天" aria-label="聊天">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button class="gnav-btn tip" data-view="workflow" data-tip="工作流" aria-label="工作流">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <button class="gnav-btn tip" data-view="agents" data-tip="智能体" aria-label="智能体">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M18 21v-2a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v2"/></svg>
+      </button>
+      <button class="gnav-btn tip" data-view="prompts" data-tip="提示词" aria-label="提示词">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c-1.5 0-2.7.4-3.6 1.1-.9.7-1.4 1.8-1.4 3.1 0 2.5 2 4.3 3.5 5.5.6.5 1.2 1 1.5 1.5.3-.5.9-1 1.5-1.5 1.5-1.2 3.5-3 3.5-5.5 0-1.3-.5-2.4-1.4-3.1C14.7 3.4 13.5 3 12 3z"/><path d="M6 21c0-2.5 2.5-5 6-5s6 2.5 6 5"/>
+        </svg>
+      </button>
+    </nav>
+
+    <!-- Bottom -->
+    <div class="flex flex-col items-center gap-1.5 pb-2">
+      <button id="themeToggle" class="gnav-btn tip" data-tip="切换主题" aria-label="切换主题">
+        <svg id="icon-moon" class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="icon-sun" class="ic hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <button class="gnav-btn tip" data-view="settings" data-tip="设置" aria-label="设置">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════
+       CONTEXT SIDEBAR
+       ═══════════════════════════════════════════ -->
+  <aside id="contextSidebar" class="ctx-sidebar flex flex-col border-r border-light flex-shrink-0 bg-base" style="width: 260px;"></aside>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+       ═══════════════════════════════════════════ -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-base texture-grid">
+
+    <!-- ═══ VIEW: CHAT SINGLE ═══ -->
+    <div id="view-chat-single" class="view-section flex flex-col h-full">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-5 py-3 border-b border-light flex-shrink-0 bg-surface/80 backdrop-blur-sm" style="backdrop-filter: blur(12px);">
+        <div class="flex items-center gap-3">
+          <div class="avatar avatar-sm" style="background: var(--c-agent-soft); color: var(--c-agent);">G</div>
+          <div>
+            <div class="text-sm font-semibold text-primary">通用助手</div>
+            <div class="text-xs text-tertiary flex items-center gap-1.5">
+              <span>Claude 3.5 Sonnet</span>
+              <span class="text-quaternary">·</span>
+              <span>Anthropic</span>
+              <span class="text-quaternary">·</span>
+              <span>05/13 21:06</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-icon btn-ghost tip" data-tip="多模型对比" aria-label="多模型对比">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h3v3h-3zM8 3h3v3H8zM5 8h14v12H5z"/></svg>
+          </button>
+          <button class="btn btn-icon btn-ghost tip" data-tip="更多" aria-label="更多">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages -->
+      <div class="flex-1 overflow-y-auto px-5 py-5 space-y-5" style="scroll-behavior: smooth;">
+        <!-- User -->
+        <div class="flex flex-col items-end anim-fadeUp">
+          <div class="msg-user">帮我分析一下这个工作流的执行结果，为什么 Loop 节点只迭代了 3 次就中断了？</div>
+          <div class="flex items-center gap-2 mt-1.5 mr-1">
+            <span class="text-xs text-quaternary">21:06</span>
+          </div>
+        </div>
+
+        <!-- Agent 1 -->
+        <div class="flex gap-3 anim-fadeUp stagger-1">
+          <div class="avatar" style="background: var(--c-agent-soft); color: var(--c-agent);">G</div>
+          <div class="msg-agent flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-primary">通用助手</span>
+              <span class="text-xs text-tertiary">Claude 3.5 Sonnet · Anthropic</span>
+            </div>
+            <div class="content">
+              <p>Loop 节点提前中断通常有以下几种原因：</p>
+              <ol>
+                <li><strong>breakCondition 满足</strong>：检查是否设置了中断条件，且在第三次迭代时条件被触发</li>
+                <li><strong>maxIterations 限制</strong>：确认 maxIterations 是否设置为 3</li>
+                <li><strong>itemsPath 数组长度</strong>：如果数据源只有 3 个元素，迭代会自然结束</li>
+                <li><strong>下游节点报错</strong>：如果 Loop 内部有 agent/code 节点执行失败，且 onError 策略为 stop</li>
+              </ol>
+              <p>建议检查 Loop 节点的配置面板，重点查看 <code>breakCondition</code> 和 <code>maxIterations</code> 字段。</p>
+            </div>
+            <div class="flex items-center gap-3 mt-2 text-xs text-tertiary">
+              <span>Tokens: 342 <span class="text-quaternary">↑142 ↓200</span></span>
+              <button class="hover:text-brand transition-colors">复制</button>
+              <button class="hover:text-brand transition-colors">重新生成</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent 2 -->
+        <div class="flex gap-3 anim-fadeUp stagger-2">
+          <div class="avatar" style="background: var(--c-code-soft); color: var(--c-code);">D</div>
+          <div class="msg-agent flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-primary">代码审查员</span>
+              <span class="text-xs text-tertiary">GPT-4o · OpenAI</span>
+            </div>
+            <div class="content">
+              <p>从执行日志来看，我看到 <code>breakCondition</code> 被设置为 <code>item.status === 'completed'</code>，而数组中第三个元素的 status 正好是 'completed'，所以触发了中断。</p>
+            </div>
+            <div class="flex items-center gap-3 mt-2 text-xs text-tertiary">
+              <span>Tokens: 156 <span class="text-quaternary">↑45 ↓111</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="px-5 pb-5 pt-2 flex-shrink-0">
+        <div class="card p-3" style="box-shadow: var(--shadow-md);">
+          <textarea class="w-full resize-none outline-none text-sm text-primary placeholder:text-quaternary bg-transparent" style="min-height: 24px; max-height: 120px;" placeholder="输入消息... 使用 @ 提及智能体" rows="1"></textarea>
+          <div class="flex items-center justify-between mt-2 pt-2 border-t border-subtle">
+            <div class="flex items-center gap-0.5">
+              <button class="btn btn-icon btn-ghost" aria-label="附件">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <button class="btn btn-icon btn-ghost" aria-label="@提及">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a10 10 0 1 0-5 8.66"/></svg>
+              </button>
+            </div>
+            <button class="btn btn-primary btn-icon" aria-label="发送">
+              <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: CHAT WORKFLOW ═══ -->
+    <div id="view-chat-workflow" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-5 py-3 border-b border-light flex-shrink-0 bg-surface/80 backdrop-blur-sm">
+        <div class="flex items-center gap-3">
+          <button class="btn btn-icon btn-ghost" aria-label="展开侧边栏">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+          <div>
+            <div class="text-sm font-semibold text-primary">狼人杀游戏编排</div>
+            <div class="text-xs text-tertiary">工作流会话 · 7 个节点</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-secondary btn-sm">
+            <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            运行
+          </button>
+          <button id="workflowToggleMode" class="btn btn-secondary btn-sm">拓扑</button>
+        </div>
+      </header>
+
+      <div class="flex-1 relative overflow-hidden">
+        <div id="workflowTopology" class="absolute inset-0 overflow-auto p-8 flex items-center justify-center">
+          <div class="flex flex-col items-center gap-5">
+            <div class="node node-trigger" style="width: 220px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-trigger-soft);">
+                  <svg class="ic-sm" style="color: var(--c-trigger);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">开始游戏</div>
+                  <div class="text-xs text-tertiary">Trigger</div>
+                </div>
+              </div>
+            </div>
+            <div class="w-px h-5 border-l-2 border-dashed border-light"></div>
+            <div class="node node-agent selected" style="width: 220px; padding: 14px 18px;" onclick="openAgentWindow('moderator')">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-agent-soft);">
+                  <svg class="ic-sm" style="color: var(--c-agent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">主持人</div>
+                  <div class="text-xs text-tertiary">Agent · GPT-4o</div>
+                </div>
+              </div>
+            </div>
+            <div class="w-px h-5 border-l-2 border-dashed border-light"></div>
+            <div class="node node-loop" style="width: 220px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-loop-soft);">
+                  <svg class="ic-sm" style="color: var(--c-loop);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">夜间行动循环</div>
+                  <div class="text-xs text-tertiary">Loop · 3 items</div>
+                </div>
+              </div>
+            </div>
+            <div class="w-px h-5 border-l-2 border-dashed border-light"></div>
+            <div class="node node-code" style="width: 220px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-code-soft);">
+                  <svg class="ic-sm" style="color: var(--c-code);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">结算夜间结果</div>
+                  <div class="text-xs text-tertiary">Code</div>
+                </div>
+              </div>
+            </div>
+            <div class="w-px h-5 border-l-2 border-dashed border-light"></div>
+            <div class="node node-condition" style="width: 220px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-condition-soft);">
+                  <svg class="ic-sm" style="color: var(--c-condition);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">游戏是否结束</div>
+                  <div class="text-xs text-tertiary">Condition</div>
+                </div>
+              </div>
+            </div>
+            <div class="w-px h-5 border-l-2 border-dashed border-light"></div>
+            <div class="node node-output" style="width: 220px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-output-soft);">
+                  <svg class="ic-sm" style="color: var(--c-output);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">输出结果</div>
+                  <div class="text-xs text-tertiary">Output</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Window -->
+        <div id="agentWindow" class="float-win hidden" style="position: absolute; right: 28px; top: 28px; width: 360px; height: 420px;">
+          <div class="float-win-header">
+            <div class="flex items-center gap-2.5">
+              <div class="w-6 h-6 rounded-md flex items-center justify-center" style="background: var(--c-agent-soft);">
+                <svg class="ic-sm" style="color: var(--c-agent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <span class="text-sm font-semibold text-primary">主持人</span>
+              <span class="badge" style="background: var(--brand-soft); color: var(--brand);">运行中</span>
+            </div>
+            <div class="flex items-center gap-0.5">
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px; padding: 4px;" aria-label="最小化">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px; padding: 4px;" onclick="closeAgentWindow()" aria-label="关闭">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-base">
+            <div class="flex gap-2">
+              <div class="avatar avatar-sm" style="background: var(--c-agent-soft); color: var(--c-agent);">主</div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-primary mb-0.5">主持人</div>
+                <div class="text-sm text-secondary leading-relaxed">天黑请闭眼，狼人请睁眼...</div>
+              </div>
+            </div>
+          </div>
+          <div class="p-2 border-t border-subtle bg-surface">
+            <div class="flex items-center gap-2">
+              <input type="text" class="input flex-1" style="min-height: 32px; padding: 6px 10px; font-size: 13px;" placeholder="发送消息...">
+              <button class="btn btn-primary btn-icon" style="min-height: 32px; min-width: 32px;" aria-label="发送">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: WORKFLOW CANVAS ═══ -->
+    <div id="view-workflow-canvas" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-4 py-2.5 border-b border-light flex-shrink-0 bg-surface/80 backdrop-blur-sm">
+        <div class="flex items-center gap-3">
+          <h1 class="text-sm font-semibold text-primary">狼人杀游戏编排</h1>
+          <span class="badge" style="background: rgba(16,185,129,0.10); color: var(--s-success);">已保存</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-secondary btn-sm">
+            <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            导出
+          </button>
+          <button class="btn btn-secondary btn-sm">
+            <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            导入
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="showTimeline()">
+            <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            测试运行
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 relative overflow-hidden">
+        <div class="absolute inset-0 overflow-auto texture-grid">
+          <div class="relative" style="width: 1200px; height: 800px;">
+            <!-- Grid dots -->
+            <div class="absolute inset-0 opacity-40" style="background-image: radial-gradient(circle, var(--border-medium) 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+            <!-- Nodes -->
+            <div class="node node-trigger absolute" style="left: 100px; top: 80px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-trigger-soft);">
+                  <svg class="ic-sm" style="color: var(--c-trigger);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">开始游戏</div>
+                  <div class="text-xs text-tertiary">Trigger</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="node node-agent absolute selected" style="left: 80px; top: 200px; width: 240px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-agent-soft);">
+                  <svg class="ic-sm" style="color: var(--c-agent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">主持人（夜阶段引导）</div>
+                  <div class="text-xs text-tertiary">Agent · GPT-4o</div>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-subtle flex items-center gap-2">
+                <span class="dot dot-ok"></span>
+                <span class="text-xs text-tertiary">上次运行 2.3s</span>
+              </div>
+            </div>
+
+            <div class="node node-loop absolute" style="left: 400px; top: 200px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-loop-soft);">
+                  <svg class="ic-sm" style="color: var(--c-loop);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">角色行动循环</div>
+                  <div class="text-xs text-tertiary">Loop · itemsPath</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="node node-code absolute" style="left: 400px; top: 340px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-code-soft);">
+                  <svg class="ic-sm" style="color: var(--c-code);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">结算结果</div>
+                  <div class="text-xs text-tertiary">Code</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="node node-condition absolute" style="left: 680px; top: 270px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-condition-soft);">
+                  <svg class="ic-sm" style="color: var(--c-condition);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">游戏结束？</div>
+                  <div class="text-xs text-tertiary">Condition</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="node node-output absolute" style="left: 680px; top: 420px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-output-soft);">
+                  <svg class="ic-sm" style="color: var(--c-output);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">最终结果</div>
+                  <div class="text-xs text-tertiary">Output</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="node node-http absolute" style="left: 80px; top: 480px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-http-soft);">
+                  <svg class="ic-sm" style="color: var(--c-http);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">发送通知</div>
+                  <div class="text-xs text-tertiary">HTTP · POST</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="node node-set absolute" style="left: 340px; top: 480px; width: 200px; padding: 14px 18px;">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--c-set-soft);">
+                  <svg class="ic-sm" style="color: var(--c-set);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">格式化数据</div>
+                  <div class="text-xs text-tertiary">Set / Transform</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connection Lines (SVG with animation) -->
+            <svg class="absolute inset-0 pointer-events-none" style="width: 1200px; height: 800px;">
+              <path d="M 200 150 Q 200 175 200 200" stroke="var(--border-medium)" stroke-width="1.5" fill="none" stroke-dasharray="6,4" style="animation: dash-flow 1s linear infinite;"/>
+              <path d="M 320 240 Q 360 240 400 240" stroke="var(--border-medium)" stroke-width="1.5" fill="none" stroke-dasharray="6,4" style="animation: dash-flow 1s linear infinite;"/>
+              <path d="M 500 290 Q 500 315 500 340" stroke="var(--border-medium)" stroke-width="1.5" fill="none" stroke-dasharray="6,4" style="animation: dash-flow 1s linear infinite;"/>
+              <path d="M 600 380 Q 640 380 680 370" stroke="var(--border-medium)" stroke-width="1.5" fill="none" stroke-dasharray="6,4" style="animation: dash-flow 1s linear infinite;"/>
+              <path d="M 780 320 Q 780 370 780 420" stroke="var(--border-medium)" stroke-width="1.5" fill="none" stroke-dasharray="6,4" style="animation: dash-flow 1s linear infinite;"/>
+              <path d="M 180 350 Q 180 415 180 480" stroke="var(--border-light)" stroke-width="1.5" fill="none" stroke-dasharray="4,6"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Node Panel -->
+        <div class="absolute right-3 top-3 bottom-3 w-52 card overflow-hidden flex flex-col bg-surface" style="box-shadow: var(--shadow-lg);">
+          <div class="px-3 py-2.5 border-b border-subtle">
+            <div class="text-xs font-semibold text-tertiary uppercase tracking-wider">节点面板</div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5">
+            <div class="text-xs text-tertiary px-2 py-1.5 font-medium mt-1">Trigger</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-trigger);"></span>手动触发</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-webhook);"></span>Webhook</div>
+            <div class="text-xs text-tertiary px-2 py-1.5 font-medium mt-2">AI</div>
+            <div class="nav-item active"><span class="w-2 h-2 rounded-full" style="background: var(--c-agent);"></span>Agent</div>
+            <div class="text-xs text-tertiary px-2 py-1.5 font-medium mt-2">Flow Control</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-condition);"></span>Condition</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-switch);"></span>Switch</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-loop);"></span>Loop</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-wait);"></span>Wait</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-merge);"></span>Merge</div>
+            <div class="text-xs text-tertiary px-2 py-1.5 font-medium mt-2">Data</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-code);"></span>Code</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-set);"></span>Set</div>
+            <div class="text-xs text-tertiary px-2 py-1.5 font-medium mt-2">Integration</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-http);"></span>HTTP</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-sub);"></span>Sub-workflow</div>
+            <div class="text-xs text-tertiary px-2 py-1.5 font-medium mt-2">Output</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--c-output);"></span>Output</div>
+          </div>
+        </div>
+
+        <!-- Minimap -->
+        <div class="absolute right-3 bottom-3 rounded-lg border border-light overflow-hidden" style="width: 140px; height: 100px; background: var(--bg-surface); box-shadow: var(--shadow-md);">
+          <div class="relative w-full h-full bg-base">
+            <div class="absolute" style="left: 10%; top: 10%; width: 16%; height: 12%; background: var(--c-trigger); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 6%; top: 30%; width: 20%; height: 12%; background: var(--c-agent); border-radius: 2px; opacity: 0.9; border: 1px solid var(--brand); box-shadow: 0 0 4px var(--brand-glow);"></div>
+            <div class="absolute" style="left: 33%; top: 30%; width: 16%; height: 12%; background: var(--c-loop); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 33%; top: 50%; width: 16%; height: 12%; background: var(--c-code); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 56%; top: 40%; width: 16%; height: 12%; background: var(--c-condition); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 56%; top: 60%; width: 16%; height: 12%; background: var(--c-output); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 6%; top: 70%; width: 16%; height: 12%; background: var(--c-http); border-radius: 2px; opacity: 0.7;"></div>
+          </div>
+        </div>
+
+        <!-- Execution Timeline -->
+        <div id="execTimeline" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 card anim-scaleIn" style="width: 560px; max-width: 90%; box-shadow: var(--shadow-xl);">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-subtle">
+            <div class="flex items-center gap-3">
+              <span class="dot dot-ok"></span>
+              <span class="text-sm font-semibold text-primary">执行完成</span>
+              <span class="text-xs text-tertiary">耗时 4.2s · 7 个节点</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="btn btn-icon btn-ghost" aria-label="导出日志">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+              <button class="btn btn-icon btn-ghost" onclick="hideTimeline()" aria-label="关闭">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="px-4 py-2 max-h-60 overflow-y-auto">
+            <div class="timeline-row"><span class="dot dot-ok"></span>
+              <div class="flex-1">
+                <div class="flex items-center justify-between"><span class="text-sm font-medium text-primary">开始游戏</span><span class="text-xs text-tertiary">0.1s</span></div>
+                <div class="text-xs" style="color: var(--s-success);">成功</div>
+              </div>
+            </div>
+            <div class="timeline-row"><span class="dot dot-ok"></span>
+              <div class="flex-1">
+                <div class="flex items-center justify-between"><span class="text-sm font-medium text-primary">主持人（夜阶段引导）</span><span class="text-xs text-tertiary">2.3s</span></div>
+                <div class="text-xs" style="color: var(--s-success);">成功 · 1 次尝试</div>
+              </div>
+            </div>
+            <div class="timeline-row"><span class="dot dot-ok"></span>
+              <div class="flex-1">
+                <div class="flex items-center justify-between"><span class="text-sm font-medium text-primary">角色行动循环</span><span class="text-xs text-tertiary">1.1s</span></div>
+                <div class="text-xs" style="color: var(--s-success);">成功 · 3 次迭代</div>
+              </div>
+            </div>
+            <div class="timeline-row"><span class="dot dot-err"></span>
+              <div class="flex-1">
+                <div class="flex items-center justify-between"><span class="text-sm font-medium text-primary">结算结果</span><span class="text-xs text-tertiary">0.5s</span></div>
+                <div class="text-xs" style="color: var(--s-error);">失败 · ReferenceError: player is not defined</div>
+                <button class="btn btn-secondary btn-sm mt-2">
+                  <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  从该节点重跑
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: AGENTS ═══ -->
+    <div id="view-agents" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-5 py-3 border-b border-light flex-shrink-0 bg-surface/80 backdrop-blur-sm">
+        <h1 class="text-base font-semibold text-primary">智能体</h1>
+        <button class="btn btn-primary">
+          <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          创建智能体
+        </button>
+      </header>
+      <div class="flex-1 overflow-y-auto p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
+          <div class="card p-4 hover:border-medium transition-all cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-lg" style="background: var(--c-agent-soft); color: var(--c-agent);">G</div>
+                <div>
+                  <div class="text-sm font-semibold text-primary">通用助手</div>
+                  <div class="text-xs text-tertiary">Claude 3.5 Sonnet · Anthropic</div>
+                </div>
+              </div>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="更多">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-tertiary mt-3 line-clamp-2">通用型 AI 助手，擅长编程、分析和创意写作...</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge" style="background: var(--bg-hover); color: var(--text-tertiary);">对话</span>
+              <span class="badge" style="background: var(--bg-hover); color: var(--text-tertiary);">Anthropic</span>
+            </div>
+          </div>
+          <div class="card p-4 hover:border-medium transition-all cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-lg" style="background: var(--c-code-soft); color: var(--c-code);">D</div>
+                <div>
+                  <div class="text-sm font-semibold text-primary">代码审查员</div>
+                  <div class="text-xs text-tertiary">GPT-4o · OpenAI</div>
+                </div>
+              </div>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="更多">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-tertiary mt-3 line-clamp-2">专注于代码审查、Bug 分析和性能优化建议...</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge" style="background: var(--bg-hover); color: var(--text-tertiary);">代码</span>
+              <span class="badge" style="background: var(--bg-hover); color: var(--text-tertiary);">OpenAI</span>
+            </div>
+          </div>
+          <div class="card p-4 hover:border-medium transition-all cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-lg" style="background: var(--c-trigger-soft); color: var(--c-trigger);">W</div>
+                <div>
+                  <div class="text-sm font-semibold text-primary">狼人杀主持人</div>
+                  <div class="text-xs text-tertiary">GPT-4o · OpenAI</div>
+                </div>
+              </div>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="更多">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-tertiary mt-3 line-clamp-2">负责狼人杀游戏的流程引导和角色扮演...</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge" style="background: var(--bg-hover); color: var(--text-tertiary);">游戏</span>
+              <span class="badge" style="background: var(--bg-hover); color: var(--text-tertiary);">OpenAI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: SETTINGS ═══ -->
+    <div id="view-settings" class="view-section hidden flex flex-col h-full">
+      <div class="flex h-full">
+        <!-- Settings Sidebar -->
+        <div class="w-48 border-r border-light flex-shrink-0 bg-base">
+          <div class="p-3">
+            <div class="text-xs font-semibold text-tertiary uppercase tracking-wider px-2 py-1.5">设置</div>
+            <div class="mt-1 space-y-0.5">
+              <button class="nav-item w-full active" data-stab="general">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                通用
+              </button>
+              <button class="nav-item w-full" data-stab="appearance">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                外观
+              </button>
+              <button class="nav-item w-full" data-stab="models">
+                <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                模型管理
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <!-- General -->
+          <div id="stab-general" class="stab max-w-xl">
+            <h2 class="text-lg font-semibold text-primary mb-1">通用设置</h2>
+            <p class="text-sm text-tertiary mb-6">管理语言、远程访问等基础配置</p>
+            <div class="card p-5 mb-4">
+              <h3 class="text-sm font-semibold text-primary mb-4">语言</h3>
+              <div class="space-y-2">
+                <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-hover transition-colors" style="border-color: var(--brand);">
+                  <input type="radio" name="lang" checked class="w-4 h-4 accent-primary">
+                  <span class="text-sm text-primary">简体中文</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-light cursor-pointer hover:bg-hover transition-colors">
+                  <input type="radio" name="lang" class="w-4 h-4 accent-primary">
+                  <span class="text-sm text-primary">English</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-light cursor-pointer hover:bg-hover transition-colors">
+                  <input type="radio" name="lang" class="w-4 h-4 accent-primary">
+                  <span class="text-sm text-primary">Español</span>
+                </label>
+              </div>
+            </div>
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-primary mb-4">远程访问</h3>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <div class="text-sm text-primary">启用局域网访问</div>
+                  <div class="text-xs text-tertiary">允许同一网络下的其他设备访问</div>
+                </div>
+                <button class="toggle on" aria-label="切换远程访问"></button>
+              </div>
+              <div>
+                <label class="text-xs text-tertiary block mb-1.5">端口号</label>
+                <input type="text" class="input" value="1420" style="max-width: 120px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Appearance -->
+          <div id="stab-appearance" class="stab hidden max-w-xl">
+            <h2 class="text-lg font-semibold text-primary mb-1">外观</h2>
+            <p class="text-sm text-tertiary mb-6">自定义主题和界面样式</p>
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-primary mb-4">主题</h3>
+              <div class="grid grid-cols-3 gap-3">
+                <button class="p-4 rounded-xl border-2 border-light hover:border-medium transition-all text-center" onclick="setTheme('light')" id="btn-theme-light">
+                  <div class="w-12 h-12 mx-auto mb-2 rounded-lg border border-light" style="background: #F5F5F0;"></div>
+                  <div class="text-sm font-medium text-primary">浅色</div>
+                </button>
+                <button class="p-4 rounded-xl border-2 border-light hover:border-medium transition-all text-center" onclick="setTheme('dark')" id="btn-theme-dark">
+                  <div class="w-12 h-12 mx-auto mb-2 rounded-lg border border-light" style="background: #0C0E12;"></div>
+                  <div class="text-sm font-medium text-primary">深色</div>
+                </button>
+                <button class="p-4 rounded-xl border-2 border-light hover:border-medium transition-all text-center" onclick="setTheme('system')" id="btn-theme-system">
+                  <div class="w-12 h-12 mx-auto mb-2 rounded-lg border border-light overflow-hidden flex">
+                    <div class="flex-1" style="background: #F5F5F0;"></div>
+                    <div class="flex-1" style="background: #0C0E12;"></div>
+                  </div>
+                  <div class="text-sm font-medium text-primary">跟随系统</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Models -->
+          <div id="stab-models" class="stab hidden">
+            <div class="flex gap-6 h-full">
+              <!-- Provider List -->
+              <div class="w-64 flex-shrink-0">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-primary">服务商</h3>
+                  <button class="btn btn-primary btn-icon" style="min-height: 28px; min-width: 28px;" aria-label="添加服务商">
+                    <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+                <div class="space-y-1.5">
+                  <div class="p-3 rounded-xl border-2 cursor-pointer transition-all" style="border-color: var(--brand); background: var(--bg-surface);" onclick="selProv(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">OpenAI</span>
+                      <span class="badge text-xs" style="background: rgba(16,185,129,0.10); color: var(--s-success);">ON</span>
+                    </div>
+                    <div class="text-xs text-tertiary truncate">https://api.openai.com/v1</div>
+                  </div>
+                  <div class="p-3 rounded-xl border border-light cursor-pointer hover:bg-hover transition-all" onclick="selProv(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">Anthropic</span>
+                      <span class="badge text-xs" style="background: var(--bg-hover); color: var(--text-tertiary);">OFF</span>
+                    </div>
+                    <div class="text-xs text-tertiary truncate">https://api.anthropic.com/v1</div>
+                  </div>
+                  <div class="p-3 rounded-xl border border-light cursor-pointer hover:bg-hover transition-all" onclick="selProv(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">DeepSeek</span>
+                      <span class="badge text-xs" style="background: rgba(16,185,129,0.10); color: var(--s-success);">ON</span>
+                    </div>
+                    <div class="text-xs text-tertiary truncate">https://api.deepseek.com/v1</div>
+                  </div>
+                  <div class="p-3 rounded-xl border border-light cursor-pointer hover:bg-hover transition-all" onclick="selProv(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">SiliconFlow</span>
+                      <span class="badge text-xs" style="background: var(--bg-hover); color: var(--text-tertiary);">OFF</span>
+                    </div>
+                    <div class="text-xs text-tertiary truncate">https://api.siliconflow.cn/v1</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Provider Detail -->
+              <div class="flex-1 max-w-xl">
+                <div class="card p-5">
+                  <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                      <h3 class="text-base font-semibold text-primary">OpenAI</h3>
+                      <span class="badge" style="background: var(--brand-soft); color: var(--brand);">OpenAI 兼容</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="btn btn-secondary btn-sm">禁用</button>
+                      <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="删除">
+                        <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="space-y-4">
+                    <div><label class="text-xs text-tertiary block mb-1.5">名称</label><input type="text" class="input" value="OpenAI"></div>
+                    <div><label class="text-xs text-tertiary block mb-1.5">Base URL</label><input type="text" class="input" value="https://api.openai.com/v1"></div>
+                    <div>
+                      <label class="text-xs text-tertiary block mb-1.5">API Key</label>
+                      <div class="relative">
+                        <input type="password" class="input pr-10" value="sk-xxxxxxxxxxxxxxxx">
+                        <button class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="显示/隐藏">
+                          <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="text-xs text-tertiary block mb-1.5">API 格式</label>
+                      <select class="input" style="appearance: auto;">
+                        <option>OpenAI Chat Completions</option>
+                        <option>OpenAI Responses</option>
+                        <option>Anthropic Messages</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="mt-6 pt-5 border-t border-subtle">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-primary">模型列表</h4>
+                      <button class="btn btn-secondary btn-sm">
+                        <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        添加模型
+                      </button>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-3 p-3 rounded-lg border border-light">
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="测试">
+                          <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-medium text-primary">GPT-4o</div>
+                          <div class="text-xs text-tertiary">gpt-4o</div>
+                        </div>
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px; color: var(--brand);" aria-label="默认">
+                          <svg class="ic-sm" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-3 p-3 rounded-lg border border-light">
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="测试">
+                          <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-medium text-primary">GPT-4o-mini</div>
+                          <div class="text-xs text-tertiary">gpt-4o-mini</div>
+                        </div>
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="设为默认">
+                          <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-5 pt-4 border-t border-subtle flex items-center gap-2 flex-wrap">
+                    <button class="btn btn-primary btn-sm">设为当前服务商</button>
+                    <button class="btn btn-secondary btn-sm">测试全部模型</button>
+                    <button class="btn btn-secondary btn-sm">获取模型列表</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: PROMPTS ═══ -->
+    <div id="view-prompts" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-5 py-3 border-b border-light flex-shrink-0 bg-surface/80 backdrop-blur-sm">
+        <h1 class="text-base font-semibold text-primary">提示词生成器</h1>
+      </header>
+      <div class="flex-1 flex">
+        <div class="w-80 border-r border-light p-5 bg-base">
+          <div class="card p-4">
+            <label class="text-xs text-tertiary block mb-1.5">描述你的需求</label>
+            <textarea class="input w-full resize-none" rows="4" placeholder="我想生成一个能帮我分析代码的提示词..."></textarea>
+            <button class="btn btn-primary w-full mt-3">
+              <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-1.5 0-2.7.4-3.6 1.1-.9.7-1.4 1.8-1.4 3.1 0 2.5 2 4.3 3.5 5.5.6.5 1.2 1 1.5 1.5.3-.5.9-1 1.5-1.5 1.5-1.2 3.5-3 3.5-5.5 0-1.3-.5-2.4-1.4-3.1C14.7 3.4 13.5 3 12 3z"/><path d="M6 21c0-2.5 2.5-5 6-5s6 2.5 6 5"/></svg>
+              生成提示词
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 p-5 overflow-y-auto">
+          <div class="card p-5 max-w-3xl">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-primary">生成的提示词</h3>
+              <button class="btn btn-secondary btn-sm">
+                <svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+            <div class="code-block"># 代码分析助手
+
+你是一位资深代码审查专家，拥有 20 年软件开发经验。
+
+## 职责
+1. 分析代码中的潜在 Bug 和逻辑错误
+2. 识别性能瓶颈和优化机会
+3. 检查安全漏洞（SQL 注入、XSS 等）
+4. 评估代码可读性和可维护性
+
+## 输出格式
+- **严重问题**：必须修复的 Bug 或安全漏洞
+- **警告**：可能影响稳定性的问题
+- **建议**：可提升代码质量的改进点
+- **优化**：性能或可读性优化方案
+
+## 规则
+- 优先关注功能正确性，其次是性能
+- 提供具体的代码示例说明修复方案
+- 如果是风格问题，遵循项目已有的代码规范</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════ -->
+  <script>
+    let currentView = 'chat';
+    let isDark = false;
+
+    function setTheme(theme) {
+      const html = document.documentElement;
+      if (theme === 'dark') { html.setAttribute('data-theme', 'dark'); isDark = true; }
+      else if (theme === 'light') { html.setAttribute('data-theme', 'light'); isDark = false; }
+      else { const pd = window.matchMedia('(prefers-color-scheme: dark)').matches; html.setAttribute('data-theme', pd ? 'dark' : 'light'); isDark = pd; }
+      updateThemeUI();
+    }
+
+    function toggleTheme() {
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      updateThemeUI();
+    }
+
+    function updateThemeUI() {
+      const moon = document.getElementById('icon-moon');
+      const sun = document.getElementById('icon-sun');
+      if (moon && sun) { moon.classList.toggle('hidden', isDark); sun.classList.toggle('hidden', !isDark); }
+      ['btn-theme-light', 'btn-theme-dark', 'btn-theme-system'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) { btn.style.borderColor = 'var(--border-light)'; btn.style.background = 'var(--bg-surface)'; }
+      });
+      const activeId = isDark ? 'btn-theme-dark' : 'btn-theme-light';
+      const active = document.getElementById(activeId);
+      if (active) { active.style.borderColor = 'var(--brand)'; active.style.background = 'var(--brand-soft)'; }
+    }
+
+    function showView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`view-${view === 'chat' ? 'chat-single' : view}`);
+      if (target) { target.classList.remove('hidden'); target.classList.add('anim-fadeIn'); }
+      if (view === 'chat') document.getElementById('view-chat-single').classList.remove('hidden');
+      document.querySelectorAll('.gnav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+      renderCtxSidebar(view);
+    }
+
+    function renderCtxSidebar(view) {
+      const sb = document.getElementById('contextSidebar');
+      let html = '';
+      if (view === 'chat') {
+        html = `<div class="flex-shrink-0 border-b border-light"><div class="flex"><button class="tab flex-1 active">工作流</button><button class="tab flex-1">会话</button></div></div>
+          <div class="flex-1 overflow-y-auto p-2"><div class="px-2 py-1.5"><button class="btn btn-primary w-full text-xs" style="min-height: 32px;"><svg class="ic-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新建会话</button></div>
+          <div class="mt-1 space-y-0.5"><div class="nav-item active"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><div class="flex-1 min-w-0"><div class="truncate">通用助手对话</div><div class="text-xs text-tertiary truncate">Claude 3.5 Sonnet</div></div></div>
+          <div class="nav-item"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><div class="flex-1 min-w-0"><div class="truncate">狼人杀游戏编排</div><div class="text-xs text-tertiary truncate">工作流 · 7 个节点</div></div></div>
+          <div class="nav-item"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><div class="flex-1 min-w-0"><div class="truncate">代码审查</div><div class="text-xs text-tertiary truncate">GPT-4o</div></div></div></div></div>`;
+      } else if (view === 'workflow') {
+        html = `<div class="flex-shrink-0 px-3 py-2 border-b border-light"><div class="text-xs font-semibold text-tertiary uppercase tracking-wider py-1">工作流</div></div>
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5"><div class="nav-item active"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><div class="flex-1 min-w-0"><div class="truncate">狼人杀游戏编排</div><div class="text-xs text-tertiary">7 个节点</div></div></div>
+          <div class="nav-item"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><div class="flex-1 min-w-0"><div class="truncate">数据抓取流水线</div><div class="text-xs text-tertiary">5 个节点</div></div></div>
+          <div class="nav-item"><svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><div class="flex-1 min-w-0"><div class="truncate">日报生成器</div><div class="text-xs text-tertiary">4 个节点</div></div></div></div>`;
+      } else if (view === 'agents') {
+        html = `<div class="flex-shrink-0 px-3 py-2 border-b border-light"><div class="text-xs font-semibold text-tertiary uppercase tracking-wider py-1">智能体</div></div>
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5"><div class="nav-item active"><div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background: var(--c-agent-soft); color: var(--c-agent);">G</div><div class="flex-1 min-w-0"><div class="truncate">通用助手</div><div class="text-xs text-tertiary">Claude 3.5 Sonnet</div></div></div>
+          <div class="nav-item"><div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background: var(--c-code-soft); color: var(--c-code);">D</div><div class="flex-1 min-w-0"><div class="truncate">代码审查员</div><div class="text-xs text-tertiary">GPT-4o</div></div></div>
+          <div class="nav-item"><div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background: var(--c-trigger-soft); color: var(--c-trigger);">W</div><div class="flex-1 min-w-0"><div class="truncate">狼人杀主持人</div><div class="text-xs text-tertiary">GPT-4o</div></div></div></div>`;
+      } else { sb.style.display = 'none'; return; }
+      sb.style.display = 'flex'; sb.innerHTML = html;
+    }
+
+    function openAgentWindow(id) {
+      const win = document.getElementById('agentWindow');
+      win.classList.remove('hidden'); win.classList.add('anim-scaleIn');
+    }
+    function closeAgentWindow() { document.getElementById('agentWindow').classList.add('hidden'); }
+    function showTimeline() { document.getElementById('execTimeline').classList.remove('hidden'); }
+    function hideTimeline() { document.getElementById('execTimeline').classList.add('hidden'); }
+
+    function showStab(tab) {
+      document.querySelectorAll('.stab').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`stab-${tab}`).classList.remove('hidden');
+      document.querySelectorAll('[data-stab]').forEach(btn => btn.classList.toggle('active', btn.dataset.stab === tab));
+    }
+
+    function selProv(el) {
+      document.querySelectorAll('#stab-models .w-64 .space-y-1\.5 > div').forEach(div => {
+        div.style.borderColor = 'var(--border-light)'; div.style.borderWidth = '1px'; div.style.background = 'var(--bg-surface)';
+      });
+      el.style.borderColor = 'var(--brand)'; el.style.borderWidth = '2px'; el.style.background = 'var(--bg-surface)';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+      document.querySelectorAll('.gnav-btn').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
+      document.getElementById('workflowToggleMode')?.addEventListener('click', () => {
+        const btn = document.getElementById('workflowToggleMode');
+        const topo = document.getElementById('workflowTopology');
+        const isTopo = btn.textContent === '拓扑';
+        btn.textContent = isTopo ? '聊天' : '拓扑'; topo.style.display = isTopo ? 'none' : 'block';
+      });
+      document.querySelectorAll('[data-stab]').forEach(btn => btn.addEventListener('click', () => showStab(btn.dataset.stab)));
+      showView('chat'); setTheme('light');
+    });
+  </script>
+</body>
+</html>

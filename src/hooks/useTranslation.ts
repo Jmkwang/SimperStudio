@@ -1,4 +1,4 @@
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 
 type Translations = Record<string, Record<string, string>>;
 

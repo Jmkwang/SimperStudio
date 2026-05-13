@@ -43,40 +43,40 @@
   }
 
   .dark {
-    /* Dark Mode - Deep Space Minimalism */
-    --background: 0 0% 5.5%;
-    --foreground: 240 20% 90%;
+    /* Dark Mode - Aurora Deep Space */
+    --background: 224 16% 6%;
+    --foreground: 40 12% 94%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 240 20% 90%;
+    --card: 224 14% 9%;
+    --card-foreground: 40 12% 94%;
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 240 20% 90%;
+    --popover: 224 14% 8%;
+    --popover-foreground: 40 12% 94%;
 
-    --primary: 258 100% 82%;
-    --primary-foreground: 0 0% 5%;
+    --primary: 187 82% 53%;
+    --primary-foreground: 224 16% 6%;
 
-    --secondary: 0 0% 11%;
-    --secondary-foreground: 240 20% 90%;
+    --secondary: 224 10% 13%;
+    --secondary-foreground: 40 12% 94%;
 
-    --muted: 0 0% 11%;
-    --muted-foreground: 0 0% 52%;
+    --muted: 224 10% 13%;
+    --muted-foreground: 220 8% 52%;
 
-    --accent: 258 60% 82%;
-    --accent-foreground: 0 0% 5%;
+    --accent: 187 70% 60%;
+    --accent-foreground: 224 16% 6%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.06;
-    --input: 0 0% 100% / 0.06;
-    --ring: 258 100% 82%;
+    --border: 220 10% 100% / 0.06;
+    --input: 220 10% 100% / 0.06;
+    --ring: 187 82% 53%;
 
-    --glow: 258 60% 82%;
-    --surface: 0 0% 8%;
-    --surface-elevated: 0 0% 11%;
-    --hover: 0 0% 100% / 0.04;
-    --hover-foreground: 0 0% 100%;
+    --glow: 187 82% 53%;
+    --surface: 224 14% 9%;
+    --surface-elevated: 224 12% 12%;
+    --hover: 220 10% 100% / 0.04;
+    --hover-foreground: 40 12% 94%;
   }
 }
 

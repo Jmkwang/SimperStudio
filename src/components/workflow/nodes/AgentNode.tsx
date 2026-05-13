@@ -1,6 +1,6 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Bot, Settings2 } from 'lucide-react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';

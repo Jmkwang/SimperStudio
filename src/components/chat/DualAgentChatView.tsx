@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { AgentResultCard } from './AgentResultCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

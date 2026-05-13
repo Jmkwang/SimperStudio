@@ -17,6 +17,7 @@ interface ChatMessageBubbleProps {
   nodeId?: string;
   emptyText?: string;
   actions?: MessageHoverActionsProps;
+  layoutMode?: 'A' | 'B';
 }
 
 function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: string }) {
@@ -97,6 +98,7 @@ export function ChatMessageBubble({
   nodeId,
   emptyText,
   actions,
+  layoutMode = 'A',
 }: ChatMessageBubbleProps) {
   if (message.role === "user") {
     return <UserBubble message={message} emptyText={emptyText} />;
@@ -105,6 +107,32 @@ export function ChatMessageBubble({
   if (message.role === "assistant" && message.agentResponses) {
     const filtered = agentResponsesFiltered(message.agentResponses, agentId, nodeId);
     const isMulti = filtered.length > 1;
+
+    // B-mode: always stack vertically (IM-style), never side-by-side
+    if (isMulti && layoutMode === 'B') {
+      return (
+        <div className="flex flex-col gap-3">
+          {filtered.map((response, idx) => (
+            <AssistantBubble
+              key={`${message.id}-${idx}`}
+              response={response}
+              message={message}
+              agent={agent}
+              layout="single"
+              actions={actions ? {
+                ...actions,
+                onCopy: actions.onCopy
+                  ? () => actions.onCopy!()
+                  : () => navigator.clipboard.writeText(response.content.text).catch(() => {}),
+                onRerun: actions.onRerun ? () => actions.onRerun!() : undefined,
+                onForward: actions.onForward ? () => actions.onForward!() : undefined,
+                onRerunAndForward: actions.onRerunAndForward ? () => actions.onRerunAndForward!() : undefined,
+              } : undefined}
+            />
+          ))}
+        </div>
+      );
+    }
 
     if (isMulti) {
       return (

@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2, Workflow } from 'lucide-react';
 import { useState } from 'react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function SubWorkflowNode({ id, data }: { id: string, data: any }) {

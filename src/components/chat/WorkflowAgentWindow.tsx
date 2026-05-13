@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { WorkflowConversationWindow } from '@/types/models';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';

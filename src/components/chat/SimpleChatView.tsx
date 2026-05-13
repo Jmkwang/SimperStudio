@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { ChatSession } from "@/types/models";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";

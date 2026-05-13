@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import { Globe, Key, Server } from "lucide-react";
+import { DebugBadge } from "@/components/debug/DebugBadge";
 import { SettingsGeneralTab } from "./SettingsGeneralTab";
 import { SettingsAppearanceTab } from "./SettingsAppearanceTab";
 import { SettingsModelsTab } from "./SettingsModelsTab";
@@ -17,7 +18,8 @@ export function SettingsView() {
   ];
 
   return (
-    <div className="flex-1 overflow-hidden flex h-full">
+    <div className="relative flex-1 overflow-hidden flex h-full">
+      <DebugBadge id="SettingsView" />
       {/* Left Tabs */}
       <div className="w-56 border-r bg-card flex flex-col">
         <div className="p-4 border-b">

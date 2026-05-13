@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DebugBadge } from "@/components/debug/DebugBadge";
 
 export function ProfileView() {
   return (
-    <div className="flex-1 overflow-auto p-8 max-w-4xl mx-auto w-full">
+    <div className="relative flex-1 overflow-auto p-8 max-w-4xl mx-auto w-full">
+      <DebugBadge id="ProfileView" />
       <div className="mb-8">
         <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
         <p className="text-muted-foreground mt-2">

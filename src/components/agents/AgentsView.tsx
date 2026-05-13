@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bot, Plus } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { DebugBadge } from '@/components/debug/DebugBadge';
 
 export function AgentsView() {
   const agents = useAppStore(state => state.agents);
@@ -86,7 +87,8 @@ export function AgentsView() {
   };
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto bg-muted/10">
+    <div className="relative flex-1 p-8 overflow-y-auto bg-muted/10">
+      <DebugBadge id="AgentsView" />
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>

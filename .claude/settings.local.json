@@ -58,7 +58,10 @@
       "Bash(npm list *)",
       "Bash(npm test *)",
       "Bash(npx vite *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(xargs wc *)",
+      "Bash(xargs sed *)",
+      "Bash(npx vitest *)"
     ]
   }
 }

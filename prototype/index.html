@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio - Design Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       THEME SYSTEM - CSS Custom Properties
+       ============================================ */
+    :root {
+      /* Backgrounds */
+      --bg-main: #FAFAFA;
+      --bg-panel: #FFFFFF;
+      --bg-muted: #F5F5F5;
+      --bg-hover: #E5E5E5;
+      --bg-active: #D4D4D4;
+      --bg-primary-soft: rgba(99, 102, 241, 0.08);
+      --bg-error-soft: rgba(239, 68, 68, 0.08);
+      --bg-success-soft: rgba(16, 185, 129, 0.08);
+
+      /* Text */
+      --text-primary: #171717;
+      --text-secondary: #404040;
+      --text-muted: #737373;
+      --text-placeholder: #A3A3A3;
+      --text-inverse: #FFFFFF;
+
+      /* Borders */
+      --border-color: #E5E5E5;
+      --border-hover: #D4D4D4;
+
+      /* Accent */
+      --primary: #6366F1;
+      --primary-hover: #4F46E5;
+      --primary-soft: rgba(99, 102, 241, 0.1);
+      --ring-color: #6366F1;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.02);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+
+      /* Radius */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-xl: 12px;
+      --radius-2xl: 16px;
+
+      /* Node Colors */
+      --node-trigger: #10B981;
+      --node-trigger-soft: rgba(16, 185, 129, 0.12);
+      --node-webhook: #84CC16;
+      --node-webhook-soft: rgba(132, 204, 22, 0.12);
+      --node-code: #3B82F6;
+      --node-code-soft: rgba(59, 130, 246, 0.12);
+      --node-agent: #6366F1;
+      --node-agent-soft: rgba(99, 102, 241, 0.12);
+      --node-condition: #F97316;
+      --node-condition-soft: rgba(249, 115, 22, 0.12);
+      --node-switch: #F59E0B;
+      --node-switch-soft: rgba(245, 158, 11, 0.12);
+      --node-loop: #8B5CF6;
+      --node-loop-soft: rgba(139, 92, 246, 0.12);
+      --node-wait: #8B5CF6;
+      --node-wait-soft: rgba(139, 92, 246, 0.12);
+      --node-merge: #EC4899;
+      --node-merge-soft: rgba(236, 72, 153, 0.12);
+      --node-http: #06B6D4;
+      --node-http-soft: rgba(6, 182, 212, 0.12);
+      --node-set: #14B8A6;
+      --node-set-soft: rgba(20, 184, 166, 0.12);
+      --node-subworkflow: #6366F1;
+      --node-subworkflow-soft: rgba(99, 102, 241, 0.12);
+      --node-output: #64748B;
+      --node-output-soft: rgba(100, 116, 139, 0.12);
+
+      /* Execution States */
+      --state-running: #6366F1;
+      --state-success: #10B981;
+      --state-error: #EF4444;
+      --state-skipped: #9CA3AF;
+      --state-retrying: #F59E0B;
+      --state-cancelled: #6B7280;
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0A0A0A;
+      --bg-panel: #121212;
+      --bg-muted: #171717;
+      --bg-hover: #262626;
+      --bg-active: #333333;
+      --bg-primary-soft: rgba(99, 102, 241, 0.12);
+      --bg-error-soft: rgba(239, 68, 68, 0.12);
+      --bg-success-soft: rgba(16, 185, 129, 0.12);
+
+      --text-primary: #EDEDED;
+      --text-secondary: #D4D4D4;
+      --text-muted: #A3A3A3;
+      --text-placeholder: #525252;
+      --text-inverse: #0A0A0A;
+
+      --border-color: #262626;
+      --border-hover: #333333;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 0 rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.3);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.4);
+    }
+
+    /* ============================================
+       BASE STYLES
+       ============================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: var(--bg-main);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; opacity: 0.3; }
+    ::-webkit-scrollbar-thumb:hover { opacity: 0.5; }
+
+    /* Selection */
+    ::selection { background: var(--primary-soft); color: var(--primary); }
+
+    /* ============================================
+       ANIMATIONS
+       ============================================ */
+    @keyframes pulse-soft {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-soft { animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-up { animation: slideUp 0.25s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .fade-in { animation: fadeIn 0.2s ease-out; }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .scale-in { animation: scaleIn 0.15s ease-out; }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .animate-pulse-soft, .slide-up, .fade-in, .scale-in {
+        animation: none;
+      }
+    }
+
+    /* ============================================
+       DESIGN TOKEN UTILITIES
+       ============================================ */
+    .bg-main { background-color: var(--bg-main); }
+    .bg-panel { background-color: var(--bg-panel); }
+    .bg-muted { background-color: var(--bg-muted); }
+    .bg-hover:hover { background-color: var(--bg-hover); }
+    .bg-active { background-color: var(--bg-active); }
+    .bg-primary-soft { background-color: var(--bg-primary-soft); }
+    .bg-error-soft { background-color: var(--bg-error-soft); }
+    .bg-success-soft { background-color: var(--bg-success-soft); }
+
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+    .text-placeholder { color: var(--text-placeholder); }
+    .text-inverse { color: var(--text-inverse); }
+    .text-accent { color: var(--primary); }
+
+    .border-theme { border-color: var(--border-color); }
+    .border-hover:hover { border-color: var(--border-hover); }
+
+    .shadow-sm-theme { box-shadow: var(--shadow-sm); }
+    .shadow-md-theme { box-shadow: var(--shadow-md); }
+    .shadow-lg-theme { box-shadow: var(--shadow-lg); }
+    .shadow-xl-theme { box-shadow: var(--shadow-xl); }
+
+    /* ============================================
+       COMPONENT PATTERNS
+       ============================================ */
+
+    /* Button base */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: 36px;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--bg-main), 0 0 0 4px var(--ring-color);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-inverse);
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-secondary {
+      background: var(--bg-muted);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .btn-icon {
+      padding: 8px;
+      min-height: 36px;
+      min-width: 36px;
+    }
+
+    /* Input */
+    .input {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      outline: none;
+      transition: all 0.15s ease;
+      min-height: 40px;
+    }
+    .input:hover { border-color: var(--border-hover); }
+    .input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+    .input::placeholder { color: var(--text-placeholder); }
+
+    .input-error {
+      border-color: var(--state-error) !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Tooltip */
+    .tooltip-container {
+      position: relative;
+    }
+    .tooltip-container::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      transform: translateX(-50%) translateY(-6px);
+      padding: 5px 10px;
+      background: var(--text-primary);
+      color: var(--bg-panel);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.15s ease;
+      z-index: 100;
+      box-shadow: var(--shadow-lg);
+    }
+    .tooltip-container::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      transform: translateX(-50%) translateY(-2px);
+      border: 4px solid transparent;
+      border-top-color: var(--text-primary);
+      opacity: 0;
+      transition: all 0.15s ease;
+      z-index: 100;
+    }
+    .tooltip-container:hover::before,
+    .tooltip-container:hover::after { opacity: 1; }
+
+    /* ============================================
+       NODE SYSTEM
+       ============================================ */
+    .node {
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .node:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+    }
+    .node.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft), var(--shadow-lg);
+    }
+    .node::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    .node-trigger::before { background: var(--node-trigger); }
+    .node-agent::before { background: var(--node-agent); }
+    .node-code::before { background: var(--node-code); }
+    .node-condition::before { background: var(--node-condition); }
+    .node-loop::before { background: var(--node-loop); }
+    .node-http::before { background: var(--node-http); }
+    .node-output::before { background: var(--node-output); }
+    .node-merge::before { background: var(--node-merge); }
+    .node-set::before { background: var(--node-set); }
+    .node-wait::before { background: var(--node-wait); }
+
+    /* Node handle */
+    .node-handle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-color);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: all 0.15s ease;
+    }
+    .node-handle:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateY(-50%) scale(1.2);
+    }
+    .node-handle-input { left: -5px; }
+    .node-handle-output { right: -5px; }
+
+    /* ============================================
+       EXECUTION STATE INDICATORS
+       ============================================ */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-running { background: var(--state-running); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    .status-running.animated { animation: pulse-soft 2s infinite; }
+    .status-success { background: var(--state-success); }
+    .status-error { background: var(--state-error); }
+    .status-skipped { background: var(--state-skipped); opacity: 0.5; }
+    .status-retrying { background: var(--state-retrying); }
+    .status-retrying.animated { animation: pulse-soft 1.5s infinite; }
+    .status-cancelled { background: var(--state-cancelled); }
+
+    /* ============================================
+       CHAT MESSAGES
+       ============================================ */
+    .message-user {
+      align-self: flex-end;
+      max-width: 80%;
+      background: var(--primary);
+      color: var(--text-inverse);
+      padding: 10px 14px;
+      border-radius: var(--radius-lg);
+      border-bottom-right-radius: 4px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .message-agent {
+      align-self: flex-start;
+      max-width: 85%;
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .message-agent-content {
+      padding: 2px 0;
+    }
+
+    /* ============================================
+       SIDEBAR NAV ITEM
+       ============================================ */
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .nav-item.active {
+      background: var(--bg-primary-soft);
+      color: var(--primary);
+    }
+
+    /* ============================================
+       TAB SYSTEM
+       ============================================ */
+    .tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* ============================================
+       TIMELINE
+       ============================================ */
+    .timeline-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-left: 2px solid var(--border-color);
+      margin-left: 11px;
+      padding-left: 16px;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -5px;
+      top: 14px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--bg-panel);
+      border: 2px solid var(--border-color);
+    }
+    .timeline-item.success::before { border-color: var(--state-success); background: var(--state-success); }
+    .timeline-item.error::before { border-color: var(--state-error); background: var(--state-error); }
+    .timeline-item.running::before { border-color: var(--state-running); background: var(--state-running); }
+
+    /* ============================================
+       FLOATING WINDOW (WORKFLOW CHAT)
+       ============================================ */
+    .float-window {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .float-window-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: grab;
+    }
+    .float-window-header:active { cursor: grabbing; }
+
+    /* ============================================
+       RESPONSIVE (Minimal)
+       ============================================ */
+    @media (max-width: 1024px) {
+      .context-sidebar { width: 220px; }
+    }
+
+    /* ============================================
+       ICON SYSTEM (Inline SVG)
+       ============================================ */
+    .icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .icon-sm { width: 14px; height: 14px; }
+    .icon-lg { width: 20px; height: 20px; }
+
+    /* Avatar */
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .avatar-lg {
+      width: 40px;
+      height: 40px;
+      font-size: 14px;
+    }
+    .avatar-sm {
+      width: 24px;
+      height: 24px;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body class="flex h-screen w-screen overflow-hidden">
+
+  <!-- ============================================
+       GLOBAL SIDEBAR (64px)
+       ============================================ -->
+  <aside class="flex flex-col items-center py-3 border-r border-theme flex-shrink-0" style="width: 64px; background: var(--bg-panel);">
+    <!-- Logo -->
+    <div class="mb-4 tooltip-container" data-tooltip="SimperStudio">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: var(--primary);">
+        <svg class="icon text-inverse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Nav Items -->
+    <nav class="flex flex-col items-center gap-1 flex-1">
+      <button class="nav-btn active tooltip-container" data-view="chat" data-tooltip="聊天" aria-label="聊天">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+      <button class="nav-btn tooltip-container" data-view="workflow" data-tooltip="工作流" aria-label="工作流">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <button class="nav-btn tooltip-container" data-view="agents" data-tooltip="智能体" aria-label="智能体">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M18 21v-2a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v2"/>
+        </svg>
+      </button>
+      <button class="nav-btn tooltip-container" data-view="prompts" data-tooltip="提示词" aria-label="提示词">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c-1.5 0-2.7.4-3.6 1.1-.9.7-1.4 1.8-1.4 3.1 0 2.5 2 4.3 3.5 5.5.6.5 1.2 1 1.5 1.5.3-.5.9-1 1.5-1.5 1.5-1.2 3.5-3 3.5-5.5 0-1.3-.5-2.4-1.4-3.1C14.7 3.4 13.5 3 12 3z"/>
+          <path d="M6 21c0-2.5 2.5-5 6-5s6 2.5 6 5"/>
+        </svg>
+      </button>
+    </nav>
+
+    <!-- Bottom Actions -->
+    <div class="flex flex-col items-center gap-1 pb-2">
+      <button id="themeToggle" class="nav-btn tooltip-container" data-tooltip="切换主题" aria-label="切换主题">
+        <svg id="icon-moon" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg id="icon-sun" class="icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <button class="nav-btn tooltip-container" data-view="settings" data-tooltip="设置" aria-label="设置">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============================================
+       CONTEXT SIDEBAR (~260px)
+       ============================================ -->
+  <aside id="contextSidebar" class="context-sidebar flex flex-col border-r border-theme flex-shrink-0" style="width: 260px; background: var(--bg-main);">
+    <!-- Dynamic content injected by JS -->
+  </aside>
+
+  <!-- ============================================
+       MAIN CONTENT
+       ============================================ -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden" style="background: var(--bg-main);">
+
+    <!-- ===== VIEW: CHAT SINGLE ===== -->
+    <div id="view-chat-single" class="view-section flex flex-col h-full">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-5 py-3 border-b border-theme flex-shrink-0" style="background: var(--bg-panel);">
+        <div class="flex items-center gap-3">
+          <div class="avatar avatar-sm" style="background: var(--node-agent-soft); color: var(--node-agent);">G</div>
+          <div>
+            <div class="text-sm font-semibold text-primary">通用助手</div>
+            <div class="text-xs text-muted flex items-center gap-1">
+              <span>Claude 3.5 Sonnet</span>
+              <span class="text-placeholder">|</span>
+              <span>Anthropic</span>
+              <span class="text-placeholder mx-1">·</span>
+              <span>05/13 21:06</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-icon btn-ghost tooltip-container" data-tooltip="多模型对比" aria-label="多模型对比">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h3v3h-3zM8 3h3v3H8zM5 8h14v12H5z"/></svg>
+          </button>
+          <button class="btn btn-icon btn-ghost tooltip-container" data-tooltip="更多" aria-label="更多">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages Area -->
+      <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5" style="scroll-behavior: smooth;">
+        <!-- User Message -->
+        <div class="flex flex-col items-end slide-up">
+          <div class="message-user shadow-md-theme">
+            帮我分析一下这个工作流的执行结果，为什么 Loop 节点只迭代了 3 次就中断了？
+          </div>
+          <div class="flex items-center gap-2 mt-1.5 mr-1">
+            <span class="text-xs text-placeholder">21:06</span>
+          </div>
+        </div>
+
+        <!-- Agent Message -->
+        <div class="flex gap-3 slide-up" style="animation-delay: 0.1s;">
+          <div class="avatar" style="background: var(--node-agent-soft); color: var(--node-agent);">G</div>
+          <div class="message-agent">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-primary">通用助手</span>
+              <span class="text-xs text-muted">Claude 3.5 Sonnet</span>
+            </div>
+            <div class="message-agent-content">
+              <p>Loop 节点提前中断通常有以下几种原因：</p>
+              <ol class="list-decimal list-inside mt-2 space-y-1 text-secondary">
+                <li><strong>breakCondition 满足</strong>：检查是否设置了中断条件，且在第三次迭代时条件被触发</li>
+                <li><strong>maxIterations 限制</strong>：确认 maxIterations 是否设置为 3</li>
+                <li><strong>itemsPath 数组长度</strong>：如果数据源只有 3 个元素，迭代会自然结束</li>
+                <li><strong>下游节点报错</strong>：如果 Loop 内部有 agent/code 节点执行失败，且 onError 策略为 stop</li>
+              </ol>
+              <p class="mt-2">建议检查 Loop 节点的配置面板，重点查看 <code class="px-1.5 py-0.5 rounded text-xs" style="background: var(--bg-muted);">breakCondition</code> 和 <code class="px-1.5 py-0.5 rounded text-xs" style="background: var(--bg-muted);">maxIterations</code> 字段。</p>
+            </div>
+            <div class="flex items-center gap-3 mt-2 text-xs text-muted">
+              <span>Tokens: 342 <span class="text-placeholder">↑142 ↓200</span></span>
+              <button class="hover:text-primary transition-colors" title="复制">复制</button>
+              <button class="hover:text-primary transition-colors" title="重新生成">重新生成</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Agent Response (2 agents) -->
+        <div class="flex gap-3 slide-up" style="animation-delay: 0.2s;">
+          <div class="avatar" style="background: var(--node-code-soft); color: var(--node-code);">D</div>
+          <div class="message-agent flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-primary">代码审查员</span>
+              <span class="text-xs text-muted">GPT-4o</span>
+              <span class="text-xs text-placeholder">· OpenAI</span>
+            </div>
+            <div class="message-agent-content">
+              从执行日志来看，我看到 <code class="px-1.5 py-0.5 rounded text-xs" style="background: var(--bg-muted);">breakCondition</code> 被设置为 <code class="px-1.5 py-0.5 rounded text-xs" style="background: var(--bg-muted);">item.status === 'completed'</code>，而数组中第三个元素的 status 正好是 'completed'，所以触发了中断。
+            </div>
+            <div class="flex items-center gap-3 mt-2 text-xs text-muted">
+              <span>Tokens: 156 <span class="text-placeholder">↑45 ↓111</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="px-4 pb-4 pt-2 flex-shrink-0">
+        <div class="card p-3">
+          <textarea class="w-full resize-none outline-none text-sm text-primary placeholder:text-placeholder" style="background: transparent; min-height: 24px; max-height: 120px;" placeholder="输入消息... 使用 @ 提及智能体" rows="1"></textarea>
+          <div class="flex items-center justify-between mt-2 pt-2 border-t border-theme">
+            <div class="flex items-center gap-1">
+              <button class="btn btn-icon btn-ghost" aria-label="附件">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <button class="btn btn-icon btn-ghost" aria-label="@提及">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a10 10 0 1 0-5 8.66"/></svg>
+              </button>
+            </div>
+            <button class="btn btn-primary btn-icon" aria-label="发送">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: CHAT WORKFLOW ===== -->
+    <div id="view-chat-workflow" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-5 py-3 border-b border-theme flex-shrink-0" style="background: var(--bg-panel);">
+        <div class="flex items-center gap-3">
+          <button class="btn btn-icon btn-ghost" aria-label="展开侧边栏">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+          <div>
+            <div class="text-sm font-semibold text-primary">狼人杀游戏编排</div>
+            <div class="text-xs text-muted">工作流会话 · 7 个节点</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-secondary text-xs" style="padding: 6px 12px; min-height: 30px;">
+            <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            运行
+          </button>
+          <button id="workflowToggleMode" class="btn btn-secondary text-xs" style="padding: 6px 12px; min-height: 30px;">拓扑</button>
+        </div>
+      </header>
+
+      <div class="flex-1 relative overflow-hidden">
+        <!-- Workflow Topology -->
+        <div id="workflowTopology" class="absolute inset-0 overflow-auto p-8" style="background: var(--bg-main);">
+          <div class="flex flex-col items-center gap-6 min-h-full justify-center">
+            <!-- Trigger -->
+            <div class="node node-trigger" style="width: 220px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-trigger-soft);">
+                  <svg class="icon-sm" style="color: var(--node-trigger);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">开始游戏</div>
+                  <div class="text-xs text-muted">Trigger</div>
+                </div>
+              </div>
+              <div class="node-handle node-handle-input" style="border-color: var(--node-trigger);"></div>
+              <div class="node-handle node-handle-output" style="border-color: var(--node-trigger);"></div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="w-px h-6 border-l-2 border-dashed border-theme"></div>
+
+            <!-- Agent: Moderator -->
+            <div class="node node-agent selected" style="width: 220px; padding: 14px 16px;" onclick="openAgentWindow('moderator')">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-agent-soft);">
+                  <svg class="icon-sm" style="color: var(--node-agent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">主持人</div>
+                  <div class="text-xs text-muted">Agent · GPT-4o</div>
+                </div>
+              </div>
+              <div class="node-handle node-handle-input" style="border-color: var(--node-agent);"></div>
+              <div class="node-handle node-handle-output" style="border-color: var(--node-agent);"></div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="w-px h-6 border-l-2 border-dashed border-theme"></div>
+
+            <!-- Loop: Night Phase -->
+            <div class="node node-loop" style="width: 220px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-loop-soft);">
+                  <svg class="icon-sm" style="color: var(--node-loop);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">夜间行动循环</div>
+                  <div class="text-xs text-muted">Loop · 3 items</div>
+                </div>
+              </div>
+              <div class="node-handle node-handle-input" style="border-color: var(--node-loop);"></div>
+              <div class="node-handle node-handle-output" style="border-color: var(--node-loop);"></div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="w-px h-6 border-l-2 border-dashed border-theme"></div>
+
+            <!-- Code: Resolve -->
+            <div class="node node-code" style="width: 220px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-code-soft);">
+                  <svg class="icon-sm" style="color: var(--node-code);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">结算夜间结果</div>
+                  <div class="text-xs text-muted">Code</div>
+                </div>
+              </div>
+              <div class="node-handle node-handle-input" style="border-color: var(--node-code);"></div>
+              <div class="node-handle node-handle-output" style="border-color: var(--node-code);"></div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="w-px h-6 border-l-2 border-dashed border-theme"></div>
+
+            <!-- Condition: Game Over? -->
+            <div class="node node-condition" style="width: 220px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-condition-soft);">
+                  <svg class="icon-sm" style="color: var(--node-condition);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">游戏是否结束</div>
+                  <div class="text-xs text-muted">Condition</div>
+                </div>
+              </div>
+              <div class="node-handle node-handle-input" style="border-color: var(--node-condition);"></div>
+              <div class="node-handle node-handle-output" style="border-color: var(--node-condition);"></div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="w-px h-6 border-l-2 border-dashed border-theme"></div>
+
+            <!-- Output -->
+            <div class="node node-output" style="width: 220px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-output-soft);">
+                  <svg class="icon-sm" style="color: var(--node-output);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">输出结果</div>
+                  <div class="text-xs text-muted">Output</div>
+                </div>
+              </div>
+              <div class="node-handle node-handle-input" style="border-color: var(--node-output);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Agent Window -->
+        <div id="agentWindow" class="float-window hidden" style="position: absolute; right: 24px; top: 24px; width: 360px; height: 420px;">
+          <div class="float-window-header" style="background: var(--bg-muted);">
+            <div class="flex items-center gap-2.5">
+              <div class="w-6 h-6 rounded-md flex items-center justify-center" style="background: var(--node-agent-soft);">
+                <svg class="icon-sm" style="color: var(--node-agent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <span class="text-sm font-semibold text-primary">主持人</span>
+              <span class="badge" style="background: var(--bg-primary-soft); color: var(--primary);">运行中</span>
+            </div>
+            <div class="flex items-center gap-0.5">
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px; padding: 4px;" aria-label="最小化">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px; padding: 4px;" onclick="closeAgentWindow()" aria-label="关闭">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-3 space-y-3" style="background: var(--bg-main);">
+            <div class="flex gap-2">
+              <div class="avatar avatar-sm" style="background: var(--node-agent-soft); color: var(--node-agent);">主</div>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-primary mb-0.5">主持人</div>
+                <div class="text-sm text-secondary leading-relaxed">天黑请闭眼，狼人请睁眼...</div>
+              </div>
+            </div>
+          </div>
+          <div class="p-2 border-t border-theme" style="background: var(--bg-panel);">
+            <div class="flex items-center gap-2">
+              <input type="text" class="input flex-1" style="min-height: 32px; padding: 6px 10px; font-size: 13px;" placeholder="发送消息...">
+              <button class="btn btn-primary btn-icon" style="min-height: 32px; min-width: 32px;" aria-label="发送">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: WORKFLOW CANVAS ===== -->
+    <div id="view-workflow-canvas" class="view-section hidden flex flex-col h-full">
+      <!-- Toolbar -->
+      <header class="flex items-center justify-between px-4 py-2.5 border-b border-theme flex-shrink-0" style="background: var(--bg-panel);">
+        <div class="flex items-center gap-3">
+          <h1 class="text-sm font-semibold text-primary">狼人杀游戏编排</h1>
+          <span class="badge" style="background: var(--bg-success-soft); color: var(--state-success);">已保存</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-secondary text-xs" style="min-height: 32px;">
+            <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            导出
+          </button>
+          <button class="btn btn-secondary text-xs" style="min-height: 32px;">
+            <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            导入
+          </button>
+          <button class="btn btn-primary text-xs" style="min-height: 32px;" onclick="showExecutionTimeline()">
+            <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            测试运行
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 relative overflow-hidden">
+        <!-- Canvas -->
+        <div class="absolute inset-0 overflow-auto" style="background: var(--bg-main);">
+          <div class="relative" style="width: 1200px; height: 800px;">
+            <!-- Grid Pattern -->
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle, var(--border-color) 1px, transparent 1px); background-size: 20px 20px; opacity: 0.5;"></div>
+
+            <!-- Nodes positioned on canvas -->
+            <!-- Trigger -->
+            <div class="node node-trigger absolute" style="left: 100px; top: 80px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-trigger-soft);">
+                  <svg class="icon-sm" style="color: var(--node-trigger);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">开始游戏</div>
+                  <div class="text-xs text-muted">Trigger</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Agent: Moderator -->
+            <div class="node node-agent absolute selected" style="left: 80px; top: 200px; width: 240px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-agent-soft);">
+                  <svg class="icon-sm" style="color: var(--node-agent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">主持人（夜阶段引导）</div>
+                  <div class="text-xs text-muted">Agent · GPT-4o</div>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-theme flex items-center gap-2">
+                <span class="status-dot status-success"></span>
+                <span class="text-xs text-muted">上次运行 2.3s</span>
+              </div>
+            </div>
+
+            <!-- Loop -->
+            <div class="node node-loop absolute" style="left: 400px; top: 200px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-loop-soft);">
+                  <svg class="icon-sm" style="color: var(--node-loop);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">角色行动循环</div>
+                  <div class="text-xs text-muted">Loop · itemsPath</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Code -->
+            <div class="node node-code absolute" style="left: 400px; top: 340px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-code-soft);">
+                  <svg class="icon-sm" style="color: var(--node-code);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">结算结果</div>
+                  <div class="text-xs text-muted">Code</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Condition -->
+            <div class="node node-condition absolute" style="left: 680px; top: 270px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-condition-soft);">
+                  <svg class="icon-sm" style="color: var(--node-condition);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">游戏结束？</div>
+                  <div class="text-xs text-muted">Condition</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Output -->
+            <div class="node node-output absolute" style="left: 680px; top: 420px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-output-soft);">
+                  <svg class="icon-sm" style="color: var(--node-output);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">最终结果</div>
+                  <div class="text-xs text-muted">Output</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- HTTP -->
+            <div class="node node-http absolute" style="left: 80px; top: 480px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-http-soft);">
+                  <svg class="icon-sm" style="color: var(--node-http);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">发送通知</div>
+                  <div class="text-xs text-muted">HTTP · POST</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Set -->
+            <div class="node node-set absolute" style="left: 340px; top: 480px; width: 200px; padding: 14px 16px;">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--node-set-soft);">
+                  <svg class="icon-sm" style="color: var(--node-set);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary truncate">格式化数据</div>
+                  <div class="text-xs text-muted">Set / Transform</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connection Lines (SVG) -->
+            <svg class="absolute inset-0 pointer-events-none" style="width: 1200px; height: 800px;">
+              <path d="M 200 150 Q 200 175 200 200" stroke="var(--border-hover)" stroke-width="2" fill="none"/>
+              <path d="M 320 240 Q 360 240 400 240" stroke="var(--border-hover)" stroke-width="2" fill="none"/>
+              <path d="M 500 290 Q 500 315 500 340" stroke="var(--border-hover)" stroke-width="2" fill="none"/>
+              <path d="M 600 380 Q 640 380 680 370" stroke="var(--border-hover)" stroke-width="2" fill="none"/>
+              <path d="M 780 320 Q 780 370 780 420" stroke="var(--border-hover)" stroke-width="2" fill="none"/>
+              <path d="M 180 350 Q 180 415 180 480" stroke="var(--border-hover)" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Node Panel (Right) -->
+        <div class="absolute right-3 top-3 bottom-3 w-52 card overflow-hidden flex flex-col" style="background: var(--bg-panel);">
+          <div class="px-3 py-2.5 border-b border-theme">
+            <div class="text-xs font-semibold text-muted uppercase tracking-wider">节点面板</div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5">
+            <div class="text-xs text-muted px-2 py-1.5 font-medium mt-1">Trigger</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-trigger);"></span>手动触发</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-webhook);"></span>Webhook</div>
+
+            <div class="text-xs text-muted px-2 py-1.5 font-medium mt-2">AI</div>
+            <div class="nav-item active"><span class="w-2 h-2 rounded-full" style="background: var(--node-agent);"></span>Agent</div>
+
+            <div class="text-xs text-muted px-2 py-1.5 font-medium mt-2">Flow Control</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-condition);"></span>Condition</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-switch);"></span>Switch</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-loop);"></span>Loop</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-wait);"></span>Wait</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-merge);"></span>Merge</div>
+
+            <div class="text-xs text-muted px-2 py-1.5 font-medium mt-2">Data</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-code);"></span>Code</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-set);"></span>Set</div>
+
+            <div class="text-xs text-muted px-2 py-1.5 font-medium mt-2">Integration</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-http);"></span>HTTP</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-subworkflow);"></span>Sub-workflow</div>
+
+            <div class="text-xs text-muted px-2 py-1.5 font-medium mt-2">Output</div>
+            <div class="nav-item"><span class="w-2 h-2 rounded-full" style="background: var(--node-output);"></span>Output</div>
+          </div>
+        </div>
+
+        <!-- Minimap -->
+        <div class="absolute right-3 bottom-3 rounded-lg border border-theme overflow-hidden" style="width: 140px; height: 100px; background: var(--bg-panel);">
+          <div class="relative w-full h-full" style="background: var(--bg-main);">
+            <div class="absolute" style="left: 10%; top: 10%; width: 16%; height: 12%; background: var(--node-trigger); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 6%; top: 30%; width: 20%; height: 12%; background: var(--node-agent); border-radius: 2px; opacity: 0.9; border: 1px solid var(--primary);"></div>
+            <div class="absolute" style="left: 33%; top: 30%; width: 16%; height: 12%; background: var(--node-loop); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 33%; top: 50%; width: 16%; height: 12%; background: var(--node-code); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 56%; top: 40%; width: 16%; height: 12%; background: var(--node-condition); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 56%; top: 60%; width: 16%; height: 12%; background: var(--node-output); border-radius: 2px; opacity: 0.7;"></div>
+            <div class="absolute" style="left: 6%; top: 70%; width: 16%; height: 12%; background: var(--node-http); border-radius: 2px; opacity: 0.7;"></div>
+          </div>
+        </div>
+
+        <!-- Execution Timeline (Floating) -->
+        <div id="executionTimeline" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 card" style="width: 560px; max-width: 90%; background: var(--bg-panel); box-shadow: var(--shadow-xl);">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-theme">
+            <div class="flex items-center gap-3">
+              <span class="status-dot status-success"></span>
+              <span class="text-sm font-semibold text-primary">执行完成</span>
+              <span class="text-xs text-muted">耗时 4.2s · 7 个节点</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="btn btn-icon btn-ghost" aria-label="导出日志">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+              <button class="btn btn-icon btn-ghost" onclick="hideExecutionTimeline()" aria-label="关闭">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="px-4 py-2 max-h-60 overflow-y-auto">
+            <div class="timeline-item success">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-primary">开始游戏</span>
+                  <span class="text-xs text-muted">0.1s</span>
+                </div>
+                <div class="text-xs text-success" style="color: var(--state-success);">成功</div>
+              </div>
+            </div>
+            <div class="timeline-item success">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-primary">主持人（夜阶段引导）</span>
+                  <span class="text-xs text-muted">2.3s</span>
+                </div>
+                <div class="text-xs text-success" style="color: var(--state-success);">成功 · 1 次尝试</div>
+              </div>
+            </div>
+            <div class="timeline-item success">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-primary">角色行动循环</span>
+                  <span class="text-xs text-muted">1.1s</span>
+                </div>
+                <div class="text-xs text-success" style="color: var(--state-success);">成功 · 3 次迭代</div>
+              </div>
+            </div>
+            <div class="timeline-item error">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-primary">结算结果</span>
+                  <span class="text-xs text-muted">0.5s</span>
+                </div>
+                <div class="text-xs" style="color: var(--state-error);">失败 · ReferenceError: player is not defined</div>
+                <button class="btn btn-secondary text-xs mt-2" style="min-height: 28px; padding: 4px 10px;">
+                  <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  从该节点重跑
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: AGENTS ===== -->
+    <div id="view-agents" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-5 py-3 border-b border-theme flex-shrink-0" style="background: var(--bg-panel);">
+        <h1 class="text-base font-semibold text-primary">智能体</h1>
+        <button class="btn btn-primary text-sm">
+          <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          创建智能体
+        </button>
+      </header>
+      <div class="flex-1 overflow-y-auto p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
+          <!-- Agent Card 1 -->
+          <div class="card p-4 hover:border-hover transition-all cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-lg" style="background: var(--node-agent-soft); color: var(--node-agent);">G</div>
+                <div>
+                  <div class="text-sm font-semibold text-primary">通用助手</div>
+                  <div class="text-xs text-muted">Claude 3.5 Sonnet</div>
+                </div>
+              </div>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="更多">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-muted mt-3 line-clamp-2">通用型 AI 助手，擅长编程、分析和创意写作...</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge" style="background: var(--bg-muted); color: var(--text-muted);">对话</span>
+              <span class="badge" style="background: var(--bg-muted); color: var(--text-muted);">Anthropic</span>
+            </div>
+          </div>
+
+          <!-- Agent Card 2 -->
+          <div class="card p-4 hover:border-hover transition-all cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-lg" style="background: var(--node-code-soft); color: var(--node-code);">D</div>
+                <div>
+                  <div class="text-sm font-semibold text-primary">代码审查员</div>
+                  <div class="text-xs text-muted">GPT-4o</div>
+                </div>
+              </div>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="更多">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-muted mt-3 line-clamp-2">专注于代码审查、Bug 分析和性能优化建议...</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge" style="background: var(--bg-muted); color: var(--text-muted);">代码</span>
+              <span class="badge" style="background: var(--bg-muted); color: var(--text-muted);">OpenAI</span>
+            </div>
+          </div>
+
+          <!-- Agent Card 3 -->
+          <div class="card p-4 hover:border-hover transition-all cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="avatar avatar-lg" style="background: var(--node-trigger-soft); color: var(--node-trigger);">W</div>
+                <div>
+                  <div class="text-sm font-semibold text-primary">狼人杀主持人</div>
+                  <div class="text-xs text-muted">GPT-4o</div>
+                </div>
+              </div>
+              <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="更多">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-muted mt-3 line-clamp-2">负责狼人杀游戏的流程引导和角色扮演...</p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="badge" style="background: var(--bg-muted); color: var(--text-muted);">游戏</span>
+              <span class="badge" style="background: var(--bg-muted); color: var(--text-muted);">OpenAI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: SETTINGS ===== -->
+    <div id="view-settings" class="view-section hidden flex flex-col h-full">
+      <div class="flex h-full">
+        <!-- Settings Sidebar Tabs -->
+        <div class="w-48 border-r border-theme flex-shrink-0" style="background: var(--bg-main);">
+          <div class="p-3">
+            <div class="text-xs font-semibold text-muted uppercase tracking-wider px-2 py-1.5">设置</div>
+            <div class="mt-1 space-y-0.5">
+              <button class="nav-item w-full active" data-setting="general">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                通用
+              </button>
+              <button class="nav-item w-full" data-setting="appearance">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                外观
+              </button>
+              <button class="nav-item w-full" data-setting="models">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                模型管理
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <!-- General -->
+          <div id="setting-general" class="setting-section max-w-xl">
+            <h2 class="text-lg font-semibold text-primary mb-1">通用设置</h2>
+            <p class="text-sm text-muted mb-6">管理语言、远程访问等基础配置</p>
+
+            <div class="card p-5 mb-4">
+              <h3 class="text-sm font-semibold text-primary mb-4">语言</h3>
+              <div class="space-y-2">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-theme cursor-pointer hover:bg-hover transition-colors" style="border-color: var(--primary);">
+                  <input type="radio" name="lang" checked class="w-4 h-4 accent-primary">
+                  <span class="text-sm text-primary">简体中文</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-theme cursor-pointer hover:bg-hover transition-colors">
+                  <input type="radio" name="lang" class="w-4 h-4 accent-primary">
+                  <span class="text-sm text-primary">English</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-theme cursor-pointer hover:bg-hover transition-colors">
+                  <input type="radio" name="lang" class="w-4 h-4 accent-primary">
+                  <span class="text-sm text-primary">Español</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-primary mb-4">远程访问</h3>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <div class="text-sm text-primary">启用局域网访问</div>
+                  <div class="text-xs text-muted">允许同一网络下的其他设备访问</div>
+                </div>
+                <button class="w-11 h-6 rounded-full relative transition-colors" style="background: var(--primary);" aria-label="切换远程访问">
+                  <span class="absolute right-1 top-1 w-4 h-4 rounded-full bg-white transition-transform"></span>
+                </button>
+              </div>
+              <div>
+                <label class="text-xs text-muted block mb-1.5">端口号</label>
+                <input type="text" class="input" value="1420" style="max-width: 120px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Appearance -->
+          <div id="setting-appearance" class="setting-section hidden max-w-xl">
+            <h2 class="text-lg font-semibold text-primary mb-1">外观</h2>
+            <p class="text-sm text-muted mb-6">自定义主题和界面样式</p>
+
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold text-primary mb-4">主题</h3>
+              <div class="grid grid-cols-3 gap-3">
+                <button class="p-4 rounded-xl border-2 border-theme hover:border-hover transition-all text-center" onclick="setTheme('light')" id="theme-btn-light">
+                  <div class="w-12 h-12 mx-auto mb-2 rounded-lg border border-theme" style="background: #FAFAFA;"></div>
+                  <div class="text-sm font-medium text-primary">浅色</div>
+                </button>
+                <button class="p-4 rounded-xl border-2 border-theme hover:border-hover transition-all text-center" onclick="setTheme('dark')" id="theme-btn-dark">
+                  <div class="w-12 h-12 mx-auto mb-2 rounded-lg border border-theme" style="background: #0A0A0A;"></div>
+                  <div class="text-sm font-medium text-primary">深色</div>
+                </button>
+                <button class="p-4 rounded-xl border-2 border-theme hover:border-hover transition-all text-center" onclick="setTheme('system')" id="theme-btn-system">
+                  <div class="w-12 h-12 mx-auto mb-2 rounded-lg border border-theme overflow-hidden flex">
+                    <div class="flex-1" style="background: #FAFAFA;"></div>
+                    <div class="flex-1" style="background: #0A0A0A;"></div>
+                  </div>
+                  <div class="text-sm font-medium text-primary">跟随系统</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Models -->
+          <div id="setting-models" class="setting-section hidden">
+            <div class="flex gap-6 h-full">
+              <!-- Provider List -->
+              <div class="w-64 flex-shrink-0">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-primary">服务商</h3>
+                  <button class="btn btn-primary btn-icon" style="min-height: 28px; min-width: 28px;" aria-label="添加服务商">
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+                <div class="space-y-1.5">
+                  <div class="p-3 rounded-xl border-2 cursor-pointer transition-all" style="border-color: var(--primary); background: var(--bg-panel);" onclick="selectProvider(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">OpenAI</span>
+                      <span class="badge text-xs" style="background: var(--bg-success-soft); color: var(--state-success);">ON</span>
+                    </div>
+                    <div class="text-xs text-muted truncate">https://api.openai.com/v1</div>
+                  </div>
+                  <div class="p-3 rounded-xl border border-theme cursor-pointer hover:bg-hover transition-all" onclick="selectProvider(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">Anthropic</span>
+                      <span class="badge text-xs" style="background: var(--bg-muted); color: var(--text-muted);">OFF</span>
+                    </div>
+                    <div class="text-xs text-muted truncate">https://api.anthropic.com/v1</div>
+                  </div>
+                  <div class="p-3 rounded-xl border border-theme cursor-pointer hover:bg-hover transition-all" onclick="selectProvider(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">DeepSeek</span>
+                      <span class="badge text-xs" style="background: var(--bg-success-soft); color: var(--state-success);">ON</span>
+                    </div>
+                    <div class="text-xs text-muted truncate">https://api.deepseek.com/v1</div>
+                  </div>
+                  <div class="p-3 rounded-xl border border-theme cursor-pointer hover:bg-hover transition-all" onclick="selectProvider(this)">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-primary">SiliconFlow</span>
+                      <span class="badge text-xs" style="background: var(--bg-muted); color: var(--text-muted);">OFF</span>
+                    </div>
+                    <div class="text-xs text-muted truncate">https://api.siliconflow.cn/v1</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Provider Detail -->
+              <div class="flex-1 max-w-xl">
+                <div class="card p-5">
+                  <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                      <h3 class="text-base font-semibold text-primary">OpenAI</h3>
+                      <span class="badge" style="background: var(--bg-primary-soft); color: var(--primary);">OpenAI 兼容</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="btn btn-secondary text-xs" style="min-height: 28px;">禁用</button>
+                      <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="删除">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="space-y-4">
+                    <div>
+                      <label class="text-xs text-muted block mb-1.5">名称</label>
+                      <input type="text" class="input" value="OpenAI">
+                    </div>
+                    <div>
+                      <label class="text-xs text-muted block mb-1.5">Base URL</label>
+                      <input type="text" class="input" value="https://api.openai.com/v1">
+                    </div>
+                    <div>
+                      <label class="text-xs text-muted block mb-1.5">API Key</label>
+                      <div class="relative">
+                        <input type="password" class="input pr-10" value="sk-xxxxxxxxxxxxxxxx">
+                        <button class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="显示/隐藏">
+                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="text-xs text-muted block mb-1.5">API 格式</label>
+                      <select class="input" style="appearance: auto;">
+                        <option>OpenAI Chat Completions</option>
+                        <option>OpenAI Responses</option>
+                        <option>Anthropic Messages</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 pt-5 border-t border-theme">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-primary">模型列表</h4>
+                      <button class="btn btn-secondary text-xs" style="min-height: 28px;">
+                        <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        添加模型
+                      </button>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-3 p-3 rounded-lg border border-theme">
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="测试">
+                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-medium text-primary">GPT-4o</div>
+                          <div class="text-xs text-muted">gpt-4o</div>
+                        </div>
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px; color: var(--primary);" aria-label="默认">
+                          <svg class="icon-sm" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-3 p-3 rounded-lg border border-theme">
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="测试">
+                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-medium text-primary">GPT-4o-mini</div>
+                          <div class="text-xs text-muted">gpt-4o-mini</div>
+                        </div>
+                        <button class="btn btn-icon btn-ghost" style="min-height: 28px; min-width: 28px;" aria-label="设为默认">
+                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-5 pt-4 border-t border-theme flex items-center gap-2">
+                    <button class="btn btn-primary text-sm">设为当前服务商</button>
+                    <button class="btn btn-secondary text-sm">测试全部模型</button>
+                    <button class="btn btn-secondary text-sm">获取模型列表</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: PROMPTS ===== -->
+    <div id="view-prompts" class="view-section hidden flex flex-col h-full">
+      <header class="flex items-center justify-between px-5 py-3 border-b border-theme flex-shrink-0" style="background: var(--bg-panel);">
+        <h1 class="text-base font-semibold text-primary">提示词生成器</h1>
+      </header>
+      <div class="flex-1 flex">
+        <div class="w-80 border-r border-theme p-5" style="background: var(--bg-main);">
+          <div class="card p-4">
+            <label class="text-xs text-muted block mb-1.5">描述你的需求</label>
+            <textarea class="input w-full resize-none" rows="4" placeholder="我想生成一个能帮我分析代码的提示词..."></textarea>
+            <button class="btn btn-primary w-full mt-3">
+              <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-1.5 0-2.7.4-3.6 1.1-.9.7-1.4 1.8-1.4 3.1 0 2.5 2 4.3 3.5 5.5.6.5 1.2 1 1.5 1.5.3-.5.9-1 1.5-1.5 1.5-1.2 3.5-3 3.5-5.5 0-1.3-.5-2.4-1.4-3.1C14.7 3.4 13.5 3 12 3z"/><path d="M6 21c0-2.5 2.5-5 6-5s6 2.5 6 5"/></svg>
+              生成提示词
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 p-5 overflow-y-auto">
+          <div class="card p-5 max-w-3xl">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-primary">生成的提示词</h3>
+              <button class="btn btn-secondary text-xs">
+                <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+            <pre class="p-4 rounded-lg text-sm leading-relaxed overflow-x-auto" style="background: var(--bg-muted); color: var(--text-secondary);"><code># 代码分析助手
+
+你是一位资深代码审查专家，拥有 20 年软件开发经验。
+
+## 职责
+1. 分析代码中的潜在 Bug 和逻辑错误
+2. 识别性能瓶颈和优化机会
+3. 检查安全漏洞（SQL 注入、XSS 等）
+4. 评估代码可读性和可维护性
+
+## 输出格式
+- **严重问题**：必须修复的 Bug 或安全漏洞
+- **警告**：可能影响稳定性的问题
+- **建议**：可提升代码质量的改进点
+- **优化**：性能或可读性优化方案
+
+## 规则
+- 优先关注功能正确性，其次是性能
+- 提供具体的代码示例说明修复方案
+- 如果是风格问题，遵循项目已有的代码规范</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script>
+    // ===== STATE =====
+    let currentView = 'chat';
+    let currentChatMode = 'single';
+    let currentSetting = 'general';
+    let isDark = false;
+
+    // ===== THEME =====
+    function setTheme(theme) {
+      const html = document.documentElement;
+      if (theme === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+        isDark = true;
+      } else if (theme === 'light') {
+        html.setAttribute('data-theme', 'light');
+        isDark = false;
+      } else {
+        // System preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        isDark = prefersDark;
+      }
+      updateThemeIcons();
+      updateThemeButtons();
+    }
+
+    function toggleTheme() {
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      updateThemeIcons();
+      updateThemeButtons();
+    }
+
+    function updateThemeIcons() {
+      const moon = document.getElementById('icon-moon');
+      const sun = document.getElementById('icon-sun');
+      if (moon && sun) {
+        moon.classList.toggle('hidden', isDark);
+        sun.classList.toggle('hidden', !isDark);
+      }
+    }
+
+    function updateThemeButtons() {
+      const btns = ['theme-btn-light', 'theme-btn-dark', 'theme-btn-system'];
+      btns.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.style.borderColor = 'var(--border-color)';
+          btn.style.background = 'var(--bg-panel)';
+        }
+      });
+      const activeBtn = isDark ? document.getElementById('theme-btn-dark') : document.getElementById('theme-btn-light');
+      if (activeBtn) {
+        activeBtn.style.borderColor = 'var(--primary)';
+        activeBtn.style.background = 'var(--bg-primary-soft)';
+      }
+    }
+
+    // ===== VIEW ROUTING =====
+    function showView(view) {
+      currentView = view;
+
+      // Hide all views
+      document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+
+      // Show target view
+      const target = document.getElementById(`view-${view === 'chat' ? 'chat-single' : view}`);
+      if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('fade-in');
+      }
+
+      // Special handling for chat
+      if (view === 'chat') {
+        document.getElementById('view-chat-single').classList.remove('hidden');
+      }
+
+      // Update nav buttons
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+
+      // Update context sidebar
+      renderContextSidebar(view);
+    }
+
+    // ===== CONTEXT SIDEBAR =====
+    function renderContextSidebar(view) {
+      const sidebar = document.getElementById('contextSidebar');
+      let html = '';
+
+      if (view === 'chat') {
+        html = `
+          <div class="flex-shrink-0 border-b border-theme">
+            <div class="flex">
+              <button class="tab flex-1 active" data-tab="workflows">工作流</button>
+              <button class="tab flex-1" data-tab="sessions">会话</button>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2">
+            <div class="px-2 py-1.5">
+              <button class="btn btn-primary w-full text-xs" style="min-height: 32px;" onclick="showNewSessionDialog()">
+                <svg class="icon-sm mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                新建会话
+              </button>
+            </div>
+            <div class="mt-1 space-y-0.5">
+              <div class="nav-item active">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div class="flex-1 min-w-0">
+                  <div class="truncate">通用助手对话</div>
+                  <div class="text-xs text-muted truncate">Claude 3.5 Sonnet</div>
+                </div>
+              </div>
+              <div class="nav-item">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                <div class="flex-1 min-w-0">
+                  <div class="truncate">狼人杀游戏编排</div>
+                  <div class="text-xs text-muted truncate">工作流 · 7 个节点</div>
+                </div>
+              </div>
+              <div class="nav-item">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div class="flex-1 min-w-0">
+                  <div class="truncate">代码审查</div>
+                  <div class="text-xs text-muted truncate">GPT-4o</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (view === 'workflow') {
+        html = `
+          <div class="flex-shrink-0 px-3 py-2 border-b border-theme">
+            <div class="text-xs font-semibold text-muted uppercase tracking-wider py-1">工作流</div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5">
+            <div class="nav-item active">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <div class="flex-1 min-w-0">
+                <div class="truncate">狼人杀游戏编排</div>
+                <div class="text-xs text-muted">7 个节点</div>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <div class="flex-1 min-w-0">
+                <div class="truncate">数据抓取流水线</div>
+                <div class="text-xs text-muted">5 个节点</div>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <div class="flex-1 min-w-0">
+                <div class="truncate">日报生成器</div>
+                <div class="text-xs text-muted">4 个节点</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (view === 'agents') {
+        html = `
+          <div class="flex-shrink-0 px-3 py-2 border-b border-theme">
+            <div class="text-xs font-semibold text-muted uppercase tracking-wider py-1">智能体</div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5">
+            <div class="nav-item active">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background: var(--node-agent-soft); color: var(--node-agent);">G</div>
+              <div class="flex-1 min-w-0">
+                <div class="truncate">通用助手</div>
+                <div class="text-xs text-muted">Claude 3.5 Sonnet</div>
+              </div>
+            </div>
+            <div class="nav-item">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background: var(--node-code-soft); color: var(--node-code);">D</div>
+              <div class="flex-1 min-w-0">
+                <div class="truncate">代码审查员</div>
+                <div class="text-xs text-muted">GPT-4o</div>
+              </div>
+            </div>
+            <div class="nav-item">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background: var(--node-trigger-soft); color: var(--node-trigger);">W</div>
+              <div class="flex-1 min-w-0">
+                <div class="truncate">狼人杀主持人</div>
+                <div class="text-xs text-muted">GPT-4o</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // No sidebar for prompts/settings
+        sidebar.style.display = 'none';
+        return;
+      }
+
+      sidebar.style.display = 'flex';
+      sidebar.innerHTML = html;
+    }
+
+    // ===== AGENT WINDOW (WORKFLOW CHAT) =====
+    function openAgentWindow(agentId) {
+      const win = document.getElementById('agentWindow');
+      win.classList.remove('hidden');
+      win.classList.add('scale-in');
+    }
+
+    function closeAgentWindow() {
+      document.getElementById('agentWindow').classList.add('hidden');
+    }
+
+    // ===== EXECUTION TIMELINE =====
+    function showExecutionTimeline() {
+      document.getElementById('executionTimeline').classList.remove('hidden');
+    }
+
+    function hideExecutionTimeline() {
+      document.getElementById('executionTimeline').classList.add('hidden');
+    }
+
+    // ===== SETTINGS TABS =====
+    function showSettingTab(tab) {
+      currentSetting = tab;
+      document.querySelectorAll('.setting-section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`setting-${tab}`).classList.remove('hidden');
+      document.querySelectorAll('[data-setting]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.setting === tab);
+      });
+    }
+
+    // ===== PROVIDER SELECTION =====
+    function selectProvider(el) {
+      document.querySelectorAll('#setting-models .w-64 .space-y-1\.5 > div').forEach(div => {
+        div.style.borderColor = 'var(--border-color)';
+        div.style.borderWidth = '1px';
+        div.style.background = 'var(--bg-panel)';
+      });
+      el.style.borderColor = 'var(--primary)';
+      el.style.borderWidth = '2px';
+      el.style.background = 'var(--bg-panel)';
+    }
+
+    // ===== EVENT LISTENERS =====
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme toggle
+      document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+
+      // Nav buttons
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => showView(btn.dataset.view));
+      });
+
+      // Workflow toggle mode
+      document.getElementById('workflowToggleMode')?.addEventListener('click', () => {
+        const btn = document.getElementById('workflowToggleMode');
+        const topology = document.getElementById('workflowTopology');
+        const isTopology = btn.textContent === '拓扑';
+        btn.textContent = isTopology ? '聊天' : '拓扑';
+        topology.style.display = isTopology ? 'none' : 'block';
+      });
+
+      // Settings tabs
+      document.querySelectorAll('[data-setting]').forEach(btn => {
+        btn.addEventListener('click', () => showSettingTab(btn.dataset.setting));
+      });
+
+      // Context sidebar tab switching
+      document.getElementById('contextSidebar')?.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab');
+        if (tab) {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+        }
+      });
+
+      // Initialize
+      showView('chat');
+      setTheme('light');
+    });
+  </script>
+</body>
+</html>

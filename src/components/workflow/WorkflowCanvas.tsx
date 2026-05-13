@@ -35,10 +35,11 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Plus, Save, Trash2, Download, PlayCircle } from 'lucide-react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
+import { DebugBadge } from '@/components/debug/DebugBadge';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
 const GenericNode = ({ data, id }: any) => {
@@ -187,6 +188,7 @@ function Flow() {
 
   return (
     <div className="flex-1 w-full h-full relative bg-background">
+      <DebugBadge id="WorkflowCanvas" />
       <ReactFlow
         nodes={nodes}
         edges={edges}

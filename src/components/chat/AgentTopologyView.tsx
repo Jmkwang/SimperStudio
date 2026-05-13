@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 import {
   ReactFlow,
   Background,

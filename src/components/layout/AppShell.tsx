@@ -1,5 +1,6 @@
 import { GlobalSidebar } from "./GlobalSidebar"
 import { ContextSidebar, ContextSidebarHeader } from "./ContextSidebar"
+import { DebugBadge } from "@/components/debug/DebugBadge"
 
 const VIEWS_WITHOUT_SIDEBAR = new Set(['prompts', 'settings', 'profile'])
 
@@ -17,7 +18,8 @@ export function AppShell({
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
       <GlobalSidebar currentView={currentView} setCurrentView={setCurrentView} />
-      <div className="flex flex-col flex-1 overflow-hidden rounded-l-2xl border-l border-border bg-background m-1.5 ml-0">
+      <div className="relative flex flex-col flex-1 overflow-hidden rounded-l-2xl border-l border-border bg-background m-1.5 ml-0">
+        <DebugBadge id="AppShell" />
         {showSidebar && (
           <ContextSidebarHeader />
         )}

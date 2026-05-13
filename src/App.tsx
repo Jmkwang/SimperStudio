@@ -6,7 +6,7 @@ import { AgentsView } from "@/components/agents/AgentsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { PromptGenerator } from "@/components/prompts/PromptGenerator";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore } from '@/stores';
 import { Toaster } from "@/components/ui/toaster";
 import { WorkflowNodePanel } from "@/components/layout/WorkflowNodePanel";
 

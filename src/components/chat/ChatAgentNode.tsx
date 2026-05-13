@@ -1,7 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { Bot } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/stores';
 
 export function ChatAgentNode({ data }: { data: any }) {
   const agents = useAppStore(state => state.agents);

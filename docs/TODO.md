@@ -406,6 +406,152 @@ src/components/settings/
 - [ ] 通用/外观设置可正常编辑和保存
 - [ ] 模型管理全部功能正常（服务商 CRUD、模型增删、测试、获取列表）
 
+## 9. PM 分析结论：待补充任务
+
+### 9.1 P0 验证缺口（阻塞项，需立即执行）
+
+- [ ] 浏览器验证：Single Chat 完整链路（新建 → 发送 → @agent → 附件 → 复制）
+- [ ] 浏览器验证：Workflow Chat 完整链路（新建 → 侧边栏收展 → workflow/agent 节点点击 → 浮窗打开）
+- [ ] 浏览器验证：多窗口交互（重叠 → 聚焦 → 关闭/最小化）
+- [ ] 浏览器验证：转发链路（手动转发 → 自动转发 → reload 后转发）
+- [ ] 浏览器验证：切回普通 session，确认 workflow UI 状态不污染普通聊天
+- [ ] Loop 聚合语义修复：对齐 `payload.loopResults` 与 `payload.llmResult` 关系，避免覆盖
+- [ ] 狼人杀样例回归：屠边、狼刀优先、女巫药剂、猎人开枪、平票 PK、`breakCondition`、`maxIterations`
+
+### 9.2 发布必须（MVP 阻塞项）
+
+- [ ] 节点配置交互对齐：统一基础区块（名称、描述、超时、重试、失败策略）
+- [ ] 基础无障碍：图标按钮补齐 `aria-label`
+- [ ] 基础无障碍：主要交互链路支持键盘 Tab 导航与可见 focus
+- [ ] 基础无障碍：可交互元素最小点击区 ≥44×44px
+- [ ] 对比度修复：执行详情面板（输入/输出快照、错误信息）正文对比度 ≥4.5:1
+- [ ] 对比度修复：大号文本（≥18px 或 14px bold）对比度 ≥3:1
+- [ ] 中小屏适配：执行面板布局不遮挡核心操作（<1024px）
+- [ ] 导入导出验收：浏览器手动验证导入/粘贴 JSON 流程
+
+### 9.3 发布后迭代（非阻塞）
+
+- [ ] P3 告警钩子：本地通知 / Webhook 扩展
+- [ ] UI：会话列表顶部固定 "+ 新增会话" 按钮
+- [ ] UI：列表项采用「头像/图标 + 助手名称」形式
+- [ ] UI：列表项三点菜单（编辑/删除/更多）
+- [ ] UI：面包屑栏添加对话时间显示
+- [ ] UI：单条消息 Token 显示增加 ↑↓ 分项
+- [ ] UI：AI 回复去除左边框线，改为无明显气泡框
+- [ ] UI：模型来源根据 `agent.modelProvider` 动态显示
+- [ ] UI：多模型对比卡片添加快捷操作栏（复制/刷新/引用/点赞/收藏/删除/更多）
+- [ ] UI：多模型对比卡片添加状态图标和时间
+- [ ] UI：GlobalSidebar 底部精简为仅暗色模式和设置（移除 Profile）
+- [ ] UI：中小屏（<768px）抽屉式侧栏适配
+- [ ] 首次启动体验：新手引导 / 空状态设计 / 狼人杀 Demo 高亮
+
+### 9.4 P7：V1.0 发布标准（待拆分）
+
+- [ ] Tauri 打包配置（Windows / macOS / Linux）
+- [ ] 文档落地页（Landing Page）
+- [ ] 自动更新器（Auto-updater）
+- [ ] 应用签名与公证（macOS Notarization / Windows Code Signing）
+- [ ] 发布渠道：GitHub Releases / 官网下载
+
+## 10. P8：代码模块化重构（渐进式 Store 拆分 + 引擎提取）
+
+### 10.1 背景与目标
+
+`src/store/appStore.ts` 已膨胀至 **2000+ 行**，同时承载了：
+- 数据实体（workspaces, agents, sessions, workflows, settings）
+- 工作流执行引擎（BFS 队列、DAG 遍历、13 种节点执行逻辑）
+- 聊天系统（流式响应、消息转发、@提及、窗口管理）
+- 多服务商模型管理
+- 大量 mock 初始化数据
+
+**目标：** 按领域拆分为独立 slice，工作流引擎提取为纯函数模块，降低新增节点/聊天功能的认知负担。
+
+### 10.2 方案：渐进式拆分（方案A）
+
+#### Phase 1：Store 领域拆分
+
+```
+stores/
+  index.ts              ← 组合导出，兼容现有 useAppStore 接口
+  chatStore.ts          ← 会话、消息、流式响应、Agent聊天窗口
+  workflowStore.ts      ← 工作流定义、节点/边数据、执行状态
+  modelStore.ts         ← 服务商、模型、settings 配置
+  uiStore.ts            ← 视图切换、侧边栏状态、工作流聊天UI
+```
+
+- [ ] 创建 `src/stores/chatStore.ts` — 迁移会话、消息、流式响应、窗口管理
+- [ ] 创建 `src/stores/workflowStore.ts` — 迁移工作流 CRUD、执行状态
+- [ ] 创建 `src/stores/modelStore.ts` — 迁移服务商/模型/设置
+- [ ] 创建 `src/stores/uiStore.ts` — 迁移视图、侧边栏、工作流聊天UI
+- [ ] 创建 `src/stores/index.ts` — 组合导出，保持 `useAppStore` API 兼容
+- [ ] 全局替换 `import { useAppStore } from '@/store/appStore'` → `from '@/stores'`
+- [ ] 删除 `src/store/appStore.ts`
+- [ ] 运行测试验证：41 个测试用例全部通过
+
+#### Phase 2：工作流引擎提取
+
+```
+lib/workflow/
+  engine.ts                  ← 纯函数 executeWorkflow(nodes, edges, payload, settings)
+  nodeExecutors/
+    agentExecutor.ts         ← Agent 节点执行逻辑
+    codeExecutor.ts          ← Code 节点执行逻辑
+    loopExecutor.ts          ← Loop 节点执行逻辑
+    conditionExecutor.ts     ← Condition/Switch 节点执行逻辑
+    httpExecutor.ts          ← HTTP 节点执行逻辑
+    setTransformExecutor.ts  ← Set/Transform 节点执行逻辑
+    waitDelayExecutor.ts     ← Wait/Delay 节点执行逻辑
+    mergeExecutor.ts         ← Merge 节点执行逻辑
+    subWorkflowExecutor.ts   ← Sub-workflow 节点执行逻辑
+  nodeRegistry.ts            ← { type: { executor, defaultData } }
+  types.ts                   ← 引擎内部类型
+```
+
+- [ ] 创建 `lib/workflow/engine.ts` — 从 appStore 提取 `executeWorkflow` 为纯函数
+- [ ] 将各节点 `case` 分支提取为独立 `nodeExecutors/*.ts`
+- [ ] 创建 `lib/workflow/nodeRegistry.ts` — 集中注册节点类型到执行器映射
+- [ ] 更新 `workflowStore.ts` 调用 `executeWorkflow` 而非内联实现
+- [ ] 验证：狼人杀工作流正常执行
+
+#### Phase 3：ContextSidebar 拆分
+
+```
+components/layout/sidebar/
+  index.ts                   ← 统一导出
+  ChatSidebar.tsx            ← 聊天视图侧边栏（工作流列表 + 会话列表）
+  WorkflowSidebar.tsx        ← 工作流视图侧边栏
+  AgentsSidebar.tsx          ← 智能体视图侧边栏
+  AgentDetailPopover.tsx     ← Agent 编辑弹窗
+  ContextItem.tsx            ← 通用列表项组件
+```
+
+- [ ] 将 `ContextSidebar.tsx` 中的 6 个内联组件拆为独立文件
+- [ ] 保持 `ContextSidebar` 作为路由壳组件
+- [ ] 验证：三栏侧边栏在各视图下正常渲染
+
+#### Phase 4：工作流节点自注册（可选增强）
+
+- [ ] `nodeRegistry.ts` 支持运行时注册新节点类型
+- [ ] 新增节点只需：创建 UI 组件 → 创建 executor → `registerNodeType()`
+- [ ] 验证：手动添加一个测试节点，确认引擎自动识别
+
+### 10.3 验收标准
+
+- [ ] `tsc --noEmit` 零错误
+- [ ] `npm test` 41 个测试用例全部通过
+- [ ] 浏览器验证：工作流执行（线性/分支/loop）正常
+- [ ] 浏览器验证：聊天收发、流式响应、窗口管理正常
+- [ ] 浏览器验证：模型服务商 CRUD 正常
+
+### 10.4 优先级
+
+- **Phase 1（Store 拆分）**：最高优先级，当前最大瓶颈
+- **Phase 2（引擎提取）**：次高，直接影响新节点扩展效率
+- **Phase 3（Sidebar 拆分）**：中等，ContextSidebar 804 行虽大但相对稳定
+- **Phase 4（自注册）**：低优先级，等前三步完成后再考虑
+
+---
+
 ## 9. 已清理的旧计划
 
 以下内容已被当前优先级方案覆盖，不再单独维护：

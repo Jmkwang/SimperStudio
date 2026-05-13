@@ -1,4 +1,4 @@
-import { useAppStore } from "@/store/appStore"
+import { useAppStore } from '@/stores'
 import { useTranslation } from "@/hooks/useTranslation"
 import { Bot, ChevronRight } from "lucide-react"
 
