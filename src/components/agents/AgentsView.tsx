@@ -197,6 +197,20 @@ export function AgentsView() {
     exitBulkMode();
   };
 
+  const toggleSelectCategory = (categoryAgents: typeof agents) => {
+    const categoryIds = categoryAgents.map((a: typeof agents[0]) => a.id);
+    const allSelected = categoryIds.every((id: string) => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allSelected) {
+        categoryIds.forEach((id: string) => next.delete(id));
+      } else {
+        categoryIds.forEach((id: string) => next.add(id));
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="relative flex-1 p-8 overflow-y-auto bg-muted/10">
       <DebugBadge id="AgentsView" />
@@ -387,7 +401,25 @@ export function AgentsView() {
 
           {selectedAgentCategory ? (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold border-b pb-2">{selectedAgentCategory}</h3>
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="text-xl font-semibold">{selectedAgentCategory}</h3>
+                {bulkMode && (
+                  <button
+                    onClick={() => toggleSelectCategory(agents.filter(agent => (agent.category || agent.industry || 'General') === selectedAgentCategory))}
+                    className={cn(
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                      agents.filter(agent => (agent.category || agent.industry || 'General') === selectedAgentCategory).every((a) => selectedIds.has(a.id))
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-foreground/30 bg-background hover:border-primary/60"
+                    )}
+                    aria-label={t('Select all in category')}
+                  >
+                    {agents.filter(agent => (agent.category || agent.industry || 'General') === selectedAgentCategory).every((a) => selectedIds.has(a.id)) && (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                    )}
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {agents
                   .filter(agent => (agent.category || agent.industry || 'General') === selectedAgentCategory)
@@ -417,7 +449,25 @@ export function AgentsView() {
                 }, {} as Record<string, typeof agents>)
               ).map(([category, categoryAgents]) => (
                 <div key={category} className="space-y-4">
-                  <h3 className="text-xl font-semibold border-b pb-2">{category}</h3>
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="text-xl font-semibold">{category}</h3>
+                    {bulkMode && (
+                      <button
+                        onClick={() => toggleSelectCategory(categoryAgents)}
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                          categoryAgents.every((a) => selectedIds.has(a.id))
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-foreground/30 bg-background hover:border-primary/60"
+                        )}
+                        aria-label={t('Select all in category')}
+                      >
+                        {categoryAgents.every((a) => selectedIds.has(a.id)) && (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categoryAgents.map(agent => (
                       <AgentCard
