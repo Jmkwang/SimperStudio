@@ -192,7 +192,7 @@ export function AgentsView() {
     if (selectedIds.size === 0 || !bulkProviderId) return;
     batchUpdateAgents(Array.from(selectedIds), {
       providerId: bulkProviderId,
-      modelId: bulkModelId || undefined,
+      modelId: bulkModelId === '__default__' ? undefined : bulkModelId,
     });
     exitBulkMode();
   };
@@ -474,7 +474,7 @@ export function AgentsView() {
                 <SelectValue placeholder={bulkProviderId ? t('Select Model') : t('Select provider first')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('Use Default')}</SelectItem>
+                <SelectItem value="__default__">{t('Use Default')}</SelectItem>
                 {providers.find(p => p.id === bulkProviderId)?.models.map(m => (
                   <SelectItem key={m.id} value={m.modelId}>{m.name}</SelectItem>
                 ))}
