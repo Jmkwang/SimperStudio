@@ -39,18 +39,38 @@ function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, 
       }}
     >
       {bulkMode && (
-        <label
-          className="absolute top-2 left-2 z-10 flex items-center justify-center w-5 h-5 rounded border border-foreground/20 bg-background/80 hover:border-primary/50 cursor-pointer"
+        <div
+          className="absolute top-2 right-2 z-10"
           onClick={(e) => e.stopPropagation()}
         >
-          <input
-            type="checkbox"
+          <div
+            className={cn(
+              "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+              selectedIds.has(agent.id)
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-foreground/30 bg-background hover:border-primary/60"
+            )}
+            onClick={() => onToggle(agent.id)}
+            role="checkbox"
+            aria-checked={selectedIds.has(agent.id)}
             aria-label={`Select ${agent.name}`}
-            className="w-3.5 h-3.5 accent-primary cursor-pointer"
-            checked={selectedIds.has(agent.id)}
-            onChange={() => onToggle(agent.id)}
-          />
-        </label>
+          >
+            {selectedIds.has(agent.id) && (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3 w-3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        </div>
       )}
       <div className="flex items-center gap-3 mb-3">
         <Avatar className="h-10 w-10 border shadow-sm">
