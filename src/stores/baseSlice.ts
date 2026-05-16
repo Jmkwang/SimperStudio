@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { v4 as uuidv4 } from 'uuid';
-import { Workspace, Agent, ChatSession, Settings, Workflow, ChatMessage } from '../types/models';
+import { Workspace, Agent, ChatSession, Settings, Workflow, ChatMessage, ModelProvider, AgentCategory } from '../types/models';
 
 const LS_KEY = 'simper_config';
 
@@ -33,10 +33,13 @@ export async function writeConfig(name: string, value: unknown) {
 export interface BaseSlice {
   workspaces: Workspace[];
   agents: Agent[];
+  agentCategories: AgentCategory[];
 
   addWorkspace: (name: string, description?: string) => void;
   addAgent: (agent: Omit<Agent, 'id' | 'createdAt'>) => Promise<void>;
   updateAgent: (id: string, updates: Partial<Agent>) => void;
+  batchUpdateAgents: (ids: string[], updates: Partial<Agent>) => void;
+  addAgentCategory: (category: Omit<AgentCategory, 'id' | 'createdAt'>) => void;
   fetchInitialData: () => Promise<void>;
 }
 
@@ -46,6 +49,37 @@ function normalizeSession(session: ChatSession): ChatSession {
     mode: session.mode || (session.workflowId ? 'workflow' : 'single'),
     messages: session.messages || [],
   };
+}
+
+/**
+ * Migrate legacy Agent configs to the new multi-provider routing system.
+ * Maps old `modelProvider` enum to new `providerId` referencing a configured provider.
+ * Agents that already have `providerId` are left untouched.
+ */
+function migrateAgent(agent: Agent, providers: ModelProvider[]): Agent {
+  if (agent.providerId) return agent;
+
+  const typeMap: Record<string, string> = {
+    openai: 'openai',
+    anthropic: 'anthropic',
+    google: 'gemini',
+    gemini: 'gemini',
+    siliconflow: 'siliconflow',
+    custom: 'custom',
+  };
+
+  if (agent.modelProvider && agent.modelProvider !== 'local') {
+    const targetType = typeMap[agent.modelProvider];
+    if (targetType) {
+      const provider = providers.find((p) => p.type === targetType);
+      if (provider) {
+        return { ...agent, providerId: provider.id };
+      }
+    }
+  }
+
+  // 'local' or unmapped: leave providerId empty so it falls back to global activeProvider
+  return agent;
 }
 
 export function createBaseSlice(set: any, get: any): BaseSlice {
@@ -58,6 +92,11 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         createdAt: Date.now(),
         updatedAt: Date.now()
       }
+    ],
+    agentCategories: [
+      { id: 'cat-general', name: 'General', createdAt: Date.now() },
+      { id: 'cat-technology', name: 'Technology', createdAt: Date.now() },
+      { id: 'cat-game', name: 'Game', createdAt: Date.now() },
     ],
     agents: [
       {
@@ -173,6 +212,25 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
       return { agents: nextAgents };
     }),
 
+    batchUpdateAgents: (ids, updates) => set((state: any) => {
+      const nextAgents = state.agents.map((agent: Agent) =>
+        ids.includes(agent.id) ? { ...agent, ...updates } : agent
+      );
+      void writeConfig('agents.json', nextAgents);
+      return { agents: nextAgents };
+    }),
+
+    addAgentCategory: (categoryData) => set((state: any) => {
+      const newCategory: AgentCategory = {
+        ...categoryData,
+        id: uuidv4(),
+        createdAt: Date.now()
+      };
+      const nextCategories = [...state.agentCategories, newCategory];
+      void writeConfig('agent_categories.json', nextCategories);
+      return { agentCategories: nextCategories };
+    }),
+
     fetchInitialData: async () => {
       try {
         const modelConfig = await readConfig<Settings>('model.json');
@@ -188,8 +246,15 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
             }
           }));
         }
+        const categoriesConfig = await readConfig<AgentCategory[]>('agent_categories.json');
+        if (categoriesConfig?.length) {
+          set({ agentCategories: categoriesConfig });
+        }
+
         if (agentsConfig?.length) {
-          set({ agents: agentsConfig });
+          const providers = modelConfig?.providers || [];
+          const migratedAgents = agentsConfig.map((a: Agent) => migrateAgent(a, providers));
+          set({ agents: migratedAgents });
         } else {
           const agents = await invoke<Agent[]>('get_agents');
           if (agents.length) {
