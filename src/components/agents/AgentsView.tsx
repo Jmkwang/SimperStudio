@@ -26,7 +26,6 @@ interface AgentCardProps {
 function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, t }: AgentCardProps) {
   return (
     <div
-      key={agent.id}
       className={cn(
         "bg-card rounded-xl border p-4 flex flex-col shadow-sm cursor-pointer hover:border-primary transition-colors relative",
         bulkMode && selectedIds.has(agent.id) && "border-primary ring-1 ring-primary/20"
@@ -343,7 +342,7 @@ export function AgentsView() {
                 </div>
               </div>
               <div className="flex justify-end pt-4 border-t">
-                <Button onClick={handleSave}>{editingId ? 'Save Changes' : 'Create Agent'}</Button>
+                <Button onClick={handleSave}>{editingId ? t('Save Changes') : t('Create Agent')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -361,7 +360,7 @@ export function AgentsView() {
                 <X className="h-3 w-3" />
               </button>
               <span className="text-xs text-muted-foreground">
-                {agents.filter(a => (a.category || a.industry || 'General') === selectedAgentCategory).length} {t('个助手')}
+                {agents.filter(a => (a.category || a.industry || 'General') === selectedAgentCategory).length} {t('agents')}
               </span>
             </div>
           )}
