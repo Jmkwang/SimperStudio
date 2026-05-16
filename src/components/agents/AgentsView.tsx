@@ -8,33 +8,100 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bot, Plus } from 'lucide-react';
+import { Bot, Plus, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { DebugBadge } from '@/components/debug/DebugBadge';
+import { cn } from '@/lib/utils';
+
+interface AgentCardProps {
+  agent: any;
+  bulkMode: boolean;
+  selectedIds: Set<string>;
+  providers: any[];
+  onToggle: (id: string) => void;
+  onEdit: (agent: any) => void;
+  t: (key: string) => string;
+}
+
+function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, t }: AgentCardProps) {
+  return (
+    <div
+      key={agent.id}
+      className={cn(
+        "bg-card rounded-xl border p-4 flex flex-col shadow-sm cursor-pointer hover:border-primary transition-colors relative",
+        bulkMode && selectedIds.has(agent.id) && "border-primary ring-1 ring-primary/20"
+      )}
+      onClick={() => {
+        if (bulkMode) {
+          onToggle(agent.id);
+        } else {
+          onEdit(agent);
+        }
+      }}
+    >
+      {bulkMode && (
+        <label
+          className="absolute top-2 left-2 z-10 flex items-center justify-center w-5 h-5 rounded border border-foreground/20 bg-background/80 hover:border-primary/50 cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            aria-label={`Select ${agent.name}`}
+            className="w-3.5 h-3.5 accent-primary cursor-pointer"
+            checked={selectedIds.has(agent.id)}
+            onChange={() => onToggle(agent.id)}
+          />
+        </label>
+      )}
+      <div className="flex items-center gap-3 mb-3">
+        <Avatar className="h-10 w-10 border shadow-sm">
+          <AvatarImage src={agent.avatar} />
+          <AvatarFallback className="bg-primary/10 text-primary">
+            <Bot className="h-5 w-5" />
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h4 className="font-semibold">{agent.name}</h4>
+          <p className="text-xs text-muted-foreground">{agent.providerId ? providers.find(p => p.id === agent.providerId)?.name : t('Global default')}</p>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground line-clamp-2">
+        {agent.description || agent.systemPrompt}
+      </p>
+    </div>
+  );
+}
 
 export function AgentsView() {
   const agents = useAppStore(state => state.agents);
   const activeAgentId = useAppStore(state => state.activeAgentId);
   const setActiveAgent = useAppStore(state => state.setActiveAgent);
+  const selectedAgentCategory = useAppStore(state => state.selectedAgentCategory);
+  const setSelectedAgentCategory = useAppStore(state => state.setSelectedAgentCategory);
   const addAgent = useAppStore(state => state.addAgent);
   const updateAgent = useAppStore(state => state.updateAgent);
+  const settings = useAppStore(state => state.settings);
+  const providers = settings.providers || [];
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const batchUpdateAgents = useAppStore(state => state.batchUpdateAgents);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkProviderId, setBulkProviderId] = useState('');
+  const [bulkModelId, setBulkModelId] = useState('');
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   const defaultAgentState = {
     name: '',
     description: '',
     systemPrompt: '',
     avatar: '',
     industry: 'General',
-    modelProvider: 'local' as const,
-    modelId: 'default',
+    providerId: '',
+    modelId: '',
     temperature: 0.7,
     maxTokens: undefined as number | undefined,
-    apiKey: '',
-    baseUrl: '',
     parameters: {}
   };
 
@@ -70,12 +137,10 @@ export function AgentsView() {
       systemPrompt: agent.systemPrompt,
       avatar: agent.avatar || '',
       industry: agent.industry || 'General',
-      modelProvider: agent.modelProvider,
-      modelId: agent.modelId,
+      providerId: agent.providerId || '',
+      modelId: agent.modelId || '',
       temperature: agent.temperature,
       maxTokens: agent.maxTokens,
-      apiKey: agent.apiKey || '',
-      baseUrl: agent.baseUrl || '',
       parameters: agent.parameters || {}
     });
     setIsOpen(true);
@@ -84,6 +149,33 @@ export function AgentsView() {
   const handleOpenNew = () => {
     setEditingId(null);
     setFormData(defaultAgentState);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exitBulkMode = () => {
+    setBulkMode(false);
+    clearSelection();
+    setBulkProviderId('');
+    setBulkModelId('');
+  };
+
+  const handleBulkApply = () => {
+    if (selectedIds.size === 0 || !bulkProviderId) return;
+    batchUpdateAgents(Array.from(selectedIds), {
+      providerId: bulkProviderId,
+      modelId: bulkModelId || undefined,
+    });
+    exitBulkMode();
   };
 
   return (
@@ -96,13 +188,27 @@ export function AgentsView() {
             <p className="text-muted-foreground mt-1">{t("Manage and configure your AI assistants.")}</p>
           </div>
 
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleOpenNew}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Agent
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={bulkMode ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => {
+                if (bulkMode) {
+                  exitBulkMode();
+                } else {
+                  setBulkMode(true);
+                }
+              }}
+            >
+              {bulkMode ? t('Exit Bulk') : t('Bulk Edit')}
+            </Button>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={handleOpenNew}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Agent
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>{editingId ? t("Edit Agent") : t("Create New Agent")}</DialogTitle>
@@ -164,51 +270,46 @@ export function AgentsView() {
                     className="h-32"
                   />
                 </div>
-                
+
                 <div className="border-t pt-4 mt-2">
                   <h4 className="text-sm font-medium mb-3">{t("Model Configuration")}</h4>
                   <div className="grid gap-4">
                     <div className="grid gap-2">
-                      <Label>Model Provider</Label>
-                      <Select 
-                        value={formData.modelProvider} 
-                        onValueChange={(value: any) => setFormData({ ...formData, modelProvider: value })}
+                      <Label>{t("Provider")}</Label>
+                      <Select
+                        value={formData.providerId}
+                        onValueChange={(value: string) => setFormData({ ...formData, providerId: value, modelId: '' })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a provider" />
+                          <SelectValue placeholder={t("Select a provider")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="local">Local (Ollama/LM Studio)</SelectItem>
-                          <SelectItem value="openai">OpenAI</SelectItem>
-                          <SelectItem value="anthropic">Anthropic</SelectItem>
-                          <SelectItem value="custom">Custom Endpoint</SelectItem>
+                          {providers.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
-                    {formData.modelProvider !== 'local' && (
-                      <>
-                        <div className="grid gap-2">
-                          <Label htmlFor="apiKey">API Key</Label>
-                          <Input
-                            id="apiKey"
-                            type="password"
-                            value={formData.apiKey}
-                            onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                            placeholder="sk-..."
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="baseUrl">Base URL (Optional)</Label>
-                          <Input
-                            id="baseUrl"
-                            value={formData.baseUrl}
-                            onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
-                            placeholder="https://api.openai.com/v1"
-                          />
-                        </div>
-                      </>
-                    )}
+
+                    <div className="grid gap-2">
+                      <Label>{t("Model")}</Label>
+                      <Select
+                        value={formData.modelId}
+                        onValueChange={(value: string) => setFormData({ ...formData, modelId: value })}
+                        disabled={!formData.providerId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={formData.providerId ? t("Select a model") : t("Select a provider first")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {providers
+                            .find((p) => p.id === formData.providerId)
+                            ?.models.map((m) => (
+                              <SelectItem key={m.id} value={m.modelId}>{m.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
@@ -246,53 +347,46 @@ export function AgentsView() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
-        <div className="space-y-8">
-          {activeAgentId ? (
-            <div className="bg-card rounded-xl border p-6 flex flex-col shadow-sm">
-              {(() => {
-                const agent = agents.find(a => a.id === activeAgentId);
-                if (!agent) return <p>Agent not found.</p>;
-                return (
-                  <>
-                    <div className="flex items-center gap-4 mb-4">
-                      <Avatar className="h-16 w-16 border shadow-sm">
-                        <AvatarImage src={agent.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          <Bot className="h-8 w-8" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-2xl">{agent.name}</h3>
-                        <p className="text-sm text-muted-foreground">{agent.modelProvider} • {agent.modelId} • {agent.industry}</p>
-                      </div>
-                    </div>
-                    <div className="mb-6">
-                      <h4 className="font-medium mb-2">{t("System Prompt")}</h4>
-                      <div className="bg-muted p-4 rounded-lg text-sm font-mono whitespace-pre-wrap">
-                        {agent.systemPrompt}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                      <div>
-                        <span className="text-muted-foreground block">{t("Temperature")}</span>
-                        {agent.temperature}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">Max Tokens</span>
-                        {agent.maxTokens || 'Default'}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-4 border-t">
-                      <Button onClick={() => handleEdit(agent)}>{t("Edit Agent Configuration")}</Button>
-                      <Button variant="secondary">{t("Test Chat")}</Button>
-                    </div>
-                  </>
-                );
-              })()}
+      <div className="space-y-8">
+          {selectedAgentCategory && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedAgentCategory(null)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              >
+                <span>{selectedAgentCategory}</span>
+                <X className="h-3 w-3" />
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {agents.filter(a => (a.category || a.industry || 'General') === selectedAgentCategory).length} {t('个助手')}
+              </span>
             </div>
-          
+          )}
+
+          {selectedAgentCategory ? (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold border-b pb-2">{selectedAgentCategory}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {agents
+                  .filter(agent => (agent.category || agent.industry || 'General') === selectedAgentCategory)
+                  .map(agent => (
+                    <AgentCard
+                      key={agent.id}
+                      agent={agent}
+                      bulkMode={bulkMode}
+                      selectedIds={selectedIds}
+                      providers={providers}
+                      onToggle={toggleSelection}
+                      onEdit={handleEdit}
+                      t={t}
+                    />
+                  ))}
+              </div>
+            </div>
+
           ) : (
             <div className="space-y-8">
               {Object.entries(
@@ -307,32 +401,21 @@ export function AgentsView() {
                   <h3 className="text-xl font-semibold border-b pb-2">{category}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categoryAgents.map(agent => (
-                      <div 
-                        key={agent.id} 
-                        className="bg-card rounded-xl border p-4 flex flex-col shadow-sm cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => setActiveAgent(agent.id)}
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          <Avatar className="h-10 w-10 border shadow-sm">
-                            <AvatarImage src={agent.avatar} />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              <Bot className="h-5 w-5" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h4 className="font-semibold">{agent.name}</h4>
-                            <p className="text-xs text-muted-foreground">{agent.modelProvider}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {agent.description || agent.systemPrompt}
-                        </p>
-                      </div>
+                      <AgentCard
+                        key={agent.id}
+                        agent={agent}
+                        bulkMode={bulkMode}
+                        selectedIds={selectedIds}
+                        providers={providers}
+                        onToggle={toggleSelection}
+                        onEdit={handleEdit}
+                        t={t}
+                      />
                     ))}
                   </div>
                 </div>
               ))}
-              
+
               {agents.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground bg-muted/50 rounded-xl border border-dashed">
                   <Bot className="mx-auto h-12 w-12 opacity-20 mb-4" />
@@ -343,6 +426,57 @@ export function AgentsView() {
           )}
 
         </div>
+
+        {bulkMode && selectedIds.size > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-xl border bg-card px-5 py-3 shadow-lg">
+            <span className="text-sm font-medium whitespace-nowrap">
+              {t('Selected')} {selectedIds.size} {t('items')}
+            </span>
+            <div className="h-4 w-px bg-border" />
+            <Select
+              value={bulkProviderId}
+              onValueChange={(v: string) => { setBulkProviderId(v); setBulkModelId(''); }}
+            >
+              <SelectTrigger className="h-8 text-xs w-36">
+                <SelectValue placeholder={t('Select Provider')} />
+              </SelectTrigger>
+              <SelectContent>
+                {providers.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={bulkModelId}
+              onValueChange={(v: string) => setBulkModelId(v)}
+              disabled={!bulkProviderId}
+            >
+              <SelectTrigger className="h-8 text-xs w-36">
+                <SelectValue placeholder={bulkProviderId ? t('Select Model') : t('Select provider first')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('Use Default')}</SelectItem>
+                {providers.find(p => p.id === bulkProviderId)?.models.map(m => (
+                  <SelectItem key={m.id} value={m.modelId}>{m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              disabled={!bulkProviderId}
+              onClick={handleBulkApply}
+            >
+              {t('Apply')}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={exitBulkMode}
+            >
+              {t('Done')}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
