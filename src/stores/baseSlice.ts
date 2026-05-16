@@ -213,8 +213,9 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
     }),
 
     batchUpdateAgents: (ids, updates) => set((state: any) => {
+      const idSet = new Set(ids);
       const nextAgents = state.agents.map((agent: Agent) =>
-        ids.includes(agent.id) ? { ...agent, ...updates } : agent
+        idSet.has(agent.id) ? { ...agent, ...updates } : agent
       );
       void writeConfig('agents.json', nextAgents);
       return { agents: nextAgents };
