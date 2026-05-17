@@ -327,7 +327,8 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
           workflow.edgesData,
           initialPayload,
           { ...options, signal: abortController.signal },
-          (stateUpdate) => setWorkflowExecutionState(stateUpdate)
+          (stateUpdate) => setWorkflowExecutionState(stateUpdate),
+          { agents: get().agents, settings: get().settings },
         );
         return result.finalPayload;
       } catch (e: any) {

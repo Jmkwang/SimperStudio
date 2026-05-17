@@ -57,7 +57,31 @@ function normalizeSession(session: ChatSession): ChatSession {
  * Agents that already have `providerId` are left untouched.
  */
 function migrateAgent(agent: Agent, providers: ModelProvider[]): Agent {
-  if (agent.providerId) return agent;
+  let migrated = { ...agent };
+
+  // Migrate dicebear external URLs to local SVG avatars
+  if (agent.avatar?.includes('dicebear.com')) {
+    const seedMap: Record<string, string> = {
+      organize: '/avatars/organize.svg',
+      summary: '/avatars/summary.svg',
+      architect: '/avatars/architect.svg',
+      reviewer: '/avatars/reviewer.svg',
+      'host-judge': '/avatars/judge.svg',
+      'shadow-wolf': '/avatars/shadow-wolf.svg',
+      'fury-wolf': '/avatars/fury-wolf.svg',
+      'star-seer': '/avatars/star-seer.svg',
+      'poison-witch': '/avatars/poison-witch.svg',
+      'iron-guard': '/avatars/iron-guard.svg',
+      'flame-hunter': '/avatars/flame-hunter.svg',
+      'sage-villager': '/avatars/sage-villager.svg',
+    };
+    const seed = new URL(agent.avatar).searchParams.get('seed');
+    if (seed && seedMap[seed]) {
+      migrated.avatar = seedMap[seed];
+    }
+  }
+
+  if (migrated.providerId) return migrated;
 
   const typeMap: Record<string, string> = {
     openai: 'openai',
@@ -68,18 +92,18 @@ function migrateAgent(agent: Agent, providers: ModelProvider[]): Agent {
     custom: 'custom',
   };
 
-  if (agent.modelProvider && agent.modelProvider !== 'local') {
-    const targetType = typeMap[agent.modelProvider];
+  if (migrated.modelProvider && migrated.modelProvider !== 'local') {
+    const targetType = typeMap[migrated.modelProvider];
     if (targetType) {
       const provider = providers.find((p) => p.type === targetType);
       if (provider) {
-        return { ...agent, providerId: provider.id };
+        return { ...migrated, providerId: provider.id };
       }
     }
   }
 
   // 'local' or unmapped: leave providerId empty so it falls back to global activeProvider
-  return agent;
+  return migrated;
 }
 
 export function createBaseSlice(set: any, get: any): BaseSlice {
@@ -101,73 +125,73 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
     agents: [
       {
         id: 'agent-organize', name: '整理助手',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=organize',
+        avatar: '/avatars/organize.svg',
         systemPrompt: '你是一个文本整理助手，负责整理和组织用户输入的内容，使其结构清晰、层次分明。',
         modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'General'
       },
       {
         id: 'agent-summary', name: '总结助手',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=summary',
+        avatar: '/avatars/summary.svg',
         systemPrompt: '你是一个文本总结助手，负责对用户输入的内容进行总结，提取关键信息和要点。',
         modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'General'
       },
       {
         id: 'agent-1', name: 'System Architect',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=architect',
+        avatar: '/avatars/architect.svg',
         systemPrompt: 'You are a system architect.',
         modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'Technology'
       },
       {
         id: 'agent-2', name: 'Code Reviewer',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=reviewer',
+        avatar: '/avatars/reviewer.svg',
         systemPrompt: 'You are a strict code reviewer.',
         modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'Technology'
       },
       {
         id: 'ww-host', name: '法官·铁面',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=host-judge',
+        avatar: '/avatars/judge.svg',
         systemPrompt: '你是狼人杀法官，性格铁面无私、语言简洁有力。你负责维持游戏阶段、解释规则、汇总夜晚行动、发布白天信息，并且不能泄露玩家隐藏身份。输出要清晰、简短、可执行。遇到违规行为直接警告。',
         modelProvider: 'local', modelId: 'default', temperature: 0.4, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-wolf-shadow', name: '狼人·暗影',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=shadow-wolf',
+        avatar: '/avatars/shadow-wolf.svg',
         systemPrompt: '你是狼人阵营的"暗影"，性格阴险狡诈、善于伪装。你擅长在白天发言中装作无辜平民，喜欢嫁祸给可疑的玩家。夜晚袭击时你倾向于选择最有威胁的好人角色。输出结构化决策，包含 targetId 和详细 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.85, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-wolf-fury', name: '狼人·狂怒',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=fury-wolf',
+        avatar: '/avatars/fury-wolf.svg',
         systemPrompt: '你是狼人阵营的"狂怒"，性格冲动好斗、喜欢激进策略。你不怕暴露身份，倾向于直接攻击发言最多的玩家。你的投票风格激进，喜欢带节奏。输出结构化决策，包含 targetId 和 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.95, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-seer', name: '预言家·星眸',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=star-seer',
+        avatar: '/avatars/star-seer.svg',
         systemPrompt: '你是狼人杀预言家"星眸"，性格冷静理性、逻辑严密。你注重数据和推理，选择查验目标时关注高嫌疑或关键发言玩家。你的发言风格条理清晰，喜欢列举证据。只输出查验目标和理由，不泄露系统外信息。',
         modelProvider: 'local', modelId: 'default', temperature: 0.6, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-witch', name: '女巫·毒心',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=poison-witch',
+        avatar: '/avatars/poison-witch.svg',
         systemPrompt: '你是狼人杀女巫"毒心"，性格精于算计、善于观察。你用药果断但不浪费，解药只在关键时刻使用，毒药留给高度确定的狼人。你善于从夜晚死亡信息推断狼人身份。输出 useHeal、poisonTargetId 和 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-guard', name: '守卫·铁壁',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=iron-guard',
+        avatar: '/avatars/iron-guard.svg',
         systemPrompt: '你是狼人杀守卫"铁壁"，性格忠诚守护、直觉敏锐。你倾向于保护关键角色（如预言家），连续两晚不守同一人。你善于从投票和发言中判断谁是狼人的目标。输出 protectTargetId 和 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.65, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-hunter', name: '猎人·烈焰',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=flame-hunter',
+        avatar: '/avatars/flame-hunter.svg',
         systemPrompt: '你是狼人杀猎人"烈焰"，性格勇猛果断、不惧牺牲。你投票时直觉优先，喜欢投给看起来最可疑的人。如果你被杀，你会选择带走你认为最可疑的玩家。输出 voteTargetId 和 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.8, parameters: {}, createdAt: Date.now(), industry: 'Game'
       },
       {
         id: 'ww-villager', name: '平民·智者',
-        avatar: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=sage-villager',
+        avatar: '/avatars/sage-villager.svg',
         systemPrompt: '你是狼人杀平民"智者"，性格善于观察、逻辑清晰。你擅长从其他玩家的发言中找破绽和矛盾，喜欢用推理说服他人。你的投票基于发言分析，不轻易跟风。输出 voteTargetId 和详细的推理 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.75, parameters: {}, createdAt: Date.now(), industry: 'Game'
       }
@@ -301,6 +325,15 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
             const parsedWorkflows = workflows.map((w: any) => ({ ...w, nodesData: JSON.parse(w.nodesData as unknown as string), edgesData: JSON.parse(w.edgesData as unknown as string) }));
             set({ workflows: parsedWorkflows });
           }
+        }
+
+        const sidebarOrders = await readConfig<{ workflowOrder?: string[]; agentCategoryOrder?: string[]; sessionOrder?: string[] }>('sidebar_orders.json');
+        if (sidebarOrders) {
+          set((state: any) => ({
+            workflowOrder: sidebarOrders.workflowOrder ?? state.workflowOrder,
+            agentCategoryOrder: sidebarOrders.agentCategoryOrder ?? state.agentCategoryOrder,
+            sessionOrder: sidebarOrders.sessionOrder ?? state.sessionOrder,
+          }));
         }
       } catch (error) {
         console.log('Running in browser mode without Tauri backend - using default data');

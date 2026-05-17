@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { ChatSession } from "@/types/models";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { ChatSession, ModelProvider, ProviderModel } from "@/types/models";
 import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,10 +7,27 @@ import { Button } from "@/components/ui/button";
 import { Send, Workflow, ArrowUp, ArrowDown, Users } from "lucide-react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DebugBadge } from "@/components/debug/DebugBadge";
+
+function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null): { providerName: string; modelName: string } | null {
+  if (!agent) return null;
+  const providerId = agent.providerId || activeProviderId;
+  if (!providerId) return null;
+  const provider = providers.find(p => p.id === providerId);
+  if (!provider) return null;
+  const model: ProviderModel | undefined = provider.models.find(m => m.modelId === agent.modelId || m.id === agent.modelId)
+    || provider.models.find(m => m.isDefault)
+    || provider.models[0];
+  return {
+    providerName: provider.name,
+    modelName: model?.name || agent.modelId || '默认',
+  };
+}
 
 export function SimpleChatView({ session }: { session: ChatSession }) {
   const { t } = useTranslation();
   const agents = useAppStore(state => state.agents);
+  const settings = useAppStore(state => state.settings);
   const sendToAgent = useAppStore(state => state.sendToAgent);
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
   const [input, setInput] = useState("");
@@ -18,11 +35,18 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const [multiAgentMode, setMultiAgentMode] = useState(false);
   const [showTopology, setShowTopology] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef(true);
 
   const activeAgent = useMemo(() => {
     if (selectedAgentId) return agents.find(a => a.id === selectedAgentId);
     return agents[0] || null;
   }, [agents, selectedAgentId]);
+
+  const activeAgentModelInfo = useMemo(() =>
+    resolveAgentDisplayModel(activeAgent, settings?.providers || [], settings?.activeProviderId || null),
+    [activeAgent, settings]
+  );
 
   const totalTokens = session.messages.reduce((sum, msg) => {
     return sum + (msg.agentResponses?.reduce((s, r) => s + (r.tokenUsage?.totalTokens || 0), 0) || 0);
@@ -36,12 +60,31 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     return sum + (msg.agentResponses?.reduce((s, r) => s + (r.tokenUsage?.completionTokens || 0), 0) || 0);
   }, 0);
 
+  // Detect user manual scroll — stop auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [session.messages.length]);
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+      autoScrollRef.current = atBottom;
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-scroll on new messages or streaming content
+  useEffect(() => {
+    if (!autoScrollRef.current) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [session.messages.length, session.messages]);
+
+  // Re-enable auto-scroll when user sends a message
   const handleSend = async () => {
     if (!input.trim() || !activeAgent) return;
+    autoScrollRef.current = true;
     if (multiAgentMode && agents.length > 1) {
       await sendMessageToAgents(session.id, input, agents);
     } else {
@@ -50,8 +93,17 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     setInput("");
   };
 
+  const handleRetry = useCallback((agentId: string) => {
+    const lastUserMsg = [...session.messages].reverse().find(m => m.role === "user");
+    if (lastUserMsg) {
+      autoScrollRef.current = true;
+      sendToAgent(session.id, agentId, lastUserMsg.content.text);
+    }
+  }, [session.messages, session.id, sendToAgent]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      <DebugBadge id="SimpleChatView" position="bottom-left" />
       {/* Breadcrumb Bar */}
       <div className="border-b px-6 py-2 flex items-center justify-between shrink-0">
         <div className="flex flex-col gap-0.5">
@@ -64,7 +116,11 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
               </>
             )}
             <span className="text-muted-foreground">|</span>
-            <span className="text-muted-foreground">{activeAgent?.modelProvider || t("Local")}</span>
+            <span className="text-muted-foreground">
+              {activeAgentModelInfo
+                ? `${activeAgentModelInfo.providerName} / ${activeAgentModelInfo.modelName}`
+                : t("未配置")}
+            </span>
             <Button
               variant="ghost"
               size="sm"
@@ -126,7 +182,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto p-6 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
         {session.messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <div className="text-4xl opacity-30">💬</div>
@@ -138,17 +194,9 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
           <ChatMessageBubble
             key={message.id}
             message={message}
-            agent={activeAgent ? { name: activeAgent.name, avatar: activeAgent.avatar } : undefined}
-            agentId={message.role === "assistant" ? undefined : undefined}
-            actions={message.role === "assistant" ? {
-              canCopy: true,
-              canRerun: true,
-              onRerun: () => {
-                if (!activeAgent) return;
-                const lastUserMsg = [...session.messages].reverse().find(m => m.role === "user");
-                if (lastUserMsg) sendToAgent(session.id, activeAgent.id, lastUserMsg.content.text);
-              },
-            } : undefined}
+            agent={activeAgent ? { id: activeAgent.id, name: activeAgent.name, avatar: activeAgent.avatar } : undefined}
+            agents={agents.map(a => ({ id: a.id, name: a.name, avatar: a.avatar }))}
+            onRetry={handleRetry}
           />
         ))}
         <div ref={messagesEndRef} />

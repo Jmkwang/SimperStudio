@@ -14,15 +14,19 @@ import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDr
 export function AgentNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const agents = useAppStore(state => state.agents);
+  const providers = useAppStore(state => state.settings?.providers) || [];
 
   const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Agent Node'));
-  const [localPrompt, setLocalPrompt] = useState(data.prompt || '');
   const [selectedAgentId, setSelectedAgentId] = useState(data.agentId || agents[0]?.id);
-  const [localAutoSend, setLocalAutoSend] = useState(data.autoSendToNext || false);
   const [localSchema, setLocalSchema] = useState(data.schema || '');
+  const [localAutoSend, setLocalAutoSend] = useState(data.autoSendToNext || false);
+  const [overrideProviderId, setOverrideProviderId] = useState(data.overrideProviderId || '');
+  const [overrideModelId, setOverrideModelId] = useState(data.overrideModelId || '');
+  const [overrideSystemPrompt, setOverrideSystemPrompt] = useState(data.overrideSystemPrompt || '');
   const [isOpen, setIsOpen] = useState(false);
 
   const activeAgent = agents.find(a => a.id === selectedAgentId);
+  const selectedOverrideProvider = providers.find(p => p.id === overrideProviderId);
 
   const handleSave = () => {
     setNodes((nds) =>
@@ -33,9 +37,11 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
             data: {
               ...applyNodeBaseConfigDraft(node.data, baseConfig),
               agentId: selectedAgentId,
-              prompt: localPrompt,
-              autoSendToNext: localAutoSend,
               schema: localSchema,
+              autoSendToNext: localAutoSend,
+              overrideProviderId: overrideProviderId || undefined,
+              overrideModelId: overrideModelId || undefined,
+              overrideSystemPrompt: overrideSystemPrompt || undefined,
             },
           };
         }
@@ -77,7 +83,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
             <DialogHeader>
               <DialogTitle>Configure Agent Node</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>Assigned Agent</Label>
@@ -103,15 +109,50 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="prompt">Node Prompt / Instructions</Label>
+                <Label htmlFor="systemPrompt">Override System Prompt</Label>
                 <Textarea
-                  id="prompt"
-                  value={localPrompt}
-                  onChange={(e) => setLocalPrompt(e.target.value)}
-                  placeholder="What should this agent do when triggered?"
+                  id="systemPrompt"
+                  value={overrideSystemPrompt}
+                  onChange={(e) => setOverrideSystemPrompt(e.target.value)}
+                  placeholder="Leave empty to use the agent's default system prompt"
                   className="resize-none h-24"
                 />
+                <p className="text-[10px] text-muted-foreground">If set, this replaces the agent's system prompt for this node only.</p>
               </div>
+
+              {/* Node-level overrides */}
+              <div className="border border-amber-200 dark:border-amber-900/40 rounded-lg p-3 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
+                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">Node-level Overrides (local only)</h5>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Override Provider</Label>
+                  <Select value={overrideProviderId} onValueChange={(v) => { setOverrideProviderId(v); setOverrideModelId(''); }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Use agent default" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Use agent default</SelectItem>
+                      {providers.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Override Model</Label>
+                  <Select value={overrideModelId} onValueChange={setOverrideModelId} disabled={!overrideProviderId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={overrideProviderId ? "Use provider default" : "Select a provider first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Use provider default</SelectItem>
+                      {selectedOverrideProvider?.models.map(m => (
+                        <SelectItem key={m.id} value={m.modelId}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
                   <Label>Auto Send to Next</Label>

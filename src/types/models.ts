@@ -7,15 +7,32 @@ export interface Agent {
   systemPrompt: string;
   industry?: string;
   category?: string;
-  modelProvider: 'local' | 'openai' | 'anthropic' | 'google' | 'siliconflow' | 'custom';
-  modelId: string;
+
+  // New multi-provider routing fields
+  providerId?: string;      // Reference to ModelProvider.id
+  modelId?: string;         // Reference to ProviderModel.modelId
+
   isActive?: boolean;
   type?: 'general' | 'coder' | 'reviewer' | 'planner';
   temperature?: number;
   maxTokens?: number;
   parameters?: any;
+
+  // Legacy fields — kept for backward compatibility, no longer used in UI
+  /** @deprecated Use providerId instead */
+  modelProvider?: 'local' | 'openai' | 'anthropic' | 'google' | 'siliconflow' | 'custom';
+  /** @deprecated Use modelId instead */
   apiKey?: string;
+  /** @deprecated Provider-level API config no longer needed */
   baseUrl?: string;
+
+  createdAt?: number;
+}
+
+export interface AgentCategory {
+  id: string;
+  name: string;
+  description?: string;
   createdAt?: number;
 }
 
@@ -54,6 +71,11 @@ export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {
   agentId?: string;
   prompt?: string;
   autoSendToNext?: boolean;
+
+  // Node-level overrides (local to this workflow node, do not mutate the global Agent config)
+  overrideProviderId?: string;
+  overrideModelId?: string;
+  overrideSystemPrompt?: string;
 }
 
 export type WorkflowNodeData = WorkflowNodeDataBase &
@@ -117,6 +139,7 @@ export interface Settings {
   activeProviderId: string | null;
   allowRemoteAccess: boolean;
   remoteAccessPort: number;
+  fontSize?: number; // percentage, e.g. 100 = default, 115 = 115%
   // Legacy fields for backward compatibility
   apiProvider?: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
   openaiKey?: string;
@@ -150,6 +173,16 @@ export interface MessageMeta {
   targetAgentId?: string;
   forwardFromMessageId?: string;
   triggeredBy?: 'user' | 'auto' | 'manual' | 'reload';
+
+  // Response metadata (used during streaming to backfill AgentResponse fields)
+  providerId?: string;
+  providerName?: string;
+  modelId?: string;
+  modelName?: string;
+  status?: 'streaming' | 'complete' | 'error';
+  errorSummary?: string;
+  errorDetail?: string;
+  tokenUsage?: TokenUsage;
 }
 
 export interface TokenUsage {
@@ -161,15 +194,27 @@ export interface TokenUsage {
 export interface AgentResponse {
   agentId: string;
   nodeId?: string;
+
+  // Actual model info used for this response (populated after successful call)
+  providerId?: string;
+  providerName?: string;
   modelId?: string;
+  modelName?: string;
+  /** @deprecated Use providerId/modelId instead */
   modelProvider?: string;
+
   content: {
     text: string;
     token?: number;
   };
   tokenUsage?: TokenUsage;
   status: 'streaming' | 'complete' | 'error';
-  timestamp: number;
+  timestamp?: number;   // when streaming started
+  duration?: number;    // ms elapsed from start to complete
+
+  // Error handling — one-line summary + clickable detail
+  errorSummary?: string;
+  errorDetail?: string;
 }
 
 export interface MultiModelComparison {

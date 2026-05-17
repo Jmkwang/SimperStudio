@@ -24,6 +24,7 @@ import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Bot, Users, Send, LayoutGrid, List } from 'lucide-react';
+import { DebugBadge } from '@/components/debug/DebugBadge';
 
 export function WorkflowChatView({ session }: { session: ChatSession }) {
   const workflows = useAppStore(state => state.workflows);
@@ -113,7 +114,8 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      <DebugBadge id="WorkflowChatView" position="bottom-left" />
       <div className="p-6 pb-2 shrink-0 h-[80px] flex items-center justify-between">
         <h2 className="text-lg font-semibold">{workflow.name}</h2>
         <div className="flex items-center gap-2">
@@ -172,9 +174,6 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
                 key={message.id}
                 message={message}
                 layoutMode={chatLayoutMode}
-                actions={message.role === "assistant" ? {
-                  canCopy: true,
-                } : undefined}
               />
             ))}
           </div>

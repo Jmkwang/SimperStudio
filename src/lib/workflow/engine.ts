@@ -10,14 +10,15 @@ export async function executeWorkflow(
   edges: WorkflowEdge[],
   initialPayload: Record<string, any>,
   options: ExecutionOptions = {},
-  onStateChange?: (state: Partial<WorkflowExecutionState>) => void
+  onStateChange?: (state: Partial<WorkflowExecutionState>) => void,
+  globalState?: Record<string, any>,
 ): Promise<{ finalPayload: Record<string, any>; results: Record<string, any>; status: WorkflowExecutionState['status'] }> {
   const signal = options.signal;
   const executionId = `exec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const executedKeys = new Set<string>();
 
   const fetchNode = (nodeId: string) => nodes.find((n) => n.id === nodeId);
-  const helpers = createExecutionHelpers(fetchNode);
+  const helpers = createExecutionHelpers(fetchNode, globalState);
 
   const startNodeId = options.startNodeId;
   const startNode = startNodeId

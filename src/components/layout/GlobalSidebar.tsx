@@ -1,19 +1,18 @@
-import { MessageSquare, Workflow, Users, Settings, Moon, Sun, Wand2, Bug } from "lucide-react"
+import { MessageSquare, Workflow, Users, Settings, Moon, Sun, Wand2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useTheme } from "../theme/ThemeProvider"
 import { useTranslation } from "@/hooks/useTranslation"
-import { useAppStore } from '@/stores'
+import { DebugBadge } from "@/components/debug/DebugBadge"
 
 export function GlobalSidebar({ currentView, setCurrentView }: { currentView: string, setCurrentView: (v: string) => void }) {
   const { theme, setTheme } = useTheme()
   const { t } = useTranslation()
-  const debugMode = useAppStore(state => state.debugMode)
-  const toggleDebugMode = useAppStore(state => state.toggleDebugMode)
 
   return (
     <TooltipProvider delayDuration={3000}>
-      <div className="flex w-[60px] flex-col items-center justify-between py-5 m-1.5 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
+      <div className="relative flex w-[60px] flex-col items-center justify-between py-5 m-1.5 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
+        <DebugBadge id="GlobalSidebar" position="top-left" />
         <div className="flex flex-col items-center gap-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-lunar-300/15 to-lunar-500/5 border border-lunar-300/8 glow-sm">
             <span className="font-semibold text-sm tracking-wider text-lunar-200">S</span>
@@ -41,29 +40,6 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
             </TooltipTrigger>
             <TooltipContent side="right">
               <p>{t("Toggle Theme")}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => toggleDebugMode()}
-                className={cn(
-                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-400 ease-out",
-                  debugMode
-                    ? "bg-primary/10 text-primary border border-primary/12"
-                    : "border border-transparent text-muted-foreground hover:text-foreground hover:bg-hover hover:border-foreground/[0.06]"
-                )}
-              >
-                {debugMode && (
-                  <div className="absolute -left-[1px] top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.5)]" />
-                )}
-                <Bug className="h-4 w-4" strokeWidth={1.5} />
-                <span className="sr-only">{debugMode ? t("关闭 Debug") : t("开启 Debug")}</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>{debugMode ? t("Debug 已开启") : t("Debug 已关闭")}</p>
             </TooltipContent>
           </Tooltip>
 

@@ -2,6 +2,8 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Plus } from "lucide-react"
 import { ContextItem } from "./ContextItem"
+import { SortableList } from "./SortableList"
+import { useAppStore } from "@/stores"
 
 export function ChatSidebar({
   workflows,
@@ -31,12 +33,43 @@ export function ChatSidebar({
   t: (key: string) => string
 }) {
   const [chatTab, setChatTab] = useState<'workflows' | 'sessions'>('workflows')
+  const workflowOrder = useAppStore(state => state.workflowOrder)
+  const setWorkflowOrder = useAppStore(state => state.setWorkflowOrder)
+  const sessionOrder = useAppStore(state => state.sessionOrder)
+  const setSessionOrder = useAppStore(state => state.setSessionOrder)
+
+  const sortedWorkflows = workflowOrder.length > 0
+    ? [...workflows].sort((a, b) => {
+        const idxA = workflowOrder.indexOf(a.id)
+        const idxB = workflowOrder.indexOf(b.id)
+        if (idxA === -1 && idxB === -1) return 0
+        if (idxA === -1) return 1
+        if (idxB === -1) return -1
+        return idxA - idxB
+      })
+    : workflows
 
   const workflowSessions = selectedChatWorkflowId
     ? sessions.filter(s => s.workflowId === selectedChatWorkflowId)
     : []
 
-  const handleWorkflowSelect = (workflowId: string) => {
+  const sortedSessions = sessionOrder.length > 0
+    ? [...workflowSessions].sort((a, b) => {
+        const idxA = sessionOrder.indexOf(a.id)
+        const idxB = sessionOrder.indexOf(b.id)
+        if (idxA === -1 && idxB === -1) return 0
+        if (idxA === -1) return 1
+        if (idxB === -1) return -1
+        return idxA - idxB
+      })
+    : workflowSessions
+
+  const handleWorkflowClick = (workflowId: string) => {
+    setSelectedChatWorkflowId(workflowId)
+    setActiveSession('')
+  }
+
+  const handleWorkflowDoubleClick = (workflowId: string) => {
     setSelectedChatWorkflowId(workflowId)
     openWorkflowSession(workflowId)
     setChatTab('sessions')
@@ -87,19 +120,24 @@ export function ChatSidebar({
       <div className="flex-1 overflow-auto px-2 py-2">
         {chatTab === 'workflows' ? (
           workflows.length > 0 ? (
-            <div className="flex flex-col gap-0.5">
-              {workflows.map(w => (
+            <SortableList
+              items={sortedWorkflows}
+              getId={w => w.id}
+              onReorder={(items) => setWorkflowOrder(items.map(w => w.id))}
+              className="flex flex-col gap-0.5"
+            >
+              {(w) => (
                 <ContextItem
-                  key={w.id}
                   title={w.name}
                   icon="workflow"
                   active={selectedChatWorkflowId === w.id}
                   deletable={false}
-                  onClick={() => handleWorkflowSelect(w.id)}
+                  onClick={() => handleWorkflowClick(w.id)}
+                  onDoubleClick={() => handleWorkflowDoubleClick(w.id)}
                   t={t}
                 />
-              ))}
-            </div>
+              )}
+            </SortableList>
           ) : (
             <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-foreground/[0.08] p-6 text-center text-xs text-muted-foreground">
               {t('暂无工作流')}
@@ -117,15 +155,19 @@ export function ChatSidebar({
               </button>
             )}
             {selectedChatWorkflowId ? (
-              workflowSessions.length > 0 ? (
-                <div className="flex flex-col gap-0.5">
-                  {workflowSessions.map(s => {
+              sortedSessions.length > 0 ? (
+                <SortableList
+                  items={sortedSessions}
+                  getId={s => s.id}
+                  onReorder={(items) => setSessionOrder(items.map(s => s.id))}
+                  className="flex flex-col gap-0.5"
+                >
+                  {(s) => {
                     const sessionAgent = s.mode === 'workflow'
                       ? undefined
                       : agents.find(a => a.id === (s as any).activeAgentId) || agents[0]
                     return (
                       <ContextItem
-                        key={s.id}
                         title={s.title}
                         icon="agent"
                         avatar={sessionAgent?.avatar}
@@ -137,8 +179,8 @@ export function ChatSidebar({
                         t={t}
                       />
                     )
-                  })}
-                </div>
+                  }}
+                </SortableList>
               ) : (
                 <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-foreground/[0.08] p-6 text-center text-xs text-muted-foreground">
                   {t('暂无会话，点击 + 新建')}

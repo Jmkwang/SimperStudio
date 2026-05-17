@@ -84,6 +84,7 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
       activeProviderId: 'siliconflow-default',
       allowRemoteAccess: true,
       remoteAccessPort: 1420,
+      fontSize: 100,
     },
 
     updateSettings: (updates) => set((state: any) => {

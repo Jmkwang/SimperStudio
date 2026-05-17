@@ -3,6 +3,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import type { ModelProvider } from '@/types/models';
+import type { ResolvedModelConfig } from './agentProviderRouter';
 
 /** 自动拼 /v1：用户只需填域名，程序补全版本路径 */
 function ensureV1(url: string): string {
@@ -15,6 +16,15 @@ function apiBase(provider: ModelProvider): string {
     return ensureV1(provider.baseUrl);
 }
 
+export async function fetchFromResolvedConfig(
+  config: ResolvedModelConfig,
+  prompt: string,
+  systemPrompt?: string,
+) {
+  return fetchFromProvider(config.provider, config.model.modelId, prompt, systemPrompt);
+}
+
+/** @deprecated Use fetchFromResolvedConfig via agentProviderRouter instead */
 export async function fetchFromModel(provider: string, modelId: string, prompt: string, settings: any, systemPrompt?: string) {
     // New multi-provider system
     if (settings.providers && settings.activeProviderId) {
@@ -54,8 +64,6 @@ export async function fetchFromModel(provider: string, modelId: string, prompt: 
 
 export async function fetchFromProvider(provider: ModelProvider, modelId: string, prompt: string, systemPrompt?: string) {
     let model;
-    const defaultModel = provider.models.find(m => m.isDefault) || provider.models[0];
-    const finalModelId = modelId || defaultModel?.modelId || '';
 
     if (provider.type === 'openai' || provider.type === 'custom' || provider.type === 'siliconflow' || provider.type === 'deepseek') {
         if (provider.apiFormat === 'anthropic-messages') {
@@ -63,16 +71,16 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
                 baseURL: apiBase(provider),
                 apiKey: provider.apiKey || '',
             });
-            model = anthropic(finalModelId);
+            model = anthropic(modelId);
         } else {
             const openai = createOpenAI({
                 baseURL: apiBase(provider),
                 apiKey: provider.apiKey || 'sk-custom',
             });
             if (provider.apiFormat === 'openai-responses') {
-                model = openai(finalModelId);
+                model = openai(modelId);
             } else {
-                model = openai.chat(finalModelId);
+                model = openai.chat(modelId);
             }
         }
     } else if (provider.type === 'anthropic') {
@@ -80,12 +88,12 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
             baseURL: apiBase(provider),
             apiKey: provider.apiKey || '',
         });
-        model = anthropic(finalModelId);
+        model = anthropic(modelId);
     } else if (provider.type === 'gemini') {
         const google = createGoogleGenerativeAI({
             apiKey: provider.apiKey || '',
         });
-        model = google(finalModelId);
+        model = google(modelId);
     } else {
         throw new Error(`Unsupported provider type: ${provider.type}`);
     }

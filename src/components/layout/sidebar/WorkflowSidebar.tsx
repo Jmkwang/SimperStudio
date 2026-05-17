@@ -1,5 +1,7 @@
 import { Plus } from "lucide-react"
 import { ContextItem } from "./ContextItem"
+import { SortableList } from "./SortableList"
+import { useAppStore } from "@/stores"
 
 export function WorkflowSidebar({
   workflows,
@@ -18,6 +20,24 @@ export function WorkflowSidebar({
   activeWorkspaceId: string | null
   t: (key: string) => string
 }) {
+  const workflowOrder = useAppStore(state => state.workflowOrder)
+  const setWorkflowOrder = useAppStore(state => state.setWorkflowOrder)
+
+  const sortedWorkflows = workflowOrder.length > 0
+    ? [...workflows].sort((a, b) => {
+        const idxA = workflowOrder.indexOf(a.id)
+        const idxB = workflowOrder.indexOf(b.id)
+        if (idxA === -1 && idxB === -1) return 0
+        if (idxA === -1) return 1
+        if (idxB === -1) return -1
+        return idxA - idxB
+      })
+    : workflows
+
+  const handleReorder = (items: typeof workflows) => {
+    setWorkflowOrder(items.map(w => w.id))
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-2 border-b border-border">
@@ -30,11 +50,15 @@ export function WorkflowSidebar({
         </button>
       </div>
       <div className="flex-1 overflow-auto px-2 pt-2 pb-2">
-        {workflows.length > 0 ? (
-          <div className="flex flex-col gap-0.5">
-            {workflows.map(w => (
+        {sortedWorkflows.length > 0 ? (
+          <SortableList
+            items={sortedWorkflows}
+            getId={w => w.id}
+            onReorder={handleReorder}
+            className="flex flex-col gap-0.5"
+          >
+            {(w) => (
               <ContextItem
-                key={w.id}
                 title={w.name}
                 icon="workflow"
                 active={activeWorkflowId === w.id}
@@ -43,8 +67,8 @@ export function WorkflowSidebar({
                 onDelete={() => deleteWorkflow(w.id)}
                 t={t}
               />
-            ))}
-          </div>
+            )}
+          </SortableList>
         ) : (
           <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-foreground/[0.08] p-6 text-center text-xs text-muted-foreground">
             {t('暂无工作流，点击 + 创建。')}

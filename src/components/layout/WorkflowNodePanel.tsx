@@ -1,6 +1,7 @@
 import { useAppStore } from '@/stores'
 import { useTranslation } from "@/hooks/useTranslation"
 import { Bot, ChevronRight } from "lucide-react"
+import { DebugBadge } from "@/components/debug/DebugBadge"
 
 export function WorkflowNodePanel({ currentView }: { currentView: string }) {
   const { t } = useTranslation()
@@ -29,7 +30,8 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
   if (collapsed) return null
 
   return (
-    <div className="flex flex-col border-r bg-background/50 w-72 flex-shrink-0">
+    <div className="relative flex flex-col border-r bg-background/50 w-72 flex-shrink-0">
+      <DebugBadge id="WorkflowNodePanel" position="top-right" />
       <div className="p-2 border-b h-14 flex items-center justify-between">
         <div className="min-w-0 px-2">
           <div className="truncate text-sm font-semibold">{workflowForActiveSession?.name || 'Workflow'}</div>

@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { WorkflowConversationWindow } from '@/types/models';
+import { WorkflowConversationWindow, WorkflowNode } from '@/types/models';
 import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Minus, Send, X } from 'lucide-react';
+import { Minus, Send, X, Layers } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
@@ -19,16 +19,26 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
 
   const sessions = useAppStore(state => state.sessions);
   const agents = useAppStore(state => state.agents);
+  const workflows = useAppStore(state => state.workflows);
   const closeWorkflowAgentWindow = useAppStore(state => state.closeWorkflowAgentWindow);
   const focusWorkflowAgentWindow = useAppStore(state => state.focusWorkflowAgentWindow);
   const toggleWorkflowAgentWindowMinimized = useAppStore(state => state.toggleWorkflowAgentWindowMinimized);
   const sendToWorkflowAgent = useAppStore(state => state.sendToWorkflowAgent);
   const rerunAgentReply = useAppStore(state => state.rerunAgentReply);
-  const rerunAndForwardAgentReply = useAppStore(state => state.rerunAndForwardAgentReply);
-  const forwardAgentReplyToNext = useAppStore(state => state.forwardAgentReplyToNext);
 
   const agent = agents.find(item => item.id === windowData.agentId);
   const session = sessions.find(item => item.id === windowData.sessionId);
+
+  const node = useMemo(() => {
+    const workflow = workflows.find(w => w.id === windowData.workflowId);
+    return workflow?.nodesData.find((n): n is WorkflowNode => n.id === windowData.nodeId && n.type === 'agent');
+  }, [workflows, windowData.workflowId, windowData.nodeId]);
+
+  const hasOverrides = !!(
+    node?.data?.overrideProviderId ||
+    node?.data?.overrideModelId ||
+    node?.data?.overrideSystemPrompt
+  );
 
   const messages = useMemo(() => {
     if (!session) return [];
@@ -80,7 +90,15 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
           </Avatar>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{agent?.name || windowData.agentId}</div>
-            <div className="truncate text-xs text-muted-foreground">{t('Node')}: {windowData.nodeId}</div>
+            <div className="truncate text-xs text-muted-foreground flex items-center gap-1">
+              {t('Node')}: {windowData.nodeId}
+              {hasOverrides && (
+                <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                  <Layers className="h-3 w-3" />
+                  {t('Override')}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -117,24 +135,11 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
                 agentId={windowData.agentId}
                 nodeId={windowData.nodeId}
                 emptyText={t('Copied attachment')}
-                actions={message.role === 'assistant' ? {
-                  canCopy: true,
-                  canRerun: true,
-                  canForward: true,
-                  canRerunAndForward: true,
-                  onRerun: () => {
-                    const text = message.agentResponses?.find(
-                      r => r.agentId === windowData.agentId && r.nodeId === windowData.nodeId
-                    )?.content.text;
-                    if (text) rerunAgentReply(windowData.sessionId, windowData.nodeId, text);
-                  },
-                  onForward: () => forwardAgentReplyToNext(windowData.sessionId, windowData.nodeId, message.id, windowData.agentId, 'manual'),
-                  onRerunAndForward: () => {
-                    const text = message.agentResponses?.find(
-                      r => r.agentId === windowData.agentId && r.nodeId === windowData.nodeId
-                    )?.content.text;
-                    if (text) rerunAndForwardAgentReply(windowData.sessionId, windowData.nodeId, text);
-                  },
+                onRetry={message.role === 'assistant' ? (agentId: string) => {
+                  const text = message.agentResponses?.find(
+                    r => r.agentId === agentId && r.nodeId === windowData.nodeId
+                  )?.content.text;
+                  if (text) rerunAgentReply(windowData.sessionId, windowData.nodeId, text);
                 } : undefined}
               />
             ))}

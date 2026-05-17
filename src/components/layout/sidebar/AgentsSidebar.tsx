@@ -1,144 +1,166 @@
-import { useState } from "react"
+import { useState } from 'react'
 import { cn } from "@/lib/utils"
-import { Bot, ChevronLeft, Plus } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useAppStore } from '@/stores'
-import { AgentDetailPopover } from "./AgentDetailPopover"
+import { Bot, Plus } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { SortableList } from "./SortableList"
+import { useAppStore } from "@/stores"
 
 export function AgentsSidebar({
   agents,
-  activeAgentId,
-  setActiveAgent,
+  agentCategories,
+  addAgentCategory,
+  selectedCategory,
+  onSelectCategory,
   t,
 }: {
   agents: any[]
-  activeAgentId: string | null
-  setActiveAgent: (id: string) => void
+  agentCategories: any[]
+  addAgentCategory: (category: { name: string; description?: string }) => void
+  selectedCategory: string | null
+  onSelectCategory: (category: string | null) => void
   t: (key: string) => string
 }) {
-  const [view, setView] = useState<'categories' | 'agents'>('categories')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const updateAgent = useAppStore(state => state.updateAgent)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [categoryName, setCategoryName] = useState('')
+  const agentCategoryOrder = useAppStore(state => state.agentCategoryOrder)
+  const setAgentCategoryOrder = useAppStore(state => state.setAgentCategoryOrder)
 
-  // Group agents by category (fallback to industry, then 'Uncategorized')
-  const grouped = agents.reduce((acc: Record<string, any[]>, agent: any) => {
+  // Merge agentCategories with categories inferred from agents
+  const categoriesFromAgents = agents.reduce((acc: Record<string, number>, agent: any) => {
     const category = agent.category || agent.industry || 'Uncategorized'
-    if (!acc[category]) acc[category] = []
-    acc[category].push(agent)
+    acc[category] = (acc[category] || 0) + 1
     return acc
-  }, {} as Record<string, any[]>)
+  }, {} as Record<string, number>)
 
-  const categories = Object.keys(grouped)
+  // Merge: store categories first, then agent-derived ones not in store
+  const mergedCounts: Record<string, number> = { ...categoriesFromAgents }
+  agentCategories.forEach((cat: any) => {
+    if (!mergedCounts[cat.name]) mergedCounts[cat.name] = 0
+  })
 
-  const handleCategoryClick = (category: string) => {
-    setSelectedCategory(category)
-    setView('agents')
+  let allCategoryNames = Object.keys(mergedCounts)
+
+  // Sort by agentCategoryOrder if available
+  if (agentCategoryOrder.length > 0) {
+    allCategoryNames = [...allCategoryNames].sort((a, b) => {
+      const idxA = agentCategoryOrder.indexOf(a)
+      const idxB = agentCategoryOrder.indexOf(b)
+      if (idxA === -1 && idxB === -1) return 0
+      if (idxA === -1) return 1
+      if (idxB === -1) return -1
+      return idxA - idxB
+    })
+  } else {
+    // Sort: store categories first, then by name
+    allCategoryNames = allCategoryNames.sort((a, b) => {
+      const aInStore = agentCategories.some((c: any) => c.name === a)
+      const bInStore = agentCategories.some((c: any) => c.name === b)
+      if (aInStore && !bInStore) return -1
+      if (!aInStore && bInStore) return 1
+      return a.localeCompare(b)
+    })
   }
 
-  const handleBackToCategories = () => {
-    setView('categories')
-    setSelectedCategory(null)
+  const handleAddCategory = () => {
+    if (categoryName.trim()) {
+      addAgentCategory({ name: categoryName.trim() })
+      setCategoryName('')
+      setIsDialogOpen(false)
+    }
   }
 
-  const handleAgentSave = (agentId: string, updates: Record<string, any>) => {
-    updateAgent(agentId, updates)
+  const handleReorder = (items: typeof allCategoryNames) => {
+    setAgentCategoryOrder(items)
   }
 
-  // Category List View
-  if (view === 'categories') {
-    return (
-      <div className="flex flex-col h-full overflow-auto py-2">
-        <div className="flex flex-col gap-0.5 px-2">
-          {/* Add New Agent */}
-          <button
-            onClick={() => setActiveAgent('__create_new__')}
-            className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl mb-1"
-          >
-            <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-            <span>{t('添加新助手')}</span>
-          </button>
+  return (
+    <div className="flex flex-col h-full overflow-auto py-2">
+      <div className="flex flex-col gap-0.5 px-2">
+        {/* Add New Category */}
+        <button
+          onClick={() => setIsDialogOpen(true)}
+          className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl mb-1"
+        >
+          <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          <span>{t('添加智能体分类')}</span>
+        </button>
 
-          {/* Category List */}
-          {categories.map(category => {
-            const catAgents = grouped[category]
+        {/* Category List */}
+        <SortableList
+          items={allCategoryNames}
+          getId={name => name}
+          onReorder={handleReorder}
+          className="flex flex-col gap-0.5"
+        >
+          {(category) => {
+            const count = mergedCounts[category]
+            const isSelected = selectedCategory === category
             return (
               <button
-                key={category}
-                onClick={() => handleCategoryClick(category)}
-                className="flex w-full items-center justify-between px-3 h-10 text-sm text-foreground transition-all duration-400 ease-out hover:bg-hover rounded-xl border border-transparent hover:border-foreground/[0.06]"
+                onClick={() => onSelectCategory(isSelected ? null : category)}
+                className={cn(
+                  "flex w-full items-center justify-between px-3 h-10 text-sm transition-all duration-400 ease-out rounded-xl border",
+                  isSelected
+                    ? "bg-primary/8 text-foreground border-primary/10"
+                    : "text-foreground border-transparent hover:bg-hover hover:border-foreground/[0.06]"
+                )}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.08]">
+                  <div className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border",
+                    isSelected ? "border-primary/20" : "border-foreground/[0.08]"
+                  )}>
                     <Bot className="h-3 w-3" strokeWidth={1.5} />
                   </div>
                   <span>{category}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground/60">{catAgents.length}</span>
-                  <ChevronLeft className="h-3 w-3 rotate-180 text-muted-foreground/40" strokeWidth={1.5} />
+                  <span className="text-[10px] text-muted-foreground/60">{count}</span>
                 </div>
               </button>
             )
-          })}
-        </div>
+          }}
+        </SortableList>
       </div>
-    )
-  }
 
-  // Agent List View (for selected category)
-  const catAgents = selectedCategory ? grouped[selectedCategory] || [] : []
-
-  return (
-    <div className="flex flex-col h-full overflow-auto py-2">
-      <div className="flex flex-col gap-0.5 px-2">
-        {/* Back Button */}
-        <button
-          onClick={handleBackToCategories}
-          className="flex w-full items-center gap-2 px-3 h-9 text-xs text-muted-foreground transition-all duration-400 ease-out hover:text-foreground rounded-lg mb-1"
-        >
-          <ChevronLeft className="h-3 w-3" strokeWidth={1.5} />
-          <span>{t('返回分类')}</span>
-        </button>
-
-        {/* Category Title */}
-        <div className="px-3 py-2">
-          <h3 className="text-xs font-semibold text-foreground">{selectedCategory}</h3>
-          <p className="text-[10px] text-muted-foreground mt-0.5">{catAgents.length} {t('个助手')}</p>
-        </div>
-
-        {/* Agent List */}
-        <div className="flex flex-col gap-0.5">
-          {catAgents.map(agent => (
-            <AgentDetailPopover
-              key={agent.id}
-              agent={agent}
-              onSave={(updates) => handleAgentSave(agent.id, updates)}
-            >
-              <div
-                className={cn(
-                  "group relative flex w-full items-center text-sm rounded-xl transition-all duration-400 ease-out cursor-pointer",
-                  activeAgentId === agent.id
-                    ? "bg-primary/8 text-foreground border border-primary/10 glow-sm"
-                    : "border border-transparent text-foreground hover:bg-hover hover:border-foreground/[0.06]"
-                )}
-              >
-                {activeAgentId === agent.id && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.5)]" />
-                )}
-                <div className="min-w-0 flex-1 flex items-center gap-2.5 px-3 h-10">
-                  <Avatar className="h-5 w-5 shrink-0 rounded-lg border border-foreground/[0.08]">
-                    <AvatarImage src={agent.avatar} />
-                    <AvatarFallback className="bg-transparent text-current text-[8px]">
-                      {agent.name?.slice(0, 1) || "A"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="block truncate">{agent.name}</span>
-                </div>
-              </div>
-            </AgentDetailPopover>
-          ))}
-        </div>
-      </div>
+      {/* Add Category Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{t('添加新分类')}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="categoryName">{t('分类名称')}</Label>
+              <Input
+                id="categoryName"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                placeholder={t('例如：市场营销')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCategory()
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
+              {t('取消')}
+            </Button>
+            <Button onClick={handleAddCategory} disabled={!categoryName.trim()}>
+              {t('添加')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

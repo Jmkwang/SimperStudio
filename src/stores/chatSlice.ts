@@ -2,9 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { invoke } from '@tauri-apps/api/core';
 import {
   ChatSession, ChatMessage, Agent, Workflow, WorkflowNode,
-  MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData
+  MessageAttachment, MessageMeta, WorkflowConversationWindow, AgentChatWindowData,
+  WorkflowAgentNodeData,
 } from '../types/models';
-import { fetchFromModel } from '@/lib/api';
+import { fetchFromResolvedConfig } from '@/lib/api';
+import { resolveAgentModelConfig, shortError, ResolveSettings } from '@/lib/agentProviderRouter';
 import { createUserMessage, createStreamMessage, createAgentResponse } from '@/lib/messageService';
 import { writeConfig } from './baseSlice';
 
@@ -50,68 +52,76 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
 }
 
 async function runAgentResponse({
-  sessionId, messageId, agent, prompt, nodeId,
+  sessionId, messageId, agent, prompt, nodeId, nodeData,
   addAgentResponseStream, completeAgentResponse, getSettings,
 }: {
   sessionId: string; messageId: string; agent: Agent; prompt: string; nodeId?: string;
+  nodeData?: Pick<WorkflowAgentNodeData, 'overrideProviderId' | 'overrideModelId' | 'overrideSystemPrompt'>;
   addAgentResponseStream: any; completeAgentResponse: any; getSettings: () => any;
 }) {
   addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId);
   try {
-    const settings = getSettings();
-    const activeProvider = settings.activeProviderId ? settings.providers.find((p: any) => p.id === settings.activeProviderId) : null;
-    const defaultModel = activeProvider?.models.find((m: any) => m.isDefault) || activeProvider?.models[0];
-    const providerToUse: string = activeProvider
-      ? activeProvider.type
-      : (settings.apiProvider === 'custom' ? 'custom' : agent.modelProvider);
-    const modelToUse = activeProvider
-      ? (defaultModel?.modelId || '')
-      : (settings.apiProvider === 'custom' ? settings.customModelId : agent.modelId);
-    const hasKey = activeProvider
-      ? !!activeProvider.apiKey
-      : (providerToUse === 'openai' && settings.openaiKey) ||
-        (providerToUse === 'anthropic' && settings.anthropicKey) ||
-        (providerToUse === 'google' && settings.googleKey) ||
-        providerToUse === 'custom';
+    const settings: ResolveSettings = getSettings();
 
-    if (!hasKey) {
-      await simulateAgentStream({ sessionId, messageId, agent, prompt, nodeId, addAgentResponseStream, completeAgentResponse, settings, isCustom: providerToUse === 'custom' });
-      return;
-    }
+    // 1. Resolve provider + model via the new router (no fallback)
+    const config = resolveAgentModelConfig(agent, nodeData, settings);
 
-    const { textStream } = await fetchFromModel(providerToUse, modelToUse || '', prompt, settings, agent.systemPrompt);
-    for await (const textPart of textStream) {
-      addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId);
-    }
-    completeAgentResponse(sessionId, messageId, agent.id, nodeId);
-  } catch (e: any) {
-    addAgentResponseStream(sessionId, messageId, agent.id, `\n\n错误：模型请求失败。${e.message || e}`, nodeId);
-    completeAgentResponse(sessionId, messageId, agent.id, nodeId);
-  }
-}
+    // 2. Determine system prompt: node override > agent systemPrompt
+    const systemPrompt = nodeData?.overrideSystemPrompt || agent.systemPrompt;
 
-function simulateAgentStream({
-  sessionId, messageId, agent, prompt, nodeId,
-  addAgentResponseStream, completeAgentResponse, settings, isCustom,
-}: {
-  sessionId: string; messageId: string; agent: Agent; prompt: string; nodeId?: string;
-  addAgentResponseStream: any; completeAgentResponse: any; settings: any; isCustom: boolean;
-}) {
-  return new Promise<void>((resolve) => {
-    const modelContext = isCustom ? `通过 ${settings.customBaseUrl} 使用 ${settings.customModelId}` : `使用 ${agent.modelProvider}/${agent.modelId}`;
-    const chunks = `你好，我是${agent.name}。我正在${modelContext}响应。你说：“${prompt}”。`.split('');
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      if (currentIndex < chunks.length) {
-        addAgentResponseStream(sessionId, messageId, agent.id, chunks[currentIndex], nodeId);
-        currentIndex++;
+    // 3. Call the model (no fallback, errors throw)
+    const result = await fetchFromResolvedConfig(config, prompt, systemPrompt);
+
+    // 4. Stream chunks + backfill model info on first chunk
+    let firstChunk = true;
+    for await (const textPart of result.textStream) {
+      if (firstChunk && textPart) {
+        addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId, {
+          providerId: config.provider.id,
+          providerName: config.providerName,
+          modelId: config.model.modelId,
+          modelName: config.modelName,
+        });
+        firstChunk = false;
       } else {
-        clearInterval(interval);
-        completeAgentResponse(sessionId, messageId, agent.id, nodeId);
-        resolve();
+        addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId);
       }
-    }, 30);
-  });
+    }
+
+    // 5. Extract token usage after stream completes
+    let tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+    try {
+      const usage = await result.usage;
+      const promptTokens = usage.inputTokens ?? 0;
+      const completionTokens = usage.outputTokens ?? 0;
+      tokenUsage = {
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+      };
+    } catch { /* some providers may not support usage */ }
+
+    completeAgentResponse(sessionId, messageId, agent.id, nodeId, {
+      providerId: config.provider.id,
+      providerName: config.providerName,
+      modelId: config.model.modelId,
+      modelName: config.modelName,
+      tokenUsage,
+    });
+  } catch (e: any) {
+    const summary = shortError(e.message || String(e));
+    const detail = e.message || String(e);
+    addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId, {
+      status: 'error',
+      errorSummary: summary,
+      errorDetail: detail,
+    });
+    completeAgentResponse(sessionId, messageId, agent.id, nodeId, {
+      status: 'error',
+      errorSummary: summary,
+      errorDetail: detail,
+    });
+  }
 }
 
 // ── Mock Sessions ──
@@ -151,8 +161,8 @@ export interface ChatSlice {
 
   addUserMessage: (sessionId: string, text: string, attachments?: MessageAttachment[], meta?: MessageMeta) => void;
   addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string, nodeId?: string, meta?: MessageMeta) => void;
-  completeAgentResponse: (sessionId: string, messageId: string, agentId: string, nodeId?: string) => void;
-  sendMessageToAgents: (sessionId: string, prompt: string, agents: Agent[], options?: { attachments?: MessageAttachment[]; nodeId?: string; meta?: MessageMeta; addUserMessage?: boolean }) => Promise<string | undefined>;
+  completeAgentResponse: (sessionId: string, messageId: string, agentId: string, nodeId?: string, meta?: MessageMeta) => void;
+  sendMessageToAgents: (sessionId: string, prompt: string, agents: Agent[], options?: { attachments?: MessageAttachment[]; nodeId?: string; nodeData?: any; meta?: MessageMeta; addUserMessage?: boolean }) => Promise<string | undefined>;
   sendToWorkflowAgent: (sessionId: string, nodeId: string, prompt: string, options?: { addUserMessage?: boolean; triggeredBy?: MessageMeta['triggeredBy']; forwardFromMessageId?: string }) => Promise<string | undefined>;
   forwardAgentReplyToNext: (sessionId: string, fromNodeId: string, messageId: string, agentId: string, triggeredBy?: MessageMeta['triggeredBy']) => Promise<void>;
   rerunAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<string | undefined>;
@@ -285,16 +295,51 @@ export function createChatSlice(set: any, get: any): ChatSlice {
             if (assistantMsgIndex === -1) {
               newAssistantMsg = createStreamMessage(sessionId, agentId, nodeId, meta, messageId);
               newAssistantMsg.agentResponses![0].content.text = textChunk;
+              // Backfill model info / error state from meta on first creation
+              if (meta?.providerId) {
+                newAssistantMsg.agentResponses![0].providerId = meta.providerId;
+                newAssistantMsg.agentResponses![0].providerName = meta.providerName;
+                newAssistantMsg.agentResponses![0].modelId = meta.modelId;
+                newAssistantMsg.agentResponses![0].modelName = meta.modelName;
+              }
+              if (meta?.status === 'error') {
+                newAssistantMsg.agentResponses![0].status = 'error';
+                newAssistantMsg.agentResponses![0].errorSummary = meta.errorSummary;
+                newAssistantMsg.agentResponses![0].errorDetail = meta.errorDetail;
+              }
               messages.push(newAssistantMsg);
             } else {
               const msg = { ...messages[assistantMsgIndex] };
               msg.agentResponses = [...(msg.agentResponses || [])];
               const agentRespIndex = msg.agentResponses.findIndex((ar: any) => ar.agentId === agentId && ar.nodeId === nodeId);
               if (agentRespIndex === -1) {
-                msg.agentResponses.push(createAgentResponse(agentId, textChunk, nodeId, 'streaming'));
+                const newResp = createAgentResponse(agentId, textChunk, nodeId, meta?.status === 'error' ? 'error' : 'streaming');
+                if (meta?.providerId) {
+                  newResp.providerId = meta.providerId;
+                  newResp.providerName = meta.providerName;
+                  newResp.modelId = meta.modelId;
+                  newResp.modelName = meta.modelName;
+                }
+                if (meta?.status === 'error') {
+                  newResp.errorSummary = meta.errorSummary;
+                  newResp.errorDetail = meta.errorDetail;
+                }
+                msg.agentResponses.push(newResp);
               } else {
                 const resp = { ...msg.agentResponses[agentRespIndex] };
                 resp.content = { text: resp.content.text + textChunk };
+                // Backfill model info if present in meta
+                if (meta?.providerId) {
+                  resp.providerId = meta.providerId;
+                  resp.providerName = meta.providerName;
+                  resp.modelId = meta.modelId;
+                  resp.modelName = meta.modelName;
+                }
+                if (meta?.status === 'error') {
+                  resp.status = 'error';
+                  resp.errorSummary = meta.errorSummary;
+                  resp.errorDetail = meta.errorDetail;
+                }
                 msg.agentResponses[agentRespIndex] = resp;
               }
               messages[assistantMsgIndex] = msg;
@@ -316,7 +361,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       }
     },
 
-    completeAgentResponse: (sessionId, messageId, agentId, nodeId) => set((state: any) => ({
+    completeAgentResponse: (sessionId, messageId, agentId, nodeId, meta) => set((state: any) => ({
       sessions: state.sessions.map((s: ChatSession) => {
         if (s.id === sessionId) {
           const messages = [...s.messages];
@@ -325,7 +370,20 @@ export function createChatSlice(set: any, get: any): ChatSlice {
             const msg = { ...messages[msgIndex] };
             if (msg.agentResponses) {
               msg.agentResponses = msg.agentResponses.map((ar: any) =>
-                ar.agentId === agentId && ar.nodeId === nodeId ? { ...ar, status: 'complete' } : ar
+                ar.agentId === agentId && ar.nodeId === nodeId
+                  ? {
+                      ...ar,
+                      status: meta?.status || 'complete',
+                      providerId: meta?.providerId || ar.providerId,
+                      providerName: meta?.providerName || ar.providerName,
+                      modelId: meta?.modelId || ar.modelId,
+                      modelName: meta?.modelName || ar.modelName,
+                      errorSummary: meta?.errorSummary || ar.errorSummary,
+                      errorDetail: meta?.errorDetail || ar.errorDetail,
+                      duration: ar.timestamp ? Date.now() - ar.timestamp : ar.duration,
+                      tokenUsage: meta?.tokenUsage || ar.tokenUsage,
+                    }
+                  : ar
               );
             }
             messages[msgIndex] = msg;
@@ -348,6 +406,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       }
       await Promise.all(agents.map((agent: Agent) => runAgentResponse({
         sessionId, messageId, agent, prompt: promptWithAttachments, nodeId: options.nodeId,
+        nodeData: options.nodeData,
         addAgentResponseStream: get().addAgentResponseStream,
         completeAgentResponse: get().completeAgentResponse,
         getSettings: () => get().settings,
@@ -362,9 +421,17 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const node = getAgentNode(workflow, nodeId);
       const agent = agents.find((item: Agent) => item.id === node?.data?.agentId);
       if (!session || !workflow || !node || !agent) return undefined;
-      const nodePrompt = node.data?.prompt ? `${node.data.prompt}\n\n${prompt}` : prompt;
-      const messageId = await get().sendMessageToAgents(sessionId, nodePrompt, [agent], {
+
+      // Node-level overrides (local to this workflow node, do not mutate global Agent config)
+      const nodeData = {
+        overrideProviderId: node.data?.overrideProviderId,
+        overrideModelId: node.data?.overrideModelId,
+        overrideSystemPrompt: node.data?.overrideSystemPrompt || node.data?.prompt || undefined,
+      };
+
+      const messageId = await get().sendMessageToAgents(sessionId, prompt, [agent], {
         nodeId,
+        nodeData,
         addUserMessage: options.addUserMessage !== false,
         meta: { workflowId: workflow.id, workflowNodeId: nodeId, targetAgentId: agent.id, forwardFromMessageId: options.forwardFromMessageId, triggeredBy: options.triggeredBy || 'user' },
       });
@@ -411,7 +478,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       }
       const messageId = uuidv4();
       await runAgentResponse({
-        sessionId, messageId, agent, prompt,
+        sessionId, messageId, agent, prompt, nodeData: undefined,
         addAgentResponseStream: get().addAgentResponseStream,
         completeAgentResponse: get().completeAgentResponse,
         getSettings: () => get().settings,

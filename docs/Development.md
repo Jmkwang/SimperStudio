@@ -71,8 +71,14 @@ SimperStudio/
 │   │   ├── layout/
 │   │   │   ├── AppShell.tsx              # 应用外壳（布局容器）
 │   │   │   ├── GlobalSidebar.tsx         # 全局左侧导航栏（4个视图按钮）
-│   │   │   ├── ContextSidebar.tsx        # 上下文侧边栏（根据视图显示不同内容）
-│   │   │   └── WorkflowNodePanel.tsx     # 工作流节点面板（右侧浮动）
+│   │   │   ├── ContextSidebar.tsx        # 上下文侧边栏（路由壳，按视图切换子组件）
+│   │   │   ├── WorkflowNodePanel.tsx     # 工作流节点面板（右侧浮动）
+│   │   │   └── sidebar/                  # 侧边栏子组件
+│   │   │       ├── ChatSidebar.tsx       # 聊天视图侧边栏（工作流+会话列表）
+│   │   │       ├── WorkflowSidebar.tsx   # 工作流视图侧边栏
+│   │   │       ├── AgentsSidebar.tsx     # 智能体视图侧边栏（分类+Agent二级导航）
+│   │   │       ├── ContextItem.tsx       # 通用列表项组件
+│   │   │       └── SortableList.tsx      # 通用拖拽排序列表（鼠标+触摸）
 │   │   │
 │   │   ├── chat/
 │   │   │   ├── ChatInterface.tsx         # 主聊天界面（路由会话视图）
@@ -96,6 +102,7 @@ SimperStudio/
 │   │   ├── workflow/
 │   │   │   ├── WorkflowCanvas.tsx        # 工作流画布主组件
 │   │   │   ├── ExecutionTimeline.tsx     # 执行时间线面板
+│   │   │   ├── WorkflowTopologyPreview.tsx # 工作流拓扑预览（只读，13种节点渲染）
 │   │   │   └── nodes/                    # 工作流节点组件
 │   │   │       ├── TriggerNode.tsx       # 触发器节点
 │   │   │       ├── AgentNode.tsx         # Agent 节点
@@ -115,7 +122,7 @@ SimperStudio/
 │   │   │   └── PromptGenerator.tsx       # 提示词生成器
 │   │   │
 │   │   ├── agents/
-│   │   │   └── AgentsView.tsx            # Agent 管理视图
+│   │   │   └── AgentsView.tsx            # Agent 管理视图（含批量编辑、分类筛选）
 │   │   │
 │   │   ├── settings/
 │   │   │   ├── SettingsView.tsx           # 设置页壳（标签栏 + 路由）
@@ -129,17 +136,36 @@ SimperStudio/
 │   │   └── ui/                           # UI 组件库 (shadcn/ui)
 │   │       ├── button.tsx, card.tsx, dialog.tsx, input.tsx, 等
 │   │
-│   ├── store/
-│   │   └── appStore.ts                   # Zustand 全局状态管理
+│   ├── stores/                            # Zustand 状态管理（按领域拆分）
+│   │   ├── index.ts                      # 组合导出，兼容 useAppStore 接口
+│   │   ├── baseSlice.ts                  # 工作空间、Agent、配置持久化
+│   │   ├── chatSlice.ts                  # 会话、消息、流式响应、窗口管理
+│   │   ├── modelSlice.ts                 # 服务商、模型、Settings 配置
+│   │   ├── uiSlice.ts                    # 视图切换、侧边栏状态
+│   │   └── workflowSlice.ts              # 工作流 CRUD、执行状态
 │   │
 │   ├── types/
 │   │   └── models.ts                     # TypeScript 类型定义
 │   │
 │   ├── lib/
 │   │   ├── api.ts                        # API 调用封装（支持多服务商）
+│   │   ├── agentProviderRouter.ts        # 三级模型解析链（节点→Agent→全局）
 │   │   ├── utils.ts                      # 工具函数
-│   │   └── workflow/                     # 工作流引擎
-│   │       └── WorkflowEngine.ts
+│   │   └── workflow/                     # 工作流引擎 v2（函数式 + 注册表）
+│   │       ├── engine.ts                 # executeWorkflow 纯函数
+│   │       ├── helpers.ts                # withTimeout、表达式求值、Schema 校验
+│   │       ├── nodeRegistry.ts           # 节点类型→执行器注册表
+│   │       ├── types.ts                  # 引擎内部类型
+│   │       └── nodeExecutors/            # 13 种节点执行器
+│   │           ├── agentExecutor.ts
+│   │           ├── codeExecutor.ts
+│   │           ├── conditionExecutor.ts
+│   │           ├── httpExecutor.ts
+│   │           ├── loopExecutor.ts
+│   │           ├── mergeExecutor.ts
+│   │           ├── setTransformExecutor.ts
+│   │           ├── subWorkflowExecutor.ts
+│   │           └── waitDelayExecutor.ts
 │   │
 │   └── hooks/
 │       └── useTranslation.ts             # 国际化钩子
@@ -165,53 +191,49 @@ SimperStudio/
 
 ## 核心功能详解 (Core Features)
 
-### 1. 状态管理 (appStore.ts)
+### 1. 状态管理 (Zustand 五层 Slice 架构)
 
-使用 **Zustand** 集中管理应用状态，包含以下模块：
+使用 **Zustand** 按领域拆分为 5 个独立 Slice，通过 `src/stores/index.ts` 组合为统一的 `useAppStore` 接口，保持向后兼容。
+
+#### 架构概览
+
+```
+src/stores/
+  index.ts          ← 组合导出：BaseSlice & ChatSlice & ModelSlice & UISlice & WorkflowSlice
+  baseSlice.ts      ← 工作空间、Agent、Agent 分类、配置持久化（readConfig/writeConfig）
+  chatSlice.ts      ← 会话、消息、流式响应、Agent 聊天窗口、转发链路
+  modelSlice.ts     ← 服务商、模型、Settings 配置
+  uiSlice.ts        ← 视图切换、侧边栏状态、debug 模式
+  workflowSlice.ts  ← 工作流 CRUD、执行状态、AbortController
+```
 
 #### 数据实体
 - **Workspaces**：工作空间（默认包含 "Personal Workspace"）
-- **Agents**：智能体配置（预置 4 个示例 Agent）
-- **Sessions**：聊天会话（默认 3 个会话）
-- **Workflows**：工作流定义（默认 5 个，含狼人杀示例）
+- **Agents**：智能体配置（预置 12 个示例 Agent，含狼人杀角色）
+- **AgentCategories**：Agent 分类（按 category 字段分组）
+- **Sessions**：聊天会话（支持 single / workflow 两种模式）
+- **Workflows**：工作流定义（默认 4 个，含狼人杀示例）
 
-#### 关键状态
-```typescript
-interface AppState {
-  workspaces: Workspace[];
-  agents: Agent[];
-  sessions: ChatSession[];
-  workflows: Workflow[];
-  activeWorkspaceId: string | null;
-  activeSessionId: string | null;
-  activeWorkflowId: string | null;
-  activeAgentId: string | null;
-  selectedChatWorkflowId: string | null;  // 聊天视图中选中的工作流
-  workflowChatMode: boolean;              // 工作流聊天模式开关
-  workflowExecution: {                    // 工作流执行状态
-    status: 'idle' | 'running' | 'completed' | 'error';
-    currentNodeId: string | null;
-    results: Record<string, any>;
-    nodeRecords: Record<string, NodeExecutionRecord>;
-  };
-  workflowChatUI: {                       // 工作流聊天 UI 状态
-    sidebarCollapsedBySession: Record<string, boolean>;
-    windows: WorkflowConversationWindow[];
-    activeWindowId: string | null;
-    zIndexCounter: number;
-  };
-  contextSidebarTab: 'workflows' | 'sessions';  // 侧边栏标签（旧，已按视图区分）
-}
-```
+#### 各 Slice 职责
 
-#### 核心 Actions
-- **fetchInitialData()**：初始化数据（从 SQLite 加载）
-- **createSession/openWorkflowSession**：会话管理
-- **addAgentResponseStream/completeAgentResponse**：流式响应处理
-- **executeWorkflow()**：工作流执行引擎（支持 startNodeId 断点续跑）
-- **cancelWorkflowExecution()**：取消正在执行的工作流
-- **saveWorkflow()**：工作流持久化（含节点数据规范化）
-- **addProvider/updateProvider/deleteProvider/setActiveProvider**：多服务商模型管理
+| Slice | 状态 | 核心 Actions |
+|-------|------|-------------|
+| **baseSlice** | workspaces, agents, agentCategories | `fetchInitialData`, `addAgent`, `updateAgent`, `batchUpdateAgents`, `addAgentCategory` |
+| **chatSlice** | sessions, workflowChatUI | `createSession`, `openWorkflowSession`, `sendMessageToAgents`, `sendToWorkflowAgent`, `forwardAgentReplyToNext`, 窗口管理 |
+| **modelSlice** | settings (providers, activeProviderId) | `updateSettings`, `addProvider`, `updateProvider`, `deleteProvider`, `setActiveProvider` |
+| **uiSlice** | activeWorkspaceId/SessionId/WorkflowId/AgentId, debugMode | 各 active ID setter, `toggleDebugMode` |
+| **workflowSlice** | workflows, workflowExecution, _abortController | `createWorkflow`, `saveWorkflow`, `deleteWorkflow`, `executeWorkflow`, `cancelWorkflowExecution` |
+
+#### 配置持久化
+
+`baseSlice` 提供 `readConfig(key)` / `writeConfig(key, data)` 统一接口：
+- **Tauri 桌面端**：通过 `invoke` 调用 Rust 后端读写 `config/config.json`
+- **浏览器回退**：使用 `localStorage`（键前缀 `simper_config`）
+- 配置按 key 分片：`settings`、`agents`、`workflows`、`model` 等
+
+#### Agent 数据迁移
+
+`migrateAgent()` 函数自动将旧版 `modelProvider` 枚举值映射到新版 `providerId` 引用，确保向后兼容。
 
 ### 2. 多服务商模型管理
 
@@ -283,6 +305,18 @@ fetchFromProvider(provider, modelId, prompt, systemPrompt)
      - 'anthropic-messages': createAnthropic() → /v1/messages
 ```
 
+#### 三级模型解析链 (agentProviderRouter.ts)
+
+`resolveAgentModelConfig(agent, nodeData?, settings?)` 实现三级解析：
+
+1. **节点级覆盖**：`nodeData.overrideProviderId` / `overrideModelId` — 工作流中单个节点可指定不同模型
+2. **Agent 级配置**：`agent.providerId` / `agent.modelId` — Agent 自身绑定的模型
+3. **全局默认**：`settings.activeProviderId` + 该 provider 的默认模型
+
+每级均校验：provider 存在性、启用状态、API Key 非空、模型可用性。失败时抛出中文描述错误。
+
+`shortError()` 将 HTTP/网络技术错误翻译为用户友好的简短提示（401/403/404/429/500/503/超时/网络/配置错误）。
+
 ### 3. 布局架构 (AppShell)
 
 三栏布局结构：
@@ -308,15 +342,27 @@ fetchFromProvider(provider, modelId, prompt, systemPrompt)
 - 提示词 → PromptGenerator
 - 设置 → SettingsView
 
-### 4. 工作流执行引擎 (executeWorkflow)
+### 4. 工作流执行引擎 v2 (函数式 + 注册表架构)
 
-位于 `appStore.ts` 的 `executeWorkflow` 函数，实现了一个基于队列的 DAG 执行引擎：
+已从 `appStore.ts` 中提取为独立的纯函数模块，位于 `src/lib/workflow/`：
+
+```
+lib/workflow/
+  engine.ts          ← executeWorkflow() 纯函数，BFS 队列驱动
+  nodeRegistry.ts    ← 节点类型→执行器注册表，含 computeCustomRouting()
+  helpers.ts         ← withTimeout、表达式求值、Schema 校验、sleep
+  types.ts           ← 引擎内部类型（ExecutionFrame、NodeExecutor、ExecutionHelpers 等）
+  nodeExecutors/     ← 13 种节点各自的执行逻辑
+```
 
 #### 执行模型
-- **队列驱动**：使用 BFS 遍历工作流节点
-- **帧隔离**：每个节点执行使用独立的 `ExecutionFrame`
+- **纯函数**：`executeWorkflow(nodes, edges, payload, settings, options)` — 无副作用，返回执行结果
+- **队列驱动**：使用 BFS 遍历工作流节点，`ExecutionFrame` 携带 `{nodeId, payload}`
+- **注册表模式**：`nodeRegistry` 维护 `Map<string, RegisteredExecutor>`，新节点只需注册 executor
 - **上下文传递**：通过 `payload` 对象在节点间传递数据
 - **循环保护**：`MAX_WORKFLOW_STEPS = 1000` 防止无限循环
+- **AbortSignal 支持**：用户可随时取消执行
+- **onStateChange 回调**：实时通知 UI 更新执行状态
 
 #### 节点类型支持（13 种）
 
@@ -713,6 +759,20 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ## 版本历史
 
+### v0.4.0 (2026-05-17)
+- **Store 五层 Slice 架构**：将 2000+ 行单体 `appStore.ts` 拆分为 baseSlice/chatSlice/modelSlice/uiSlice/workflowSlice，按领域关注点分离
+- **工作流引擎 v2**：从类式改为函数式架构，`executeWorkflow` 提取为纯函数，新增 nodeRegistry 注册表模式，13 种节点各有独立 executor
+- **引擎增强**：AbortSignal 取消执行、onStateChange 实时回调、输入输出 Schema 校验、节点级超时/重试/失败策略
+- **Agent 分类系统**：Agent 增加 `category` 字段，侧边栏分类+Agent 二级导航，分类筛选
+- **批量编辑模式**：Agent 视图支持批量选择、按分类全选、批量修改 Provider/Model
+- **三级模型解析链**：`agentProviderRouter.ts` 实现节点覆盖→Agent 配置→全局默认三级解析
+- **Provider/Model 选择器重构**：Agent 创建/编辑移除 per-agent API Key，改用全局 Provider 配置
+- **工作流节点模型覆盖**：Agent 节点支持 `overrideProviderId`/`overrideModelId` 覆盖全局配置
+- **侧边栏组件化**：ContextSidebar 拆分为 ChatSidebar/WorkflowSidebar/AgentsSidebar 独立组件
+- **SortableList 组件**：通用拖拽排序列表，支持鼠标拖拽和触摸长按
+- **WorkflowTopologyPreview**：只读工作流拓扑预览组件，支持 13 种节点类型渲染
+- **AgentCard 组件提取**：从 AgentsView 提取可复用卡片组件，支持批量选择
+
 ### v0.3.0 (2026-05-07)
 - API 格式支持：三种格式切换（OpenAI Chat Completions / Responses / Anthropic Messages），自动补全 `/v1`
 - DeepSeek 服务商支持，默认模型 deepseek-v4-flash / deepseek-v4-pro
@@ -749,28 +809,38 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ### 关键文件路径索引
 
-#### 核心状态管理
-- `src/store/appStore.ts` - 全局 Zustand 状态，包含所有工作流逻辑
-  - `executeWorkflow()` - 工作流执行引擎
-  - `saveWorkflow()` - 工作流持久化
-  - `workflowExecution` 状态 - 跟踪执行状态
-  - `addProvider/updateProvider/deleteProvider/setActiveProvider` - 多服务商管理
+#### 核心状态管理（五层 Slice 架构）
+- `src/stores/index.ts` - 组合导出，`useAppStore = BaseSlice & ChatSlice & ModelSlice & UISlice & WorkflowSlice`
+- `src/stores/baseSlice.ts` - 工作空间、Agent、Agent 分类、配置持久化（readConfig/writeConfig）
+- `src/stores/chatSlice.ts` - 会话、消息、流式响应、Agent 聊天窗口、转发链路
+- `src/stores/modelSlice.ts` - 服务商、模型、Settings 配置
+- `src/stores/uiSlice.ts` - 视图切换、侧边栏状态、debug 模式
+- `src/stores/workflowSlice.ts` - 工作流 CRUD、执行状态、AbortController
 
 #### 多服务商模型管理
 - `src/types/models.ts` - ModelProvider / ProviderModel / Settings 类型定义
 - `src/components/settings/SettingsView.tsx` - 设置页壳（标签栏 + 路由）
 - `src/components/settings/SettingsModelsTab.tsx` - 模型管理页签（服务商 CRUD、模型测试、对话框）
 - `src/lib/api.ts` - fetchFromModel / fetchFromProvider API 封装
+- `src/lib/agentProviderRouter.ts` - 三级模型解析链（节点→Agent→全局）
 
 #### 布局组件
 - `src/components/layout/AppShell.tsx` - 三栏布局外壳
 - `src/components/layout/GlobalSidebar.tsx` - 左侧全局导航（4按钮）
-- `src/components/layout/ContextSidebar.tsx` - 中间上下文侧边栏（按视图切换）
+- `src/components/layout/ContextSidebar.tsx` - 中间上下文侧边栏（路由壳）
+- `src/components/layout/sidebar/ChatSidebar.tsx` - 聊天视图侧边栏
+- `src/components/layout/sidebar/WorkflowSidebar.tsx` - 工作流视图侧边栏
+- `src/components/layout/sidebar/AgentsSidebar.tsx` - 智能体视图侧边栏（分类+Agent 二级导航）
+- `src/components/layout/sidebar/SortableList.tsx` - 通用拖拽排序列表
 
-#### 工作流节点实现
+#### 工作流引擎 v2
+- `src/lib/workflow/engine.ts` - `executeWorkflow()` 纯函数，BFS 队列驱动
+- `src/lib/workflow/nodeRegistry.ts` - 节点类型→执行器注册表
+- `src/lib/workflow/helpers.ts` - withTimeout、表达式求值、Schema 校验
+- `src/lib/workflow/types.ts` - 引擎内部类型
+- `src/lib/workflow/nodeExecutors/*.ts` - 13 种节点执行器
 - `src/components/workflow/WorkflowCanvas.tsx` - 画布主逻辑（含 MiniMap）
-- `src/components/workflow/nodes/LoopNode.tsx` - 循环节点UI配置
-- 节点类型：trigger | agent | output | condition | code | loop
+- `src/components/workflow/WorkflowTopologyPreview.tsx` - 工作流拓扑预览（只读）
 
 #### 数据库层（Rust）
 - `src-tauri/src/db.rs` - 所有数据库操作
@@ -780,7 +850,7 @@ A: 进入 "Settings" → "Models" 标签页：
 #### 前端组件
 - `src/components/chat/ChatInterface.tsx` - 聊天主界面
 - `src/components/chat/WorkflowChatView.tsx` - 工作流聊天视图（含 Bot 按钮）
-- `src/components/agents/AgentsView.tsx` - Agent管理
+- `src/components/agents/AgentsView.tsx` - Agent 管理（含批量编辑、分类筛选、AgentCard）
 - `src/components/workflow/nodes/` - 所有节点组件
 
 ### 关键数据流
@@ -855,5 +925,5 @@ get_workflows, add_workflow, update_workflow, delete_workflow
 ---
 
 **文档维护**：本文件随项目更新自动维护。
-**最后更新**：2026-05-07
-**版本**：v0.3.0
+**最后更新**：2026-05-17
+**版本**：v0.4.0

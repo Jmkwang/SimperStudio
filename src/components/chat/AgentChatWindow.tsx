@@ -99,13 +99,9 @@ export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowDat
                 agent={agent ? { name: agent.name, avatar: agent.avatar } : undefined}
                 agentId={windowData.agentId}
                 emptyText={t('Sent message')}
-                actions={message.role === 'assistant' ? {
-                  canCopy: true,
-                  canRerun: true,
-                  onRerun: () => {
-                    const text = message.agentResponses?.find(r => r.agentId === windowData.agentId)?.content.text;
-                    if (text) sendToAgent(windowData.sessionId, windowData.agentId, text);
-                  },
+                onRetry={message.role === 'assistant' ? (agentId: string) => {
+                  const text = message.agentResponses?.find(r => r.agentId === agentId)?.content.text;
+                  if (text) sendToAgent(windowData.sessionId, agentId, text);
                 } : undefined}
               />
             ))}

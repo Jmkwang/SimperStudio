@@ -19,7 +19,7 @@ export function AppShell({
     <div className="flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
       <GlobalSidebar currentView={currentView} setCurrentView={setCurrentView} />
       <div className="relative flex flex-col flex-1 overflow-hidden rounded-l-2xl border-l border-border bg-background m-1.5 ml-0">
-        <DebugBadge id="AppShell" />
+        <DebugBadge id="AppShell" position="bottom-right" />
         {showSidebar && (
           <ContextSidebarHeader />
         )}

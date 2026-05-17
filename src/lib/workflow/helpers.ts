@@ -59,7 +59,10 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
 }
 
-export function createExecutionHelpers(fetchNode: (nodeId: string) => any) {
+export function createExecutionHelpers(
+  fetchNode: (nodeId: string) => any,
+  globalState?: Record<string, any>,
+) {
   return {
     getByPath,
     setByPath,
@@ -70,5 +73,6 @@ export function createExecutionHelpers(fetchNode: (nodeId: string) => any) {
     validateSchema,
     AsyncFunction,
     fetchNode,
+    getGlobalState: globalState ? (key: string) => globalState[key] : undefined,
   };
 }

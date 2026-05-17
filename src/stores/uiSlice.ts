@@ -6,39 +6,63 @@ export interface UISlice {
   activeSessionId: string | null;
   activeWorkflowId: string | null;
   activeAgentId: string | null;
+  selectedAgentCategory: string | null;
   workflowChatMode: boolean;
   chatLayoutMode: 'A' | 'B';
   debugMode: boolean;
   contextSidebarTab: 'workflows' | 'sessions';
   selectedChatWorkflowId: string | null;
 
+  // Sidebar item order (array of IDs in display order)
+  workflowOrder: string[];
+  agentCategoryOrder: string[];
+  sessionOrder: string[];
+
   // Actions
   setActiveWorkspace: (id: string) => void;
   setActiveSession: (id: string) => void;
   setActiveWorkflow: (id: string | null) => void;
   setActiveAgent: (id: string | null) => void;
+  setSelectedAgentCategory: (category: string | null) => void;
   setChatLayoutMode: (mode: 'A' | 'B') => void;
   toggleDebugMode: () => void;
   setContextSidebarTab: (tab: 'workflows' | 'sessions') => void;
   setSelectedChatWorkflowId: (id: string | null) => void;
   toggleWorkflowChatMode: (enabled: boolean) => void;
+  setWorkflowOrder: (order: string[]) => void;
+  setAgentCategoryOrder: (order: string[]) => void;
+  setSessionOrder: (order: string[]) => void;
 
   // Helpers
   getActiveSession: () => ChatSession | undefined;
   getActiveWorkflow: () => Workflow | undefined;
 }
 
-export function createUISlice(set: any, get: any): UISlice {
+export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
+  const saveSidebarOrders = (state: any) => {
+    if (writeConfig) {
+      void writeConfig('sidebar_orders.json', {
+        workflowOrder: state.workflowOrder,
+        agentCategoryOrder: state.agentCategoryOrder,
+        sessionOrder: state.sessionOrder,
+      });
+    }
+  };
+
   return {
     activeWorkspaceId: 'default-workspace',
     activeSessionId: 'default-session',
     activeWorkflowId: 'default-workflow',
-    activeAgentId: 'agent-1',
+    activeAgentId: null,
+    selectedAgentCategory: null,
     workflowChatMode: false,
     chatLayoutMode: 'B',
     debugMode: true,
     contextSidebarTab: 'workflows',
     selectedChatWorkflowId: null,
+    workflowOrder: [],
+    agentCategoryOrder: [],
+    sessionOrder: [],
 
     setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
     setActiveSession: (id) => set((state: any) => {
@@ -50,11 +74,27 @@ export function createUISlice(set: any, get: any): UISlice {
     }),
     setActiveWorkflow: (id) => set({ activeWorkflowId: id }),
     setActiveAgent: (id) => set({ activeAgentId: id }),
+    setSelectedAgentCategory: (category) => set({ selectedAgentCategory: category }),
     setChatLayoutMode: (mode) => set({ chatLayoutMode: mode }),
     toggleDebugMode: () => set((state: any) => ({ debugMode: !state.debugMode })),
     setContextSidebarTab: (tab) => set({ contextSidebarTab: tab }),
     setSelectedChatWorkflowId: (id) => set({ selectedChatWorkflowId: id }),
     toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
+    setWorkflowOrder: (order) => set((state: any) => {
+      const next = { ...state, workflowOrder: order };
+      saveSidebarOrders(next);
+      return { workflowOrder: order };
+    }),
+    setAgentCategoryOrder: (order) => set((state: any) => {
+      const next = { ...state, agentCategoryOrder: order };
+      saveSidebarOrders(next);
+      return { agentCategoryOrder: order };
+    }),
+    setSessionOrder: (order) => set((state: any) => {
+      const next = { ...state, sessionOrder: order };
+      saveSidebarOrders(next);
+      return { sessionOrder: order };
+    }),
 
     getActiveSession: () => {
       const { sessions, activeSessionId } = get();

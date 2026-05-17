@@ -54,6 +54,7 @@ export interface ExecutionHelpers {
   validateSchema: (data: any, schemaStr: string | undefined, label: string) => string | null;
   AsyncFunction: any;
   fetchNode: (nodeId: string) => WorkflowNode | undefined;
+  getGlobalState?: (key: string) => any;
 }
 
 export type NodeRouterFn = (

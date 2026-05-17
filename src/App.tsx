@@ -14,11 +14,17 @@ type ViewMode = 'chat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'pr
 
 function App() {
   const fetchInitialData = useAppStore(state => state.fetchInitialData);
+  const fontSize = useAppStore(state => state.settings.fontSize);
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
 
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
+
+  // Apply font size to document root
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontSize ?? 100}%`;
+  }, [fontSize]);
 
   const renderContent = () => {
     switch (viewMode) {

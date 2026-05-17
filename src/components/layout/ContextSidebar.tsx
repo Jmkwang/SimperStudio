@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react"
 import { useAppStore } from '@/stores'
 import { useTranslation } from "@/hooks/useTranslation"
 import { ChatSidebar, WorkflowSidebar, AgentsSidebar } from "./sidebar"
+import { DebugBadge } from "@/components/debug/DebugBadge"
 
 export function ContextSidebarHeader() {
   return (
@@ -33,10 +34,12 @@ export function ContextSidebar({
   const sessions = useAppStore(state => state.sessions)
   const workflows = useAppStore(state => state.workflows)
   const agents = useAppStore(state => state.agents)
+  const agentCategories = useAppStore(state => state.agentCategories)
+  const addAgentCategory = useAppStore(state => state.addAgentCategory)
   const activeSessionId = useAppStore(state => state.activeSessionId)
   const activeWorkflowId = useAppStore(state => state.activeWorkflowId)
-  const activeAgentId = useAppStore(state => state.activeAgentId)
-  const setActiveAgent = useAppStore(state => state.setActiveAgent)
+  const selectedAgentCategory = useAppStore(state => state.selectedAgentCategory)
+  const setSelectedAgentCategory = useAppStore(state => state.setSelectedAgentCategory)
   const selectedChatWorkflowId = useAppStore(state => state.selectedChatWorkflowId)
   const setSelectedChatWorkflowId = useAppStore(state => state.setSelectedChatWorkflowId)
 
@@ -138,8 +141,10 @@ export function ContextSidebar({
       case 'agents':
         return <AgentsSidebar
           agents={agents}
-          activeAgentId={activeAgentId}
-          setActiveAgent={setActiveAgent}
+          agentCategories={agentCategories}
+          addAgentCategory={addAgentCategory}
+          selectedCategory={selectedAgentCategory}
+          onSelectCategory={setSelectedAgentCategory}
           t={t}
         />
       default:
@@ -156,6 +161,7 @@ export function ContextSidebar({
       ref={sidebarRef}
       style={{ width: effectiveWidth, minWidth: effectiveWidth, maxWidth: effectiveWidth }}
     >
+      <DebugBadge id="ContextSidebar" position="top-left" />
       <div className="flex-1 overflow-hidden">
         {renderSidebarContent()}
       </div>

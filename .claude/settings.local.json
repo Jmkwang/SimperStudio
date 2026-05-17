@@ -61,7 +61,10 @@
       "Bash(node *)",
       "Bash(xargs wc *)",
       "Bash(xargs sed *)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(ls -la src/lib/agentProviderRouter.ts src/components/layout/sidebar/SortableList.tsx src/components/workflow/WorkflowTopologyPreview.tsx)",
+      "Bash(git log *)",
+      "Bash(tasklist)"
     ]
   }
 }

@@ -12,6 +12,7 @@ export function ContextItem({
   active = false,
   deletable = false,
   onClick,
+  onDoubleClick,
   onDelete,
   t,
 }: {
@@ -22,6 +23,7 @@ export function ContextItem({
   active?: boolean,
   deletable?: boolean,
   onClick?: () => void,
+  onDoubleClick?: () => void,
   onDelete?: () => void,
   t: (key: string) => string,
 }) {
@@ -39,6 +41,7 @@ export function ContextItem({
       )}
       <button
         onClick={onClick}
+        onDoubleClick={onDoubleClick}
         className="min-w-0 flex-1 flex items-center gap-2.5 px-3 h-10 text-left active:scale-[0.98] transition-transform duration-200"
       >
         {icon === 'workflow' && (

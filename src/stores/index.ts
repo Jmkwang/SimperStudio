@@ -19,6 +19,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createBaseSlice(set, get),
   ...createChatSlice(set, get),
   ...createModelSlice(set, get, writeConfig),
-  ...createUISlice(set, get),
+  ...createUISlice(set, get, writeConfig),
   ...createWorkflowSlice(set, get),
 }));

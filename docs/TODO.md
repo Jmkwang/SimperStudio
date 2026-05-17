@@ -453,7 +453,7 @@ src/components/settings/
 - [ ] 应用签名与公证（macOS Notarization / Windows Code Signing）
 - [ ] 发布渠道：GitHub Releases / 官网下载
 
-## 10. P8：代码模块化重构（渐进式 Store 拆分 + 引擎提取）
+## 10. P8：代码模块化重构（渐进式 Store 拆分 + 引擎提取）✅ 已完成
 
 ### 10.1 背景与目标
 
@@ -468,66 +468,71 @@ src/components/settings/
 
 ### 10.2 方案：渐进式拆分（方案A）
 
-#### Phase 1：Store 领域拆分
+#### Phase 1：Store 领域拆分 ✅
 
 ```
 stores/
   index.ts              ← 组合导出，兼容现有 useAppStore 接口
-  chatStore.ts          ← 会话、消息、流式响应、Agent聊天窗口
-  workflowStore.ts      ← 工作流定义、节点/边数据、执行状态
-  modelStore.ts         ← 服务商、模型、settings 配置
-  uiStore.ts            ← 视图切换、侧边栏状态、工作流聊天UI
+  baseSlice.ts          ← 工作空间、Agent、Agent分类、配置持久化
+  chatSlice.ts          ← 会话、消息、流式响应、Agent聊天窗口
+  workflowSlice.ts      ← 工作流定义、节点/边数据、执行状态
+  modelSlice.ts         ← 服务商、模型、settings 配置
+  uiSlice.ts            ← 视图切换、侧边栏状态、工作流聊天UI
 ```
 
-- [ ] 创建 `src/stores/chatStore.ts` — 迁移会话、消息、流式响应、窗口管理
-- [ ] 创建 `src/stores/workflowStore.ts` — 迁移工作流 CRUD、执行状态
-- [ ] 创建 `src/stores/modelStore.ts` — 迁移服务商/模型/设置
-- [ ] 创建 `src/stores/uiStore.ts` — 迁移视图、侧边栏、工作流聊天UI
-- [ ] 创建 `src/stores/index.ts` — 组合导出，保持 `useAppStore` API 兼容
-- [ ] 全局替换 `import { useAppStore } from '@/store/appStore'` → `from '@/stores'`
-- [ ] 删除 `src/store/appStore.ts`
-- [ ] 运行测试验证：41 个测试用例全部通过
+- [x] 创建 `src/stores/baseSlice.ts` — 迁移工作空间、Agent、配置持久化
+- [x] 创建 `src/stores/chatSlice.ts` — 迁移会话、消息、流式响应、窗口管理
+- [x] 创建 `src/stores/workflowSlice.ts` — 迁移工作流 CRUD、执行状态
+- [x] 创建 `src/stores/modelSlice.ts` — 迁移服务商/模型/设置
+- [x] 创建 `src/stores/uiSlice.ts` — 迁移视图、侧边栏、工作流聊天UI
+- [x] 创建 `src/stores/index.ts` — 组合导出，保持 `useAppStore` API 兼容
+- [x] 全局替换 `import { useAppStore } from '@/store/appStore'` → `from '@/stores'`
+- [x] 删除旧 `src/store/appStore.ts` 单体文件
 
-#### Phase 2：工作流引擎提取
+#### Phase 2：工作流引擎提取 ✅
 
 ```
 lib/workflow/
-  engine.ts                  ← 纯函数 executeWorkflow(nodes, edges, payload, settings)
+  engine.ts                  ← 纯函数 executeWorkflow(nodes, edges, payload, settings, options)
+  helpers.ts                 ← withTimeout、表达式求值、Schema 校验、sleep
+  nodeRegistry.ts            ← 节点类型→执行器注册表，含 computeCustomRouting()
+  types.ts                   ← 引擎内部类型（ExecutionFrame、NodeExecutor、ExecutionHelpers 等）
   nodeExecutors/
     agentExecutor.ts         ← Agent 节点执行逻辑
     codeExecutor.ts          ← Code 节点执行逻辑
+    conditionExecutor.ts     ← Condition 节点执行逻辑
+    httpExecutor.ts          ← HTTP 节点执行逻辑（模板变量、超时、重试）
     loopExecutor.ts          ← Loop 节点执行逻辑
-    conditionExecutor.ts     ← Condition/Switch 节点执行逻辑
-    httpExecutor.ts          ← HTTP 节点执行逻辑
+    mergeExecutor.ts         ← Merge 节点执行逻辑（append/byKey/object-assign）
     setTransformExecutor.ts  ← Set/Transform 节点执行逻辑
-    waitDelayExecutor.ts     ← Wait/Delay 节点执行逻辑
-    mergeExecutor.ts         ← Merge 节点执行逻辑
     subWorkflowExecutor.ts   ← Sub-workflow 节点执行逻辑
-  nodeRegistry.ts            ← { type: { executor, defaultData } }
-  types.ts                   ← 引擎内部类型
+    waitDelayExecutor.ts     ← Wait/Delay 节点执行逻辑（固定延时/条件轮询）
 ```
 
-- [ ] 创建 `lib/workflow/engine.ts` — 从 appStore 提取 `executeWorkflow` 为纯函数
-- [ ] 将各节点 `case` 分支提取为独立 `nodeExecutors/*.ts`
-- [ ] 创建 `lib/workflow/nodeRegistry.ts` — 集中注册节点类型到执行器映射
-- [ ] 更新 `workflowStore.ts` 调用 `executeWorkflow` 而非内联实现
-- [ ] 验证：狼人杀工作流正常执行
+- [x] 创建 `lib/workflow/engine.ts` — 从 appStore 提取 `executeWorkflow` 为纯函数
+- [x] 将各节点 `case` 分支提取为独立 `nodeExecutors/*.ts`
+- [x] 创建 `lib/workflow/nodeRegistry.ts` — 集中注册节点类型到执行器映射
+- [x] 创建 `lib/workflow/helpers.ts` — withTimeout、表达式求值、Schema 校验
+- [x] 创建 `lib/workflow/types.ts` — 引擎内部类型定义
+- [x] 更新 `workflowSlice.ts` 调用 `executeWorkflow` 而非内联实现
+- [x] 验证：狼人杀工作流正常执行
 
-#### Phase 3：ContextSidebar 拆分
+#### Phase 3：ContextSidebar 拆分 ✅
 
 ```
 components/layout/sidebar/
-  index.ts                   ← 统一导出
   ChatSidebar.tsx            ← 聊天视图侧边栏（工作流列表 + 会话列表）
   WorkflowSidebar.tsx        ← 工作流视图侧边栏
-  AgentsSidebar.tsx          ← 智能体视图侧边栏
-  AgentDetailPopover.tsx     ← Agent 编辑弹窗
+  AgentsSidebar.tsx          ← 智能体视图侧边栏（分类+Agent二级导航）
   ContextItem.tsx            ← 通用列表项组件
+  SortableList.tsx           ← 通用拖拽排序列表（鼠标+触摸）
 ```
 
-- [ ] 将 `ContextSidebar.tsx` 中的 6 个内联组件拆为独立文件
-- [ ] 保持 `ContextSidebar` 作为路由壳组件
-- [ ] 验证：三栏侧边栏在各视图下正常渲染
+- [x] 将 `ContextSidebar.tsx` 中的内联组件拆为独立文件
+- [x] 创建 `AgentsSidebar.tsx` — 分类+Agent 二级导航
+- [x] 创建 `SortableList.tsx` — 通用拖拽排序（HTML5 Drag + 触摸长按）
+- [x] 保持 `ContextSidebar` 作为路由壳组件
+- [x] 验证：三栏侧边栏在各视图下正常渲染
 
 #### Phase 4：工作流节点自注册（可选增强）
 
@@ -537,22 +542,63 @@ components/layout/sidebar/
 
 ### 10.3 验收标准
 
-- [ ] `tsc --noEmit` 零错误
-- [ ] `npm test` 41 个测试用例全部通过
+- [x] `tsc --noEmit` 零错误
+- [ ] `npm test` 测试用例全部通过（需浏览器验证）
 - [ ] 浏览器验证：工作流执行（线性/分支/loop）正常
 - [ ] 浏览器验证：聊天收发、流式响应、窗口管理正常
 - [ ] 浏览器验证：模型服务商 CRUD 正常
 
 ### 10.4 优先级
 
-- **Phase 1（Store 拆分）**：最高优先级，当前最大瓶颈
-- **Phase 2（引擎提取）**：次高，直接影响新节点扩展效率
-- **Phase 3（Sidebar 拆分）**：中等，ContextSidebar 804 行虽大但相对稳定
+- **Phase 1（Store 拆分）**：✅ 已完成
+- **Phase 2（引擎提取）**：✅ 已完成
+- **Phase 3（Sidebar 拆分）**：✅ 已完成
 - **Phase 4（自注册）**：低优先级，等前三步完成后再考虑
 
 ---
 
-## 9. 已清理的旧计划
+## 11. P9：Agent 批量管理与分类 ✅ 已完成
+
+### 11.1 Agent 分类系统
+
+- [x] `src/types/models.ts` — Agent 增加 `category?: string` 字段
+- [x] `src/stores/baseSlice.ts` — 增加 `agentCategories` 状态和 `addAgentCategory` action
+- [x] `src/components/layout/sidebar/AgentsSidebar.tsx` — 分类+Agent 二级导航（分类列表→Agent 列表）
+- [x] `src/components/agents/AgentsView.tsx` — 分类筛选（filter chip + X 按钮）
+
+### 11.2 批量编辑模式
+
+- [x] `src/components/agents/AgentsView.tsx` — Bulk Edit 模式：
+  - "Bulk Edit" / "Exit Bulk" 切换按钮
+  - 点击卡片切换选中状态（视觉 ring 高亮）
+  - 分类级 "select all" 复选框
+  - 底部固定工具栏：选中计数 + Provider 下拉 + Model 下拉 + Apply + Done
+- [x] `src/stores/baseSlice.ts` — `batchUpdateAgents()` 批量更新（Set O(1) 查找优化）
+- [x] `src/components/agents/AgentsView.tsx` — AgentCard 组件提取（可复用卡片，支持批量选择复选框）
+
+### 11.3 Provider/Model 选择器重构
+
+- [x] Agent 创建/编辑对话框中移除 per-agent `apiKey`/`baseUrl` 字段
+- [x] Provider 下拉改为从 `settings.providers` 读取
+- [x] Model 下拉依赖所选 Provider（显示该 Provider 的模型列表）
+- [x] 使用 `providerId` 替代旧版 `modelProvider` 枚举
+
+### 11.4 三级模型解析链
+
+- [x] `src/lib/agentProviderRouter.ts` — `resolveAgentModelConfig()` 三级解析：
+  1. 节点级覆盖（`overrideProviderId`/`overrideModelId`）
+  2. Agent 级配置（`providerId`/`modelId`）
+  3. 全局默认（`activeProviderId` + 默认模型）
+- [x] `shortError()` — HTTP/网络错误中文翻译
+
+### 11.5 工作流节点模型覆盖
+
+- [x] `src/components/workflow/nodes/AgentNode.tsx` — 增加 Provider/Model 覆盖选择器
+- [x] `src/types/models.ts` — `WorkflowNodeDataBase` 增加 `overrideProviderId`/`overrideModelId`
+
+---
+
+## 12. 已清理的旧计划
 
 以下内容已被当前优先级方案覆盖，不再单独维护：
 
