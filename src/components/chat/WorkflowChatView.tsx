@@ -33,6 +33,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const workflowChatUI = useAppStore(state => state.workflowChatUI);
   const setWorkflowSidebarCollapsed = useAppStore(state => state.setWorkflowSidebarCollapsed);
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
+  const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const chatLayoutMode = useAppStore(state => state.chatLayoutMode);
   const setChatLayoutMode = useAppStore(state => state.setChatLayoutMode);
   const { t } = useTranslation();
@@ -173,7 +174,14 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
               <ChatMessageBubble
                 key={message.id}
                 message={message}
+                agents={linkedAgents.map(a => ({ id: a.id, name: a.name, avatar: a.avatar }))}
                 layoutMode={chatLayoutMode}
+                onRetry={(agentId, messageId) => {
+                  const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user');
+                  if (lastUserMsg) {
+                    retryAgentResponse(session.id, messageId, agentId, lastUserMsg.content.text);
+                  }
+                }}
               />
             ))}
           </div>

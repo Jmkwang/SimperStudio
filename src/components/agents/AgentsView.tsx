@@ -73,9 +73,9 @@ function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, 
         </div>
       )}
       <div className="flex items-center gap-3 mb-3">
-        <Avatar className="h-10 w-10 border shadow-sm">
+        <Avatar className="h-10 w-10 rounded-full border shadow-sm">
           <AvatarImage src={agent.avatar} />
-          <AvatarFallback className="bg-primary/10 text-primary">
+          <AvatarFallback className="rounded-full bg-primary/10 text-primary">
             <Bot className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>

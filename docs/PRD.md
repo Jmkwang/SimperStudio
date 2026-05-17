@@ -30,6 +30,7 @@
 *   Trigger nodes (manual, scheduled, webhook).
 *   Action nodes (API calls, data transformation, logic gates).
 *   LLM integration nodes (prompting an agent within a workflow).
+*   **Dynamic Agent nodes:** Runtime-configurable agent nodes that read their persona (name, avatar, system prompt, personality) from the workflow payload or inline templates. Enables "agent sets agents" patterns where a leader agent dynamically assigns roles to blank agents.
 *   Execution history and debugging tools.
 *   **MiniMap:** Visual overview of the workflow canvas.
 

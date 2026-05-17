@@ -30,6 +30,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const settings = useAppStore(state => state.settings);
   const sendToAgent = useAppStore(state => state.sendToAgent);
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
+  const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const [input, setInput] = useState("");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [multiAgentMode, setMultiAgentMode] = useState(false);
@@ -93,13 +94,13 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     setInput("");
   };
 
-  const handleRetry = useCallback((agentId: string) => {
+  const handleRetry = useCallback((agentId: string, messageId: string) => {
     const lastUserMsg = [...session.messages].reverse().find(m => m.role === "user");
     if (lastUserMsg) {
       autoScrollRef.current = true;
-      sendToAgent(session.id, agentId, lastUserMsg.content.text);
+      retryAgentResponse(session.id, messageId, agentId, lastUserMsg.content.text);
     }
-  }, [session.messages, session.id, sendToAgent]);
+  }, [session.messages, session.id, retryAgentResponse]);
 
   return (
     <div className="flex flex-col h-full relative">
@@ -159,9 +160,9 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                     : "bg-muted hover:bg-muted/70 text-muted-foreground"
                 }`}
               >
-                <Avatar className="h-4 w-4 rounded-sm shrink-0">
+                <Avatar className="h-4 w-4 rounded-full shrink-0">
                   <AvatarImage src={agent.avatar} />
-                  <AvatarFallback className="rounded-sm text-[8px]">{agent.name?.slice(0, 1)}</AvatarFallback>
+                  <AvatarFallback className="rounded-full bg-primary/10 text-primary text-[8px]">{agent.name?.slice(0, 1)}</AvatarFallback>
                 </Avatar>
                 {agent.name}
               </button>

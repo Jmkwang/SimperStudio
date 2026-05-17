@@ -52,6 +52,7 @@ export interface ExecutionHelpers {
   withTimeout: <T>(promise: Promise<T>, ms: number, error: string) => Promise<T>;
   sleep: (ms: number) => Promise<void>;
   validateSchema: (data: any, schemaStr: string | undefined, label: string) => string | null;
+  replaceTemplateVars: (template: string, payload: any) => string;
   AsyncFunction: any;
   fetchNode: (nodeId: string) => WorkflowNode | undefined;
   getGlobalState?: (key: string) => any;

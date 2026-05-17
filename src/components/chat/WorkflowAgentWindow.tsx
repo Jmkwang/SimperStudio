@@ -24,7 +24,7 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
   const focusWorkflowAgentWindow = useAppStore(state => state.focusWorkflowAgentWindow);
   const toggleWorkflowAgentWindowMinimized = useAppStore(state => state.toggleWorkflowAgentWindowMinimized);
   const sendToWorkflowAgent = useAppStore(state => state.sendToWorkflowAgent);
-  const rerunAgentReply = useAppStore(state => state.rerunAgentReply);
+  const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
 
   const agent = agents.find(item => item.id === windowData.agentId);
   const session = sessions.find(item => item.id === windowData.sessionId);
@@ -52,7 +52,10 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
         }
       }
       if (message.role === 'assistant' && message.agentResponses) {
-        const hasResponse = message.agentResponses.some(response => response.agentId === windowData.agentId && response.nodeId === windowData.nodeId);
+        const hasResponse = message.agentResponses.some(
+          response => response.agentId === windowData.agentId &&
+          (response.nodeId === undefined || response.nodeId === windowData.nodeId)
+        );
         if (hasResponse) {
           msgs.push(message);
         }
@@ -135,11 +138,13 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
                 agentId={windowData.agentId}
                 nodeId={windowData.nodeId}
                 emptyText={t('Copied attachment')}
-                onRetry={message.role === 'assistant' ? (agentId: string) => {
-                  const text = message.agentResponses?.find(
-                    r => r.agentId === agentId && r.nodeId === windowData.nodeId
-                  )?.content.text;
-                  if (text) rerunAgentReply(windowData.sessionId, windowData.nodeId, text);
+                onRetry={message.role === 'assistant' ? (agentId: string, messageId: string) => {
+                  const allMessages = session?.messages || [];
+                  const msgIndex = allMessages.findIndex(m => m.id === message.id);
+                  const lastUserMsg = msgIndex >= 0
+                    ? [...allMessages.slice(0, msgIndex)].reverse().find(m => m.role === 'user')
+                    : undefined;
+                  if (lastUserMsg) retryAgentResponse(windowData.sessionId, messageId, agentId, lastUserMsg.content.text, windowData.nodeId);
                 } : undefined}
               />
             ))}

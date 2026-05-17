@@ -44,7 +44,7 @@ export interface Workspace {
   updatedAt: number;
 }
 
-export type WorkflowNodeType = 'trigger' | 'agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
+export type WorkflowNodeType = 'trigger' | 'agent' | 'dynamic-agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
 
 export interface WorkflowNodePosition {
   x: number;
@@ -78,8 +78,54 @@ export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {
   overrideSystemPrompt?: string;
 }
 
+/**
+ * Dynamic Agent config object — can be read from payload or generated from inline templates.
+ */
+export interface DynamicAgentConfig {
+  name?: string;
+  avatar?: string;
+  systemPrompt: string;
+  role?: string;
+  personality?: string;
+  providerId?: string;
+  modelId?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+/**
+ * Dynamic Agent node data — runtime-configurable agent persona.
+ */
+export interface WorkflowDynamicAgentNodeData extends WorkflowNodeDataBase {
+  configSource: 'payload' | 'inline';
+
+  // payload mode
+  configPath?: string;
+
+  // inline mode
+  inlineConfig?: {
+    nameTemplate?: string;
+    systemPromptTemplate: string;
+    avatarTemplate?: string;
+    personalityTemplate?: string;
+    roleTemplate?: string;
+  };
+
+  promptTemplate?: string;
+
+  // model fallback chain
+  fallbackAgentId?: string;
+  fallbackProviderId?: string;
+  fallbackModelId?: string;
+
+  outputField?: string;
+  autoSendToNext?: boolean;
+  enableChatWindow?: boolean;
+}
+
 export type WorkflowNodeData = WorkflowNodeDataBase &
   Partial<WorkflowAgentNodeData> &
+  Partial<WorkflowDynamicAgentNodeData> &
   Record<string, unknown>;
 
 export interface WorkflowNode {

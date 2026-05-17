@@ -106,6 +106,37 @@
 
 ## 3. P1：可组合节点生态（对标 n8n 的节点可拼装能力）
 
+### 3.B Dynamic Agent 节点（设计完成，待实现）
+
+> 详细设计见 `docs/plan-dynamic-agent.md`
+
+**目标**：支持"Agent 设定 Agent"——一个组长 Agent 动态给其他空白 Agent 分配角色/性格/任务。
+
+**核心场景**：狼人杀工作流升级——主持人 Agent 动态生成角色分配，Loop + Dynamic Agent 实现依次发言、独立性格。
+
+#### Phase 1：核心引擎
+- [ ] `src/types/models.ts` — 新增 `DynamicAgentConfig`、`WorkflowDynamicAgentNodeData`，扩展 `WorkflowNodeType`
+- [ ] `src/lib/workflow/helpers.ts` — 新增 `replaceTemplateVars()` 模板替换函数
+- [ ] `src/lib/workflow/nodeExecutors/dynamicAgentExecutor.ts` — 创建执行器（payload/inline 双模式、三级模型回退）
+- [ ] `src/lib/workflow/nodeRegistry.ts` — 注册 `dynamic-agent` 执行器
+- [ ] 单元测试：payload 模式、inline 模式、模型回退链、Loop 串行集成
+
+#### Phase 2：节点编辑器 UI
+- [ ] `src/components/workflow/nodes/DynamicAgentNode.tsx` — 节点编辑器（配置来源切换、模板输入、fallback 选择）
+- [ ] `src/components/workflow/WorkflowCanvas.tsx` — 注册 nodeTypes、节点面板添加分类
+- [ ] 节点样式设计（紫色主题、`UserCog`/`Mask` 图标）
+
+#### Phase 3：聊天视图集成
+- [ ] `WorkflowAgentWindow` — 支持从 `_dynamicAgentMeta` 读取动态名称/头像
+- [ ] `ChatMessageBubble` — 支持显示动态 Agent 信息
+- [ ] `WorkflowChatView` — Dynamic Agent 节点点击打开对话窗口
+
+#### Phase 4：狼人杀示例升级
+- [ ] 重新设计狼人杀工作流 JSON（主持人生成角色 + Loop + Dynamic Agent）
+- [ ] 回归测试：角色随机分配、串行发言、性格差异、游戏逻辑
+
+---
+
 ### 3.A 工作流导入导出
 
 - [x] `src/components/workflow/WorkflowCanvas.tsx`
@@ -312,20 +343,20 @@
   - 当前：面包屑栏只有话题名 > 模型名 | Local，无时间
   - 文件：`src/components/chat/SimpleChatView.tsx`
 
-- [ ] **单条消息 Token 显示增加 ↑↓ 分项**
+- [x] **单条消息 Token 显示增加 ↑↓ 分项**
   - 目标：Tokens: 总token ↑上传token ↓下载token，上传下载数字前有 ↑↓ 符号
-  - 当前：只显示 `totalTokens tokens`，无分项
+  - 当前：已改为 `↑${promptTokens} ↓${completionTokens} tokens` 格式
   - 文件：`src/components/chat/ChatMessageBubble.tsx`（AssistantBubble）
 
 - [ ] **AI 回复去除左边框线，改为无明显气泡框**
   - 目标：AI 回复左对齐，无明显气泡框，直接在深色背景上显示文字
-  - 当前：使用了 `border-l-2 border-muted-foreground/20 pl-3` 左边框引用样式
+  - 当前：使用了 `bg-muted/30` 背景色，无明显左边框
   - 文件：`src/components/chat/ChatMessageBubble.tsx`（AssistantBubble）
 
-- [ ] **模型来源根据 agent.modelProvider 动态显示**
+- [x] **模型来源根据 agent 配置动态显示**
   - 目标：模型来源显示实际 provider（OpenAI/Anthropic/Local 等）
-  - 当前：面包屑中固定硬编码为 `t("Local")`
-  - 文件：`src/components/chat/SimpleChatView.tsx`
+  - 当前：气泡中已显示 `providerName/modelName`，面包屑仍显示静态文本
+  - 文件：`src/components/chat/ChatMessageBubble.tsx`、`src/components/chat/SimpleChatView.tsx`
 
 ### 7.7 多模型对比卡片（MultiModelComparison / AgentResultCard）
 
@@ -399,6 +430,12 @@ src/components/settings/
 - [x] 删除服务商黑屏 — 对话框移入 models 条件块内
 - [x] 配置持久化：Rust 统一单文件 `config/config.json`，浏览器 localStorage 回退
 - [x] `.gitignore` 排除 `config/` 目录防止 API Key 泄露
+- [x] ChatInterface 头像与 AgentsView 不一致 — AgentsView / ChatMessageBubble / SimpleChatView 统一 `rounded-full` + `Bot` icon + `bg-primary/10 text-primary`
+- [x] 消息气泡底部无 retry 按钮 — `ChatMessageBubble` 条件从 `onRetry && response.agentId` 简化为 `onRetry &&`，各视图补传 `onRetry`
+- [x] retry 新建消息而非在原气泡重新生成 — 新增 `retryAgentResponse` action，复用原 `messageId` 清除旧 `agentResponse` 后重新生成
+- [x] retry 重复添加用户消息 — `SimpleChatView` / `AgentChatWindow` / `WorkflowAgentWindow` 全部改用 `retryAgentResponse`（底层 `addUserMessage: false`）
+- [x] 拓扑视图不显示聊天 A/B 中的回复 — `WorkflowAgentWindow` 和 `agentResponsesFiltered` 支持 `nodeId === undefined` 的全局消息
+- [x] Provider/Model 信息抢视觉重心 — 从气泡底部移至 Agent 名称后方，底部元信息颜色统一为 `text-muted-foreground/50`
 
 ### 验收
 
@@ -410,8 +447,8 @@ src/components/settings/
 
 ### 9.1 P0 验证缺口（阻塞项，需立即执行）
 
-- [ ] 浏览器验证：Single Chat 完整链路（新建 → 发送 → @agent → 附件 → 复制）
-- [ ] 浏览器验证：Workflow Chat 完整链路（新建 → 侧边栏收展 → workflow/agent 节点点击 → 浮窗打开）
+- [ ] 浏览器验证：Single Chat 完整链路（新建 → 发送 → @agent → 附件 → 复制 → retry）
+- [ ] 浏览器验证：Workflow Chat 完整链路（新建 → 侧边栏收展 → workflow/agent 节点点击 → 浮窗打开 → retry）
 - [ ] 浏览器验证：多窗口交互（重叠 → 聚焦 → 关闭/最小化）
 - [ ] 浏览器验证：转发链路（手动转发 → 自动转发 → reload 后转发）
 - [ ] 浏览器验证：切回普通 session，确认 workflow UI 状态不污染普通聊天
@@ -436,9 +473,9 @@ src/components/settings/
 - [ ] UI：列表项采用「头像/图标 + 助手名称」形式
 - [ ] UI：列表项三点菜单（编辑/删除/更多）
 - [ ] UI：面包屑栏添加对话时间显示
-- [ ] UI：单条消息 Token 显示增加 ↑↓ 分项
+- [x] UI：单条消息 Token 显示增加 ↑↓ 分项
 - [ ] UI：AI 回复去除左边框线，改为无明显气泡框
-- [ ] UI：模型来源根据 `agent.modelProvider` 动态显示
+- [x] UI：模型来源根据 agent 配置动态显示
 - [ ] UI：多模型对比卡片添加快捷操作栏（复制/刷新/引用/点赞/收藏/删除/更多）
 - [ ] UI：多模型对比卡片添加状态图标和时间
 - [ ] UI：GlobalSidebar 底部精简为仅暗色模式和设置（移除 Profile）

@@ -21,6 +21,7 @@ export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowDat
   const agents = useAppStore(state => state.agents);
   const closeAgentChatWindow = useAppStore(state => state.closeAgentChatWindow);
   const sendToAgent = useAppStore(state => state.sendToAgent);
+  const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
 
   const agent = agents.find(item => item.id === windowData.agentId);
   const session = sessions.find(item => item.id === windowData.sessionId);
@@ -99,9 +100,13 @@ export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowDat
                 agent={agent ? { name: agent.name, avatar: agent.avatar } : undefined}
                 agentId={windowData.agentId}
                 emptyText={t('Sent message')}
-                onRetry={message.role === 'assistant' ? (agentId: string) => {
-                  const text = message.agentResponses?.find(r => r.agentId === agentId)?.content.text;
-                  if (text) sendToAgent(windowData.sessionId, agentId, text);
+                onRetry={message.role === 'assistant' ? (agentId: string, messageId: string) => {
+                  const allMessages = session?.messages || [];
+                  const msgIndex = allMessages.findIndex(m => m.id === message.id);
+                  const lastUserMsg = msgIndex >= 0
+                    ? [...allMessages.slice(0, msgIndex)].reverse().find(m => m.role === 'user')
+                    : undefined;
+                  if (lastUserMsg) retryAgentResponse(windowData.sessionId, messageId, agentId, lastUserMsg.content.text);
                 } : undefined}
               />
             ))}

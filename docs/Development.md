@@ -423,6 +423,18 @@ lib/workflow/
 - 实时更新本地 Zustand 状态
 - `agentResponses` 数组存储多 Agent 并发响应
 
+#### Retry（重新生成）
+- `chatSlice.retryAgentResponse` — 在原消息气泡内重新生成指定 agent 的回复，不创建新消息
+- 流程：清除原消息中对应 `agentId`/`nodeId` 的旧 `agentResponse` → 用同样的 `messageId` 重新调用 `runAgentResponse`
+- 触发入口：`ChatMessageBubble` 气泡底部 Copy 按钮旁的 RefreshCw 图标
+- 各视图统一调用：`SimpleChatView`、`WorkflowChatView`、`AgentChatWindow`、`WorkflowAgentWindow`
+
+#### 消息气泡样式
+- **Agent 头部**：Avatar（`rounded-full` + `Bot` fallback，与 AgentsView 一致）+ Agent 名称 + Provider/Model 信息
+- **Provider/Model 位置**：紧跟在 Agent 名称后方，格式如 `整理助手  DeepSeek/DeepSeek V4 Flash`
+- **底部元信息**：时间、Token 分项（↑prompt ↓completion）、耗时，颜色使用 `text-muted-foreground/50` 避免抢视觉重心
+- **操作按钮**：Copy、Retry，默认 `text-muted-foreground/50`，hover 恢复 `text-foreground`
+
 ### 5.1 拓扑视图与节点组件复用
 
 Chats 区的拓扑视图复用 Workflow 工作流的节点视觉设计，保持全应用 UI 一致性。
@@ -759,6 +771,15 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ## 版本历史
 
+### v0.4.1 (2026-05-18)
+- **Retry 在原气泡重新生成**：新增 `retryAgentResponse` action，清除旧 `agentResponse` 后用原 `messageId` 重新流式生成，避免新建消息
+- **Provider/Model 信息位置调整**：从气泡底部移至 Agent 名称后方，格式 `AgentName Provider/Model`
+- **气泡底部视觉降噪**：时间、Token、耗时、操作按钮默认颜色统一为 `text-muted-foreground/50`，hover 恢复
+- **WorkflowChatView 补传 props**：补传 `agents` 和 `onRetry`，修复 workflow 聊天模式下头像和 retry 按钮缺失
+- **拓扑视图消息过滤修复**：`WorkflowAgentWindow` 和 `agentResponsesFiltered` 支持 `nodeId === undefined` 的全局消息，修复拓扑视图不显示聊天 A/B 中发送的回复
+- **Agent 头像样式对齐**：AgentsView / ChatMessageBubble / SimpleChatView 选择器统一使用 `rounded-full` + `Bot` icon + `bg-primary/10 text-primary`
+- **Retry 逻辑统一修复**：`SimpleChatView`、`AgentChatWindow`、`WorkflowAgentWindow` 均使用原始用户消息作为 prompt，避免重复添加用户消息
+
 ### v0.4.0 (2026-05-17)
 - **Store 五层 Slice 架构**：将 2000+ 行单体 `appStore.ts` 拆分为 baseSlice/chatSlice/modelSlice/uiSlice/workflowSlice，按领域关注点分离
 - **工作流引擎 v2**：从类式改为函数式架构，`executeWorkflow` 提取为纯函数，新增 nodeRegistry 注册表模式，13 种节点各有独立 executor
@@ -848,8 +869,13 @@ A: 进入 "Settings" → "Models" 标签页：
 - `src-tauri/src/lib.rs` - Tauri 命令注册
 
 #### 前端组件
-- `src/components/chat/ChatInterface.tsx` - 聊天主界面
-- `src/components/chat/WorkflowChatView.tsx` - 工作流聊天视图（含 Bot 按钮）
+- `src/components/chat/ChatInterface.tsx` - 聊天主界面（single/workflow 路由）
+- `src/components/chat/SimpleChatView.tsx` - 单智能体聊天视图（含 retry、多 Agent 切换）
+- `src/components/chat/WorkflowChatView.tsx` - 工作流聊天视图（含 Bot 按钮、布局 A/B 切换）
+- `src/components/chat/ChatMessageBubble.tsx` - 消息气泡组件（UserBubble + AssistantBubble + retry）
+- `src/components/chat/MessageHoverActions.tsx` - 消息悬浮操作栏
+- `src/components/chat/WorkflowAgentWindow.tsx` - 工作流 Agent 浮动对话窗口
+- `src/components/chat/AgentChatWindow.tsx` - Agent 浮动对话窗口
 - `src/components/agents/AgentsView.tsx` - Agent 管理（含批量编辑、分类筛选、AgentCard）
 - `src/components/workflow/nodes/` - 所有节点组件
 
@@ -891,6 +917,51 @@ interface LoopNodeData {
 }
 ```
 
+### 7. Dynamic Agent 节点（设计阶段）
+
+详见 `docs/plan-dynamic-agent.md` 完整设计文档。以下为概要：
+
+#### 核心概念
+Dynamic Agent 节点是一种**运行时动态配置**的 AI 执行节点，不绑定到预定义 Agent 实体。支持两种配置来源：
+- **payload 模式**：从 `payload` 指定路径读取 `DynamicAgentConfig`
+- **inline 模式**：在节点内配置模板，执行时通过模板变量替换生成配置
+
+#### 与 Agent 节点的区别
+
+| 特性 | Agent 节点 | Dynamic Agent 节点 |
+|------|-----------|-------------------|
+| Agent 绑定 | 静态 `agentId` 引用 | 动态配置（payload 或模板） |
+| systemPrompt | 来自预定义 Agent | 支持模板变量替换，运行时注入 |
+| 头像/名称 | 来自预定义 Agent | 运行时动态指定 |
+| 用途 | 固定角色执行 | 动态角色分配、多角色模拟 |
+
+#### 典型使用模式（狼人杀升级）
+
+```
+[Agent: 主持人] → 生成角色分配 → payload.players = [...]
+  ↓
+[Loop] —— 遍历 payload.players
+  ↓
+[Dynamic Agent] —— configSource='payload', configPath='loop.currentItem'
+  ↓ 每个迭代使用不同的角色配置（性格、思维方式不同）
+[Code] —— 收集发言、判断胜负
+```
+
+#### 关键实现点
+
+- **模板变量替换**：`helpers.replaceTemplateVars(template, payload)` 支持 `{{path.to.value}}` 语法
+- **三级模型回退**：`config.providerId` → `fallbackAgentId` → `fallbackProviderId` → 全局默认
+- **虚拟 Agent 对象**：执行时构造临时 Agent 对象传给 `resolveAgentModelConfig`
+- **元信息回写**：执行结果附带 `_dynamicAgentMeta`，供下游节点和聊天视图使用
+
+#### 新增文件（计划）
+
+| 文件 | 说明 |
+|------|------|
+| `src/lib/workflow/nodeExecutors/dynamicAgentExecutor.ts` | Dynamic Agent 执行器 |
+| `src/components/workflow/nodes/DynamicAgentNode.tsx` | 节点编辑器 UI |
+| `docs/plan-dynamic-agent.md` | 完整设计文档 |
+
 ### 数据库JSON字段说明
 
 - `workflows.nodes_data` - 节点数组（JSON字符串）
@@ -925,5 +996,5 @@ get_workflows, add_workflow, update_workflow, delete_workflow
 ---
 
 **文档维护**：本文件随项目更新自动维护。
-**最后更新**：2026-05-17
+**最后更新**：2026-05-18
 **版本**：v0.4.0

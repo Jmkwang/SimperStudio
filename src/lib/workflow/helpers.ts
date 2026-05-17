@@ -59,6 +59,18 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
 }
 
+/**
+ * Replace template variables in a string with values from an object.
+ * Supports {{path.to.value}} syntax.
+ */
+export function replaceTemplateVars(template: string, payload: any): string {
+  if (!template) return '';
+  return template.replace(/\{\{(.*?)\}\}/g, (match, path) => {
+    const value = getByPath(payload, path.trim());
+    return value !== undefined ? String(value) : match;
+  });
+}
+
 export function createExecutionHelpers(
   fetchNode: (nodeId: string) => any,
   globalState?: Record<string, any>,
@@ -71,6 +83,7 @@ export function createExecutionHelpers(
     withTimeout,
     sleep,
     validateSchema,
+    replaceTemplateVars,
     AsyncFunction,
     fetchNode,
     getGlobalState: globalState ? (key: string) => globalState[key] : undefined,

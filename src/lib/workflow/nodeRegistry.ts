@@ -1,6 +1,7 @@
 import { WorkflowNode, WorkflowEdge } from '../../types/models';
 import { NodeExecutorFn, NodeRouterFn, ExecutionHelpers } from './types';
 import { agentExecute } from './nodeExecutors/agentExecutor';
+import { dynamicAgentExecute } from './nodeExecutors/dynamicAgentExecutor';
 import { codeExecute } from './nodeExecutors/codeExecutor';
 import { httpExecute } from './nodeExecutors/httpExecutor';
 import { setTransformExecute } from './nodeExecutors/setTransformExecutor';
@@ -23,6 +24,7 @@ function register(executor: RegisteredExecutor) {
 }
 
 register({ type: 'agent', execute: agentExecute });
+register({ type: 'dynamic-agent', execute: dynamicAgentExecute });
 register({ type: 'code', execute: codeExecute });
 register({ type: 'http', execute: httpExecute });
 register({ type: 'set', execute: setTransformExecute });

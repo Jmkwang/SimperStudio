@@ -4,42 +4,42 @@
 
 @layer base {
   :root {
-    /* Light Mode - Deep Space Minimalism */
-    --background: 0 0% 97%;
-    --foreground: 240 10% 12%;
+    /* Light Mode - Refined Warm Minimalism */
+    --background: 40 20% 98%;
+    --foreground: 240 10% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 12%;
+    --card-foreground: 240 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 12%;
+    --popover-foreground: 240 10% 10%;
 
     --primary: 258 85% 68%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 94%;
-    --secondary-foreground: 240 10% 12%;
+    --secondary: 240 6% 93%;
+    --secondary-foreground: 240 10% 10%;
 
-    --muted: 240 5% 94%;
-    --muted-foreground: 240 5% 48%;
+    --muted: 40 15% 95%;
+    --muted-foreground: 240 5% 42%;
 
-    --accent: 258 70% 75%;
+    --accent: 258 65% 72%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 88%;
-    --input: 240 6% 88%;
+    --border: 240 8% 85%;
+    --input: 240 8% 87%;
     --ring: 258 85% 68%;
 
     --radius: 12px;
 
-    --glow: 258 70% 75%;
-    --surface: 0 0% 100%;
-    --surface-elevated: 0 0% 98%;
-    --hover: 240 10% 12% / 0.04;
-    --hover-foreground: 240 10% 12%;
+    --glow: 258 60% 65%;
+    --surface: 40 15% 99%;
+    --surface-elevated: 0 0% 100%;
+    --hover: 240 10% 12% / 0.05;
+    --hover-foreground: 240 10% 10%;
   }
 
   .dark {
@@ -131,6 +131,16 @@
   }
   .surface-elevated {
     background: hsl(var(--surface-elevated));
+  }
+  .surface-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
+  }
+  .surface-glass {
+    background: hsl(var(--surface) / 0.8);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
   }
 
   @keyframes breathe {

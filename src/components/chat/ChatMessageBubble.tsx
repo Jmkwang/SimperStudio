@@ -19,7 +19,7 @@ interface ChatMessageBubbleProps {
   nodeId?: string;
   emptyText?: string;
   onCopy?: () => void;
-  onRetry?: (agentId: string) => void;
+  onRetry?: (agentId: string, messageId: string) => void;
   layoutMode?: 'A' | 'B';
 }
 
@@ -53,7 +53,7 @@ function AssistantBubble({
   message: ChatMessage;
   agent?: AgentInfo;
   onCopy?: () => void;
-  onRetry?: (agentId: string) => void;
+  onRetry?: (agentId: string, messageId: string) => void;
   layout?: 'single' | 'multi';
 }) {
   const { t } = useTranslation();
@@ -85,7 +85,14 @@ function AssistantBubble({
         layout === 'single' ? "max-w-[80%]" : "w-full"
       )}>
         {agent?.name && (
-          <span className="text-[11px] font-medium text-muted-foreground mb-0.5 ml-1">{agent.name}</span>
+          <span className="text-[11px] font-medium text-muted-foreground mb-0.5 ml-1">
+            {agent.name}
+            {(response.providerName || response.modelName) && (
+              <span className="text-[10px] text-muted-foreground/70 ml-1.5">
+                {response.providerName}/{response.modelName || response.modelId}
+              </span>
+            )}
+          </span>
         )}
         <div className={cn(
           "py-1.5 text-sm whitespace-pre-wrap break-words w-full rounded-lg px-3",
@@ -115,32 +122,27 @@ function AssistantBubble({
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5 ml-1 flex-wrap">
-          <span className="text-[10px] text-muted-foreground shrink-0">
+          <span className="text-[10px] text-muted-foreground/50 shrink-0">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
           {(response.tokenUsage || response.duration) && (
-            <span className="text-[10px] text-muted-foreground shrink-0">
+            <span className="text-[10px] text-muted-foreground/50 shrink-0">
               ({response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : ''}{response.tokenUsage && response.duration ? ' / ' : ''}{response.duration ? `${(response.duration / 1000).toFixed(1)}s` : ''})
-            </span>
-          )}
-          {(response.providerName || response.modelName) && (
-            <span className="text-[10px] text-muted-foreground shrink-0">
-              {response.providerName}/{response.modelName || response.modelId}
             </span>
           )}
           {!isStreaming && (
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleCopy}
-                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
                 aria-label={t("Copy")}
               >
                 <Copy className="h-3 w-3" />
               </button>
-              {onRetry && response.agentId && (
+              {onRetry && (
                 <button
-                  onClick={() => onRetry(response.agentId!)}
-                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
+                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
                   aria-label={t("Retry")}
                 >
                   <RefreshCw className="h-3 w-3" />
@@ -254,7 +256,7 @@ function agentResponsesFiltered(
 ): AgentResponse[] {
   return responses.filter(r => {
     if (agentId && r.agentId !== agentId) return false;
-    if (nodeId && r.nodeId !== nodeId) return false;
+    if (nodeId && r.nodeId !== undefined && r.nodeId !== nodeId) return false;
     return true;
   });
 }

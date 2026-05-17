@@ -168,6 +168,7 @@ export interface ChatSlice {
   rerunAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<string | undefined>;
   rerunAndForwardAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<void>;
   sendToAgent: (sessionId: string, agentId: string, prompt: string, options?: { addUserMessage?: boolean }) => Promise<string | undefined>;
+  retryAgentResponse: (sessionId: string, messageId: string, agentId: string, prompt: string, nodeId?: string) => Promise<void>;
 
   linkWorkflowToSession: (sessionId: string, workflowId: string) => void;
   getWorkflowForSession: (sessionId: string) => Workflow | undefined;
@@ -484,6 +485,36 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         getSettings: () => get().settings,
       });
       return messageId;
+    },
+
+    retryAgentResponse: async (sessionId, messageId, agentId, prompt, nodeId) => {
+      const { agents } = get();
+      const agent = agents.find((a: Agent) => a.id === agentId);
+      if (!agent) return;
+
+      // 1. 清除原有 agentResponse
+      set((state: any) => ({
+        sessions: state.sessions.map((s: ChatSession) => {
+          if (s.id !== sessionId) return s;
+          const messages = [...s.messages];
+          const msgIndex = messages.findIndex(m => m.id === messageId);
+          if (msgIndex === -1) return s;
+          const msg = { ...messages[msgIndex] };
+          msg.agentResponses = (msg.agentResponses || []).filter(
+            (ar: any) => !(ar.agentId === agentId && ar.nodeId === nodeId)
+          );
+          messages[msgIndex] = msg;
+          return { ...s, messages };
+        })
+      }));
+
+      // 2. 用同样的 messageId 重新运行 agent 响应
+      await runAgentResponse({
+        sessionId, messageId, agent, prompt, nodeId,
+        addAgentResponseStream: get().addAgentResponseStream,
+        completeAgentResponse: get().completeAgentResponse,
+        getSettings: () => get().settings,
+      });
     },
 
     linkWorkflowToSession: (sessionId, workflowId) => set((state: any) => ({
