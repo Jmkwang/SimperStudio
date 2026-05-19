@@ -3,6 +3,22 @@ import { Agent, DynamicAgentConfig } from '@/types/models';
 import { resolveAgentModelConfig, shortError } from '@/lib/agentProviderRouter';
 import { fetchFromResolvedConfig } from '@/lib/api';
 
+function tryParseJson(result: string): { parsed: any; success: boolean } {
+  try {
+    return { parsed: JSON.parse(result), success: true };
+  } catch {
+    const match = result.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return { parsed: JSON.parse(match[0]), success: true };
+      } catch {
+        return { parsed: { raw: result, _parseError: 'Failed to parse JSON from response' }, success: false };
+      }
+    }
+    return { parsed: { raw: result, _parseError: 'No JSON found in response' }, success: false };
+  }
+}
+
 export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers) => {
   // 1. Parse dynamic configuration
   let config: DynamicAgentConfig | undefined;
@@ -88,11 +104,30 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
       result += chunk;
     }
 
-    // 5. Build output
+    // 5. Parse schema if specified
+    const schema = node.data?.schema ? String(node.data.schema) : undefined;
+    let outputValue: any = result;
+    if (schema) {
+      const { parsed } = tryParseJson(result);
+      outputValue = parsed;
+    }
+
+    // 6. Collect loop iteration results
+    if (payload.loop && Array.isArray(payload._loopResults)) {
+      payload._loopResults.push({
+        nodeId: node.id,
+        iterationIndex: payload.loop.index,
+        iterationItem: payload.loop.currentItem,
+        llmResult: outputValue,
+        timestamp: Date.now(),
+      });
+    }
+
+    // 7. Build output
     const outputField = String(node.data?.outputField || 'llmResult');
     return {
       ...payload,
-      [outputField]: result,
+      [outputField]: outputValue,
       _dynamicAgentMeta: {
         nodeId: node.id,
         name: config.name,

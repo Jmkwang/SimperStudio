@@ -115,25 +115,25 @@
 **核心场景**：狼人杀工作流升级——主持人 Agent 动态生成角色分配，Loop + Dynamic Agent 实现依次发言、独立性格。
 
 #### Phase 1：核心引擎
-- [ ] `src/types/models.ts` — 新增 `DynamicAgentConfig`、`WorkflowDynamicAgentNodeData`，扩展 `WorkflowNodeType`
-- [ ] `src/lib/workflow/helpers.ts` — 新增 `replaceTemplateVars()` 模板替换函数
-- [ ] `src/lib/workflow/nodeExecutors/dynamicAgentExecutor.ts` — 创建执行器（payload/inline 双模式、三级模型回退）
-- [ ] `src/lib/workflow/nodeRegistry.ts` — 注册 `dynamic-agent` 执行器
-- [ ] 单元测试：payload 模式、inline 模式、模型回退链、Loop 串行集成
+- [x] `src/types/models.ts` — 新增 `DynamicAgentConfig`、`WorkflowDynamicAgentNodeData`，扩展 `WorkflowNodeType`
+- [x] `src/lib/workflow/helpers.ts` — 新增 `replaceTemplateVars()` 模板替换函数
+- [x] `src/lib/workflow/nodeExecutors/dynamicAgentExecutor.ts` — 创建执行器（payload/inline 双模式、三级模型回退、schema JSON 解析、_loopResults 收集）
+- [x] `src/lib/workflow/nodeRegistry.ts` — 注册 `dynamic-agent` 执行器
+- [x] 单元测试：payload 模式、inline 模式、模型回退链、Loop 串行集成
 
 #### Phase 2：节点编辑器 UI
-- [ ] `src/components/workflow/nodes/DynamicAgentNode.tsx` — 节点编辑器（配置来源切换、模板输入、fallback 选择）
-- [ ] `src/components/workflow/WorkflowCanvas.tsx` — 注册 nodeTypes、节点面板添加分类
-- [ ] 节点样式设计（紫色主题、`UserCog`/`Mask` 图标）
+- [x] `src/components/workflow/nodes/DynamicAgentNode.tsx` — 节点编辑器（配置来源切换、模板输入、fallback 选择）
+- [x] `src/components/workflow/WorkflowCanvas.tsx` — 注册 nodeTypes、节点面板添加分类
+- [x] 节点样式设计（紫色主题、`Sparkles` 图标）
 
 #### Phase 3：聊天视图集成
-- [ ] `WorkflowAgentWindow` — 支持从 `_dynamicAgentMeta` 读取动态名称/头像
-- [ ] `ChatMessageBubble` — 支持显示动态 Agent 信息
-- [ ] `WorkflowChatView` — Dynamic Agent 节点点击打开对话窗口
+- [x] `WorkflowAgentWindow` — 支持从 `_dynamicAgentMeta` 读取动态名称/头像
+- [x] `ChatMessageBubble` — 支持显示动态 Agent 信息
+- [x] `WorkflowChatView` — Dynamic Agent 节点点击打开对话窗口
 
 #### Phase 4：狼人杀示例升级
-- [ ] 重新设计狼人杀工作流 JSON（主持人生成角色 + Loop + Dynamic Agent）
-- [ ] 回归测试：角色随机分配、串行发言、性格差异、游戏逻辑
+- [x] 重新设计狼人杀工作流 JSON（主持人生成角色 + Loop + Dynamic Agent）
+- [ ] 回归测试：角色随机分配、串行发言、性格差异、游戏逻辑（需浏览器手动验证）
 
 ---
 

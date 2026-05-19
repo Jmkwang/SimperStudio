@@ -125,6 +125,7 @@ export function ContextSidebar({
           openWorkflowSession={openWorkflowSession}
           createSession={createSession}
           deleteSession={deleteSession}
+          deleteWorkflow={deleteWorkflow}
           activeWorkspaceId={activeWorkspaceId}
           t={t}
         />

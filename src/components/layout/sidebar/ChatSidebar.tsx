@@ -4,6 +4,8 @@ import { Plus } from "lucide-react"
 import { ContextItem } from "./ContextItem"
 import { SortableList } from "./SortableList"
 import { useAppStore } from "@/stores"
+import { NewSessionDialog } from "./NewSessionDialog"
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 
 export function ChatSidebar({
   workflows,
@@ -16,6 +18,7 @@ export function ChatSidebar({
   openWorkflowSession,
   createSession,
   deleteSession,
+  deleteWorkflow,
   activeWorkspaceId,
   t,
 }: {
@@ -29,14 +32,19 @@ export function ChatSidebar({
   openWorkflowSession: (id: string) => Promise<void>
   createSession: (title: string, workspaceId: string, workflowId?: string, mode?: 'single' | 'workflow') => void
   deleteSession: (id: string) => Promise<void>
+  deleteWorkflow: (id: string) => Promise<void>
   activeWorkspaceId: string | null
   t: (key: string) => string
 }) {
   const [chatTab, setChatTab] = useState<'workflows' | 'sessions'>('workflows')
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: 'session' | 'workflow' } | null>(null)
   const workflowOrder = useAppStore(state => state.workflowOrder)
   const setWorkflowOrder = useAppStore(state => state.setWorkflowOrder)
   const sessionOrder = useAppStore(state => state.sessionOrder)
   const setSessionOrder = useAppStore(state => state.setSessionOrder)
+  const setActiveAgent = useAppStore(state => state.setActiveAgent)
 
   const sortedWorkflows = workflowOrder.length > 0
     ? [...workflows].sort((a, b) => {
@@ -79,16 +87,33 @@ export function ChatSidebar({
     setActiveSession(sessionId)
   }
 
-  const handleNewSession = () => {
-    if (selectedChatWorkflowId) {
-      const workflow = workflows.find(w => w.id === selectedChatWorkflowId)
-      createSession(
-        workflow?.name || t('新会话'),
-        activeWorkspaceId || 'default-workspace',
-        selectedChatWorkflowId,
-        'workflow'
-      )
+  const handleCreateSingleSession = (title: string, workspaceId: string, agentId: string) => {
+    createSession(title, workspaceId, undefined, 'single')
+    setActiveAgent(agentId)
+  }
+
+  const handleCreateWorkflowSession = (title: string, workspaceId: string, workflowId: string) => {
+    createSession(title, workspaceId, workflowId, 'workflow')
+    setSelectedChatWorkflowId(workflowId)
+    setChatTab('sessions')
+  }
+
+  const handleDeleteClick = (id: string, name: string, type: 'session' | 'workflow') => {
+    setItemToDelete({ id, name, type })
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return
+    if (itemToDelete.type === 'session') {
+      deleteSession(itemToDelete.id)
+    } else if (itemToDelete.type === 'workflow') {
+      deleteWorkflow(itemToDelete.id)
+      if (selectedChatWorkflowId === itemToDelete.id) {
+        setSelectedChatWorkflowId(null)
+      }
     }
+    setItemToDelete(null)
   }
 
   return (
@@ -117,6 +142,19 @@ export function ChatSidebar({
           {t('会话')}
         </button>
       </div>
+
+      {/* New session button - always visible */}
+      <div className="px-2 pt-2 pb-1 border-b border-border"
+      >
+        <button
+          onClick={() => setDialogOpen(true)}
+          className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl"
+        >
+          <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          <span>{t('新建会话')}</span>
+        </button>
+      </div>
+
       <div className="flex-1 overflow-auto px-2 py-2">
         {chatTab === 'workflows' ? (
           workflows.length > 0 ? (
@@ -131,9 +169,10 @@ export function ChatSidebar({
                   title={w.name}
                   icon="workflow"
                   active={selectedChatWorkflowId === w.id}
-                  deletable={false}
+                  deletable={true}
                   onClick={() => handleWorkflowClick(w.id)}
                   onDoubleClick={() => handleWorkflowDoubleClick(w.id)}
+                  onDelete={() => handleDeleteClick(w.id, w.name, 'workflow')}
                   t={t}
                 />
               )}
@@ -145,15 +184,6 @@ export function ChatSidebar({
           )
         ) : (
           <>
-            {selectedChatWorkflowId && (
-              <button
-                onClick={handleNewSession}
-                className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground mb-1 rounded-xl"
-              >
-                <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                <span>{t('新建会话')}</span>
-              </button>
-            )}
             {selectedChatWorkflowId ? (
               sortedSessions.length > 0 ? (
                 <SortableList
@@ -175,7 +205,7 @@ export function ChatSidebar({
                         active={activeSessionId === s.id}
                         deletable={true}
                         onClick={() => handleSessionSelect(s.id)}
-                        onDelete={() => deleteSession(s.id)}
+                        onDelete={() => handleDeleteClick(s.id, s.title, 'session')}
                         t={t}
                       />
                     )
@@ -194,6 +224,24 @@ export function ChatSidebar({
           </>
         )}
       </div>
+
+      <NewSessionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        agents={agents}
+        workflows={workflows}
+        activeWorkspaceId={activeWorkspaceId}
+        onCreateSingleSession={handleCreateSingleSession}
+        onCreateWorkflowSession={handleCreateWorkflowSession}
+        t={t}
+      />
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={itemToDelete?.name || ''}
+        onConfirm={handleConfirmDelete}
+        t={t}
+      />
     </div>
   )
 }

@@ -1,7 +1,9 @@
+import { useState } from "react"
 import { Plus } from "lucide-react"
 import { ContextItem } from "./ContextItem"
 import { SortableList } from "./SortableList"
 import { useAppStore } from "@/stores"
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 
 export function WorkflowSidebar({
   workflows,
@@ -20,6 +22,9 @@ export function WorkflowSidebar({
   activeWorkspaceId: string | null
   t: (key: string) => string
 }) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null)
+
   const workflowOrder = useAppStore(state => state.workflowOrder)
   const setWorkflowOrder = useAppStore(state => state.setWorkflowOrder)
 
@@ -36,6 +41,18 @@ export function WorkflowSidebar({
 
   const handleReorder = (items: typeof workflows) => {
     setWorkflowOrder(items.map(w => w.id))
+  }
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setItemToDelete({ id, name })
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      deleteWorkflow(itemToDelete.id)
+      setItemToDelete(null)
+    }
   }
 
   return (
@@ -64,7 +81,7 @@ export function WorkflowSidebar({
                 active={activeWorkflowId === w.id}
                 deletable={true}
                 onClick={() => setActiveWorkflow(w.id)}
-                onDelete={() => deleteWorkflow(w.id)}
+                onDelete={() => handleDeleteClick(w.id, w.name)}
                 t={t}
               />
             )}
@@ -75,6 +92,13 @@ export function WorkflowSidebar({
           </div>
         )}
       </div>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={itemToDelete?.name || ''}
+        onConfirm={handleConfirmDelete}
+        t={t}
+      />
     </div>
   )
 }
