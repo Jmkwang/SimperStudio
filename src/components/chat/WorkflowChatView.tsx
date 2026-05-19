@@ -46,9 +46,18 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
 
   const isCollapsed = workflowChatUI.sidebarCollapsedBySession[session.id] ?? true;
 
-  const agentNodes = workflow?.nodesData?.filter(node => node.type === 'agent' && node.data?.agentId) || [];
+  const agentNodes = workflow?.nodesData?.filter(node =>
+    (node.type === 'agent' && node.data?.agentId) ||
+    node.type === 'dynamic-agent'
+  ) || [];
   const linkedAgents = agentNodes
-    .map(node => agents.find(a => a.id === node.data?.agentId))
+    .map(node => {
+      if (node.type === 'dynamic-agent') {
+        // Virtual agent for dynamic-agent nodes
+        return { id: `dynamic-${node.id}`, name: node.data?.label || 'Dynamic Agent', avatar: '' } as Agent;
+      }
+      return agents.find(a => a.id === node.data?.agentId);
+    })
     .filter(Boolean) as Agent[];
 
   const hasMultipleAgents = linkedAgents.length > 1;
@@ -91,6 +100,19 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
             ...baseData,
             agentId: node.data.agentId,
             onClick: () => openWorkflowAgentWindow(session.id, workflow.id, node.id, node.data.agentId!),
+          },
+        };
+      }
+
+      if (nodeType === 'dynamic-agent') {
+        const dynamicAgentId = `dynamic-${node.id}`;
+        return {
+          ...node,
+          type: 'agent',
+          data: {
+            ...baseData,
+            agentId: dynamicAgentId,
+            onClick: () => openWorkflowAgentWindow(session.id, workflow.id, node.id, dynamicAgentId),
           },
         };
       }

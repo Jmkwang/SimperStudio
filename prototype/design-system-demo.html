@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio - Design System Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       Design Tokens - Light Mode (Default)
+       ============================================ */
+    :root {
+      /* Brand & Accent */
+      --brand-coral: #ff5530;
+      --brand-magenta: #ea5ec1;
+      --brand-blue: #1456f0;
+      --brand-blue-mid: #3b82f6;
+      --brand-blue-deep: #1d4ed8;
+      --brand-blue-700: #17437d;
+      --brand-cyan: #3daeff;
+      --brand-blue-200: #bfdbfe;
+      --brand-purple: #a855f7;
+
+      /* Surface */
+      --canvas: #ffffff;
+      --surface: #f7f8fa;
+      --surface-soft: #f2f3f5;
+      --hairline: #e5e7eb;
+      --hairline-soft: #eaecf0;
+
+      /* Text */
+      --ink: #0a0a0a;
+      --ink-strong: #000000;
+      --charcoal: #222222;
+      --slate: #45515e;
+      --steel: #5f5f5f;
+      --stone: #8e8e93;
+      --muted: #a8aab2;
+      --on-dark: #ffffff;
+
+      /* Semantic */
+      --success-bg: #e8ffea;
+      --success-text: #1ba673;
+      --error: #d45656;
+      --footer-bg: #0a0a0a;
+
+      /* Component aliases */
+      --primary: var(--ink);
+      --on-primary: var(--on-dark);
+      --primary-soft: #181e25;
+    }
+
+    /* ============================================
+       Design Tokens - Dark Mode
+       ============================================ */
+    [data-theme="dark"] {
+      --canvas: #0a0a0a;
+      --surface: #141414;
+      --surface-soft: #1a1a1a;
+      --hairline: #2a2a2a;
+      --hairline-soft: #333333;
+
+      --ink: #f0f0f0;
+      --ink-strong: #ffffff;
+      --charcoal: #c0c0c0;
+      --slate: #8899aa;
+      --steel: #999999;
+      --stone: #aaaaaa;
+      --muted: #777777;
+      --on-dark: #ffffff;
+
+      --success-bg: #1a3a22;
+      --success-text: #4ade80;
+      --error: #ef4444;
+      --footer-bg: #000000;
+
+      --primary: #ffffff;
+      --on-primary: #0a0a0a;
+      --primary-soft: #2a2a2a;
+    }
+
+    /* ============================================
+       Reset & Base
+       ============================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "DM Sans", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: var(--canvas);
+      color: var(--charcoal);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* ============================================
+       Typography
+       ============================================ */
+    .text-hero {
+      font-size: clamp(32px, 6vw, 80px);
+      font-weight: 600;
+      line-height: 1.10;
+      letter-spacing: -2px;
+      color: var(--ink);
+    }
+
+    .text-display-lg {
+      font-size: clamp(28px, 4vw, 56px);
+      font-weight: 600;
+      line-height: 1.10;
+      letter-spacing: -1.5px;
+      color: var(--ink);
+    }
+
+    .text-heading-lg {
+      font-size: clamp(24px, 3vw, 40px);
+      font-weight: 600;
+      line-height: 1.20;
+      letter-spacing: -1px;
+      color: var(--ink);
+    }
+
+    .text-heading-md {
+      font-size: clamp(20px, 2.5vw, 32px);
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      color: var(--ink);
+    }
+
+    .text-heading-sm {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.30;
+      color: var(--ink);
+    }
+
+    .text-card-title {
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.40;
+      color: var(--ink);
+    }
+
+    .text-subtitle {
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.50;
+      color: var(--steel);
+    }
+
+    .text-body {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.50;
+      color: var(--charcoal);
+    }
+
+    .text-body-sm {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.50;
+      color: var(--steel);
+    }
+
+    .text-caption {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.70;
+      color: var(--stone);
+    }
+
+    .text-micro {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.50;
+      color: var(--muted);
+    }
+
+    /* ============================================
+       Buttons
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.40;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border-radius: 9999px;
+      padding: 11px 24px;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.85;
+    }
+
+    .btn-primary:active {
+      background-color: var(--charcoal);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      border-radius: 9999px;
+      padding: 11px 24px;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--ink);
+      color: var(--canvas);
+    }
+
+    .btn-tertiary {
+      background-color: var(--canvas);
+      color: var(--ink);
+      border: 1px solid var(--hairline);
+      border-radius: 9999px;
+      padding: 11px 24px;
+    }
+
+    .btn-tertiary:hover {
+      border-color: var(--stone);
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background-color: var(--canvas);
+      color: var(--ink);
+      border: 1px solid var(--hairline);
+      padding: 0;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--stone);
+    }
+
+    /* ============================================
+       Cards
+       ============================================ */
+    .card-base {
+      background-color: var(--canvas);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--hairline);
+    }
+
+    .card-feature {
+      background-color: var(--surface);
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    .product-card {
+      border-radius: 32px;
+      padding: 32px;
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .product-card-coral { background-color: var(--brand-coral); }
+    .product-card-magenta { background-color: var(--brand-magenta); }
+    .product-card-blue { background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-deep) 100%); }
+    .product-card-purple { background-color: var(--brand-purple); }
+
+    .product-card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      filter: blur(40px);
+    }
+
+    .product-card-title {
+      font-size: clamp(24px, 3vw, 40px);
+      font-weight: 600;
+      line-height: 1.20;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .product-card-desc {
+      font-size: 14px;
+      line-height: 1.50;
+      opacity: 0.8;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ai-tile {
+      background-color: var(--canvas);
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid var(--hairline);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .ai-tile:hover {
+      box-shadow: rgba(0, 0, 0, 0.08) 0px 4px 6px 0px;
+    }
+
+    /* ============================================
+       Badges
+       ============================================ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.50;
+      border-radius: 9999px;
+      padding: 4px 10px;
+    }
+
+    .badge-success {
+      background-color: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .badge-new {
+      background-color: var(--brand-coral);
+      color: #ffffff;
+    }
+
+    .badge-beta {
+      background-color: var(--brand-blue-200);
+      color: var(--brand-blue-deep);
+    }
+
+    /* ============================================
+       Navigation
+       ============================================ */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--canvas);
+      border-bottom: 1px solid var(--hairline-soft);
+      backdrop-filter: blur(12px);
+      transition: background-color 0.3s ease;
+    }
+
+    .nav-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--steel);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--ink);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ============================================
+       Theme Toggle
+       ============================================ */
+    .theme-toggle {
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      border: 1px solid var(--hairline);
+      background-color: var(--canvas);
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--stone);
+    }
+
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ============================================
+       Layout Utilities
+       ============================================ */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    .section {
+      padding: 96px 0;
+    }
+
+    .section-md {
+      padding: 64px 0;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .flex-col {
+      flex-direction: column;
+    }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .justify-center {
+      justify-content: center;
+    }
+
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .gap-5 { gap: 20px; }
+    .gap-6 { gap: 24px; }
+    .gap-8 { gap: 32px; }
+
+    .text-center { text-align: center; }
+
+    .mb-1 { margin-bottom: 4px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-3 { margin-bottom: 12px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-6 { margin-bottom: 24px; }
+    .mb-8 { margin-bottom: 32px; }
+    .mb-12 { margin-bottom: 48px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-4 { margin-top: 16px; }
+
+    /* ============================================
+       Hero Section
+       ============================================ */
+    .hero {
+      padding: 96px 0;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: 9999px;
+      padding: 8px 16px;
+      margin-bottom: 32px;
+    }
+
+    .hero-title {
+      max-width: 900px;
+      margin: 0 auto 24px;
+    }
+
+    .hero-subtitle {
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================
+       Stats Row
+       ============================================ */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      padding: 48px 0;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .stat-cell {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: clamp(24px, 3vw, 40px);
+      font-weight: 600;
+      line-height: 1.20;
+      letter-spacing: -1px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--steel);
+    }
+
+    /* ============================================
+       Data Table
+       ============================================ */
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background-color: var(--canvas);
+      border-radius: 8px;
+      border: 1px solid var(--hairline);
+      overflow: hidden;
+    }
+
+    .data-table th {
+      background-color: var(--surface);
+      color: var(--steel);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.50;
+      text-align: left;
+      padding: 12px 16px;
+    }
+
+    .data-table td {
+      color: var(--charcoal);
+      font-size: 14px;
+      line-height: 1.50;
+      padding: 16px;
+      border-bottom: 1px solid var(--hairline-soft);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ============================================
+       Input
+       ============================================ */
+    .text-input {
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--ink);
+      background-color: var(--canvas);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 12px 16px;
+      height: 40px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .text-input:focus {
+      border: 2px solid var(--brand-blue-deep);
+      padding: 11px 15px;
+    }
+
+    .text-input::placeholder {
+      color: var(--stone);
+    }
+
+    /* ============================================
+       Search Pill
+       ============================================ */
+    .search-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--surface);
+      color: var(--steel);
+      font-size: 14px;
+      border-radius: 8px;
+      padding: 8px 16px;
+      height: 36px;
+      border: 1px solid var(--hairline);
+    }
+
+    /* ============================================
+       Tabs
+       ============================================ */
+    .segmented-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 32px;
+    }
+
+    .segmented-tab {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.40;
+      color: var(--steel);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .segmented-tab.active {
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+    }
+
+    /* ============================================
+       Footer
+       ============================================ */
+    .footer {
+      background-color: var(--footer-bg);
+      color: var(--on-dark);
+      padding: 64px 0 32px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.5fr repeat(4, 1fr);
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .footer-tagline {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.50;
+    }
+
+    .footer-col-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--on-dark);
+      margin-bottom: 16px;
+    }
+
+    .footer-link {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .footer-link:hover {
+      opacity: 0.7;
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ============================================
+       Responsive
+       ============================================ */
+    @media (max-width: 1023px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .footer-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-links { display: none; }
+    }
+
+    @media (max-width: 767px) {
+      .container { padding: 0 20px; }
+      .section { padding: 64px 0; }
+      .hero { padding: 64px 0; }
+      .grid-4 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr; gap: 24px; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+    }
+
+    /* ============================================
+       Illustration Placeholders
+       ============================================ */
+    .illustration {
+      width: 100%;
+      height: 100px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .illustration-coral { background: linear-gradient(135deg, #ff5530 0%, #ff8855 100%); }
+    .illustration-magenta { background: linear-gradient(135deg, #ea5ec1 0%, #c084fc 100%); }
+    .illustration-blue { background: linear-gradient(135deg, #1456f0 0%, #3daeff 100%); }
+    .illustration-purple { background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%); }
+
+    /* ============================================
+       Decorative Elements
+       ============================================ */
+    .gradient-bg {
+      background: linear-gradient(180deg, var(--canvas) 0%, var(--surface) 100%);
+    }
+
+    .promo-strip {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      text-align: center;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .promo-strip a {
+      color: var(--on-primary);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ============================================
+       Mobile Nav
+       ============================================ */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    @media (max-width: 1023px) {
+      .mobile-menu-btn { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Promo Banner -->
+  <div class="promo-strip">
+    SimperStudio 现已开放下载 — <a href="#">立即获取</a>
+  </div>
+
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        SimperStudio
+      </a>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">功能</a>
+        <a href="#models" class="nav-link">模型</a>
+        <a href="#docs" class="nav-link">文档</a>
+        <a href="#pricing" class="nav-link">价格</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <a href="#" class="btn btn-secondary">登录</a>
+        <a href="#" class="btn btn-primary">开始使用</a>
+      </div>
+      <button class="mobile-menu-btn" aria-label="菜单">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="badge badge-new">NEW</span>
+        <span class="text-body-sm">v2.0 现已发布，支持动态智能体节点</span>
+      </div>
+      <h1 class="text-hero hero-title">Small & Beautiful.<br>AI Power Unleashed.</h1>
+      <p class="text-subtitle hero-subtitle">
+        将多智能体对话与可视化工作流完美融合的桌面应用。本地优先，闪电般快速，无限扩展。
+      </p>
+      <div class="hero-actions">
+        <a href="#" class="btn btn-primary">免费下载</a>
+        <a href="#" class="btn btn-secondary">查看文档</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Row -->
+  <section style="background-color: var(--surface-soft);">
+    <div class="container">
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-number">50+</div>
+          <div class="stat-label">内置模型支持</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">本地数据存储</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-number">∞</div>
+          <div class="stat-label">工作流节点组合</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-number">0ms</div>
+          <div class="stat-label">本地启动延迟</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Matrix -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="text-center mb-12">
+        <h2 class="text-heading-lg mb-4">四大核心模块</h2>
+        <p class="text-subtitle">每一个模块都是独立的 AI 产品体验</p>
+      </div>
+      <div class="grid-4" style="gap: 16px;">
+        <div class="product-card product-card-coral">
+          <span class="badge badge-new" style="position: absolute; top: 24px; right: 24px; z-index: 2;">LIVE</span>
+          <div class="product-card-title">智能体对话</div>
+          <div class="product-card-desc">多智能体协作聊天，支持切换、对比、群聊模式</div>
+        </div>
+        <div class="product-card product-card-magenta">
+          <div class="product-card-title">可视化工作流</div>
+          <div class="product-card-desc">拖拽式节点编辑器，触发器、动作、逻辑门一应俱全</div>
+        </div>
+        <div class="product-card product-card-blue">
+          <span class="badge" style="position: absolute; top: 24px; right: 24px; z-index: 2; background: rgba(255,255,255,0.2); color: #fff;">BETA</span>
+          <div class="product-card-title">动态智能体</div>
+          <div class="product-card-desc">运行时配置的智能体节点，实现"智能体设定智能体"</div>
+        </div>
+        <div class="product-card product-card-purple">
+          <div class="product-card-title">提示词工程</div>
+          <div class="product-card-desc">专业的提示词管理、模板库与版本控制</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Product Matrix -->
+  <section class="section gradient-bg">
+    <div class="container">
+      <div class="text-center mb-12">
+        <h2 class="text-heading-lg mb-4">平台能力矩阵</h2>
+        <p class="text-subtitle">为开发者与创作者打造的全栈 AI 工具链</p>
+      </div>
+      <div class="grid-4" style="gap: 16px;">
+        <div class="ai-tile">
+          <div class="illustration illustration-coral">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="text-card-title mb-2">多模型对话</div>
+          <div class="text-body-sm">支持 OpenAI、Anthropic、Gemini、Ollama 等主流模型，一键切换</div>
+        </div>
+        <div class="ai-tile">
+          <div class="illustration illustration-blue">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div class="text-card-title mb-2">工作流编辑器</div>
+          <div class="text-body-sm">基于 React Flow 的无限画布，支持 MiniMap 与执行时间线</div>
+        </div>
+        <div class="ai-tile">
+          <div class="illustration illustration-magenta">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <div class="text-card-title mb-2">自定义 API</div>
+          <div class="text-body-sm">将任意 REST 端点定义为工具，供智能体或工作流节点调用</div>
+        </div>
+        <div class="ai-tile">
+          <div class="illustration illustration-purple">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="text-card-title mb-2">安全本地存储</div>
+          <div class="text-body-sm">SQLite 本地数据库，所有数据保存在你的设备上</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Showcase -->
+  <section class="section">
+    <div class="container">
+      <div class="grid-2" style="align-items: center;">
+        <div>
+          <h2 class="text-heading-lg mb-4">工作流驱动的对话体验</h2>
+          <p class="text-body mb-6">
+            每个工作流可以拥有无限个聊天会话。在对话中实时查看工作流的节点拓扑图，
+            理解 AI 的决策路径。支持浮窗式 Agent 聊天，让多智能体协作如同面对面交流。
+          </p>
+          <div class="flex gap-4" style="flex-wrap: wrap;">
+            <span class="badge badge-beta">React Flow</span>
+            <span class="badge badge-beta">实时拓扑</span>
+            <span class="badge badge-beta">执行时间线</span>
+          </div>
+        </div>
+        <div class="card-feature">
+          <div style="background: linear-gradient(135deg, var(--brand-blue-200) 0%, var(--brand-cyan) 100%); height: 240px; border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Model Comparison Table -->
+  <section class="section-md" id="models" style="background-color: var(--surface);">
+    <div class="container">
+      <div class="text-center mb-12">
+        <h2 class="text-heading-lg mb-4">支持的模型提供商</h2>
+        <p class="text-subtitle">一键配置，无限扩展</p>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>提供商</th>
+              <th>类型</th>
+              <th>默认端点</th>
+              <th>支持特性</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>OpenAI</strong></td>
+              <td>云端 API</td>
+              <td>api.openai.com</td>
+              <td>GPT-4、流式输出、函数调用</td>
+              <td><span class="badge badge-success">可用</span></td>
+            </tr>
+            <tr>
+              <td><strong>Anthropic</strong></td>
+              <td>云端 API</td>
+              <td>api.anthropic.com</td>
+              <td>Claude 3、长上下文、多模态</td>
+              <td><span class="badge badge-success">可用</span></td>
+            </tr>
+            <tr>
+              <td><strong>Google Gemini</strong></td>
+              <td>云端 API</td>
+              <td>generativelanguage.googleapis.com</td>
+              <td>Gemini Pro、原生多模态</td>
+              <td><span class="badge badge-success">可用</span></td>
+            </tr>
+            <tr>
+              <td><strong>Ollama</strong></td>
+              <td>本地部署</td>
+              <td>localhost:11434</td>
+              <td>Llama、Mistral、CodeLlama</td>
+              <td><span class="badge badge-success">可用</span></td>
+            </tr>
+            <tr>
+              <td><strong>自定义 API</strong></td>
+              <td>开放端点</td>
+              <td>用户配置</td>
+              <td>任意兼容 OpenAI 的接口</td>
+              <td><span class="badge badge-beta">灵活</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tabs Demo -->
+  <section class="section" id="docs">
+    <div class="container">
+      <div class="text-center mb-12">
+        <h2 class="text-heading-lg mb-4">灵活的会话模式</h2>
+        <p class="text-subtitle">从单智能体到多模型对比，满足一切场景</p>
+      </div>
+      <div style="max-width: 720px; margin: 0 auto;">
+        <div class="segmented-tabs">
+          <button class="segmented-tab active" onclick="switchTab(this, 'tab1')">单智能体</button>
+          <button class="segmented-tab" onclick="switchTab(this, 'tab2')">工作流聊天</button>
+          <button class="segmented-tab" onclick="switchTab(this, 'tab3')">双 Agent 对比</button>
+          <button class="segmented-tab" onclick="switchTab(this, 'tab4')">多模型对比</button>
+        </div>
+        <div id="tab1" class="tab-content">
+          <div class="card-base">
+            <h3 class="text-heading-sm mb-3">专注的单轮对话</h3>
+            <p class="text-body mb-4">
+              选择任意已配置的智能体，开始一对一的深度对话。支持流式输出、Token 实时计数、
+              消息历史管理和上下文剪枝。
+            </p>
+            <div class="flex gap-3" style="flex-wrap: wrap;">
+              <span class="badge badge-beta">流式输出</span>
+              <span class="badge badge-beta">Token 计数</span>
+              <span class="badge badge-beta">上下文管理</span>
+            </div>
+          </div>
+        </div>
+        <div id="tab2" class="tab-content" style="display: none;">
+          <div class="card-base">
+            <h3 class="text-heading-sm mb-3">可视化工作流驱动</h3>
+            <p class="text-body mb-4">
+              每个工作流可拥有无限聊天会话。在对话中嵌入 React Flow 拓扑图，
+              实时追踪执行路径与节点状态。
+            </p>
+            <div class="flex gap-3" style="flex-wrap: wrap;">
+              <span class="badge badge-beta">拓扑图</span>
+              <span class="badge badge-beta">执行时间线</span>
+              <span class="badge badge-beta">浮窗聊天</span>
+            </div>
+          </div>
+        </div>
+        <div id="tab3" class="tab-content" style="display: none;">
+          <div class="card-base">
+            <h3 class="text-heading-sm mb-3">A/B 对比测试</h3>
+            <p class="text-body mb-4">
+              左右并排展示两个 Agent 的回复，逐字模拟流式打字效果。
+              共享输入框，一次提问，双重答案。
+            </p>
+            <div class="flex gap-3" style="flex-wrap: wrap;">
+              <span class="badge badge-beta">并排对比</span>
+              <span class="badge badge-beta">逐字效果</span>
+              <span class="badge badge-beta">共享输入</span>
+            </div>
+          </div>
+        </div>
+        <div id="tab4" class="tab-content" style="display: none;">
+          <div class="card-base">
+            <h3 class="text-heading-sm mb-3">多模型同时回答</h3>
+            <p class="text-body mb-4">
+              勾选多个模型，一次提问获取所有模型的回答。支持标签式模型选择器，
+              快速对比不同提供商的响应质量。
+            </p>
+            <div class="flex gap-3" style="flex-wrap: wrap;">
+              <span class="badge badge-beta">多标签选择</span>
+              <span class="badge badge-beta">批量提问</span>
+              <span class="badge badge-beta">质量对比</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Preview -->
+  <section class="section-md" id="pricing" style="background-color: var(--surface-soft);">
+    <div class="container">
+      <div class="text-center mb-12">
+        <h2 class="text-heading-lg mb-4">完全免费，开源优先</h2>
+        <p class="text-subtitle">SimperStudio 采用 MIT 协议开源，所有功能免费使用</p>
+      </div>
+      <div class="grid-3">
+        <div class="card-base" style="text-align: center;">
+          <div class="text-micro mb-2" style="color: var(--brand-coral); font-weight: 600;">个人版</div>
+          <div class="text-heading-md mb-2">免费</div>
+          <div class="text-body-sm mb-6">永久免费，功能无限制</div>
+          <ul style="list-style: none; text-align: left; margin-bottom: 24px;">
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              所有核心功能
+            </li>
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              本地数据存储
+            </li>
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              无限工作流
+            </li>
+            <li class="text-body-sm" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              社区支持
+            </li>
+          </ul>
+          <a href="#" class="btn btn-primary" style="width: 100%;">下载使用</a>
+        </div>
+        <div class="card-base" style="text-align: center; border: 2px solid var(--brand-blue);">
+          <div class="text-micro mb-2" style="color: var(--brand-blue); font-weight: 600;">开发者版</div>
+          <div class="text-heading-md mb-2">免费</div>
+          <div class="text-body-sm mb-6">开源贡献，共建生态</div>
+          <ul style="list-style: none; text-align: left; margin-bottom: 24px;">
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              完整源码访问
+            </li>
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              自定义插件开发
+            </li>
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              API 扩展接口
+            </li>
+            <li class="text-body-sm" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              优先技术支持
+            </li>
+          </ul>
+          <a href="#" class="btn btn-primary" style="width: 100%; background: var(--brand-blue);">参与贡献</a>
+        </div>
+        <div class="card-base" style="text-align: center;">
+          <div class="text-micro mb-2" style="color: var(--brand-purple); font-weight: 600;">企业版</div>
+          <div class="text-heading-md mb-2">定制</div>
+          <div class="text-body-sm mb-6">私有化部署与定制开发</div>
+          <ul style="list-style: none; text-align: left; margin-bottom: 24px;">
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              私有化部署
+            </li>
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              定制化开发
+            </li>
+            <li class="text-body-sm mb-2" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              SLA 保障
+            </li>
+            <li class="text-body-sm" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-text)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              专属客户经理
+            </li>
+          </ul>
+          <a href="#" class="btn btn-secondary" style="width: 100%;">联系我们</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section style="padding: 64px 0;">
+    <div class="container">
+      <div style="background-color: var(--brand-coral); border-radius: 32px; padding: 64px 32px; text-align: center; color: white;">
+        <h2 class="text-heading-lg mb-4" style="color: white;">准备好开始了吗？</h2>
+        <p class="text-subtitle mb-8" style="color: rgba(255,255,255,0.85); max-width: 500px; margin-left: auto; margin-right: auto;">
+          下载 SimperStudio，在几分钟内搭建你的第一个 AI 工作流
+        </p>
+        <div class="flex items-center justify-center gap-4" style="flex-wrap: wrap;">
+          <a href="#" class="btn btn-tertiary">下载 macOS 版</a>
+          <a href="#" class="btn btn-tertiary">下载 Windows 版</a>
+          <a href="#" class="btn" style="background: rgba(255,255,255,0.2); color: white; border-radius: 9999px; padding: 11px 24px;">下载 Linux 版</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">SimperStudio</div>
+          <div class="footer-tagline">Small & Beautiful.<br>Intelligence with everyone.</div>
+          <div class="flex gap-3" style="margin-top: 16px;">
+            <a href="#" class="btn-icon" style="background: transparent; border-color: rgba(255,255,255,0.2); color: white;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+            <a href="#" class="btn-icon" style="background: transparent; border-color: rgba(255,255,255,0.2); color: white;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">产品</div>
+          <a href="#" class="footer-link">功能介绍</a>
+          <a href="#" class="footer-link">下载</a>
+          <a href="#" class="footer-link">更新日志</a>
+          <a href="#" class="footer-link">路线图</a>
+        </div>
+        <div>
+          <div class="footer-col-title">开发者</div>
+          <a href="#" class="footer-link">文档</a>
+          <a href="#" class="footer-link">API 参考</a>
+          <a href="#" class="footer-link">GitHub</a>
+          <a href="#" class="footer-link">贡献指南</a>
+        </div>
+        <div>
+          <div class="footer-col-title">资源</div>
+          <a href="#" class="footer-link">社区</a>
+          <a href="#" class="footer-link">博客</a>
+          <a href="#" class="footer-link">教程</a>
+          <a href="#" class="footer-link">常见问题</a>
+        </div>
+        <div>
+          <div class="footer-col-title">公司</div>
+          <a href="#" class="footer-link">关于我们</a>
+          <a href="#" class="footer-link">联系方式</a>
+          <a href="#" class="footer-link">隐私政策</a>
+          <a href="#" class="footer-link">服务条款</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span> 2026 SimperStudio. Open source under MIT License.</span>
+        <span>Made with love for the AI community.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = themeToggle.querySelector('.sun-icon');
+    const moonIcon = themeToggle.querySelector('.moon-icon');
+    const html = document.documentElement;
+
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+      html.setAttribute('data-theme', 'dark');
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        html.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }
+    });
+
+    // Tab Switching
+    function switchTab(btn, tabId) {
+      document.querySelectorAll('.segmented-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      document.getElementById(tabId).style.display = 'block';
+    }
+  </script>
+</body>
+</html>

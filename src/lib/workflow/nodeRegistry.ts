@@ -53,20 +53,21 @@ export function executeNode(
 export function computeCustomRouting(
   node: WorkflowNode,
   payload: any,
-  edges: WorkflowEdge[],
+  outgoingEdges: WorkflowEdge[],
+  incomingEdges: WorkflowEdge[],
   results: Record<string, any>,
   helpers: ExecutionHelpers
 ): Promise<{ nextFrames: Array<{ nodeId: string; payload: any }>; skipDefault: boolean }> | null {
   if (node.type === 'condition' || node.type === 'switch') {
-    return handleConditionSwitchRouting(node, payload, edges, helpers);
+    return handleConditionSwitchRouting(node, payload, outgoingEdges, helpers);
   }
   if (node.type === 'loop') {
-    return handleLoopRouting(node, payload, edges, helpers);
+    return handleLoopRouting(node, payload, outgoingEdges, helpers);
   }
   if (node.type === 'merge') {
-    const merged = computeMergePayload(node, payload, edges, results);
+    const merged = computeMergePayload(node, payload, incomingEdges, results);
     return Promise.resolve({
-      nextFrames: edges.map((e) => ({ nodeId: e.target, payload: structuredClone(merged) })),
+      nextFrames: outgoingEdges.map((e) => ({ nodeId: e.target, payload: structuredClone(merged) })),
       skipDefault: true,
     });
   }

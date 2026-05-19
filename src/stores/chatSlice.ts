@@ -29,7 +29,7 @@ function normalizeSession(session: ChatSession): ChatSession {
 }
 
 function getAgentNode(workflow: Workflow | undefined, nodeId: string): WorkflowNode | undefined {
-  return workflow?.nodesData.find((node) => node.id === nodeId && node.type === 'agent');
+  return workflow?.nodesData.find((node) => node.id === nodeId && (node.type === 'agent' || node.type === 'dynamic-agent'));
 }
 
 function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): WorkflowNode | undefined {
@@ -315,6 +315,9 @@ export function createChatSlice(set: any, get: any): ChatSlice {
               const agentRespIndex = msg.agentResponses.findIndex((ar: any) => ar.agentId === agentId && ar.nodeId === nodeId);
               if (agentRespIndex === -1) {
                 const newResp = createAgentResponse(agentId, textChunk, nodeId, meta?.status === 'error' ? 'error' : 'streaming');
+                if (meta?._dynamicAgentMeta) {
+                  newResp._dynamicAgentMeta = meta._dynamicAgentMeta;
+                }
                 if (meta?.providerId) {
                   newResp.providerId = meta.providerId;
                   newResp.providerName = meta.providerName;
@@ -329,6 +332,9 @@ export function createChatSlice(set: any, get: any): ChatSlice {
               } else {
                 const resp = { ...msg.agentResponses[agentRespIndex] };
                 resp.content = { text: resp.content.text + textChunk };
+                if (meta?._dynamicAgentMeta && !resp._dynamicAgentMeta) {
+                  resp._dynamicAgentMeta = meta._dynamicAgentMeta;
+                }
                 // Backfill model info if present in meta
                 if (meta?.providerId) {
                   resp.providerId = meta.providerId;
@@ -420,8 +426,64 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const session = sessions.find((item: ChatSession) => item.id === sessionId);
       const workflow = session?.workflowId ? workflows.find((item: Workflow) => item.id === session.workflowId) : undefined;
       const node = getAgentNode(workflow, nodeId);
+      if (!session || !workflow || !node) return undefined;
+
+      // Handle dynamic-agent node
+      if (node.type === 'dynamic-agent') {
+        const nodeData = node.data as any;
+        const inline = nodeData?.inlineConfig;
+
+        // Build dynamic config from inline templates (chat layer uses empty payload for literal templates)
+        const dynamicName = inline?.nameTemplate?.replace(/\{\{.*?\}\}/g, '') || 'Dynamic Agent';
+        const dynamicSystemPrompt = inline?.systemPromptTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
+        const dynamicAvatar = inline?.avatarTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
+        const dynamicRole = inline?.roleTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
+        const dynamicPersonality = inline?.personalityTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
+
+        // Resolve fallback agent for model config
+        const fallbackAgent = nodeData?.fallbackAgentId
+          ? agents.find((a: Agent) => a.id === nodeData.fallbackAgentId)
+          : undefined;
+
+        const virtualAgent: Agent = fallbackAgent || {
+          id: `dynamic-${nodeId}`,
+          name: dynamicName,
+          avatar: dynamicAvatar,
+          systemPrompt: dynamicSystemPrompt,
+          providerId: nodeData?.fallbackProviderId,
+          modelId: nodeData?.fallbackModelId,
+        };
+
+        const dynamicMeta = {
+          nodeId,
+          name: dynamicName,
+          role: dynamicRole,
+          personality: dynamicPersonality,
+          avatar: dynamicAvatar,
+          systemPrompt: dynamicSystemPrompt,
+        };
+
+        const messageId = await get().sendMessageToAgents(sessionId, prompt, [virtualAgent], {
+          nodeId,
+          addUserMessage: options.addUserMessage !== false,
+          meta: {
+            workflowId: workflow.id,
+            workflowNodeId: nodeId,
+            targetAgentId: virtualAgent.id,
+            forwardFromMessageId: options.forwardFromMessageId,
+            triggeredBy: options.triggeredBy || 'user',
+            _dynamicAgentMeta: dynamicMeta,
+          },
+        });
+        if (nodeData?.autoSendToNext && messageId) {
+          await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, virtualAgent.id, 'auto');
+        }
+        return messageId;
+      }
+
+      // Standard agent node
       const agent = agents.find((item: Agent) => item.id === node?.data?.agentId);
-      if (!session || !workflow || !node || !agent) return undefined;
+      if (!agent) return undefined;
 
       // Node-level overrides (local to this workflow node, do not mutate global Agent config)
       const nodeData = {
@@ -442,6 +504,17 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       return messageId;
     },
 
+    /**
+     * Chat UI layer: forward an agent reply to the next agent node in the workflow.
+     *
+     * This is an **interactive/debugging path** — it triggers a new chat message
+     * via `sendToWorkflowAgent` and does NOT go through the formal `executeWorkflow`
+     * engine. Use cases: manual forward, auto-forward (`autoSendToNext`), or
+     * reload-and-forward in the workflow chat view.
+     *
+     * For formal runtime execution with full DAG traversal, state tracking, and
+     * error handling, use `executeWorkflow` from `lib/workflow/engine.ts` instead.
+     */
     forwardAgentReplyToNext: async (sessionId, fromNodeId, messageId, agentId, triggeredBy = 'manual') => {
       const { sessions, workflows } = get();
       const session = sessions.find((item: ChatSession) => item.id === sessionId);

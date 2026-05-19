@@ -1,8 +1,13 @@
 import { WorkflowNode, WorkflowEdge as _WorkflowEdge } from '../../../types/models';
 import { NodeExecutorFn, ExecutionHelpers } from '../types';
 
-export const loopExecute: NodeExecutorFn = async (_node, payload, _helpers) => {
-  return payload;
+export const loopExecute: NodeExecutorFn = async (node, payload, _helpers) => {
+  // Expose accumulated loop results under the public field name
+  return {
+    ...payload,
+    loopResults: payload._loopResults || payload.loopResults || [],
+    loopNodeId: node.id,
+  };
 };
 
 export interface LoopIterationResult {
@@ -29,11 +34,15 @@ export async function computeLoopIterations(
 
   const result: LoopIterationResult = { iterationPayloads: [], breakEarly: false };
 
+  // Shared accumulator for all iterations — survives shallow copies inside the loop body
+  const sharedLoopResults: any[] = payload._loopResults || [];
+
   for (let i = 0; i < iterationCount; i++) {
     const iterationPayload: any = structuredClone(payload);
     iterationPayload[itemAlias] = items[i];
     iterationPayload[indexAlias] = i;
-    iterationPayload.loop = { currentItem: items[i], index: i, total };
+    iterationPayload.loop = { currentItem: items[i], index: i, total, nodeId: node.id };
+    iterationPayload._loopResults = sharedLoopResults;
 
     if (breakCondition) {
       try {

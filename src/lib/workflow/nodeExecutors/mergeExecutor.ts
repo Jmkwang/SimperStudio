@@ -8,18 +8,20 @@ export const mergeExecute: NodeExecutorFn = async (_node, payload, _helpers) => 
 /**
  * Merge routing: collects results from upstream nodes and merges them.
  * Called after execution to handle the merge semantics.
+ *
+ * @param incomingEdges - edges that point TO this merge node (source = upstream)
  */
 export function computeMergePayload(
   node: WorkflowNode,
   basePayload: any,
-  edges: WorkflowEdge[],
+  incomingEdges: WorkflowEdge[],
   results: Record<string, any>
 ): any {
   const strategy = node.data?.strategy || 'append';
   const mergeKey = node.data?.mergeKey || 'id';
   const incomingResults: any[] = [];
-  for (const edge of edges) {
-    if (results[edge.target]) incomingResults.push(results[edge.target]);
+  for (const edge of incomingEdges) {
+    if (results[edge.source]) incomingResults.push(results[edge.source]);
   }
   if (strategy === 'append') {
     return { ...basePayload, merged: incomingResults };

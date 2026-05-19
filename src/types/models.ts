@@ -229,6 +229,16 @@ export interface MessageMeta {
   errorSummary?: string;
   errorDetail?: string;
   tokenUsage?: TokenUsage;
+
+  // Dynamic Agent metadata (populated when the node is a dynamic-agent)
+  _dynamicAgentMeta?: {
+    nodeId: string;
+    name?: string;
+    role?: string;
+    personality?: string;
+    avatar?: string;
+    systemPrompt?: string;
+  };
 }
 
 export interface TokenUsage {
@@ -261,6 +271,9 @@ export interface AgentResponse {
   // Error handling — one-line summary + clickable detail
   errorSummary?: string;
   errorDetail?: string;
+
+  // Dynamic Agent metadata (carried from message meta for UI display)
+  _dynamicAgentMeta?: MessageMeta['_dynamicAgentMeta'];
 }
 
 export interface MultiModelComparison {

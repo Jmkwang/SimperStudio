@@ -168,6 +168,14 @@ export function ChatMessageBubble({
   layoutMode = 'A',
 }: ChatMessageBubbleProps) {
   const resolveAgent = (response: AgentResponse): AgentInfo | undefined => {
+    // Dynamic agent meta takes precedence
+    if (response._dynamicAgentMeta) {
+      return {
+        id: response.agentId,
+        name: response._dynamicAgentMeta.name,
+        avatar: response._dynamicAgentMeta.avatar,
+      };
+    }
     if (agents && response.agentId) {
       const found = agents.find(a => a.id === response.agentId);
       if (found) return found;

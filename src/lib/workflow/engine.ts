@@ -5,6 +5,14 @@ import { executeNode, computeCustomRouting } from './nodeRegistry';
 
 const MAX_WORKFLOW_STEPS = 1000;
 
+/**
+ * Formal workflow engine: executes the complete DAG with full state tracking,
+ * retry logic, schema validation, and execution records.
+ *
+ * This is the **runtime execution path**. For interactive chat forwarding
+ * between agent nodes (manual/auto/reload), use `forwardAgentReplyToNext`
+ * from the chat slice instead.
+ */
 export async function executeWorkflow(
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
@@ -153,9 +161,10 @@ export async function executeWorkflow(
 
     // Routing
     const outgoingEdges = nodeEdges;
+    const incomingEdges = edges.filter((e) => e.target === nodeId);
 
     // Check for custom routing (condition/switch/loop/merge)
-    const customRouting = await computeCustomRouting(node!, currentPayload, outgoingEdges, results, helpers);
+    const customRouting = await computeCustomRouting(node!, currentPayload, outgoingEdges, incomingEdges, results, helpers);
     if (customRouting) {
       for (const frame of customRouting.nextFrames) {
         queue.push(frame);

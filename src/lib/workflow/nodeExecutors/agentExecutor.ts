@@ -43,18 +43,57 @@ export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
     if (node.data?.schema) {
       try {
         const parsed = JSON.parse(result);
+        // Collect loop iteration results so they are not overwritten by subsequent iterations
+        if (payload.loop && Array.isArray(payload._loopResults)) {
+          payload._loopResults.push({
+            nodeId: node.id,
+            iterationIndex: payload.loop.index,
+            iterationItem: payload.loop.currentItem,
+            llmResult: parsed,
+            timestamp: Date.now(),
+          });
+        }
         return { ...payload, llmResult: parsed };
       } catch {
         const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           try {
             const parsed = JSON.parse(jsonMatch[0]);
+            if (payload.loop && Array.isArray(payload._loopResults)) {
+              payload._loopResults.push({
+                nodeId: node.id,
+                iterationIndex: payload.loop.index,
+                iterationItem: payload.loop.currentItem,
+                llmResult: parsed,
+                timestamp: Date.now(),
+              });
+            }
             return { ...payload, llmResult: parsed };
           } catch {
-            return { ...payload, llmResult: { raw: result, _parseError: 'Failed to parse JSON from response' } };
+            const fallback = { raw: result, _parseError: 'Failed to parse JSON from response' };
+            if (payload.loop && Array.isArray(payload._loopResults)) {
+              payload._loopResults.push({
+                nodeId: node.id,
+                iterationIndex: payload.loop.index,
+                iterationItem: payload.loop.currentItem,
+                llmResult: fallback,
+                timestamp: Date.now(),
+              });
+            }
+            return { ...payload, llmResult: fallback };
           }
         }
-        return { ...payload, llmResult: { raw: result, _parseError: 'No JSON found in response' } };
+        const fallback = { raw: result, _parseError: 'No JSON found in response' };
+        if (payload.loop && Array.isArray(payload._loopResults)) {
+          payload._loopResults.push({
+            nodeId: node.id,
+            iterationIndex: payload.loop.index,
+            iterationItem: payload.loop.currentItem,
+            llmResult: fallback,
+            timestamp: Date.now(),
+          });
+        }
+        return { ...payload, llmResult: fallback };
       }
     }
 

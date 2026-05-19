@@ -30,6 +30,7 @@ import { WaitDelayNode } from './nodes/WaitDelayNode';
 import { MergeNode } from './nodes/MergeNode';
 import { WebhookTriggerNode } from './nodes/WebhookTriggerNode';
 import { SubWorkflowNode } from './nodes/SubWorkflowNode';
+import { DynamicAgentNode } from './nodes/DynamicAgentNode';
 import { ExecutionTimeline } from './ExecutionTimeline';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -60,6 +61,7 @@ const GenericNode = ({ data, id }: any) => {
   const nodeTypes = {
   trigger: TriggerNode,
   agent: AgentNode,
+  'dynamic-agent': DynamicAgentNode,
   output: OutputNode,
   condition: RouterNode,
   code: CodeNode,
@@ -77,6 +79,11 @@ const GenericNode = ({ data, id }: any) => {
 
 const nodeDefaultDataBuilders: Record<string, () => Record<string, any>> = {
   agent: () => ({ agentId: '', prompt: 'Configure me.' }),
+  'dynamic-agent': () => ({
+    configSource: 'inline',
+    inlineConfig: { systemPromptTemplate: '' },
+    outputField: 'llmResult',
+  }),
   loop: () => ({
     itemsPath: 'payload.alivePlayers',
     itemAlias: 'item',
@@ -238,6 +245,7 @@ function Flow() {
                    </CommandGroup>
                    <CommandGroup heading={t("AI")}>
                      <CommandItem onSelect={() => addNode('agent', 'Agent')}>{t("Agent")}</CommandItem>
+                     <CommandItem onSelect={() => addNode('dynamic-agent', 'Dynamic Agent')}>{t("Dynamic Agent")}</CommandItem>
                    </CommandGroup>
                    <CommandGroup heading={t("Integration")}>
                      <CommandItem onSelect={() => addNode('subworkflow', 'Sub-workflow')}>{t("Sub-workflow")}</CommandItem>

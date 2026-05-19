@@ -31,14 +31,22 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
 
   const node = useMemo(() => {
     const workflow = workflows.find(w => w.id === windowData.workflowId);
-    return workflow?.nodesData.find((n): n is WorkflowNode => n.id === windowData.nodeId && n.type === 'agent');
+    return workflow?.nodesData.find((n): n is WorkflowNode => n.id === windowData.nodeId && (n.type === 'agent' || n.type === 'dynamic-agent'));
   }, [workflows, windowData.workflowId, windowData.nodeId]);
+
+  // Dynamic agent meta from payload (populated during execution)
+  const dynamicMeta = (session?.messages || [])
+    .flatMap(m => m.agentResponses || [])
+    .find(r => r.nodeId === windowData.nodeId)?._dynamicAgentMeta;
 
   const hasOverrides = !!(
     node?.data?.overrideProviderId ||
     node?.data?.overrideModelId ||
     node?.data?.overrideSystemPrompt
   );
+
+  const displayName = dynamicMeta?.name || agent?.name || windowData.agentId;
+  const displayAvatar = dynamicMeta?.avatar || agent?.avatar;
 
   const messages = useMemo(() => {
     if (!session) return [];
@@ -86,13 +94,13 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
       <div className="flex items-center justify-between border-b px-3 py-2 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <Avatar className="h-6 w-6 rounded-md shrink-0">
-            <AvatarImage src={agent?.avatar} />
+            <AvatarImage src={displayAvatar} />
             <AvatarFallback className="rounded-md bg-primary/10 text-primary text-xs">
-              {agent?.name?.slice(0, 2) || 'A'}
+              {displayName?.slice(0, 2) || 'A'}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold">{agent?.name || windowData.agentId}</div>
+            <div className="truncate text-sm font-semibold">{displayName}</div>
             <div className="truncate text-xs text-muted-foreground flex items-center gap-1">
               {t('Node')}: {windowData.nodeId}
               {hasOverrides && (
