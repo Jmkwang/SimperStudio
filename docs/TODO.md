@@ -104,6 +104,45 @@
 - [ ] 验证手动转发、自动转发、再发送一次、reload 后转发。
 - [ ] 切回普通 session，确认 workflow UI 状态不污染普通聊天。
 
+## 综合审计 P0 风险（2026-05-26）
+
+> 由工程部（6 个角色）+ 设计部（6 个角色）综合审计产出。以下问题阻塞生产发布，需在现有 P0 完成后优先排期。
+
+### 安全类（阻塞发布）
+
+- [ ] **沙箱化表达式求值**：`helpers.ts:31-39` `evaluateExpression` 使用 `new AsyncFunction + with(payload)` 执行任意用户输入，存在代码注入风险。替换为 `jexl` / `jsonata` 等安全表达式解析器，或引入 AST 解释器。
+- [ ] **隔离 Code 节点执行环境**：`codeExecutor.ts:4-13` Code 节点直接 `new AsyncFunction` 执行用户 JavaScript，10 秒超时无法阻止同步恶意操作。使用 Web Worker 隔离或改用受限 DSL。
+- [ ] **修复 withTimeout 竞态条件**：`helpers.ts:3-9` `timeoutId` 可能未赋值就被 `clearTimeout` 调用。将类型改为 `NodeJS.Timeout | undefined`，`finally` 中判空再清除。
+
+### API / 模型路由类（阻塞发布）
+
+- [ ] **修复 streamText 参数传递**：`api.ts:103` `streamText()` 未传入 `maxTokens` 和 `temperature`，用户设置被忽略，可能导致高额账单。
+- [ ] **修复 provider 默认值矛盾**：`agentProviderRouter.ts:30` + `modelSlice.ts:93` 默认 `activeProviderId` 指向禁用的 provider，首次调用必失败。统一 fallback 逻辑与默认值。
+- [ ] **移除 apiKey fallback 不一致**：`api.ts:80` `apiKey || 'sk-custom'` 与 `resolveAgentModelConfig` 校验逻辑矛盾，产生无意义请求。
+
+### 数据持久化类（阻塞发布）
+
+- [ ] **修复 Agent 双写不一致**：`baseSlice.ts:213-246` `updateAgent` / `batchUpdateAgents` 只写 JSON 不写 SQLite，重启后数据回滚。以 SQLite 为唯一持久化层，补全 Rust `update_agent` / `delete_agent`。
+- [ ] **使用 Tauri app data 目录**：`db.rs:41` 相对路径 `simperstudio.db` 导致启动目录变化时数据丢失。替换为 `tauri::api::path::app_data_dir()`。
+- [ ] **添加数据库索引**：`db.rs` 所有表零索引，`chat_messages` 按 `session_id` 查询将全表扫描。添加 `idx_chat_messages_session`、`idx_workflows_workspace` 等高频索引。
+- [ ] **修复内存与 DB 不一致**：`chatSlice.ts:277-286` 先改内存再写库，写库失败时内存有数据而数据库无记录。调整为"写库成功后再改内存"或引入乐观更新回滚。
+
+### 类型与架构类（阻塞发布）
+
+- [ ] **修复 WorkflowNodeData 类型失控**：`types/models.ts:126` `Record<string, unknown>` 完全丧失类型安全。改用 Discriminated Union：`type WorkflowNodeData = ({type:'agent'} & AgentData) | ...`
+- [ ] **补齐子工作流实现**：`subWorkflowExecutor.ts` 仅返回 `payload`，无实际递归执行逻辑。调用 `executeWorkflow` 实现递归执行。
+
+### 验证与合规类（阻塞发布）
+
+- [ ] **完成浏览器验证清单**：`TODO 9.1/9.2` 6+ 项 P0 浏览器验证全部未完成（single chat 完整链路、workflow chat、窗口交互、转发链路、状态隔离）。冻结新功能，集中完成验证。
+- [ ] **添加 LICENSE 文件**：根目录无 LICENSE，存在法律风险并阻碍贡献者。推荐 MIT 或 Apache-2.0。
+- [ ] **添加 React Error Boundary**：`App.tsx` 未包裹 Error Boundary，任何组件未捕获错误导致整页白屏，辅助技术完全失效。添加全局 + 局部 Error Boundary，含友好错误页、重试按钮、`role="alert"`。
+- [ ] **搭建最小化设计系统文档**：无 Storybook 或组件用法说明，设计债务快速累积。为 shadcn/ui 封装组件编写用法文档和变体示例。
+
+### 设计合规类（阻塞发布）
+
+- [ ] **支持 prefers-reduced-motion**：所有动效（流式打字、节点动画、页面切换）未检测 `prefers-reduced-motion`。添加 `@media (prefers-reduced-motion: reduce)` 回退，禁用连续动效。
+
 ## 3. P1：可组合节点生态（对标 n8n 的节点可拼装能力）
 
 ### 3.B Dynamic Agent 节点（设计完成，待实现）
