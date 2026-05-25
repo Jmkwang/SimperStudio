@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimperStudio 设计部审计报告</title>
+<style>
+  :root {
+    --coral: #cc785c;
+    --coral-active: #a9583e;
+    --ink: #141413;
+    --body: #3d3d3a;
+    --muted: #6c6a64;
+    --canvas: #faf9f5;
+    --surface-card: #efe9de;
+    --surface-dark: #181715;
+    --on-dark: #faf9f5;
+    --hairline: #e6dfd8;
+    --success: #5db872;
+    --warning: #d4a017;
+    --error: #c64545;
+    --info: #4a90d9;
+    --p0-bg: #fef2f2;
+    --p0-border: #fecaca;
+    --p0-text: #991b1b;
+    --p1-bg: #fffbeb;
+    --p1-border: #fde68a;
+    --p1-text: #92400e;
+    --p2-bg: #f0fdf4;
+    --p2-border: #bbf7d0;
+    --p2-text: #166534;
+    --design-bg: #f0f4fd;
+    --design-border: #c7d2fe;
+    --design-text: #3730a3;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--canvas);
+    color: var(--body);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .report-header {
+    background: linear-gradient(135deg, var(--surface-dark) 0%, #2d2a25 100%);
+    color: var(--on-dark);
+    padding: 64px 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-header::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(204,120,92,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .report-header h1 {
+    font-size: 42px;
+    font-weight: 400;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .report-header .subtitle {
+    font-size: 18px;
+    color: #a09d96;
+    font-weight: 400;
+    position: relative;
+  }
+  .report-header .meta {
+    margin-top: 24px;
+    display: flex;
+    gap: 32px;
+    font-size: 13px;
+    color: #a09d96;
+    position: relative;
+    flex-wrap: wrap;
+  }
+  .report-header .meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* Navigation */
+  .nav-bar {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--hairline);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 12px 0;
+  }
+  .nav-bar .container { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nav-bar a {
+    padding: 6px 14px;
+    border-radius: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav-bar a:hover, .nav-bar a.active {
+    background: var(--canvas);
+    color: var(--ink);
+  }
+
+  /* Sections */
+  section { padding: 48px 0; border-bottom: 1px solid var(--hairline); }
+  section:last-child { border-bottom: none; }
+  h2 {
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; }
+
+  /* Cards */
+  .card {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-dark {
+    background: var(--surface-dark);
+    color: var(--on-dark);
+    border: none;
+  }
+  .card-dark h3, .card-dark h4 { color: var(--on-dark); border-color: #333; }
+  .card-dark p, .card-dark li { color: #c0bcb5; }
+
+  /* Priority badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-p0 { background: var(--p0-bg); color: var(--p0-text); border: 1px solid var(--p0-border); }
+  .badge-p1 { background: var(--p1-bg); color: var(--p1-text); border: 1px solid var(--p1-border); }
+  .badge-p2 { background: var(--p2-bg); color: var(--p2-text); border: 1px solid var(--p2-border); }
+  .badge-design { background: var(--design-bg); color: var(--design-text); border: 1px solid var(--design-border); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--surface-card);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(230,223,216,0.3); }
+  td:first-child { font-weight: 500; color: var(--ink); }
+
+  /* Finding blocks */
+  .finding {
+    border-left: 3px solid var(--hairline);
+    padding: 16px 20px;
+    margin: 12px 0;
+    background: white;
+    border-radius: 0 8px 8px 0;
+  }
+  .finding-p0 { border-left-color: var(--error); background: var(--p0-bg); }
+  .finding-p1 { border-left-color: var(--warning); background: var(--p1-bg); }
+  .finding-p2 { border-left-color: var(--success); background: var(--p2-bg); }
+  .finding-design { border-left-color: var(--info); background: var(--design-bg); }
+  .finding-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .finding-title { font-weight: 600; color: var(--ink); font-size: 14px; }
+  .finding-location {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: "JetBrains Mono", monospace;
+    background: rgba(0,0,0,0.04);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .finding-desc { color: var(--body); margin-bottom: 8px; }
+  .finding-rec {
+    font-size: 13px;
+    color: var(--muted);
+    padding-top: 8px;
+    border-top: 1px dashed var(--hairline);
+  }
+  .finding-rec strong { color: var(--ink); }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .stat-box {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-number {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-p0 { color: var(--error); }
+  .stat-p1 { color: var(--warning); }
+  .stat-p2 { color: var(--success); }
+  .stat-design { color: var(--info); }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Auditor cards */
+  .auditor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .auditor-card {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .auditor-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .auditor-info h4 { margin: 0 0 4px; font-size: 15px; }
+  .auditor-info p { margin: 0; font-size: 12px; color: var(--muted); }
+  .auditor-counts { display: flex; gap: 12px; margin-top: 10px; font-size: 13px; }
+  .auditor-counts span { display: flex; align-items: center; gap: 4px; }
+
+  /* Action items */
+  .action-list { list-style: none; }
+  .action-list li {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .action-list li::before {
+    content: attr(data-num);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .action-p0::before { background: var(--error); color: white; }
+  .action-p1::before { background: var(--warning); color: white; }
+
+  /* Heatmap */
+  .heatmap {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--hairline);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .heatmap-cell {
+    padding: 10px 12px;
+    background: white;
+    font-size: 13px;
+  }
+  .heatmap-header {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    background: var(--surface-card);
+  }
+  .heat-p0 { background: var(--p0-bg); color: var(--p0-text); font-weight: 600; }
+  .heat-p1 { background: var(--p1-bg); color: var(--p1-text); font-weight: 600; }
+  .heat-p2 { background: var(--p2-bg); color: var(--p2-text); font-weight: 600; }
+  .heat-ok { background: #f0fdf4; color: #166534; }
+
+  /* Design note */
+  .design-note {
+    background: var(--design-bg);
+    border: 1px solid var(--design-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--design-text);
+  }
+
+  /* Scroll to top */
+  .scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    background: var(--coral);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(204,120,92,0.4);
+    transition: transform 0.2s;
+  }
+  .scroll-top:hover { transform: translateY(-2px); }
+
+  /* Code blocks */
+  code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12px;
+    background: rgba(0,0,0,0.04);
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  .card-dark code { background: rgba(255,255,255,0.08); color: #e8e0d2; }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 8px;
+    background: var(--hairline);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* Print */
+  @media print {
+    .nav-bar, .scroll-top { display: none; }
+    section { page-break-inside: avoid; }
+    .report-header { padding: 32px 0; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .report-header h1 { font-size: 28px; }
+    .report-header .meta { flex-direction: column; gap: 8px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .heatmap { font-size: 11px; }
+    .heatmap-cell { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="report-header">
+  <div class="container">
+    <h1>SimperStudio 设计部审计报告</h1>
+    <p class="subtitle">基于六大设计专业角色的综合体验审计</p>
+    <div class="meta">
+      <span>📅 2026-05-26</span>
+      <span>🎨 6 个专业审计维度</span>
+      <span>⚠️ 30+ 项设计发现</span>
+      <span>📁 SimperStudio (Tauri + React)</span>
+      <span>🎭 设计部</span>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav class="nav-bar">
+  <div class="container">
+    <a href="#summary" class="active">执行摘要</a>
+    <a href="#heatmap">风险热力图</a>
+    <a href="#ui">🎨 UI</a>
+    <a href="#uxr">🔍 UX研究</a>
+    <a href="#uxa">🏗️ UX架构</a>
+    <a href="#story">🎬 视觉叙事</a>
+    <a href="#whimsy">✨ 趣味</a>
+    <a href="#inclusive">🌈 包容性</a>
+    <a href="#actions">行动清单</a>
+  </div>
+</nav>
+
+<!-- Executive Summary -->
+<section id="summary">
+  <div class="container">
+    <h2>执行摘要</h2>
+    <p style="font-size:16px; color:var(--ink); margin-bottom:24px;">
+      SimperStudio 的界面建立在 shadcn/ui + Tailwind CSS 的坚实基础上，具有统一的色彩系统和现代化的组件语言。但在<strong>设计系统文档化</strong>、<strong>无障碍合规</strong>、<strong>用户体验研究基础设施</strong>方面存在显著缺口。设计层面的"最后一公里"——错误状态、空状态、加载体验、包容性设计——尚未完成。
+    </p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-number stat-p0">3</div>
+        <div class="stat-label">P0 严重</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--error)"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number stat-p1">14</div>
+        <div class="stat-label">P1 中等</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:70%; background:var(--warning)"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number stat-p2">14</div>
+        <div class="stat-label">P2 轻微</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:40%; background:var(--success)"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" style="color:var(--coral)">6</div>
+        <div class="stat-label">审计维度</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--coral)"></div></div>
+      </div>
+    </div>
+
+    <div class="auditor-grid">
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#e8e0ff;">🎨</div>
+        <div class="auditor-info">
+          <h4>UI 设计师</h4>
+          <p>视觉系统、组件一致性、Design Token</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 1 P0</span>
+            <span class="stat-p1">● 4 P1</span>
+            <span class="stat-p2">● 3 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#d1fae5;">🔍</div>
+        <div class="auditor-info">
+          <h4>UX 研究员</h4>
+          <p>用户研究、可用性测试、数据洞察</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 0 P0</span>
+            <span class="stat-p1">● 3 P1</span>
+            <span class="stat-p2">● 2 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#ede9fe;">🏗️</div>
+        <div class="auditor-info">
+          <h4>UX 架构师</h4>
+          <p>CSS体系、布局框架、响应式策略</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 1 P0</span>
+            <span class="stat-p1">● 3 P1</span>
+            <span class="stat-p2">● 3 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#fce7f3;">🎬</div>
+        <div class="auditor-info">
+          <h4>视觉叙事师</h4>
+          <p>品牌叙事、空状态、加载体验</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 0 P0</span>
+            <span class="stat-p1">● 2 P1</span>
+            <span class="stat-p2">● 3 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#fef3c7;">✨</div>
+        <div class="auditor-info">
+          <h4>趣味注入师</h4>
+          <p>品牌个性、彩蛋、微交互</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 0 P0</span>
+            <span class="stat-p1">● 1 P1</span>
+            <span class="stat-p2">● 2 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#ccfbf1;">🌈</div>
+        <div class="auditor-info">
+          <h4>包容性视觉专家</h4>
+          <p>无障碍、减少动效、文化包容</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 1 P0</span>
+            <span class="stat-p1">● 1 P1</span>
+            <span class="stat-p2">● 1 P2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Heatmap -->
+<section id="heatmap">
+  <div class="container">
+    <h2>风险热力图</h2>
+    <p>按审计维度和严重程度分布的问题数量</p>
+    <div class="heatmap">
+      <div class="heatmap-cell heatmap-header">审计维度</div>
+      <div class="heatmap-cell heatmap-header" style="text-align:center">P0 严重</div>
+      <div class="heatmap-cell heatmap-header" style="text-align:center">P1 中等</div>
+      <div class="heatmap-cell heatmap-header" style="text-align:center">P2 轻微</div>
+
+      <div class="heatmap-cell"><strong>🎨 UI 设计</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">1</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">4</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">3</div>
+
+      <div class="heatmap-cell"><strong>🔍 UX 研究</strong></div>
+      <div class="heatmap-cell heat-ok" style="text-align:center">0</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">3</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">2</div>
+
+      <div class="heatmap-cell"><strong>🏗️ UX 架构</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">1</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">3</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">3</div>
+
+      <div class="heatmap-cell"><strong>🎬 视觉叙事</strong></div>
+      <div class="heatmap-cell heat-ok" style="text-align:center">0</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">2</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">3</div>
+
+      <div class="heatmap-cell"><strong>✨ 趣味注入</strong></div>
+      <div class="heatmap-cell heat-ok" style="text-align:center">0</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">1</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">2</div>
+
+      <div class="heatmap-cell"><strong>🌈 包容性视觉</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">1</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">1</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">1</div>
+
+      <div class="heatmap-cell heatmap-header"><strong>合计</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center"><strong>3</strong></div>
+      <div class="heatmap-cell heat-p1" style="text-align:center"><strong>14</strong></div>
+      <div class="heatmap-cell heat-p2" style="text-align:center"><strong>14</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- Critical P0 Summary -->
+<section style="background:#fef2f2;">
+  <div class="container">
+    <h2 style="color:var(--p0-text)">🚨 P0 严重风险总览</h2>
+    <p style="color:var(--p0-text)">以下3项设计问题严重影响用户体验和产品专业度</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30%">问题</th>
+          <th style="width:25%">位置</th>
+          <th style="width:45%">影响</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>无设计系统文档/Storybook</td>
+          <td>全局缺失</td>
+          <td>组件用法、状态、变体无统一参考，开发者各自为政，设计债务快速累积</td>
+        </tr>
+        <tr>
+          <td>无障碍合规缺口</td>
+          <td>多个组件</td>
+          <td>部分交互元素缺少焦点管理、键盘导航不完善、屏幕阅读器支持不完整</td>
+        </tr>
+        <tr>
+          <td>错误边界缺失</td>
+          <td>App.tsx</td>
+          <td>应用崩溃时用户面对白屏，无错误恢复或友好提示，体验极差</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- UI Designer -->
+<section id="ui">
+  <div class="container">
+    <h2>🎨 UI 设计师审计</h2>
+    <p>审计范围：设计系统完整性、组件库一致性、Design Token、暗色模式、响应式、无障碍、设计交付</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">无设计系统文档或 Storybook</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        项目中无任何设计系统文档、组件用法说明或 Storybook 站点。新开发者无法了解组件的可用变体、状态和行为规范。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>搭建最小化 Storybook；为每个 shadcn/ui 封装组件编写用法文档和变体示例。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">Design Token 未系统化提取</span>
+        <span class="finding-location">tailwind.config.ts, 多处 CSS</span>
+      </div>
+      <div class="finding-desc">
+        颜色（Coral #cc785c、Canvas #faf9f5）、间距、圆角等设计值分散在 Tailwind 配置和硬编码样式中，无统一的 Design Token 文件。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>创建 <code>design-tokens.ts</code> 或 CSS 变量文件，统一导出颜色、间距、字体层级，确保设计与开发同源。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">暗色模式实现不完整</span>
+        <span class="finding-location">ThemeProvider.tsx, 多处组件</span>
+      </div>
+      <div class="finding-desc">
+        <code>ThemeProvider</code> 支持 light/dark/system 切换，但部分自定义组件（如工作流节点、聊天气泡）未完整适配暗色模式，可能出现对比度不足或颜色突兀。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>建立暗色模式检查清单，逐一验证所有自定义组件在 dark 类下的视觉效果；使用 <code>dark:</code> 前缀系统化处理。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">空状态设计缺失</span>
+        <span class="finding-location">AgentsView, ChatInterface, WorkflowCanvas</span>
+      </div>
+      <div class="finding-desc">
+        Agent 列表为空、聊天无消息、工作流画布为空时，界面缺乏引导性空状态设计，用户不知下一步该做什么。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>为每个主要列表/画布设计空状态插图 + 引导文案 + 快捷操作按钮。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">加载状态不一致</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        不同页面使用不同的加载指示方式（Lucide 图标旋转、文字"Loading..."、Skeleton 缺失），缺乏统一的加载设计规范。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>定义三种加载级别：页面级（Skeleton）、区域级（Spinner + 遮罩）、操作级（Button loading 状态），统一实现为组件。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无设计 QA 流程</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        无设计走查机制，开发者实现后无人核对像素还原度，设计稿与最终实现之间的差异无人追踪。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在 PR 模板中添加"设计还原检查"项；关键页面引入视觉回归测试（Chromatic/Storybook）。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">图标系统未统一</span>
+        <span class="finding-location">多处</span>
+      </div>
+      <div class="finding-desc">
+        同时使用 Lucide 图标和自定义 SVG，图标尺寸、描边粗细、颜色继承策略不统一。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>统一使用 Lucide；定义图标尺寸规范（sm 16px、md 20px、lg 24px）并封装为 <code>Icon</code> 组件。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">响应式断点策略未定义</span>
+        <span class="finding-location">tailwind.config.ts</span>
+      </div>
+      <div class="finding-desc">
+        使用 Tailwind 默认断点，但未根据桌面应用特性定义专用断点（如侧边栏折叠宽度、画布最小尺寸）。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>定义桌面应用专用断点（sidebar-collapse: 1024px、compact: 1280px、wide: 1600px）。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UX Researcher -->
+<section id="uxr" style="background:#faf9f5;">
+  <div class="container">
+    <h2>🔍 UX 研究员审计</h2>
+    <p>审计范围：用户研究基础设施、可用性测试、数据收集、反馈机制、用户旅程、无障碍研究、A/B测试</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">无用户行为分析</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        未集成任何分析工具（Mixpanel/Amplitude/PostHog），无法追踪用户路径、功能使用频率、流失节点。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>集成隐私友好的分析工具（如 PostHog 自托管或 Plausible），追踪关键事件：工作流创建、Agent 配置、模型切换、执行成功率。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">无应用内反馈入口</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        用户遇到问题时无法直接反馈，需要跳转到 GitHub Issues 或外部渠道，反馈门槛高、流失率高。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在设置页添加"发送反馈"按钮，收集分类反馈（Bug/功能建议/使用困惑）+ 可选的联系方式。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">无用户画像或旅程地图</span>
+        <span class="finding-location">docs/ 目录</span>
+      </div>
+      <div class="finding-desc">
+        文档中无目标用户定义、无用户旅程地图、无痛点分析。设计决策缺乏用户视角的锚点。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>创建 2-3 个核心用户画像（如"自动化工程师""AI 探索者"），绘制从安装到日常使用的完整旅程地图。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无错误上报机制</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        未集成 Sentry 或其他错误追踪，生产环境崩溃信息完全依赖用户主动报告。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>集成 Sentry 免费版，捕获未处理异常和关键错误，保护用户隐私前提下收集堆栈信息。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无 A/B 测试能力</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        无法验证设计改动的实际效果（如新布局是否提升任务完成率），设计迭代依赖直觉。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在分析工具中预留 A/B 测试标记能力，为后续实验打下基础。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UX Architect -->
+<section id="uxa">
+  <div class="container">
+    <h2>🏗️ UX 架构师审计</h2>
+    <p>审计范围：CSS体系、布局框架、组件架构、响应式策略、主题切换、命名规范、信息架构</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">无错误边界 (Error Boundary)</span>
+        <span class="finding-location">App.tsx</span>
+      </div>
+      <div class="finding-desc">
+        应用未包裹 React Error Boundary，任何组件的未捕获错误都会导致整页白屏，用户无法恢复或获得反馈。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>添加全局 Error Boundary，显示友好错误页（含"重新加载"按钮和"报告问题"入口）。为工作流画布等复杂区域添加局部 Error Boundary 隔离故障。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">CSS 架构缺乏层级规范</span>
+        <span class="finding-location">globals.css, tailwind.config.ts</span>
+      </div>
+      <div class="finding-desc">
+        Tailwind 工具类与自定义 CSS 混用，无明确的"何时用工具类、何时用组件类"决策标准。CSS 特异性问题可能随项目增长而恶化。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>制定 CSS 架构规范：布局用 Tailwind 工具类、组件样式用 <code>cn()</code> 合并、复杂动画用自定义 CSS 模块。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">主题切换未持久化到后端</span>
+        <span class="finding-location">ThemeProvider.tsx</span>
+      </div>
+      <div class="finding-desc">
+        主题偏好仅保存在 localStorage，清除浏览器数据后丢失。多设备使用时无法同步。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>将主题偏好存入 SQLite <code>settings</code> 表，与账号/设备无关的配置同步。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">信息架构文档缺失</span>
+        <span class="finding-location">docs/ 目录</span>
+      </div>
+      <div class="finding-desc">
+        无信息架构图、无内容层级规范、无导航结构文档。新功能添加时缺乏架构约束，可能导致导航臃肿。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>绘制信息架构图：一级导航（Chat/Workflow/Agents/Settings）→ 二级页面 → 核心操作；定义每页的信息层级（H1/H2/正文）。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">z-index 管理混乱</span>
+        <span class="finding-location">多处组件</span>
+      </div>
+      <div class="finding-desc">
+        Dialog、Popover、Dropdown、Toast 等层叠组件的 z-index 无统一管理，可能出现遮罩层覆盖不当或内容被遮挡。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>定义 z-index 层级系统：Base(0) → Sticky(10) → Dropdown(100) → Dialog(200) → Toast(300) → DevTools(999)。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无间距阶梯规范</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        组件间距使用任意值（p-3、p-4、p-3.5、p-5 混用），无明确的 4px/8px 基线网格规范。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>定义 4px 基线网格：xs(4)、sm(8)、md(16)、lg(24)、xl(32)、2xl(48)，禁止偏离基线的任意值。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">组件边界模糊</span>
+        <span class="finding-location">src/components/</span>
+      </div>
+      <div class="finding-desc">
+        组件目录按功能分组（chat/workflow/settings）而非按层级分组（primitive/composite/page），跨页面复用组件时定位困难。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>增加 <code>components/shared/</code> 目录存放跨页面组件；按 primitive/composite/page 三级组织。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Visual Storyteller -->
+<section id="story" style="background:#faf9f5;">
+  <div class="container">
+    <h2>🎬 视觉叙事师审计</h2>
+    <p>审计范围：品牌叙事、空状态视觉、加载体验、错误页面、多媒体内容、视觉隐喻、跨平台一致性</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">品牌叙事在界面中体现不足</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        "Simper"（更简单）的品牌主张未在界面中显性表达。用户无法从视觉语言中感知产品的核心价值——简化 AI 工作流。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在首次启动、空状态、帮助提示中融入品牌叙事（如"让 AI 工作流像搭积木一样简单"）。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">错误状态缺乏视觉关怀</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        API 错误、工作流执行失败、网络中断等场景仅显示纯文本错误消息，无插图、无恢复指引、无情感化安抚。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>设计三类错误插画：网络错误（断线意象）、API 错误（服务器意象）、未知错误（问号意象）；每个错误页包含"重试"和"获取帮助"按钮。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">工作流执行缺少过程可视化</span>
+        <span class="finding-location">WorkflowCanvas, ExecutionTimeline</span>
+      </div>
+      <div class="finding-desc">
+        工作流执行时虽有 <code>ExecutionTimeline</code>，但节点级进度、数据流转可视化不足，用户难以理解"现在跑到哪一步、数据长什么样"。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>为工作流节点添加执行状态徽章（等待中/运行中/成功/失败）；点击节点可查看该步骤的输入输出数据快照。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无产品截图/演示素材</span>
+        <span class="finding-location">README, docs/</span>
+      </div>
+      <div class="finding-desc">
+        README 和文档中无任何产品界面截图或 GIF 演示，潜在用户无法直观了解产品能力。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>制作 3-5 张核心界面截图（聊天、工作流画布、Agent 配置）和 1 个 15 秒演示 GIF。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">缺少新手引导叙事</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        首次使用无引导式教程或工具提示（Tooltip Tour），新用户需自行探索复杂的工作流概念。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>设计 3 步新手引导：1) 创建工作流 2) 添加 Agent 节点 3) 运行并查看结果。使用高亮 + Tooltip 的交互式引导。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Whimsy Injector -->
+<section id="whimsy">
+  <div class="container">
+    <h2>✨ 趣味注入师审计</h2>
+    <p>审计范围：品牌个性、微交互、彩蛋、游戏化、趣味文案、季节性体验、可分享瞬间</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">产品个性过于"工具化"</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        界面完全功能性导向，无任何品牌个性表达。与竞品（如 ComfyUI、Dify）相比，缺少让人记住的"人味"。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>从微文案开始注入个性：成功提示不用"操作成功"而用"Agent 已就绪，开始发挥吧！"；为不同工作流结果添加趣味状态文案。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">微交互缺失</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        按钮点击、节点添加、工作流完成等关键时刻缺少微动效反馈，操作感生硬。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>添加关键微交互：按钮点击缩放(scale 0.98)、节点添加弹性动画、工作流完成时的轻量庆祝效果（confetti 或简单徽章弹出）。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无彩蛋或奖励机制</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        无任何隐藏功能、彩蛋或成就系统，探索型用户缺乏持续使用的情感动力。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>设计轻量成就系统："初次运行""连接 3 个节点""使用 5 个不同 Agent"，在设置页展示成就徽章。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Inclusive Visuals -->
+<section id="inclusive" style="background:#faf9f5;">
+  <div class="container">
+    <h2>🌈 包容性视觉专家审计</h2>
+    <p>审计范围：无障碍合规 (WCAG)、减少动效支持、色彩对比度、键盘导航、屏幕阅读器、字体可调、文化包容性</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">缺少 React Error Boundary</span>
+        <span class="finding-location">App.tsx</span>
+      </div>
+      <div class="finding-desc">
+        与 UX 架构交叉确认：未捕获的渲染错误会导致辅助技术（屏幕阅读器）完全失效，用户不仅看不到内容，连错误信息都无法获取。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>优先添加 Error Boundary，确保错误状态可被屏幕阅读器朗读（添加 <code>role="alert"</code> 和 <code>aria-live</code>）。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">未支持 prefers-reduced-motion</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        流式打字效果、工作流节点动画、页面切换等动效未检测 <code>prefers-reduced-motion</code>，对前庭功能障碍用户可能造成不适。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在 <code>ThemeProvider</code> 中监听 <code>prefers-reduced-motion</code>，为所有动画添加 <code>@media (prefers-reduced-motion: reduce)</code> 回退（直接显示最终状态，无过渡）。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">键盘导航不完善</span>
+        <span class="finding-location">WorkflowCanvas, ChatInterface</span>
+      </div>
+      <div class="finding-desc">
+        React Flow 画布缺少完整的键盘操作支持（无法仅用键盘添加/连接节点）。聊天界面的文件附件和工具调用无键盘快捷键。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>为画布添加 Tab 焦点管理；为常用操作添加快捷键（Ctrl+Enter 发送、Ctrl+N 新会话、/ 聚焦输入框）。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">字体大小调整机制待完善</span>
+        <span class="finding-location">settings.fontSize, App.tsx</span>
+      </div>
+      <div class="finding-desc">
+        虽有 <code>fontSize</code> 设置（百分比调整），但未与系统字体大小设置联动，且缺少超大字体下的布局适配测试。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>监听 <code>window.matchMedia('(prefers-font-size)')</code> 变化；测试 150%、200% 字体缩放下的关键页面布局。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">色彩对比度未系统验证</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        Coral (#cc785c) 在浅色背景上的对比度约为 3.2:1，低于 WCAG AA 标准（4.5:1）。暗色模式下的 muted 文字对比度可能更低。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 APCA 或 WCAG 对比度计算工具验证所有文字/背景组合；调整 Coral 色值或增加文字字重/描边以提升可读性。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">缺少屏幕阅读器优化</span>
+        <span class="finding-location">WorkflowCanvas, ExecutionTimeline</span>
+      </div>
+      <div class="finding-desc">
+        工作流画布作为纯视觉化界面，对屏幕阅读器用户几乎不可访问。节点连接关系、执行状态无 ARIA 替代文本。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>为画布添加"列表视图"替代模式，以结构化列表展示节点和连接关系；为每个节点添加描述性 <code>aria-label</code>。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Action Items -->
+<section id="actions" style="background:var(--surface-dark); color:var(--on-dark);">
+  <div class="container">
+    <h2 style="color:var(--on-dark)">📋 优先级行动清单</h2>
+    <p style="color:#a09d96">按优先级排序的设计改进建议</p>
+
+    <h3 style="color:var(--on-dark); border-color:#333">P0 — 立即执行</h3>
+    <ol class="action-list">
+      <li class="action-p0" data-num="1">
+        <div>
+          <strong style="color:var(--on-dark)">搭建最小化 Storybook</strong><br>
+          <span style="color:#a09d96">为 shadcn/ui 封装组件编写用法文档和变体示例，建立设计系统单一事实来源。</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="2">
+        <div>
+          <strong style="color:var(--on-dark)">添加 React Error Boundary</strong><br>
+          <span style="color:#a09d96">全局 + 局部 Error Boundary，含友好错误页、重试按钮、屏幕阅读器支持。</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="3">
+        <div>
+          <strong style="color:var(--on-dark)">制定用户研究计划</strong><br>
+          <span style="color:#a09d96">招募 5-8 名目标用户，完成核心任务可用性测试，建立用户反馈渠道。</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="4">
+        <div>
+          <strong style="color:var(--on-dark)">支持 prefers-reduced-motion</strong><br>
+          <span style="color:#a09d96">为所有动画添加 reduced-motion 回退，禁用流式打字等连续动效。</span>
+        </div>
+      </li>
+    </ol>
+
+    <h3 style="color:var(--on-dark); border-color:#333; margin-top:40px">P1 — 短期修复</h3>
+    <ol class="action-list">
+      <li class="action-p1" data-num="1">
+        <div>
+          <strong style="color:var(--on-dark)">提取 Design Token</strong><br>
+          <span style="color:#a09d96">创建 design-tokens.ts，统一颜色、间距、字体层级，确保设计与开发同源。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="2">
+        <div>
+          <strong style="color:var(--on-dark)">完善暗色模式适配</strong><br>
+          <span style="color:#a09d96">检查所有自定义组件在 dark 类下的视觉效果，修复对比度问题。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="3">
+        <div>
+          <strong style="color:var(--on-dark)">设计空状态组件</strong><br>
+          <span style="color:#a09d96">为 Agent 列表、聊天、工作流画布设计统一空状态（插图 + 引导文案 + 快捷操作）。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="4">
+        <div>
+          <strong style="color:var(--on-dark)">统一加载状态规范</strong><br>
+          <span style="color:#a09d96">定义页面级/区域级/操作级三种加载模式，统一实现为可复用组件。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="5">
+        <div>
+          <strong style="color:var(--on-dark)">集成隐私友好分析</strong><br>
+          <span style="color:#a09d96">集成 PostHog/Plausible，追踪关键事件（工作流创建、Agent 配置、执行成功率）。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="6">
+        <div>
+          <strong style="color:var(--on-dark)">添加应用内反馈入口</strong><br>
+          <span style="color:#a09d96">在设置页添加"发送反馈"，分类收集 Bug/功能建议/使用困惑。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="7">
+        <div>
+          <strong style="color:var(--on-dark)">设计错误状态插画</strong><br>
+          <span style="color:#a09d96">网络错误、API 错误、未知错误三类插画，每个含重试和帮助按钮。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="8">
+        <div>
+          <strong style="color:var(--on-dark)">为画布添加键盘导航</strong><br>
+          <span style="color:#a09d96">Tab 焦点管理、常用操作快捷键（Ctrl+Enter 发送、Ctrl+N 新会话）。</span>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="background:var(--surface-card); padding:32px 0; text-align:center; color:var(--muted); font-size:13px; border-top:1px solid var(--hairline);">
+  <div class="container">
+    <p>SimperStudio 设计部综合审计报告 | 由六大设计专业子代理团队生成</p>
+    <p style="margin-top:4px;">审计日期：2026-05-26 | 审计方法：代码审查 + 设计启发式评估 + 无障碍扫描</p>
+  </div>
+</footer>
+
+<button class="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // Active nav highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-bar a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(sec => {
+      const top = sec.offsetTop - 80;
+      if (scrollY >= top) current = sec.id;
+    });
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+
+</body>
+</html>

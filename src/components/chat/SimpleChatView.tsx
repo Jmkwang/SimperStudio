@@ -4,9 +4,8 @@ import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Workflow, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { Send, Workflow, ArrowUp, ArrowDown } from "lucide-react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DebugBadge } from "@/components/debug/DebugBadge";
 
 function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null): { providerName: string; modelName: string } | null {
@@ -32,8 +31,8 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const [input, setInput] = useState("");
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [multiAgentMode, setMultiAgentMode] = useState(false);
+  const [selectedAgentId] = useState<string | null>(null);
+  const [multiAgentMode] = useState(false);
   const [showTopology, setShowTopology] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -110,7 +109,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 text-sm">
             <span className="font-medium">{session.title}</span>
-            {activeAgent && (
+            {activeAgent && activeAgent.name !== session.title && (
               <>
                 <span className="text-muted-foreground">›</span>
                 <span>{activeAgent.name}</span>
@@ -146,42 +145,6 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
         )}
       </div>
 
-      {agents.length > 1 && (
-        <div className="border-b px-6 py-2 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="text-xs text-muted-foreground shrink-0">{t("Agent")}:</span>
-            {agents.map(agent => (
-              <button
-                key={agent.id}
-                onClick={() => setSelectedAgentId(agent.id)}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
-                  activeAgent?.id === agent.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted hover:bg-muted/70 text-muted-foreground"
-                }`}
-              >
-                <Avatar className="h-4 w-4 rounded-full shrink-0">
-                  <AvatarImage src={agent.avatar} />
-                  <AvatarFallback className="rounded-full bg-primary/10 text-primary text-[8px]">{agent.name?.slice(0, 1)}</AvatarFallback>
-                </Avatar>
-                {agent.name}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setMultiAgentMode(!multiAgentMode)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
-              multiAgentMode
-                ? "bg-emerald-500/20 text-emerald-500"
-                : "bg-muted hover:bg-muted/70 text-muted-foreground"
-            }`}
-            title={multiAgentMode ? t("多Agent模式已开启") : t("点击开启多Agent模式")}
-          >
-            <Users className="h-3.5 w-3.5" />
-            {multiAgentMode ? t("多Agent") : t("单Agent")}
-          </button>
-        </div>
-      )}
 
       <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
         {session.messages.length === 0 && (

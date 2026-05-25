@@ -57,12 +57,14 @@ export function ChatSidebar({
       })
     : workflows
 
+  const singleSessions = sessions.filter(s => s.mode === 'single' || !s.workflowId)
   const workflowSessions = selectedChatWorkflowId
     ? sessions.filter(s => s.workflowId === selectedChatWorkflowId)
     : []
 
+  const allSessionsToShow = [...singleSessions, ...workflowSessions]
   const sortedSessions = sessionOrder.length > 0
-    ? [...workflowSessions].sort((a, b) => {
+    ? [...allSessionsToShow].sort((a, b) => {
         const idxA = sessionOrder.indexOf(a.id)
         const idxB = sessionOrder.indexOf(b.id)
         if (idxA === -1 && idxB === -1) return 0
@@ -70,7 +72,7 @@ export function ChatSidebar({
         if (idxB === -1) return -1
         return idxA - idxB
       })
-    : workflowSessions
+    : allSessionsToShow
 
   const handleWorkflowClick = (workflowId: string) => {
     setSelectedChatWorkflowId(workflowId)
@@ -184,41 +186,35 @@ export function ChatSidebar({
           )
         ) : (
           <>
-            {selectedChatWorkflowId ? (
-              sortedSessions.length > 0 ? (
-                <SortableList
-                  items={sortedSessions}
-                  getId={s => s.id}
-                  onReorder={(items) => setSessionOrder(items.map(s => s.id))}
-                  className="flex flex-col gap-0.5"
-                >
-                  {(s) => {
-                    const sessionAgent = s.mode === 'workflow'
-                      ? undefined
-                      : agents.find(a => a.id === (s as any).activeAgentId) || agents[0]
-                    return (
-                      <ContextItem
-                        title={s.title}
-                        icon="agent"
-                        avatar={sessionAgent?.avatar}
-                        fallbackName={sessionAgent?.name}
-                        active={activeSessionId === s.id}
-                        deletable={true}
-                        onClick={() => handleSessionSelect(s.id)}
-                        onDelete={() => handleDeleteClick(s.id, s.title, 'session')}
-                        t={t}
-                      />
-                    )
-                  }}
-                </SortableList>
-              ) : (
-                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-foreground/[0.08] p-6 text-center text-xs text-muted-foreground">
-                  {t('暂无会话，点击 + 新建')}
-                </div>
-              )
+            {sortedSessions.length > 0 ? (
+              <SortableList
+                items={sortedSessions}
+                getId={s => s.id}
+                onReorder={(items) => setSessionOrder(items.map(s => s.id))}
+                className="flex flex-col gap-0.5"
+              >
+                {(s) => {
+                  const sessionAgent = s.mode === 'workflow'
+                    ? undefined
+                    : agents.find(a => a.id === (s as any).activeAgentId) || agents[0]
+                  return (
+                    <ContextItem
+                      title={s.title}
+                      icon="agent"
+                      avatar={sessionAgent?.avatar}
+                      fallbackName={sessionAgent?.name}
+                      active={activeSessionId === s.id}
+                      deletable={true}
+                      onClick={() => handleSessionSelect(s.id)}
+                      onDelete={() => handleDeleteClick(s.id, s.title, 'session')}
+                      t={t}
+                    />
+                  )
+                }}
+              </SortableList>
             ) : (
               <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-foreground/[0.08] p-6 text-center text-xs text-muted-foreground">
-                {t('请先选择一个工作流')}
+                {t('暂无会话，点击 + 新建')}
               </div>
             )}
           </>

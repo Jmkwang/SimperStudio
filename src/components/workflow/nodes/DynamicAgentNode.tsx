@@ -263,7 +263,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">None</SelectItem>
-                      {providers.map((p) => (
+                      {providers.filter(p => p.isEnabled).map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
                         </SelectItem>

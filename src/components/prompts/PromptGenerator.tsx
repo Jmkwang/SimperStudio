@@ -44,7 +44,9 @@ export function PromptGenerator() {
     setIsLoading(true);
 
     try {
-      const activeProvider = settings.activeProviderId ? settings.providers.find(p => p.id === settings.activeProviderId) : null;
+      const activeProvider = settings.activeProviderId
+        ? settings.providers.find(p => p.id === settings.activeProviderId)
+        : settings.providers.find(p => p.isEnabled);
       const defaultModel = activeProvider?.models.find(m => m.isDefault) || activeProvider?.models[0];
       const providerToUse = activeProvider ? activeProvider.type : (settings.apiProvider === 'custom' ? 'custom' : 'openai');
       const modelToUse = activeProvider ? (defaultModel?.modelId || '') : (settings.apiProvider === 'custom' ? settings.customModelId : '');

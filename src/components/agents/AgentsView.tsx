@@ -317,7 +317,7 @@ export function AgentsView() {
                           <SelectValue placeholder={t("Select a provider")} />
                         </SelectTrigger>
                         <SelectContent>
-                          {providers.map((p) => (
+                          {providers.filter(p => p.isEnabled).map((p) => (
                             <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -510,7 +510,7 @@ export function AgentsView() {
                 <SelectValue placeholder={t('Select Provider')} />
               </SelectTrigger>
               <SelectContent>
-                {providers.map(p => (
+                {providers.filter(p => p.isEnabled).map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
               </SelectContent>

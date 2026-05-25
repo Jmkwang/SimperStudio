@@ -59,7 +59,6 @@ export function SettingsModelsTab() {
   const addProvider = useAppStore(state => state.addProvider);
   const updateProvider = useAppStore(state => state.updateProvider);
   const deleteProvider = useAppStore(state => state.deleteProvider);
-  const setActiveProvider = useAppStore(state => state.setActiveProvider);
   const { t } = useTranslation();
 
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(settings.activeProviderId);
@@ -468,13 +467,6 @@ export function SettingsModelsTab() {
                   </div>
                 </div>
 
-                {/* Set Active */}
-                <div className="pt-4 border-t">
-                  <Button variant={settings.activeProviderId === selectedProvider.id ? "secondary" : "default"}
-                    onClick={() => setActiveProvider(selectedProvider.id)} disabled={settings.activeProviderId === selectedProvider.id}>
-                    {settings.activeProviderId === selectedProvider.id ? t("Active Provider") : t("Set as Active")}
-                  </Button>
-                </div>
               </div>
             </div>
           ) : (

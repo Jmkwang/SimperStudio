@@ -27,9 +27,10 @@ export function resolveAgentModelConfig(
   settings?: ResolveSettings,
 ): ResolvedModelConfig {
   // 1. Determine providerId
-  const providerId = nodeData?.overrideProviderId || agent.providerId || settings?.activeProviderId;
+  const activeProviderId = settings?.activeProviderId || settings?.providers.find((p) => p.isEnabled)?.id || null;
+  const providerId = nodeData?.overrideProviderId || agent.providerId || activeProviderId;
   if (!providerId) {
-    throw new Error('No provider configured. Set a provider for this Agent or select a global active provider in Settings.');
+    throw new Error('No provider configured. Set a provider for this Agent or enable at least one provider in Settings > Models.');
   }
 
   const provider = settings?.providers.find((p) => p.id === providerId);

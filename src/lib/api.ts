@@ -27,8 +27,10 @@ export async function fetchFromResolvedConfig(
 /** @deprecated Use fetchFromResolvedConfig via agentProviderRouter instead */
 export async function fetchFromModel(provider: string, modelId: string, prompt: string, settings: any, systemPrompt?: string) {
     // New multi-provider system
-    if (settings.providers && settings.activeProviderId) {
-        const activeProvider = settings.providers.find((p: ModelProvider) => p.id === settings.activeProviderId);
+    if (settings.providers) {
+        const activeProvider = settings.activeProviderId
+            ? settings.providers.find((p: ModelProvider) => p.id === settings.activeProviderId)
+            : settings.providers.find((p: ModelProvider) => p.isEnabled);
         if (activeProvider && activeProvider.isEnabled) {
             return fetchFromProvider(activeProvider, modelId, prompt, systemPrompt);
         }

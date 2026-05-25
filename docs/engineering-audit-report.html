@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimperStudio 工程部审计报告</title>
+<style>
+  :root {
+    --coral: #cc785c;
+    --coral-active: #a9583e;
+    --ink: #141413;
+    --body: #3d3d3a;
+    --muted: #6c6a64;
+    --canvas: #faf9f5;
+    --surface-card: #efe9de;
+    --surface-dark: #181715;
+    --on-dark: #faf9f5;
+    --hairline: #e6dfd8;
+    --success: #5db872;
+    --warning: #d4a017;
+    --error: #c64545;
+    --info: #4a90d9;
+    --p0-bg: #fef2f2;
+    --p0-border: #fecaca;
+    --p0-text: #991b1b;
+    --p1-bg: #fffbeb;
+    --p1-border: #fde68a;
+    --p1-text: #92400e;
+    --p2-bg: #f0fdf4;
+    --p2-border: #bbf7d0;
+    --p2-text: #166534;
+    --design-bg: #f0f4fd;
+    --design-border: #c7d2fe;
+    --design-text: #3730a3;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--canvas);
+    color: var(--body);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .report-header {
+    background: linear-gradient(135deg, var(--surface-dark) 0%, #2d2a25 100%);
+    color: var(--on-dark);
+    padding: 64px 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-header::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(204,120,92,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .report-header h1 {
+    font-size: 42px;
+    font-weight: 400;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .report-header .subtitle {
+    font-size: 18px;
+    color: #a09d96;
+    font-weight: 400;
+    position: relative;
+  }
+  .report-header .meta {
+    margin-top: 24px;
+    display: flex;
+    gap: 32px;
+    font-size: 13px;
+    color: #a09d96;
+    position: relative;
+    flex-wrap: wrap;
+  }
+  .report-header .meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* Navigation */
+  .nav-bar {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--hairline);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 12px 0;
+  }
+  .nav-bar .container { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nav-bar a {
+    padding: 6px 14px;
+    border-radius: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav-bar a:hover, .nav-bar a.active {
+    background: var(--canvas);
+    color: var(--ink);
+  }
+
+  /* Sections */
+  section { padding: 48px 0; border-bottom: 1px solid var(--hairline); }
+  section:last-child { border-bottom: none; }
+  h2 {
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; }
+
+  /* Cards */
+  .card {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-dark {
+    background: var(--surface-dark);
+    color: var(--on-dark);
+    border: none;
+  }
+  .card-dark h3, .card-dark h4 { color: var(--on-dark); border-color: #333; }
+  .card-dark p, .card-dark li { color: #c0bcb5; }
+
+  /* Priority badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-p0 { background: var(--p0-bg); color: var(--p0-text); border: 1px solid var(--p0-border); }
+  .badge-p1 { background: var(--p1-bg); color: var(--p1-text); border: 1px solid var(--p1-border); }
+  .badge-p2 { background: var(--p2-bg); color: var(--p2-text); border: 1px solid var(--p2-border); }
+  .badge-design { background: var(--design-bg); color: var(--design-text); border: 1px solid var(--design-border); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--surface-card);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(230,223,216,0.3); }
+  td:first-child { font-weight: 500; color: var(--ink); }
+
+  /* Finding blocks */
+  .finding {
+    border-left: 3px solid var(--hairline);
+    padding: 16px 20px;
+    margin: 12px 0;
+    background: white;
+    border-radius: 0 8px 8px 0;
+  }
+  .finding-p0 { border-left-color: var(--error); background: var(--p0-bg); }
+  .finding-p1 { border-left-color: var(--warning); background: var(--p1-bg); }
+  .finding-p2 { border-left-color: var(--success); background: var(--p2-bg); }
+  .finding-design { border-left-color: var(--info); background: var(--design-bg); }
+  .finding-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .finding-title { font-weight: 600; color: var(--ink); font-size: 14px; }
+  .finding-location {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: "JetBrains Mono", monospace;
+    background: rgba(0,0,0,0.04);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .finding-desc { color: var(--body); margin-bottom: 8px; }
+  .finding-rec {
+    font-size: 13px;
+    color: var(--muted);
+    padding-top: 8px;
+    border-top: 1px dashed var(--hairline);
+  }
+  .finding-rec strong { color: var(--ink); }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .stat-box {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-number {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-p0 { color: var(--error); }
+  .stat-p1 { color: var(--warning); }
+  .stat-p2 { color: var(--success); }
+  .stat-design { color: var(--info); }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Auditor cards */
+  .auditor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .auditor-card {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .auditor-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .auditor-info h4 { margin: 0 0 4px; font-size: 15px; }
+  .auditor-info p { margin: 0; font-size: 12px; color: var(--muted); }
+  .auditor-counts { display: flex; gap: 12px; margin-top: 10px; font-size: 13px; }
+  .auditor-counts span { display: flex; align-items: center; gap: 4px; }
+
+  /* Action items */
+  .action-list { list-style: none; }
+  .action-list li {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .action-list li::before {
+    content: attr(data-num);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .action-p0::before { background: var(--error); color: white; }
+  .action-p1::before { background: var(--warning); color: white; }
+
+  /* Heatmap */
+  .heatmap {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--hairline);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .heatmap-cell {
+    padding: 10px 12px;
+    background: white;
+    font-size: 13px;
+  }
+  .heatmap-header {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    background: var(--surface-card);
+  }
+  .heat-p0 { background: var(--p0-bg); color: var(--p0-text); font-weight: 600; }
+  .heat-p1 { background: var(--p1-bg); color: var(--p1-text); font-weight: 600; }
+  .heat-p2 { background: var(--p2-bg); color: var(--p2-text); font-weight: 600; }
+  .heat-ok { background: #f0fdf4; color: #166534; }
+
+  /* Design note */
+  .design-note {
+    background: var(--design-bg);
+    border: 1px solid var(--design-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--design-text);
+  }
+
+  /* Scroll to top */
+  .scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    background: var(--coral);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(204,120,92,0.4);
+    transition: transform 0.2s;
+  }
+  .scroll-top:hover { transform: translateY(-2px); }
+
+  /* Code blocks */
+  code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12px;
+    background: rgba(0,0,0,0.04);
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  .card-dark code { background: rgba(255,255,255,0.08); color: #e8e0d2; }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 8px;
+    background: var(--hairline);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* Print */
+  @media print {
+    .nav-bar, .scroll-top { display: none; }
+    section { page-break-inside: avoid; }
+    .report-header { padding: 32px 0; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .report-header h1 { font-size: 28px; }
+    .report-header .meta { flex-direction: column; gap: 8px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .heatmap { font-size: 11px; }
+    .heatmap-cell { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="report-header">
+  <div class="container">
+    <h1>SimperStudio 工程部审计报告</h1>
+    <p class="subtitle">基于六大工程专业角色的综合技术审计</p>
+    <div class="meta">
+      <span>📅 2026-05-26</span>
+      <span>🔍 6 个专业审计维度</span>
+      <span>⚠️ 45+ 项风险发现</span>
+      <span>📁 SimperStudio (Tauri + React)</span>
+      <span>👥 工程部</span>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav class="nav-bar">
+  <div class="container">
+    <a href="#summary" class="active">执行摘要</a>
+    <a href="#heatmap">风险热力图</a>
+    <a href="#architect">🏛️ 架构</a>
+    <a href="#prototyper">⚡ 原型</a>
+    <a href="#writer">✍️ 文档</a>
+    <a href="#optimizer">🔄 优化</a>
+    <a href="#data">📊 数据</a>
+    <a href="#reviewer">👀 代码审查</a>
+    <a href="#actions">行动清单</a>
+  </div>
+</nav>
+
+<!-- Executive Summary -->
+<section id="summary">
+  <div class="container">
+    <h2>执行摘要</h2>
+    <p style="font-size:16px; color:var(--ink); margin-bottom:24px;">
+      SimperStudio 是一个架构设计优秀、功能覆盖全面的 AI 工作流桌面应用。五层 Zustand Slice 架构、函数式工作流引擎、三级模型解析链等设计展现了出色的工程判断力。但在<strong>安全沙箱</strong>、<strong>生产稳定性</strong>、<strong>数据一致性</strong>方面存在亟需修复的 P0 级风险。
+    </p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-number stat-p0">13</div>
+        <div class="stat-label">P0 严重风险</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--error)"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number stat-p1">38</div>
+        <div class="stat-label">P1 中等风险</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:70%; background:var(--warning)"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number stat-p2">22</div>
+        <div class="stat-label">P2 轻微风险</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:40%; background:var(--success)"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" style="color:var(--coral)">6</div>
+        <div class="stat-label">审计维度</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--coral)"></div></div>
+      </div>
+    </div>
+
+    <div class="auditor-grid">
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#e8e0ff;">🏛️</div>
+        <div class="auditor-info">
+          <h4>软件架构师</h4>
+          <p>系统架构、依赖方向、反模式识别</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 4 P0</span>
+            <span class="stat-p1">● 7 P1</span>
+            <span class="stat-p2">● 3 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#fef3c7;">⚡</div>
+        <div class="auditor-info">
+          <h4>快速原型师</h4>
+          <p>技术栈、MVP完整性、迭代速度</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 2 P0</span>
+            <span class="stat-p1">● 4 P1</span>
+            <span class="stat-p2">● 3 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#ccfbf1;">✍️</div>
+        <div class="auditor-info">
+          <h4>技术文档工程师</h4>
+          <p>README、API文档、一致性</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 2 P0</span>
+            <span class="stat-p1">● 7 P1</span>
+            <span class="stat-p2">● 3 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#ede9fe;">🔄</div>
+        <div class="auditor-info">
+          <h4>自主优化架构师</h4>
+          <p>API路由、熔断器、成本管控</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 2 P0</span>
+            <span class="stat-p1">● 6 P1</span>
+            <span class="stat-p2">● 2 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#ffedd5;">📊</div>
+        <div class="auditor-info">
+          <h4>数据工程师</h4>
+          <p>Schema设计、持久化、安全</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 3 P0</span>
+            <span class="stat-p1">● 8 P1</span>
+            <span class="stat-p2">● 5 P2</span>
+          </div>
+        </div>
+      </div>
+      <div class="auditor-card">
+        <div class="auditor-icon" style="background:#fce7f3;">👀</div>
+        <div class="auditor-info">
+          <h4>代码审查师</h4>
+          <p>正确性、安全性、可维护性、测试</p>
+          <div class="auditor-counts">
+            <span class="stat-p0">● 6 P0</span>
+            <span class="stat-p1">● 8 P1</span>
+            <span class="stat-p2">● 6 P2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="design-note" style="margin-top:24px;">
+      <strong>📋 优先级调整说明</strong><br>
+      根据产品决策，<strong>API Key 加密存储</strong>已从 P0 调整为 P1（"暂时没那么紧急"）；<strong>HTTP 节点可访问内网地址</strong>已确认为产品设计要求，从风险清单中移除。
+    </div>
+  </div>
+</section>
+
+<!-- Heatmap -->
+<section id="heatmap">
+  <div class="container">
+    <h2>风险热力图</h2>
+    <p>按审计维度和严重程度分布的问题数量</p>
+    <div class="heatmap">
+      <div class="heatmap-cell heatmap-header">审计维度</div>
+      <div class="heatmap-cell heatmap-header" style="text-align:center">P0 严重</div>
+      <div class="heatmap-cell heatmap-header" style="text-align:center">P1 中等</div>
+      <div class="heatmap-cell heatmap-header" style="text-align:center">P2 轻微</div>
+
+      <div class="heatmap-cell"><strong>🏛️ 软件架构</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">4</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">7</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">3</div>
+
+      <div class="heatmap-cell"><strong>⚡ 快速原型</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">2</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">4</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">3</div>
+
+      <div class="heatmap-cell"><strong>✍️ 技术文档</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">2</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">7</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">3</div>
+
+      <div class="heatmap-cell"><strong>🔄 优化架构</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">2</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">6</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">2</div>
+
+      <div class="heatmap-cell"><strong>📊 数据工程</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">3</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">8</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">5</div>
+
+      <div class="heatmap-cell"><strong>👀 代码审查</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center">6</div>
+      <div class="heatmap-cell heat-p1" style="text-align:center">8</div>
+      <div class="heatmap-cell heat-p2" style="text-align:center">6</div>
+
+      <div class="heatmap-cell heatmap-header"><strong>合计</strong></div>
+      <div class="heatmap-cell heat-p0" style="text-align:center"><strong>13</strong></div>
+      <div class="heatmap-cell heat-p1" style="text-align:center"><strong>38</strong></div>
+      <div class="heatmap-cell heat-p2" style="text-align:center"><strong>22</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- Critical P0 Summary -->
+<section style="background:#fef2f2;">
+  <div class="container">
+    <h2 style="color:var(--p0-text)">🚨 P0 严重风险总览</h2>
+    <p style="color:var(--p0-text)">以下13项问题阻塞生产发布，需立即修复</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30%">问题</th>
+          <th style="width:25%">位置</th>
+          <th style="width:45%">影响</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>代码注入风险（Expression）</td>
+          <td><code>helpers.ts:31</code></td>
+          <td><code>new AsyncFunction + with(payload)</code> 执行任意用户输入，恶意工作流可执行任意代码</td>
+        </tr>
+        <tr>
+          <td>代码注入风险（Code Node）</td>
+          <td><code>codeExecutor.ts:4</code></td>
+          <td>Code 节点直接 <code>new AsyncFunction</code> 执行用户 JavaScript，无任何沙箱隔离</td>
+        </tr>
+        <tr>
+          <td>withTimeout 竞态条件</td>
+          <td><code>helpers.ts:3</code></td>
+          <td><code>timeoutId</code> 可能未赋值就被 <code>clearTimeout</code> 调用，存在 undefined 风险</td>
+        </tr>
+        <tr>
+          <td>maxTokens/temperature 未生效</td>
+          <td><code>api.ts:103</code></td>
+          <td><code>streamText()</code> 未传入用户设置，可能导致高额账单</td>
+        </tr>
+        <tr>
+          <td>provider 默认值矛盾</td>
+          <td><code>agentProviderRouter.ts:30</code>, <code>modelSlice.ts:93</code></td>
+          <td>默认 <code>activeProviderId</code> 指向禁用的 provider，导致首次调用必失败</td>
+        </tr>
+        <tr>
+          <td>Agent 双写不一致</td>
+          <td><code>baseSlice.ts</code></td>
+          <td><code>updateAgent</code> 只写 JSON 不写 SQLite，重启后数据回滚</td>
+        </tr>
+        <tr>
+          <td>数据库相对路径</td>
+          <td><code>db.rs:41</code></td>
+          <td>相对路径导致启动目录变化时数据丢失</td>
+        </tr>
+        <tr>
+          <td>内存与 DB 不一致</td>
+          <td><code>chatSlice.ts</code></td>
+          <td>先改内存再写库，失败时内存有数据而数据库无记录</td>
+        </tr>
+        <tr>
+          <td>数据库零索引</td>
+          <td><code>db.rs</code></td>
+          <td>所有表无索引，消息量增长后性能急剧恶化</td>
+        </tr>
+        <tr>
+          <td>验证缺口阻塞发布</td>
+          <td>TODO 9.1/9.2</td>
+          <td>6+ 项 P0 浏览器验证未完成，功能正确性未确认</td>
+        </tr>
+        <tr>
+          <td>子工作流空实现</td>
+          <td><code>subWorkflowExecutor.ts</code></td>
+          <td>仅返回 payload，工作流引擎完整性受损</td>
+        </tr>
+        <tr>
+          <td>WorkflowNodeData 类型失控</td>
+          <td><code>types/models.ts:126</code></td>
+          <td><code>Record&lt;string, unknown&gt;</code> 完全丧失类型安全</td>
+        </tr>
+        <tr>
+          <td>LICENSE 缺失</td>
+          <td>根目录</td>
+          <td>开源项目无 LICENSE，法律风险 + 贡献者顾虑</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Software Architect -->
+<section id="architect">
+  <div class="container">
+    <h2>🏛️ 软件架构师审计</h2>
+    <p>审计范围：架构分层、状态管理、工作流引擎、类型系统、API抽象、反模式、可扩展性、可维护性、ADR</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">表达式求值存在代码注入漏洞</span>
+        <span class="finding-location">helpers.ts:31-39</span>
+      </div>
+      <div class="finding-desc">
+        <code>evaluateExpression</code> 使用 <code>with(payload) { return ${expression}; }</code> 直接执行用户输入的字符串。<code>with()</code> 虽限制变量查找范围，但攻击者仍可通过原型链污染或全局对象访问执行任意代码。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>短期使用 <code>jexl</code> 或 <code>jsonata</code> 等安全表达式解析器；中期实现 AST 解释器；必须对表达式进行语法白名单校验。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">God Store 导致不必要的重渲染</span>
+        <span class="finding-location">stores/index.ts</span>
+      </div>
+      <div class="finding-desc">
+        单一 <code>AppStore</code> 包含所有状态，任何组件订阅任一字段变化都可能触发重渲染。chatSlice 已达 684 行，同时处理消息 CRUD、流式响应、窗口管理、Agent 转发。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>按领域拆分为独立 Zustand store（<code>useChatStore</code>、<code>useWorkflowStore</code>），使用 <code>useShallow</code> 优化订阅。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">WorkflowNodeData 类型完全开放</span>
+        <span class="finding-location">types/models.ts:126-129</span>
+      </div>
+      <div class="finding-desc">
+        <code>WorkflowNodeDataBase &amp; Partial&lt;...&gt; &amp; Record&lt;string, unknown&gt;</code> 使得任意字段都可合法存在，编译器无法捕获类型错误。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>改用 Discriminated Union：<code>type WorkflowNodeData = ({type:'agent'} &amp; AgentData) | ({type:'code'} &amp; CodeData) | ...</code>
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">缺少架构决策记录 (ADR)</span>
+        <span class="finding-location">docs/ 目录</span>
+      </div>
+      <div class="finding-desc">
+        项目中无任何 ADR 文档。Store 拆分、BFS 引擎、三级模型链等关键决策的"为什么"未记录，新开发者难以理解设计意图。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>创建 <code>docs/adr/</code> 目录，记录 Zustand 选择、BFS 串行模型、三级解析链等决策。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">Slice 间隐式耦合</span>
+        <span class="finding-location">baseSlice.ts:259-341</span>
+      </div>
+      <div class="finding-desc">
+        <code>fetchInitialData</code> 直接设置其他 slice 的状态（settings、sessions、workflows），破坏边界独立性。所有 slice 的 <code>set: any, get: any</code> 完全绕过 TypeScript 类型检查。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>引入泛型约束 <code>StoreSet / StoreGet</code>；<code>fetchInitialData</code> 拆分为各 slice 的独立初始化 action。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">废弃 API 仍在被调用</span>
+        <span class="finding-location">api.ts:28, PromptGenerator.tsx</span>
+      </div>
+      <div class="finding-desc">
+        <code>fetchFromModel</code> 已标记 <code>@deprecated</code> 但 <code>PromptGenerator.tsx</code> 仍直接调用，维护两套 provider 解析逻辑。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>统一使用 <code>fetchFromResolvedConfig</code>，移除废弃函数。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无代码分割/懒加载</span>
+        <span class="finding-location">App.tsx</span>
+      </div>
+      <div class="finding-desc">
+        所有视图组件同步导入，未使用 <code>React.lazy</code>。首次加载包含全部工作流画布、设置页等代码。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>视图级代码分割：<code>const WorkflowCanvas = React.lazy(() =&gt; import(...))</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Rapid Prototyper -->
+<section id="prototyper" style="background:#faf9f5;">
+  <div class="container">
+    <h2>⚡ 快速原型师审计</h2>
+    <p>审计范围：技术栈选择、开发速度、MVP完整性、模块化、预构建组件、反馈收集、生产过渡、技术债务</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">P0 验证缺口阻塞发布</span>
+        <span class="finding-location">TODO 9.1 / 9.2</span>
+      </div>
+      <div class="finding-desc">
+        6+ 项浏览器验证全部未完成（single chat 完整链路、workflow chat、窗口交互、转发链路、状态隔离、对比度/点击区）。功能正确性未确认即准备发布。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>冻结新功能开发，集中 1 周完成所有 P0 验证清单。引入 Playwright E2E 测试覆盖核心用户旅程。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">子工作流节点是空壳实现</span>
+        <span class="finding-location">subWorkflowExecutor.ts</span>
+      </div>
+      <div class="finding-desc">
+        <code>subWorkflowExecutor</code> 仅返回 <code>payload</code>，无实际递归执行逻辑。P1 功能不可用，影响工作流引擎的完整性。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>调用 <code>executeWorkflow</code> 实现递归执行，传递参数和回传结果。预计 1-2 天工作量。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">Rust 后端严重欠利用</span>
+        <span class="finding-location">src-tauri/src/</span>
+      </div>
+      <div class="finding-desc">
+        Rust 层仅包含基础 CRUD 和表定义（~420 行），沦为"数据库胶水层"。未发挥 Tauri 在系统级集成、性能、安全方面的优势。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>明确 Rust 后端职责边界；考虑将表达式求值、API Key 加密、文件系统监控等移至 Rust 层。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">生产化准备严重不足</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        无代码签名（Windows/macOS 会拦截未签名应用）、无自动更新器（Tauri Updater）、无落地页、无 GitHub Releases 流程。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>申请代码签名证书；集成 Tauri Updater；创建最小化落地页；建立 GitHub Actions 发布流水线。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">零用户反馈收集机制</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        无错误上报（Sentry）、无使用分析（Mixpanel）、无应用内反馈入口。产品迭代完全依赖主观判断。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>集成 Sentry 最小化错误上报；扩展"一键导出诊断包"功能；在设置页添加反馈入口。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">首次启动体验完全缺失</span>
+        <span class="finding-location">全局</span>
+      </div>
+      <div class="finding-desc">
+        新用户打开应用面对空列表，无引导、无示例高亮，流失风险高。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>首次启动时自动加载 1-2 个示例工作流和 Agent，避免空状态。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Technical Writer -->
+<section id="writer">
+  <div class="container">
+    <h2>✍️ 技术文档工程师审计</h2>
+    <p>审计范围：README、开发者体验、API文档、代码注释、架构文档、贡献指南、Docs-as-Code、一致性、缺失文档</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">LICENSE 文件缺失</span>
+        <span class="finding-location">根目录</span>
+      </div>
+      <div class="finding-desc">
+        开源项目无 LICENSE 文件，存在法律风险，也会阻碍潜在贡献者参与。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>立即添加 LICENSE（推荐 MIT 或 Apache-2.0）。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">CONTRIBUTING.md 缺失</span>
+        <span class="finding-location">根目录</span>
+      </div>
+      <div class="finding-desc">
+        无贡献指南、无 Issue/PR 模板、无分支命名规范。外部开发者不知如何参与。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>创建 CONTRIBUTING.md 和 .github/ 模板文件。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">JSDoc 覆盖率极低（仅17处）</span>
+        <span class="finding-location">src/ 目录</span>
+      </div>
+      <div class="finding-desc">
+        整个 <code>src/</code> 目录仅 17 处 JSDoc 注释。大量核心函数（<code>fetchFromProvider</code>、<code>runAgentResponse</code>、<code>createBaseSlice</code> 等）无注释。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>为核心公共 API 添加 JSDoc；使用 TypeDoc 生成自动 API 文档站点。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">文档同步严重滞后</span>
+        <span class="finding-location">docs/ 目录</span>
+      </div>
+      <div class="finding-desc">
+        多处文档状态与代码不符：<code>plan-dynamic-agent.md</code> 写"Plan 阶段未编码"但代码已实现；<code>Features.md</code> 写"设计中"但 Dynamic Agent 已上线；<code>Development.md</code> 版本标记为 v0.4.0 但代码已 v0.4.1+。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>建立"代码 PR 需同步更新文档"的检查清单；每次发布前审核所有文档状态标记。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">README 缺少关键要素</span>
+        <span class="finding-location">README.md</span>
+      </div>
+      <div class="finding-desc">
+        无界面截图/GIF、Tauri 环境安装指引缺失、Node 版本未锁定（无 .nvmrc）、无徽章。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>添加 1-2 张核心界面截图；补充 Rust/Tauri 安装链接；添加 <code>engines</code> 字段到 package.json。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">文档入口分散</span>
+        <span class="finding-location">docs/ 目录</span>
+      </div>
+      <div class="finding-desc">
+        README.md、CLAUDE.md、Development.md 都可作为入口，新读者不知从何开始。DESIGN.md 与 Design_Specs.md 命名容易混淆。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>重命名 DESIGN.md 为外部参考文档；在 CLAUDE.md 中添加阅读路径推荐。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Autonomous Optimization -->
+<section id="optimizer" style="background:#faf9f5;">
+  <div class="container">
+    <h2>🔄 自主优化架构师审计</h2>
+    <p>审计范围：多供应商路由、熔断器、成本管控、重试策略、超时控制、错误处理、影子测试、监控告警、并发控制、安全护栏</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">maxTokens/temperature 未传入 streamText</span>
+        <span class="finding-location">api.ts:103</span>
+      </div>
+      <div class="finding-desc">
+        <code>fetchFromProvider()</code> 调用 <code>streamText({ model, system, prompt })</code> 时未传入 <code>maxTokens</code> 和 <code>temperature</code>。用户设置被完全忽略，可能导致意外高额账单。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>立即修复：<code>streamText({ ..., maxTokens: config.maxTokens, temperature: config.temperature })</code>
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">安全护栏多重缺陷</span>
+        <span class="finding-location">api.ts, httpExecutor.ts</span>
+      </div>
+      <div class="finding-desc">
+        API Key 明文存储在 JSON 和 SQLite 中；无输入长度限制；无 prompt injection 检测；localStorage fallback 泄露敏感数据。
+        <br><em>注：HTTP 节点可访问内网地址为产品设计要求，不作为缺陷。</em>
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 Tauri Keychain/Stronghold 存储 API Key；禁用含 API Key 的 localStorage 回退；增加输入长度限制。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">完全缺失熔断器机制</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        代码中无任何 circuit breaker、failure counter、half-open 状态。当供应商持续故障（429/500/503）时，系统会持续发送请求。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>为每个 provider 引入内存级熔断器：记录连续失败次数，超过阈值后进入 open 状态（冷却期 30s），half-open 后放行探测请求。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">聊天层无重试、无超时</span>
+        <span class="finding-location">chatSlice.ts:54</span>
+      </div>
+      <div class="finding-desc">
+        <code>runAgentResponse()</code> 无任何重试逻辑和超时控制。API 调用失败直接报错，流式响应可能无限挂起。工作流层的重试策略与聊天层不统一。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在 <code>runAgentResponse()</code> 中引入 <code>withTimeout</code>（默认 60s）和基于错误类型的重试（仅重试 429/503/timeout/network error）。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">并发调用无限制</span>
+        <span class="finding-location">chatSlice.ts:414</span>
+      </div>
+      <div class="finding-desc">
+        <code>sendMessageToAgents()</code> 使用 <code>Promise.all(agents.map(...))</code> 无任何并发限制。10+ Agent 同时触发会发起 10+ 个 LLM 请求，冲垮供应商 rate limit。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>引入 <code>p-limit</code> 或 Semaphore，限制同时 LLM 调用数为 3-5 个。实现 <code>ExecutionOptions.concurrency</code> 的实际逻辑。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">无智能路由与降级</span>
+        <span class="finding-location">agentProviderRouter.ts</span>
+      </div>
+      <div class="finding-desc">
+        三级解析链是静态配置，无基于延迟/成本/可用性的动态选择。注释明确写明 "No fallback — any missing/invalid config throws immediately"。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>增加跨供应商 fallback 链：首选失败后按优先级尝试其他 isEnabled 供应商。为每个 provider 增加健康检查评分。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">无影子测试 / A/B 测试</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        无法在不干扰用户的情况下测试新模型。引入新供应商需直接切换生产流量。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>增加 <code>shadowProviderId/shadowModelId</code> 字段，后台并行发送到影子模型仅记录结果。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Data Engineer -->
+<section id="data">
+  <div class="container">
+    <h2>📊 数据工程师审计</h2>
+    <p>审计范围：Schema设计、持久化策略、数据迁移、数据质量、一致性、可观测性、备份恢复、配置管理、安全、可扩展性</p>
+
+    <h3>关键发现</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">数据库零索引</span>
+        <span class="finding-location">db.rs:40-114</span>
+      </div>
+      <div class="finding-desc">
+        所有表零索引。<code>chat_messages</code> 按 <code>session_id</code> 查询和 <code>chat_sessions</code> 按 <code>workspace_id</code> 查询将全表扫描，消息量增长后性能急剧恶化。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>立即添加：<code>CREATE INDEX idx_chat_messages_session ON chat_messages(session_id)</code> 等至少 3 个高频索引。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">Agent 双写不一致</span>
+        <span class="finding-location">baseSlice.ts:213-246</span>
+      </div>
+      <div class="finding-desc">
+        <code>addAgent</code> 同时写 SQLite 和 JSON，但 <code>updateAgent</code>/<code>batchUpdateAgents</code> 只写 JSON 不写 SQLite。重启后 <code>fetchInitialData</code> 优先读 JSON，SQLite 数据永远停留在旧版本。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>以 SQLite 为唯一持久化层，JSON 仅用于导出/迁移。补全 Rust <code>update_agent</code>/<code>delete_agent</code> 命令。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">相对路径导致数据丢失风险</span>
+        <span class="finding-location">db.rs:41, db.rs:419</span>
+      </div>
+      <div class="finding-desc">
+        <code>Connection::open("simperstudio.db")</code> 和 <code>PathBuf::from("config")</code> 使用相对路径，实际工作目录取决于 Tauri 进程启动位置。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 <code>tauri::api::path::app_data_dir()</code> 获取标准应用数据目录。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">内存与数据库不一致</span>
+        <span class="finding-location">chatSlice.ts:277-286</span>
+      </div>
+      <div class="finding-desc">
+        <code>addUserMessage</code> 先 <code>set</code> 更新内存，再 <code>invoke</code> 写库。后者失败则内存有数据而数据库无记录。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>调整为"写库成功后再改内存"，或引入乐观更新 + 错误回滚机制。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">Schema 与 TS 类型不同步</span>
+        <span class="finding-location">db.rs:23-38 vs types/models.ts</span>
+      </div>
+      <div class="finding-desc">
+        Rust <code>Agent</code> 结构体保留 <code>model_provider</code>、<code>api_key</code>、<code>base_url</code> 等已废弃字段，TS <code>Agent</code> 已使用 <code>providerId</code>、<code>modelId</code>。数据库未同步迁移。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>新增 <code>provider_id</code>、<code>model_id</code> 列；将旧字段标记废弃并逐步清理。引入 schema 迁移框架。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">无 Schema 版本控制</span>
+        <span class="finding-location">db.rs</span>
+      </div>
+      <div class="finding-desc">
+        无 <code>PRAGMA user_version</code> 或 <code>_migrations</code> 表。唯一的"迁移"是检测 <code>workflow_id</code> 列是否存在并 ALTER TABLE。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>引入 <code>user_version</code> 机制，按版本号顺序执行迁移脚本。创建 <code>_migrations</code> 表记录执行历史。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">API Key 明文存储</span>
+        <span class="finding-location">db.rs, modelSlice.ts</span>
+      </div>
+      <div class="finding-desc">
+        所有服务商 API Key 以明文存储在 SQLite 和 JSON 中，可被任意进程读取。localStorage fallback 进一步扩大了攻击面。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 Tauri Stronghold 或系统钥匙串加密存储；禁用 localStorage 回退。优先级：P1（"暂时没那么紧急"）。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">无备份与恢复机制</span>
+        <span class="finding-location">全局缺失</span>
+      </div>
+      <div class="finding-desc">
+        无任何备份机制。<code>simperstudio.db</code> 损坏即永久丢失。无导出/导入 API。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>启动/退出时执行 <code>VACUUM INTO 'backup/simperstudio_YYYYMMDD.db'</code>。暴露 <code>export_data()</code> 和 <code>import_data()</code> 命令。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">单连接串行瓶颈</span>
+        <span class="finding-location">db.rs:7-9</span>
+      </div>
+      <div class="finding-desc">
+        <code>Mutex&lt;Connection&gt;</code> 导致所有 DB 操作串行，多 Agent 并发时阻塞。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 <code>r2d2_sqlite</code> 连接池管理多连接，允许并行读取。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Code Reviewer -->
+<section id="reviewer" style="background:#faf9f5;">
+  <div class="container">
+    <h2>👀 代码审查师审计</h2>
+    <p>审计范围：正确性、安全性、可维护性、性能、测试覆盖、代码模式、错误处理、边界条件</p>
+
+    <h3>阻塞项 (Blocking Issues)</h3>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">withTimeout 存在 timeoutId 未定义风险</span>
+        <span class="finding-location">helpers.ts:3-9</span>
+      </div>
+      <div class="finding-desc">
+        <code>timeoutId</code> 声明后若在 <code>setTimeout</code> 回调执行前被 <code>clearTimeout</code>，存在 undefined 风险。若 <code>ms &lt;= 0</code>，赋值可能未完成。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>将类型改为 <code>NodeJS.Timeout | undefined</code>，<code>finally</code> 中检查 <code>if (timeoutId !== undefined)</code> 再清除。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">evaluateExpression 使用 new AsyncFunction + with(payload)</span>
+        <span class="finding-location">helpers.ts:31-39</span>
+      </div>
+      <div class="finding-desc">
+        与架构师审计交叉确认：工作流条件表达式直接执行用户输入字符串。<code>with(payload)</code> 无法阻止原型链污染或全局访问。同步版本 <code>evaluateExpressionSync</code> 同样危险。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 <code>jexl</code>/<code>jsonata</code> 替代；若必须保留 JS，用 Web Worker 隔离执行环境。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">codeExecutor 直接执行用户 JavaScript 代码</span>
+        <span class="finding-location">codeExecutor.ts:4-13</span>
+      </div>
+      <div class="finding-desc">
+        Code 节点使用 <code>new AsyncFunction</code> 执行用户代码，10秒超时无法阻止同步恶意操作（如 <code>while(true){}</code> 阻塞事件循环）。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 Web Worker 隔离执行；或改用受限 DSL 替代原生 JS；至少静态分析禁止 <code>eval</code>、<code>Function</code>、<code>import</code> 等关键字。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">httpExecutor URL 协议与格式风险</span>
+        <span class="finding-location">httpExecutor.ts:4-34</span>
+      </div>
+      <div class="finding-desc">
+        URL 经模板替换后直接 <code>fetch()</code>，无协议校验（允许 <code>file://</code>）。headers 通过 <code>JSON.parse</code> 解析，非法 JSON 静默失败。body 被 <code>JSON.stringify</code> 包裹后作为字符串发送，Content-Type 可能不匹配。
+        <br><em>注：HTTP 节点可访问内网地址（localhost/169.254.x.x）为产品设计要求，不作为缺陷处理。</em>
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>添加协议白名单 <code>['http:', 'https:']</code>；headers 解析失败时显式报错；校验 Content-Type 与 body 格式一致性。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">apiKey || 'sk-custom' 两处逻辑不一致</span>
+        <span class="finding-location">api.ts:80</span>
+      </div>
+      <div class="finding-desc">
+        <code>resolveAgentModelConfig</code> 已检查 <code>!provider.apiKey</code> 并抛出错误，但 <code>fetchFromProvider</code> 仍保留 <code>|| 'sk-custom'</code> fallback，产生无意义请求。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>移除 <code>|| 'sk-custom'</code> fallback，统一由 <code>resolveAgentModelConfig</code> 校验。
+      </div>
+    </div>
+
+    <div class="finding finding-p0">
+      <div class="finding-header">
+        <span class="badge badge-p0">P0</span>
+        <span class="finding-title">activeProviderId fallback 与默认值矛盾</span>
+        <span class="finding-location">agentProviderRouter.ts:30, modelSlice.ts:93</span>
+      </div>
+      <div class="finding-desc">
+        <code>modelSlice</code> 默认 <code>activeProviderId: 'siliconflow-default'</code>，但所有 provider <code>isEnabled</code> 默认为 <code>false</code>。导致 <code>resolveAgentModelConfig</code> 的 <code>!provider.isEnabled</code> 校验必失败。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>将 <code>siliconflow-default</code> 的 <code>isEnabled</code> 设为 <code>true</code>，或修改 <code>autoSelectActiveProvider</code> 逻辑与默认值一致。
+      </div>
+    </div>
+
+    <h3>建议项 (Suggestions)</h3>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">chatSlice.ts 多处空 catch {} 静默吞错</span>
+        <span class="finding-location">chatSlice.ts (多处)</span>
+      </div>
+      <div class="finding-desc">
+        Tauri 后端调用失败被完全静默处理，如 <code>try { await invoke('add_chat_session', ...) } catch { }</code>。用户无法感知数据保存失败。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>至少记录 <code>console.error</code>，或向用户显示 toast 通知。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">sendMessageToAgents 使用 Promise.all 错误处理不完善</span>
+        <span class="finding-location">chatSlice.ts:414-422</span>
+      </div>
+      <div class="finding-desc">
+        任一 agent 调用失败，<code>Promise.all</code> 立即 reject，其他 agent 响应被丢弃。错误未被外层 catch。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 <code>Promise.allSettled</code> 替代，分别处理每个 agent 的成功/失败状态。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">modelSlice 中 void writeConfig 异步错误未处理</span>
+        <span class="finding-location">modelSlice.ts:101, 112, 123, 134</span>
+      </div>
+      <div class="finding-desc">
+        <code>void writeConfig('model.json', settings)</code> 的异步错误被忽略。磁盘写入失败时 UI 显示已保存，实际数据丢失。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>添加 <code>.catch()</code> 处理错误并通知用户。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">validateSchema 实现过于简单</span>
+        <span class="finding-location">helpers.ts:42-56</span>
+      </div>
+      <div class="finding-desc">
+        不支持嵌套对象、可选字段、数组元素类型、联合类型；无效 schema 被静默忽略（<code>catch { /* ignore */ }</code>）。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>集成 <code>zod</code> 或 <code>ajv</code> 进行 JSON Schema 验证，至少将 schema 解析错误暴露给用户。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">loopExecutor sharedLoopResults 引用共享</span>
+        <span class="finding-location">loopExecutor.ts:38-45</span>
+      </div>
+      <div class="finding-desc">
+        <code>_loopResults</code> 是同一数组引用，所有迭代共享。若未来引入并行执行，会产生竞态条件。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>在 <code>computeLoopIterations</code> 中使用 <code>structuredClone(sharedLoopResults)</code>，或明确文档说明 loop 节点不支持并行。
+      </div>
+    </div>
+
+    <div class="finding finding-p1">
+      <div class="finding-header">
+        <span class="badge badge-p1">P1</span>
+        <span class="finding-title">saveWorkflow 节点数据清理丢失动态字段</span>
+        <span class="finding-location">workflowSlice.ts:331-372</span>
+      </div>
+      <div class="finding-desc">
+        手动列举保存字段，新增节点数据字段需同步更新，否则被静默丢弃。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用类型安全的序列化方式，或保存前进行字段校验，警告未识别字段。
+      </div>
+    </div>
+
+    <h3>小改进 (Minor Improvements)</h3>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">engine.ts MAX_WORKFLOW_STEPS 硬编码</span>
+        <span class="finding-location">engine.ts:6</span>
+      </div>
+      <div class="finding-desc">
+        <code>MAX_WORKFLOW_STEPS = 1000</code> 是魔法数字，无法根据工作流复杂度调整。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>作为 <code>ExecutionOptions</code> 的可配置参数。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">engine.ts 固定 400ms throttle</span>
+        <span class="finding-location">engine.ts:100</span>
+      </div>
+      <div class="finding-desc">
+        固定 <code>await sleep(400)</code> 影响性能，无法按需调整。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>将 throttle 时间作为可配置参数，或仅在调试模式下启用。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">mergeExecutor object-assign 可能产生意外覆盖</span>
+        <span class="finding-location">mergeExecutor.ts:37-38</span>
+      </div>
+      <div class="finding-desc">
+        多个上游结果同名属性，后面的覆盖前面的，无警告。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>添加冲突检测逻辑，同名属性时发出警告或使用深度合并策略。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">shortError HTTP 状态码匹配不够精确</span>
+        <span class="finding-location">agentProviderRouter.ts:71-86</span>
+      </div>
+      <div class="finding-desc">
+        <code>message.includes('401')</code> 会误判如 <code>model-401-v2</code> 等非状态码场景。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用正则 <code>/\b401\b/</code> 匹配边界。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">Rust 后端 Mutex 使用 unwrap() 可能 panic</span>
+        <span class="finding-location">db.rs:118 (多处)</span>
+      </div>
+      <div class="finding-desc">
+        <code>state.conn.lock().unwrap()</code>，若某线程 panic 时持有锁，后续线程会 panic。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>使用 <code>lock().map_err(|e| e.to_string())?</code> 优雅处理 poisoned lock。
+      </div>
+    </div>
+
+    <div class="finding finding-p2">
+      <div class="finding-header">
+        <span class="badge badge-p2">P2</span>
+        <span class="finding-title">测试覆盖率不足</span>
+        <span class="finding-location">src/store/__tests__/, src/lib/workflow/__tests__/</span>
+      </div>
+      <div class="finding-desc">
+        缺少循环节点、合并节点、动态 agent、HTTP 节点集成测试；无表达式注入攻击场景测试；retry 逻辑未真正验证。
+      </div>
+      <div class="finding-rec">
+        <strong>建议：</strong>补充上述测试模块，增加安全边界测试用例。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Action Items -->
+<section id="actions" style="background:var(--surface-dark); color:var(--on-dark);">
+  <div class="container">
+    <h2 style="color:var(--on-dark)">📋 优先级行动清单</h2>
+    <p style="color:#a09d96">按优先级排序的修复建议，P0 项必须立即处理</p>
+
+    <h3 style="color:var(--on-dark); border-color:#333">P0 — 立即执行（阻塞发布）</h3>
+    <ol class="action-list">
+      <li class="action-p0" data-num="1">
+        <div>
+          <strong style="color:var(--on-dark)">修复 streamText 参数传递</strong><br>
+          <span style="color:#a09d96">将 maxTokens 和 temperature 传入 streamText()，确保用户设置生效。文件：api.ts</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="2">
+        <div>
+          <strong style="color:var(--on-dark)">沙箱化表达式求值</strong><br>
+          <span style="color:#a09d96">替换 with(payload) + Function 为 jexl/jsonata 等安全解析器。文件：helpers.ts</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="3">
+        <div>
+          <strong style="color:var(--on-dark)">隔离 Code 节点执行环境</strong><br>
+          <span style="color:#a09d96">使用 Web Worker 或受限 DSL 替代原生 JS 执行。文件：codeExecutor.ts</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="4">
+        <div>
+          <strong style="color:var(--on-dark)">修复 provider 默认值矛盾</strong><br>
+          <span style="color:#a09d96">统一 activeProviderId fallback 逻辑与 modelSlice 默认值。文件：agentProviderRouter.ts, modelSlice.ts</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="5">
+        <div>
+          <strong style="color:var(--on-dark)">修复 withTimeout 竞态条件</strong><br>
+          <span style="color:#a09d96">timeoutId 改为可选类型，finally 中判空再清除。文件：helpers.ts</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="6">
+        <div>
+          <strong style="color:var(--on-dark)">统一数据源，修复 Agent 双写</strong><br>
+          <span style="color:#a09d96">补全 Rust update_agent/delete_agent，前端统一走 SQLite。文件：db.rs, baseSlice.ts</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="7">
+        <div>
+          <strong style="color:var(--on-dark)">使用 Tauri app data 目录</strong><br>
+          <span style="color:#a09d96">替换所有相对路径为 app_data_dir()。文件：db.rs</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="8">
+        <div>
+          <strong style="color:var(--on-dark)">添加数据库索引</strong><br>
+          <span style="color:#a09d96">为 session_id、workspace_id 等高频查询列添加索引。文件：db.rs</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="9">
+        <div>
+          <strong style="color:var(--on-dark)">完成 P0 浏览器验证</strong><br>
+          <span style="color:#a09d96">逐项执行 TODO 9.1/9.2 验证清单，记录并修复阻塞问题。</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="10">
+        <div>
+          <strong style="color:var(--on-dark)">添加 LICENSE 文件</strong><br>
+          <span style="color:#a09d96">选择 MIT 或 Apache-2.0 协议，放置于根目录。</span>
+        </div>
+      </li>
+      <li class="action-p0" data-num="11">
+        <div>
+          <strong style="color:var(--on-dark)">修复 WorkflowNodeData 类型</strong><br>
+          <span style="color:#a09d96">改用 Discriminated Union 替代 Record&lt;string, unknown&gt;。文件：types/models.ts</span>
+        </div>
+      </li>
+    </ol>
+
+    <h3 style="color:var(--on-dark); border-color:#333; margin-top:40px">P1 — 短期修复（发布前）</h3>
+    <ol class="action-list">
+      <li class="action-p1" data-num="1">
+        <div>
+          <strong style="color:var(--on-dark)">加密 API Key 存储</strong><br>
+          <span style="color:#a09d96">使用 Tauri Stronghold 或系统钥匙串存储 API Key，禁用 localStorage 回退。优先级：P1（"暂时没那么紧急"）。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="2">
+        <div>
+          <strong style="color:var(--on-dark)">为聊天层添加超时和重试</strong><br>
+          <span style="color:#a09d96">runAgentResponse() 引入 withTimeout + 基于错误类型的重试策略。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="3">
+        <div>
+          <strong style="color:var(--on-dark)">限制并发调用</strong><br>
+          <span style="color:#a09d96">Promise.all(agents.map(...)) 替换为 p-limit，默认并发 3-5。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="4">
+        <div>
+          <strong style="color:var(--on-dark)">引入熔断器机制</strong><br>
+          <span style="color:#a09d96">为每个 provider 实现内存级熔断器，连续失败阈值 + 冷却期。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="5">
+        <div>
+          <strong style="color:var(--on-dark)">修复空 catch 和异步错误处理</strong><br>
+          <span style="color:#a09d96">chatSlice.ts 和 modelSlice.ts 中所有空 catch / void writeConfig 添加错误日志和用户通知。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="6">
+        <div>
+          <strong style="color:var(--on-dark)">创建 CONTRIBUTING.md</strong><br>
+          <span style="color:#a09d96">开发环境、分支规范、PR 流程、测试要求。同步创建 GitHub 模板。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="7">
+        <div>
+          <strong style="color:var(--on-dark)">补齐子工作流实现</strong><br>
+          <span style="color:#a09d96">subWorkflowExecutor 调用 executeWorkflow 实现递归执行。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="8">
+        <div>
+          <strong style="color:var(--on-dark)">拆分 God Store</strong><br>
+          <span style="color:#a09d96">按领域拆分为独立 Zustand store，减少重渲染。</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="9">
+        <div>
+          <strong style="color:var(--on-dark)">引入 Schema 版本控制</strong><br>
+          <span style="color:#a09d96">使用 PRAGMA user_version + 迁移表管理 schema 演进。文件：db.rs</span>
+        </div>
+      </li>
+      <li class="action-p1" data-num="10">
+        <div>
+          <strong style="color:var(--on-dark)">统一文档状态</strong><br>
+          <span style="color:#a09d96">更新所有文档的时间戳和状态标记，确保与代码一致。</span>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="background:var(--surface-card); padding:32px 0; text-align:center; color:var(--muted); font-size:13px; border-top:1px solid var(--hairline);">
+  <div class="container">
+    <p>SimperStudio 工程部综合审计报告 | 由六大工程专业子代理团队生成</p>
+    <p style="margin-top:4px;">审计日期：2026-05-26 | 审计方法：代码审查 + 架构分析 + 交叉验证</p>
+    <p style="margin-top:4px; font-size:12px;">优先级调整说明：API Key 加密存储已调整为 P1；HTTP 节点内网访问确认为产品设计要求</p>
+  </div>
+</footer>
+
+<button class="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // Active nav highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-bar a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(sec => {
+      const top = sec.offsetTop - 80;
+      if (scrollY >= top) current = sec.id;
+    });
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+
+</body>
+</html>

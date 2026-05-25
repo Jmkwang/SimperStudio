@@ -8,7 +8,16 @@ export interface ModelSlice {
   addProvider: (provider: ModelProvider) => void;
   updateProvider: (id: string, updates: Partial<ModelProvider>) => void;
   deleteProvider: (id: string) => void;
-  setActiveProvider: (id: string) => void;
+}
+
+function autoSelectActiveProvider(providers: ModelProvider[], currentActiveId: string | null): string | null {
+  // If current active is still enabled, keep it
+  if (currentActiveId && providers.find(p => p.id === currentActiveId)?.isEnabled) {
+    return currentActiveId;
+  }
+  // Otherwise pick the first enabled provider
+  const firstEnabled = providers.find(p => p.isEnabled);
+  return firstEnabled?.id || null;
 }
 
 export function createModelSlice(set: any, _get: any, writeConfig: (name: string, value: unknown) => Promise<void>): ModelSlice {
@@ -94,18 +103,22 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
     }),
 
     addProvider: (provider) => set((state: any) => {
+      const newProviders = [...state.settings.providers, provider];
       const settings: Settings = {
         ...state.settings,
-        providers: [...state.settings.providers, provider],
+        providers: newProviders,
+        activeProviderId: autoSelectActiveProvider(newProviders, state.settings.activeProviderId),
       };
       void writeConfig('model.json', settings);
       return { settings };
     }),
 
     updateProvider: (id, updates) => set((state: any) => {
+      const newProviders = state.settings.providers.map((p: ModelProvider) => p.id === id ? { ...p, ...updates } : p);
       const settings: Settings = {
         ...state.settings,
-        providers: state.settings.providers.map((p: ModelProvider) => p.id === id ? { ...p, ...updates } : p),
+        providers: newProviders,
+        activeProviderId: autoSelectActiveProvider(newProviders, state.settings.activeProviderId),
       };
       void writeConfig('model.json', settings);
       return { settings };
@@ -116,16 +129,8 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
       const settings: Settings = {
         ...state.settings,
         providers: newProviders,
-        activeProviderId: state.settings.activeProviderId === id
-          ? (newProviders[0]?.id || null)
-          : state.settings.activeProviderId,
+        activeProviderId: autoSelectActiveProvider(newProviders, state.settings.activeProviderId),
       };
-      void writeConfig('model.json', settings);
-      return { settings };
-    }),
-
-    setActiveProvider: (id) => set((state: any) => {
-      const settings: Settings = { ...state.settings, activeProviderId: id };
       void writeConfig('model.json', settings);
       return { settings };
     }),

@@ -131,7 +131,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Use agent default</SelectItem>
-                      {providers.map(p => (
+                      {providers.filter(p => p.isEnabled).map(p => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
