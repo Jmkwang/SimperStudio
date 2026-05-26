@@ -771,6 +771,12 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ## 版本历史
 
+### v0.4.2 (2026-05-27)
+- **UI/UX 设计审计**：6 角色联合审查（UI 设计师、UX 架构师、UX 研究员、包容性视觉专家、视觉叙事师、趣味注入师），产出 P0-P3 分级整改清单
+- **边框间距修复**：GlobalSidebar 与 ContextSidebar 边框重叠问题，调整 margin 为 6px 间距
+- **P10 方案规划**：GlobalSidebar 聊天与工作流会话拆分方案写入 TODO（双入口设计）
+- **版本号同步**：package.json / tauri.conf.json / Cargo.toml 统一升级至 0.4.2
+
 ### v0.4.1 (2026-05-18)
 - **Retry 在原气泡重新生成**：新增 `retryAgentResponse` action，清除旧 `agentResponse` 后用原 `messageId` 重新流式生成，避免新建消息
 - **Provider/Model 信息位置调整**：从气泡底部移至 Agent 名称后方，格式 `AgentName Provider/Model`
@@ -996,5 +1002,5 @@ get_workflows, add_workflow, update_workflow, delete_workflow
 ---
 
 **文档维护**：本文件随项目更新自动维护。
-**最后更新**：2026-05-18
-**版本**：v0.4.0
+**最后更新**：2026-05-27
+**版本**：v0.4.2
