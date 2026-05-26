@@ -107,12 +107,13 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
                         placeholder="e.g. payload.score > 90"
                         className="font-mono text-xs flex-1"
                       />
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
                         onClick={() => removeRoute(idx)}
                         disabled={routes.length <= 1}
+                        aria-label="Remove route"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

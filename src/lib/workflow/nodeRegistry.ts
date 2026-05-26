@@ -126,7 +126,9 @@ async function handleLoopRouting(
 
   for (const iter of loopResult.iterationPayloads) {
     for (const edge of edges) {
-      nextFrames.push({ nodeId: edge.target, payload: structuredClone(iter.payload) });
+      // iterationPayload is already a structuredClone in computeLoopIterations;
+      // avoid a second clone to preserve the shared _loopResults reference.
+      nextFrames.push({ nodeId: edge.target, payload: iter.payload });
     }
   }
 

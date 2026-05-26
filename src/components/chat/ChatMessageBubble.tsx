@@ -118,7 +118,7 @@ function AssistantBubble({
               )}
             </div>
           ) : (
-            <div>{response.content.text}{isStreaming && <span className="inline-block w-1.5 h-4 ml-0.5 bg-foreground/40 animate-pulse align-text-bottom" />}</div>
+            <div>{response.content.text}{isStreaming && <span className="inline-block w-1.5 h-4 ml-0.5 bg-foreground/40 animate-pulse motion-reduce:opacity-100 motion-reduce:animate-none align-text-bottom" />}</div>
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5 ml-1 flex-wrap">

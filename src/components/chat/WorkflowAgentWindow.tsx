@@ -34,15 +34,17 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
     return workflow?.nodesData.find((n): n is WorkflowNode => n.id === windowData.nodeId && (n.type === 'agent' || n.type === 'dynamic-agent'));
   }, [workflows, windowData.workflowId, windowData.nodeId]);
 
+  const nodeData = node?.data as Record<string, unknown> | undefined;
+
   // Dynamic agent meta from payload (populated during execution)
   const dynamicMeta = (session?.messages || [])
     .flatMap(m => m.agentResponses || [])
     .find(r => r.nodeId === windowData.nodeId)?._dynamicAgentMeta;
 
   const hasOverrides = !!(
-    node?.data?.overrideProviderId ||
-    node?.data?.overrideModelId ||
-    node?.data?.overrideSystemPrompt
+    nodeData?.overrideProviderId ||
+    nodeData?.overrideModelId ||
+    nodeData?.overrideSystemPrompt
   );
 
   const displayName = dynamicMeta?.name || agent?.name || windowData.agentId;

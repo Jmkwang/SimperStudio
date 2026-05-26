@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { invoke } from '@tauri-apps/api/core';
-import { Workflow, WorkflowNode, WorkflowEdge } from '../types/models';
+import { Workflow, WorkflowNode, WorkflowEdge, WorkflowNodeData } from '../types/models';
 import { writeConfig } from './baseSlice';
 import { executeWorkflow as engineExecuteWorkflow } from '../lib/workflow/engine';
 
@@ -333,24 +333,27 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
         const { workflows } = get();
         const wf = workflows.find((w: Workflow) => w.id === id);
         if (wf) {
-          const cleanNodes: WorkflowNode[] = nodes.map((n) => ({
-            id: n.id, type: n.type, position: n.position,
-            data: {
-              label: n.data?.label, description: n.data?.description,
-              timeoutMs: n.data?.timeoutMs, retryPolicy: n.data?.retryPolicy, onError: n.data?.onError,
-              inputSchema: n.data?.inputSchema, outputSchema: n.data?.outputSchema,
-              agentId: n.data?.agentId, prompt: n.data?.prompt, schema: n.data?.schema, autoSendToNext: n.data?.autoSendToNext,
-              routes: n.data?.routes, code: n.data?.code,
-              itemsPath: n.data?.itemsPath, itemAlias: n.data?.itemAlias, indexAlias: n.data?.indexAlias,
-              maxIterations: n.data?.maxIterations, breakCondition: n.data?.breakCondition, aggregationStrategy: n.data?.aggregationStrategy,
-              method: n.data?.method, url: n.data?.url, headers: n.data?.headers, body: n.data?.body,
-              mappings: n.data?.mappings, constants: n.data?.constants, whitelist: n.data?.whitelist,
-              branches: n.data?.branches, waitMode: n.data?.waitMode, delayMs: n.data?.delayMs, untilExpression: n.data?.untilExpression,
-              strategy: n.data?.strategy, mergeKey: n.data?.mergeKey,
-              webhookMethod: n.data?.webhookMethod, webhookPath: n.data?.webhookPath, authToken: n.data?.authToken,
-              subWorkflowId: n.data?.subWorkflowId, inputMapping: n.data?.inputMapping,
-            }
-          }));
+          const cleanNodes: WorkflowNode[] = nodes.map((n) => {
+            const d = n.data as any;
+            return {
+              id: n.id, type: n.type, position: n.position,
+              data: {
+                label: d?.label, description: d?.description,
+                timeoutMs: d?.timeoutMs, retryPolicy: d?.retryPolicy, onError: d?.onError,
+                inputSchema: d?.inputSchema, outputSchema: d?.outputSchema,
+                agentId: d?.agentId, prompt: d?.prompt, schema: d?.schema, autoSendToNext: d?.autoSendToNext,
+                routes: d?.routes, code: d?.code,
+                itemsPath: d?.itemsPath, itemAlias: d?.itemAlias, indexAlias: d?.indexAlias,
+                maxIterations: d?.maxIterations, breakCondition: d?.breakCondition, aggregationStrategy: d?.aggregationStrategy,
+                method: d?.method, url: d?.url, headers: d?.headers, body: d?.body,
+                mappings: d?.mappings, constants: d?.constants, whitelist: d?.whitelist,
+                branches: d?.branches, waitMode: d?.waitMode, delayMs: d?.delayMs, untilExpression: d?.untilExpression,
+                strategy: d?.strategy, mergeKey: d?.mergeKey,
+                webhookMethod: d?.webhookMethod, webhookPath: d?.webhookPath, authToken: d?.authToken,
+                subWorkflowId: d?.subWorkflowId, inputs: d?.inputs,
+              } as WorkflowNodeData
+            };
+          });
           const cleanEdges: WorkflowEdge[] = edges.map((e) => ({
             id: e.id, source: e.source, sourceHandle: e.sourceHandle,
             target: e.target, targetHandle: e.targetHandle, animated: e.animated
@@ -416,7 +419,7 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
           initialPayload,
           { ...options, signal: abortController.signal },
           (stateUpdate) => setWorkflowExecutionState(stateUpdate),
-          { agents: get().agents, settings: get().settings },
+          { agents: get().agents, settings: get().settings, workflows: get().workflows },
         );
         return result.finalPayload;
       } catch (e: any) {

@@ -6,6 +6,7 @@ import { AgentsView } from "@/components/agents/AgentsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { PromptGenerator } from "@/components/prompts/PromptGenerator";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useAppStore } from '@/stores';
 import { Toaster } from "@/components/ui/toaster";
 import { WorkflowNodePanel } from "@/components/layout/WorkflowNodePanel";
@@ -50,20 +51,22 @@ function App() {
   };
 
   return (
-    <AppShell
-      currentView={viewMode}
-      setCurrentView={(v) => setViewMode(v as ViewMode)}
-    >
-      <div className="flex flex-col h-full">
-        <div className="flex-1 relative overflow-hidden flex">
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {renderContent()}
+    <ErrorBoundary>
+      <AppShell
+        currentView={viewMode}
+        setCurrentView={(v) => setViewMode(v as ViewMode)}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-1 relative overflow-hidden flex">
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {renderContent()}
+            </div>
+            <WorkflowNodePanel currentView={viewMode} />
           </div>
-          <WorkflowNodePanel currentView={viewMode} />
         </div>
-      </div>
-      <Toaster />
-    </AppShell>
+        <Toaster />
+      </AppShell>
+    </ErrorBoundary>
   );
 }
 

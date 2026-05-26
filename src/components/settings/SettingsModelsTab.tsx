@@ -240,6 +240,9 @@ export function SettingsModelsTab() {
                   <div className="text-xs text-muted-foreground truncate">{provider.baseUrl || '(空)'}</div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {settings.activeProviderId === provider.id && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">当前</span>
+                  )}
                   {provider.isEnabled && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 font-medium">ON</span>
                   )}
@@ -260,6 +263,19 @@ export function SettingsModelsTab() {
                   <h3 className="text-lg font-medium">{selectedProvider.name}</h3>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn("h-8 px-2", settings.activeProviderId === selectedProvider.id ? "text-primary" : "text-muted-foreground")}
+                    disabled={settings.activeProviderId === selectedProvider.id}
+                    onClick={() => {
+                      const setActiveProvider = useAppStore.getState().setActiveProvider;
+                      setActiveProvider(selectedProvider.id);
+                    }}
+                  >
+                    <Star className="h-4 w-4 mr-1" />
+                    {settings.activeProviderId === selectedProvider.id ? '当前服务商' : '设为当前'}
+                  </Button>
                   <Button variant="ghost" size="sm" className={cn("h-8 px-2", selectedProvider.isEnabled ? "text-emerald-500" : "text-muted-foreground")}
                     onClick={() => updateProvider(selectedProvider.id, { isEnabled: !selectedProvider.isEnabled })}>
                     <Power className="h-4 w-4 mr-1" />

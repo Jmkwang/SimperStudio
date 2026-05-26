@@ -221,29 +221,65 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         await invoke('add_agent', { agent: agentToSave });
         const nextAgents = [...get().agents, newAgent];
         set({ agents: nextAgents });
-        await writeConfig('agents.json', nextAgents);
       } catch (error) {
         console.error('Failed to add agent:', error);
         throw error;
       }
     },
 
-    updateAgent: (id, updates) => set((state: any) => {
-      const nextAgents = state.agents.map((agent: Agent) =>
-        agent.id === id ? { ...agent, ...updates } : agent
-      );
-      void writeConfig('agents.json', nextAgents);
-      return { agents: nextAgents };
-    }),
+    updateAgent: async (id, updates) => {
+      const { agents } = get();
+      const agent = agents.find((a: Agent) => a.id === id);
+      if (!agent) return;
+      const updatedAgent = { ...agent, ...updates };
+      try {
+        const agentToSave = {
+          ...updatedAgent,
+          model_provider: updatedAgent.modelProvider || 'local',
+          model_id: updatedAgent.modelId || 'default',
+          max_tokens: updatedAgent.maxTokens,
+          api_key: updatedAgent.apiKey,
+          base_url: updatedAgent.baseUrl,
+          parameters: JSON.stringify(updatedAgent.parameters || {}),
+        };
+        await invoke('update_agent', { agent: agentToSave });
+        const nextAgents = agents.map((a: Agent) =>
+          a.id === id ? updatedAgent : a
+        );
+        set({ agents: nextAgents });
+      } catch (e) {
+        console.error('Failed to update agent in DB:', e);
+      }
+    },
 
-    batchUpdateAgents: (ids, updates) => set((state: any) => {
+    batchUpdateAgents: async (ids, updates) => {
+      const { agents } = get();
       const idSet = new Set(ids);
-      const nextAgents = state.agents.map((agent: Agent) =>
-        idSet.has(agent.id) ? { ...agent, ...updates } : agent
+      const agentsToUpdate = agents.filter((a: Agent) => idSet.has(a.id));
+      const successfulIds = new Set<string>();
+      for (const agent of agentsToUpdate) {
+        const updatedAgent = { ...agent, ...updates };
+        try {
+          const agentToSave = {
+            ...updatedAgent,
+            model_provider: updatedAgent.modelProvider || 'local',
+            model_id: updatedAgent.modelId || 'default',
+            max_tokens: updatedAgent.maxTokens,
+            api_key: updatedAgent.apiKey,
+            base_url: updatedAgent.baseUrl,
+            parameters: JSON.stringify(updatedAgent.parameters || {}),
+          };
+          await invoke('update_agent', { agent: agentToSave });
+          successfulIds.add(agent.id);
+        } catch (e) {
+          console.error('Failed to batch update agent in DB:', e);
+        }
+      }
+      const nextAgents = agents.map((agent: Agent) =>
+        successfulIds.has(agent.id) ? { ...agent, ...updates } : agent
       );
-      void writeConfig('agents.json', nextAgents);
-      return { agents: nextAgents };
-    }),
+      set({ agents: nextAgents });
+    },
 
     addAgentCategory: (categoryData) => set((state: any) => {
       const newCategory: AgentCategory = {
@@ -276,15 +312,22 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           set({ agentCategories: categoriesConfig });
         }
 
-        if (agentsConfig?.length) {
+        // SQLite is the single source of truth for agents
+        const agents = await invoke<Agent[]>('get_agents');
+        if (agents.length) {
+          const parsedAgents = agents.map((a: any) => ({ ...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters }));
+          set({ agents: parsedAgents });
+        } else if (agentsConfig?.length) {
+          // Fallback to JSON only for legacy migration
           const providers = modelConfig?.providers || [];
           const migratedAgents = agentsConfig.map((a: Agent) => migrateAgent(a, providers));
           set({ agents: migratedAgents });
-        } else {
-          const agents = await invoke<Agent[]>('get_agents');
-          if (agents.length) {
-            const parsedAgents = agents.map((a: any) => ({ ...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters }));
-            set({ agents: parsedAgents });
+          // Migrate legacy JSON agents to SQLite
+          for (const agent of migratedAgents) {
+            try {
+              const agentToSave = { ...agent, parameters: JSON.stringify(agent.parameters || {}) };
+              await invoke('add_agent', { agent: agentToSave });
+            } catch { /* may already exist in SQLite */ }
           }
         }
 

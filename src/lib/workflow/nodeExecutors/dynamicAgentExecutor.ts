@@ -1,5 +1,5 @@
 import { NodeExecutorFn } from '../types';
-import { Agent, DynamicAgentConfig } from '@/types/models';
+import { Agent, DynamicAgentConfig, WorkflowDynamicAgentNodeData } from '@/types/models';
 import { resolveAgentModelConfig, shortError } from '@/lib/agentProviderRouter';
 import { fetchFromResolvedConfig } from '@/lib/api';
 
@@ -20,18 +20,19 @@ function tryParseJson(result: string): { parsed: any; success: boolean } {
 }
 
 export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers) => {
+  const data = node.data as WorkflowDynamicAgentNodeData;
   // 1. Parse dynamic configuration
   let config: DynamicAgentConfig | undefined;
 
-  if (node.data?.configSource === 'payload') {
-    const configPath = String(node.data?.configPath || 'payload.dynamicAgentConfig');
+  if (data.configSource === 'payload') {
+    const configPath = String(data.configPath || 'payload.dynamicAgentConfig');
     const resolved = helpers.getByPath(payload, configPath);
     if (resolved && typeof resolved === 'object' && resolved.systemPrompt) {
       config = resolved as DynamicAgentConfig;
     }
   } else {
     // inline mode: generate config from templates
-    const inline = node.data?.inlineConfig;
+    const inline = data.inlineConfig;
     if (inline && inline.systemPromptTemplate) {
       config = {
         name: helpers.replaceTemplateVars(inline.nameTemplate || 'Dynamic Agent', payload),
@@ -59,9 +60,9 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
   let modelId = config.modelId;
 
   // Fallback 1: from fallbackAgentId
-  if (!providerId && node.data?.fallbackAgentId) {
+  if (!providerId && data.fallbackAgentId) {
     const agents = helpers.getGlobalState?.('agents') || [];
-    const fallbackAgent = agents.find((a: Agent) => a.id === node.data?.fallbackAgentId);
+    const fallbackAgent = agents.find((a: Agent) => a.id === data.fallbackAgentId);
     if (fallbackAgent) {
       providerId = fallbackAgent.providerId;
       modelId = fallbackAgent.modelId;
@@ -69,14 +70,14 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
   }
 
   // Fallback 2: from fallbackProviderId / fallbackModelId
-  if (!providerId && node.data?.fallbackProviderId) {
-    providerId = String(node.data.fallbackProviderId);
-    modelId = node.data?.fallbackModelId ? String(node.data.fallbackModelId) : undefined;
+  if (!providerId && data.fallbackProviderId) {
+    providerId = String(data.fallbackProviderId);
+    modelId = data.fallbackModelId ? String(data.fallbackModelId) : undefined;
   }
 
   // 3. Build prompt text
-  const promptText = node.data?.promptTemplate
-    ? helpers.replaceTemplateVars(String(node.data.promptTemplate), payload)
+  const promptText = data.promptTemplate
+    ? helpers.replaceTemplateVars(String(data.promptTemplate), payload)
     : (typeof payload === 'object' ? JSON.stringify(payload, null, 2) : String(payload));
 
   // 4. Call LLM
@@ -96,7 +97,11 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
     const { textStream } = await fetchFromResolvedConfig(
       modelConfig,
       promptText,
-      config.systemPrompt
+      config.systemPrompt,
+      {
+        maxTokens: config.maxTokens,
+        temperature: config.temperature,
+      }
     );
 
     let result = '';
@@ -105,7 +110,7 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
     }
 
     // 5. Parse schema if specified
-    const schema = node.data?.schema ? String(node.data.schema) : undefined;
+    const schema = data.schema ? String(data.schema) : undefined;
     let outputValue: any = result;
     if (schema) {
       const { parsed } = tryParseJson(result);
@@ -124,7 +129,7 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
     }
 
     // 7. Build output
-    const outputField = String(node.data?.outputField || 'llmResult');
+    const outputField = String(data.outputField || 'llmResult');
     return {
       ...payload,
       [outputField]: outputValue,

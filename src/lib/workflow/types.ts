@@ -53,9 +53,9 @@ export interface ExecutionHelpers {
   sleep: (ms: number) => Promise<void>;
   validateSchema: (data: any, schemaStr: string | undefined, label: string) => string | null;
   replaceTemplateVars: (template: string, payload: any) => string;
-  AsyncFunction: any;
   fetchNode: (nodeId: string) => WorkflowNode | undefined;
   getGlobalState?: (key: string) => any;
+  executeWorkflow?: (workflowId: string, initialPayload: Record<string, any>) => Promise<any>;
 }
 
 export type NodeRouterFn = (

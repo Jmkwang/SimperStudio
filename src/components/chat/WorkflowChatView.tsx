@@ -47,16 +47,16 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const isCollapsed = workflowChatUI.sidebarCollapsedBySession[session.id] ?? true;
 
   const agentNodes = workflow?.nodesData?.filter(node =>
-    (node.type === 'agent' && node.data?.agentId) ||
+    (node.type === 'agent' && (node.data as Record<string, unknown>)?.agentId) ||
     node.type === 'dynamic-agent'
   ) || [];
   const linkedAgents = agentNodes
     .map(node => {
       if (node.type === 'dynamic-agent') {
         // Virtual agent for dynamic-agent nodes
-        return { id: `dynamic-${node.id}`, name: node.data?.label || 'Dynamic Agent', avatar: '' } as Agent;
+        return { id: `dynamic-${node.id}`, name: (node.data as Record<string, unknown>)?.label || 'Dynamic Agent', avatar: '' } as Agent;
       }
-      return agents.find(a => a.id === node.data?.agentId);
+      return agents.find(a => a.id === (node.data as Record<string, unknown>)?.agentId);
     })
     .filter(Boolean) as Agent[];
 
@@ -92,14 +92,15 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
         label: node.data?.label || node.id,
       };
 
-      if (nodeType === 'agent' && node.data?.agentId) {
+      if (nodeType === 'agent' && (node.data as Record<string, unknown>)?.agentId) {
+        const agentId = (node.data as Record<string, unknown>).agentId as string;
         return {
           ...node,
           type: 'agent',
           data: {
             ...baseData,
-            agentId: node.data.agentId,
-            onClick: () => openWorkflowAgentWindow(session.id, workflow.id, node.id, node.data.agentId!),
+            agentId,
+            onClick: () => openWorkflowAgentWindow(session.id, workflow.id, node.id, agentId),
           },
         };
       }

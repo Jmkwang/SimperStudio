@@ -159,11 +159,12 @@ const handleKeyDown = (e: React.KeyboardEvent) => {
             className="min-h-[60px] max-h-[200px] pr-12 resize-none"
             disabled={isLoading}
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             size="icon"
             disabled={!input.trim() || isLoading}
             className="absolute right-3 bottom-3 h-8 w-8"
+            aria-label={isLoading ? 'Generating' : 'Send'}
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>

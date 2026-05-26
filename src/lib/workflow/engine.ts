@@ -26,7 +26,20 @@ export async function executeWorkflow(
   const executedKeys = new Set<string>();
 
   const fetchNode = (nodeId: string) => nodes.find((n) => n.id === nodeId);
-  const helpers = createExecutionHelpers(fetchNode, globalState);
+  const helpers = createExecutionHelpers(fetchNode, globalState, (subWorkflowId, subPayload) => {
+    const subWorkflow = globalState?.workflows?.find((w: any) => w.id === subWorkflowId);
+    if (!subWorkflow) {
+      throw new Error(`Sub-workflow not found: ${subWorkflowId}`);
+    }
+    return executeWorkflow(
+      subWorkflow.nodesData,
+      subWorkflow.edgesData,
+      subPayload,
+      { signal: options.signal },
+      undefined,
+      globalState,
+    );
+  });
 
   const startNodeId = options.startNodeId;
   const startNode = startNodeId

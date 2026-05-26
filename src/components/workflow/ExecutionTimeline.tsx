@@ -64,7 +64,7 @@ export function ExecutionTimeline() {
   };
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur border rounded-xl shadow-lg p-4 z-10 max-w-3xl mx-auto pointer-events-auto">
+    <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur border rounded-xl shadow-lg p-4 z-10 max-w-3xl mx-auto pointer-events-auto max-sm:bottom-2 max-sm:left-2 max-sm:right-2 max-sm:p-3">
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           <div className={cn('w-2 h-2 rounded-full', {
@@ -78,13 +78,13 @@ export function ExecutionTimeline() {
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleExport}>
             <Download className="h-3 w-3 mr-1" /> Export
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setWorkflowExecutionState({ status: 'idle' })}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setWorkflowExecutionState({ status: 'idle' })} aria-label="Close execution timeline">
             <X className="h-3 w-3" />
           </Button>
         </div>
       </div>
 
-      <div className="space-y-1 max-h-[250px] overflow-y-auto pr-1">
+      <div className="space-y-1 max-h-[250px] max-sm:max-h-[180px] overflow-y-auto pr-1">
         {sortedNodes.map((node) => {
           const record = nodeRecords[node.id];
           if (!record) return null;
@@ -94,6 +94,8 @@ export function ExecutionTimeline() {
               <button
                 className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted/50 transition-colors"
                 onClick={() => setExpandedNode(isExpanded ? null : node.id)}
+                aria-expanded={isExpanded}
+                aria-controls={`node-detail-${node.id}`}
               >
                 <div className={cn('w-2 h-2 rounded-full shrink-0', statusColors[record.status] || 'bg-gray-400')} />
                 <span className="text-xs font-medium flex-1 truncate">{node.data?.label || node.id}</span>
@@ -113,11 +115,11 @@ export function ExecutionTimeline() {
                 {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
               </button>
               {isExpanded && (
-                <div className="px-3 pb-2 border-t bg-muted/20">
-                  {record.error && <p className="text-xs text-red-500 mt-1">Error: {record.error}</p>}
-                  {record.attempts > 0 && <p className="text-[10px] text-muted-foreground mt-1">Attempts: {record.attempts}</p>}
+                <div id={`node-detail-${node.id}`} className="px-3 pb-2 border-t bg-muted/20">
+                  {record.error && <p className="text-xs text-red-600 dark:text-red-400 mt-1">Error: {record.error}</p>}
+                  {record.attempts > 0 && <p className="text-[11px] text-foreground/70 mt-1">Attempts: {record.attempts}</p>}
                   {workflowExecution.results[node.id] && (
-                    <pre className="text-[10px] font-mono text-muted-foreground mt-1 max-h-[100px] overflow-auto bg-muted/50 p-1 rounded">
+                    <pre className="text-[11px] font-mono text-foreground/80 mt-1 max-h-[100px] overflow-auto bg-muted/50 p-1 rounded">
                       {JSON.stringify(workflowExecution.results[node.id], null, 2)}
                     </pre>
                   )}

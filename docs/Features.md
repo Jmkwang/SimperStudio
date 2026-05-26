@@ -135,7 +135,7 @@
 | **Trigger** | 手动触发，工作流入口 | source（右侧） |
 | **Webhook Trigger** | HTTP Webhook 触发，支持 Method/Path/Auth | source（右侧） |
 | **Agent** | 调用 LLM Agent，支持 Prompt 模板、Output Schema、Auto-send | target + source |
-| **Code** | 执行自定义 JS 代码（AsyncFunction 沙箱，10s 超时） | target + source |
+| **Code** | 执行自定义 JS 代码（Web Worker 隔离，10s 超时） | target + source |
 | **HTTP Request** | 发起 HTTP 请求（GET/POST/PUT/PATCH/DELETE），模板变量替换 | target + source |
 | **Router** | 基于 JS 条件表达式的分支路由，动态路由列表 | target + 动态 source |
 | **IF/Switch** | 多分支条件判断，动态分支列表 | target + 动态 source |

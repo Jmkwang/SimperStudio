@@ -16,12 +16,18 @@ function apiBase(provider: ModelProvider): string {
     return ensureV1(provider.baseUrl);
 }
 
+export interface FetchOptions {
+  maxTokens?: number;
+  temperature?: number;
+}
+
 export async function fetchFromResolvedConfig(
   config: ResolvedModelConfig,
   prompt: string,
   systemPrompt?: string,
+  options?: FetchOptions,
 ) {
-  return fetchFromProvider(config.provider, config.model.modelId, prompt, systemPrompt);
+  return fetchFromProvider(config.provider, config.model.modelId, prompt, systemPrompt, options);
 }
 
 /** @deprecated Use fetchFromResolvedConfig via agentProviderRouter instead */
@@ -64,20 +70,20 @@ export async function fetchFromModel(provider: string, modelId: string, prompt: 
     });
 }
 
-export async function fetchFromProvider(provider: ModelProvider, modelId: string, prompt: string, systemPrompt?: string) {
+export async function fetchFromProvider(provider: ModelProvider, modelId: string, prompt: string, systemPrompt?: string, options?: FetchOptions) {
     let model;
 
     if (provider.type === 'openai' || provider.type === 'custom' || provider.type === 'siliconflow' || provider.type === 'deepseek') {
         if (provider.apiFormat === 'anthropic-messages') {
             const anthropic = createAnthropic({
                 baseURL: apiBase(provider),
-                apiKey: provider.apiKey || '',
+                apiKey: provider.apiKey,
             });
             model = anthropic(modelId);
         } else {
             const openai = createOpenAI({
                 baseURL: apiBase(provider),
-                apiKey: provider.apiKey || 'sk-custom',
+                apiKey: provider.apiKey,
             });
             if (provider.apiFormat === 'openai-responses') {
                 model = openai(modelId);
@@ -88,12 +94,12 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
     } else if (provider.type === 'anthropic') {
         const anthropic = createAnthropic({
             baseURL: apiBase(provider),
-            apiKey: provider.apiKey || '',
+            apiKey: provider.apiKey,
         });
         model = anthropic(modelId);
     } else if (provider.type === 'gemini') {
         const google = createGoogleGenerativeAI({
-            apiKey: provider.apiKey || '',
+            apiKey: provider.apiKey,
         });
         model = google(modelId);
     } else {
@@ -104,5 +110,7 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
         model,
         system: systemPrompt,
         prompt,
+        maxTokens: options?.maxTokens,
+        temperature: options?.temperature,
     });
 }

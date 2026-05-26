@@ -30,7 +30,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
   if (collapsed) return null
 
   return (
-    <div className="relative flex flex-col border-r bg-background/50 w-72 flex-shrink-0">
+    <div className="relative flex flex-col border-r bg-background/50 w-72 flex-shrink-0 max-lg:hidden">
       <DebugBadge id="WorkflowNodePanel" position="top-right" />
       <div className="p-2 border-b h-14 flex items-center justify-between">
         <div className="min-w-0 px-2">
@@ -41,6 +41,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
           onClick={() => setWorkflowSidebarCollapsed(activeSession.id, true)}
           className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           title={t('Collapse workflow panel')}
+          aria-label={t('Collapse workflow panel')}
         >
           <ChevronRight className="h-4 w-4" />
         </button>

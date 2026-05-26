@@ -1,7 +1,7 @@
 mod db;
 
 use db::{
-    DbState, init_db, get_agents, add_agent,
+    DbState, init_db, get_agents, add_agent, update_agent, delete_agent,
     get_workspaces, add_workspace, update_workspace, delete_workspace,
     get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
     get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,
@@ -26,8 +26,8 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            greet, 
-            get_agents, add_agent,
+            greet,
+            get_agents, add_agent, update_agent, delete_agent,
             get_workspaces, add_workspace, update_workspace, delete_workspace,
             get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
             get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,

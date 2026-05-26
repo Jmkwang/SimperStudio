@@ -70,7 +70,10 @@ async function runAgentResponse({
     const systemPrompt = nodeData?.overrideSystemPrompt || agent.systemPrompt;
 
     // 3. Call the model (no fallback, errors throw)
-    const result = await fetchFromResolvedConfig(config, prompt, systemPrompt);
+    const result = await fetchFromResolvedConfig(config, prompt, systemPrompt, {
+      maxTokens: agent.maxTokens,
+      temperature: agent.temperature,
+    });
 
     // 4. Stream chunks + backfill model info on first chunk
     let firstChunk = true;
@@ -203,8 +206,10 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         workflowId, messages: [],
         createdAt: Date.now(), updatedAt: Date.now()
       };
-      try { await invoke('add_chat_session', { session: newSession }); } catch { }
-      set((state: any) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
+      try {
+        await invoke('add_chat_session', { session: newSession });
+        set((state: any) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
+      } catch { }
     },
 
     createWorkflowBackedSession: async (title, workspaceId) => {
@@ -256,12 +261,14 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         mode: 'workflow', workflowId, messages: [],
         createdAt: now, updatedAt: now,
       };
-      try { await invoke('add_chat_session', { session: newSession }); } catch { }
-      set((state: any) => ({
-        sessions: [...state.sessions, newSession],
-        activeWorkflowId: workflowId,
-        activeSessionId: newSession.id,
-      }));
+      try {
+        await invoke('add_chat_session', { session: newSession });
+        set((state: any) => ({
+          sessions: [...state.sessions, newSession],
+          activeWorkflowId: workflowId,
+          activeSessionId: newSession.id,
+        }));
+      } catch { }
     },
 
     deleteSession: async (id) => {
@@ -276,23 +283,32 @@ export function createChatSlice(set: any, get: any): ChatSlice {
 
     addUserMessage: async (sessionId, text, attachments = [], meta) => {
       const newMessage = createUserMessage(sessionId, text, attachments, meta);
+      try {
+        await invoke('add_chat_message', { message: { ...newMessage, content: JSON.stringify(newMessage.content) } });
+      } catch {
+        // DB write failed — do not mutate memory to keep consistency
+        return;
+      }
       set((state: any) => ({
         sessions: state.sessions.map((s: ChatSession) => {
           if (s.id === sessionId) return { ...s, messages: [...s.messages, newMessage], updatedAt: Date.now() };
           return s;
         })
       }));
-      try { await invoke('add_chat_message', { message: { ...newMessage, content: JSON.stringify(newMessage.content) } }); } catch { }
     },
 
     addAgentResponseStream: async (sessionId, messageId, agentId, textChunk, nodeId, meta) => {
-      let assistantMsgIndex = -1;
+      // Check if this is a new message before mutating memory
+      const state = get();
+      const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
+      const isNewMessage = session ? session.messages.findIndex((m: ChatMessage) => m.id === messageId) === -1 : false;
+
       let newAssistantMsg: ChatMessage | null = null;
       set((state: any) => {
         const sessions = state.sessions.map((s: ChatSession) => {
           if (s.id === sessionId) {
             const messages = [...s.messages];
-            assistantMsgIndex = messages.findIndex(m => m.id === messageId);
+            const assistantMsgIndex = messages.findIndex(m => m.id === messageId);
             if (assistantMsgIndex === -1) {
               newAssistantMsg = createStreamMessage(sessionId, agentId, nodeId, meta, messageId);
               newAssistantMsg.agentResponses![0].content.text = textChunk;
@@ -358,48 +374,74 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         });
         return { sessions };
       });
-      if (newAssistantMsg) {
+
+      // Persist new messages to DB immediately; streaming chunks are memory-only
+      if (newAssistantMsg && isNewMessage) {
         const msg: ChatMessage = newAssistantMsg;
         const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
         try {
-          if (assistantMsgIndex === -1) await invoke('add_chat_message', { message: msgToSave });
-          else await invoke('update_chat_message', { message: msgToSave });
-        } catch { }
+          await invoke('add_chat_message', { message: msgToSave });
+        } catch {
+          // Rollback: remove the optimistic message from memory on DB failure
+          set((state: any) => ({
+            sessions: state.sessions.map((s: ChatSession) => {
+              if (s.id === sessionId) {
+                return { ...s, messages: s.messages.filter(m => m.id !== messageId) };
+              }
+              return s;
+            })
+          }));
+        }
       }
     },
 
-    completeAgentResponse: (sessionId, messageId, agentId, nodeId, meta) => set((state: any) => ({
-      sessions: state.sessions.map((s: ChatSession) => {
-        if (s.id === sessionId) {
-          const messages = [...s.messages];
-          const msgIndex = messages.findIndex(m => m.id === messageId);
-          if (msgIndex !== -1) {
-            const msg = { ...messages[msgIndex] };
-            if (msg.agentResponses) {
-              msg.agentResponses = msg.agentResponses.map((ar: any) =>
-                ar.agentId === agentId && ar.nodeId === nodeId
-                  ? {
-                      ...ar,
-                      status: meta?.status || 'complete',
-                      providerId: meta?.providerId || ar.providerId,
-                      providerName: meta?.providerName || ar.providerName,
-                      modelId: meta?.modelId || ar.modelId,
-                      modelName: meta?.modelName || ar.modelName,
-                      errorSummary: meta?.errorSummary || ar.errorSummary,
-                      errorDetail: meta?.errorDetail || ar.errorDetail,
-                      duration: ar.timestamp ? Date.now() - ar.timestamp : ar.duration,
-                      tokenUsage: meta?.tokenUsage || ar.tokenUsage,
-                    }
-                  : ar
-              );
+    completeAgentResponse: async (sessionId, messageId, agentId, nodeId, meta) => {
+      set((state: any) => ({
+        sessions: state.sessions.map((s: ChatSession) => {
+          if (s.id === sessionId) {
+            const messages = [...s.messages];
+            const msgIndex = messages.findIndex(m => m.id === messageId);
+            if (msgIndex !== -1) {
+              const msg = { ...messages[msgIndex] };
+              if (msg.agentResponses) {
+                msg.agentResponses = msg.agentResponses.map((ar: any) =>
+                  ar.agentId === agentId && ar.nodeId === nodeId
+                    ? {
+                        ...ar,
+                        status: meta?.status || 'complete',
+                        providerId: meta?.providerId || ar.providerId,
+                        providerName: meta?.providerName || ar.providerName,
+                        modelId: meta?.modelId || ar.modelId,
+                        modelName: meta?.modelName || ar.modelName,
+                        errorSummary: meta?.errorSummary || ar.errorSummary,
+                        errorDetail: meta?.errorDetail || ar.errorDetail,
+                        duration: ar.timestamp ? Date.now() - ar.timestamp : ar.duration,
+                        tokenUsage: meta?.tokenUsage || ar.tokenUsage,
+                      }
+                    : ar
+                );
+              }
+              messages[msgIndex] = msg;
             }
-            messages[msgIndex] = msg;
+            return { ...s, messages };
           }
-          return { ...s, messages };
+          return s;
+        })
+      }));
+
+      // Persist final message state to DB
+      const state = get();
+      const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
+      const msg = session?.messages.find((m: ChatMessage) => m.id === messageId);
+      if (msg) {
+        const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
+        try {
+          await invoke('update_chat_message', { message: msgToSave });
+        } catch {
+          // Best-effort persistence; memory already has the final state
         }
-        return s;
-      })
-    })),
+      }
+    },
 
     sendMessageToAgents: async (sessionId, prompt, agents, options = {}) => {
       const session = get().sessions.find((item: ChatSession) => item.id === sessionId);

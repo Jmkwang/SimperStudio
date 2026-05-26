@@ -75,7 +75,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
                     <div key={b.id} className="grid gap-1 border rounded-md p-2">
                       <div className="flex items-center gap-2">
                         <Input value={b.label} onChange={(e) => updateBranch(i, 'label', e.target.value)} placeholder="Label" className="text-xs flex-1" />
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeBranch(i)} disabled={branches.length <= 1}><Trash2 className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeBranch(i)} disabled={branches.length <= 1} aria-label="Remove branch"><Trash2 className="h-3 w-3" /></Button>
                       </div>
                       <Input value={b.condition} onChange={(e) => updateBranch(i, 'condition', e.target.value)} placeholder="payload.score > 90" className="font-mono text-xs" />
                     </div>

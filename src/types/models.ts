@@ -123,10 +123,89 @@ export interface WorkflowDynamicAgentNodeData extends WorkflowNodeDataBase {
   enableChatWindow?: boolean;
 }
 
-export type WorkflowNodeData = WorkflowNodeDataBase &
-  Partial<WorkflowAgentNodeData> &
-  Partial<WorkflowDynamicAgentNodeData> &
-  Record<string, unknown>;
+export interface WorkflowCodeNodeData extends WorkflowNodeDataBase {
+  code?: string;
+}
+
+export interface WorkflowConditionNodeData extends WorkflowNodeDataBase {
+  expression?: string;
+  routes?: Array<{ id: string; condition: string; label?: string }>;
+  branches?: Array<{ id: string; condition: string; label?: string }>;
+}
+
+export interface WorkflowLoopNodeData extends WorkflowNodeDataBase {
+  itemsPath?: string;
+  itemAlias?: string;
+  indexAlias?: string;
+  maxIterations?: number;
+  breakCondition?: string;
+}
+
+export interface WorkflowOutputNodeData extends WorkflowNodeDataBase {
+  outputField?: string;
+}
+
+export interface WorkflowRouterNodeData extends WorkflowNodeDataBase {
+  routes?: Array<{ id: string; condition: string; label?: string }>;
+}
+
+export interface WorkflowSwitchNodeData extends WorkflowNodeDataBase {
+  switchValue?: string;
+  cases?: Array<{ value: string; label: string }>;
+}
+
+export interface WorkflowHttpNodeData extends WorkflowNodeDataBase {
+  method?: string;
+  url?: string;
+  headers?: string;
+  body?: string;
+}
+
+export interface WorkflowSetNodeData extends WorkflowNodeDataBase {
+  mappings?: Array<{ sourcePath: string; targetPath: string }>;
+  constants?: string;
+  whitelist?: string;
+}
+
+export interface WorkflowWaitNodeData extends WorkflowNodeDataBase {
+  waitMode?: 'fixed' | 'until';
+  delayMs?: number;
+  untilExpression?: string;
+}
+
+export interface WorkflowMergeNodeData extends WorkflowNodeDataBase {
+  strategy?: 'append' | 'byKey' | 'object-assign';
+  mergeKey?: string;
+}
+
+export interface WorkflowSubWorkflowNodeData extends WorkflowNodeDataBase {
+  workflowId?: string;
+  inputs?: Record<string, string>;
+}
+
+export interface WorkflowWebhookNodeData extends WorkflowNodeDataBase {
+  endpoint?: string;
+  httpMethod?: string;
+  authType?: string;
+  payloadTemplate?: string;
+}
+
+export type WorkflowNodeData =
+  | WorkflowAgentNodeData
+  | WorkflowDynamicAgentNodeData
+  | WorkflowCodeNodeData
+  | WorkflowConditionNodeData
+  | WorkflowLoopNodeData
+  | WorkflowOutputNodeData
+  | WorkflowRouterNodeData
+  | WorkflowSwitchNodeData
+  | WorkflowHttpNodeData
+  | WorkflowSetNodeData
+  | WorkflowWaitNodeData
+  | WorkflowMergeNodeData
+  | WorkflowSubWorkflowNodeData
+  | WorkflowWebhookNodeData
+  | WorkflowNodeDataBase;
 
 export interface WorkflowNode {
   id: string;

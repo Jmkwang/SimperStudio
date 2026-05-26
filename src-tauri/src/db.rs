@@ -4,6 +4,21 @@ use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
+fn app_data_dir() -> PathBuf {
+    dirs::data_dir().unwrap_or_else(|| PathBuf::from(".")).join("SimperStudio")
+}
+
+fn db_path() -> PathBuf {
+    app_data_dir().join("simperstudio.db")
+}
+
+fn ensure_app_dir() {
+    let dir = app_data_dir();
+    if !dir.exists() {
+        let _ = fs::create_dir_all(&dir);
+    }
+}
+
 pub struct DbState {
     pub conn: Mutex<Connection>,
 }
@@ -38,7 +53,8 @@ pub struct Agent {
 }
 
 pub fn init_db() -> Result<Connection> {
-    let conn = Connection::open("simperstudio.db")?;
+    ensure_app_dir();
+    let conn = Connection::open(db_path())?;
 
     conn.execute_batch(
         "
@@ -97,6 +113,11 @@ pub fn init_db() -> Result<Connection> {
             updated_at INTEGER NOT NULL,
             FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
         );
+
+        -- High-frequency query indexes
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+        CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
         "
     )?;
 
@@ -150,6 +171,23 @@ pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), Strin
         "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
         (&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.created_at)
     ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn update_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
+    let conn = state.conn.lock().unwrap();
+    conn.execute(
+        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, api_key = ?9, base_url = ?10, parameters = ?11, industry = ?12 WHERE id = ?13",
+        (&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.id)
+    ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_agent(id: String, state: tauri::State<DbState>) -> Result<(), String> {
+    let conn = state.conn.lock().unwrap();
+    conn.execute("DELETE FROM agents WHERE id = ?1", [&id]).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -417,5 +455,5 @@ pub fn write_json_config(name: String, value: String) -> Result<(), String> {
 }
 
 fn config_path() -> PathBuf {
-    PathBuf::from("config").join("config.json")
+    app_data_dir().join("config").join("config.json")
 }

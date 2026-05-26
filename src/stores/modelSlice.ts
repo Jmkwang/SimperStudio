@@ -8,6 +8,7 @@ export interface ModelSlice {
   addProvider: (provider: ModelProvider) => void;
   updateProvider: (id: string, updates: Partial<ModelProvider>) => void;
   deleteProvider: (id: string) => void;
+  setActiveProvider: (providerId: string | null) => void;
 }
 
 function autoSelectActiveProvider(providers: ModelProvider[], currentActiveId: string | null): string | null {
@@ -90,7 +91,7 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           ],
         },
       ],
-      activeProviderId: 'siliconflow-default',
+      activeProviderId: null,
       allowRemoteAccess: true,
       remoteAccessPort: 1420,
       fontSize: 100,
@@ -130,6 +131,15 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
         ...state.settings,
         providers: newProviders,
         activeProviderId: autoSelectActiveProvider(newProviders, state.settings.activeProviderId),
+      };
+      void writeConfig('model.json', settings);
+      return { settings };
+    }),
+
+    setActiveProvider: (providerId) => set((state: any) => {
+      const settings: Settings = {
+        ...state.settings,
+        activeProviderId: providerId,
       };
       void writeConfig('model.json', settings);
       return { settings };

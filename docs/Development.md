@@ -10,7 +10,7 @@
 - 🔄 **可视化工作流引擎**：基于 React Flow 的拖拽式工作流编排，13 种节点类型，DAG 队列驱动执行
 - 🔁 **Loop 节点迭代**：支持数组遍历、条件中断、结果聚合
 - 📊 **条件路由节点**：基于 JavaScript 表达式的动态分支分发（Router + IF/Switch）
-- 💻 **代码执行节点**：支持自定义 JS 逻辑与状态转换（AsyncFunction 沙箱）
+- 💻 **代码执行节点**：支持自定义 JS 逻辑与状态转换（Web Worker 隔离执行）
 - 🌐 **HTTP 请求节点**：支持 GET/POST/PUT/PATCH/DELETE，模板变量替换，超时控制
 - 🔀 **数据转换节点**：字段映射、常量注入、输出白名单过滤
 - ⏱️ **延时等待节点**：固定延迟 / 条件轮询等待
@@ -402,9 +402,9 @@ lib/workflow/
 ```
 
 #### 表达式求值
-使用 `AsyncFunction` 动态编译 JS 表达式，支持：
+使用 AST 解释器求值 JS 表达式，支持：
 - 超时控制（2s 表达式求值）
-- 安全沙箱（with 语句隔离）
+- 安全沙箱（无代码注入，纯表达式解析）
 - 错误捕获
 
 ### 5. 聊天系统 (ChatInterface.tsx)
@@ -898,7 +898,7 @@ A: 进入 "Settings" → "Models" 标签页：
 3. **队列处理**：BFS遍历，使用 `queue: ExecutionFrame[]`
 4. **节点执行**：
    - Agent节点：模拟LLM调用，设置 `payload.llmResult`
-   - Code节点：`new AsyncFunction()` 执行JS代码
+   - Code节点：Web Worker 隔离执行 JS 代码
    - Condition节点：表达式求值，选择分支
    - **Loop节点**：遍历数组，注入上下文，收集结果
 5. **结果收集**：`results[nodeId] = currentPayload`

@@ -81,7 +81,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
                       <Input value={m.sourcePath} onChange={(e) => updateMapping(i, 'sourcePath', e.target.value)} placeholder="payload.src" className="font-mono text-xs flex-1" />
                       <span className="text-muted-foreground text-xs">→</span>
                       <Input value={m.targetPath} onChange={(e) => updateMapping(i, 'targetPath', e.target.value)} placeholder="output.field" className="font-mono text-xs flex-1" />
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeMapping(i)} disabled={mappings.length <= 1}><Trash2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeMapping(i)} disabled={mappings.length <= 1} aria-label="Remove mapping"><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   ))}
                 </div>

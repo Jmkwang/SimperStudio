@@ -29,7 +29,6 @@ function createHelpers(overrides: any = {}) {
     sleep: vi.fn(),
     validateSchema: vi.fn(() => null),
     replaceTemplateVars,
-    AsyncFunction: Object.getPrototypeOf(async function () { }).constructor,
     fetchNode: vi.fn(),
     getGlobalState: vi.fn((key: string) => {
       if (key === 'settings') return { providers: [], activeProviderId: null };

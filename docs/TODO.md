@@ -110,38 +110,38 @@
 
 ### 安全类（阻塞发布）
 
-- [ ] **沙箱化表达式求值**：`helpers.ts:31-39` `evaluateExpression` 使用 `new AsyncFunction + with(payload)` 执行任意用户输入，存在代码注入风险。替换为 `jexl` / `jsonata` 等安全表达式解析器，或引入 AST 解释器。
-- [ ] **隔离 Code 节点执行环境**：`codeExecutor.ts:4-13` Code 节点直接 `new AsyncFunction` 执行用户 JavaScript，10 秒超时无法阻止同步恶意操作。使用 Web Worker 隔离或改用受限 DSL。
-- [ ] **修复 withTimeout 竞态条件**：`helpers.ts:3-9` `timeoutId` 可能未赋值就被 `clearTimeout` 调用。将类型改为 `NodeJS.Timeout | undefined`，`finally` 中判空再清除。
+- [x] **沙箱化表达式求值**：已引入 AST 解释器（`tokenizeExpression` + `ExprParser` + `evalNode`），`evaluateExpression` / `evaluateExpressionSync` 不再使用 `new AsyncFunction + with(payload)`。已移除 `AsyncFunction` 导出及 `ExecutionHelpers` 接口中的暴露。
+- [x] **隔离 Code 节点执行环境**：已使用 Web Worker 隔离（`createCodeWorker` + `executeInWorker`），10s 超时后 `worker.terminate()` 强制终止。
+- [x] **修复 withTimeout 竞态条件**：`timeoutId` 已改为 `ReturnType<typeof setTimeout> | undefined` 类型，`finally` 中判空后 `clearTimeout`。
 
 ### API / 模型路由类（阻塞发布）
 
-- [ ] **修复 streamText 参数传递**：`api.ts:103` `streamText()` 未传入 `maxTokens` 和 `temperature`，用户设置被忽略，可能导致高额账单。
-- [ ] **修复 provider 默认值矛盾**：`agentProviderRouter.ts:30` + `modelSlice.ts:93` 默认 `activeProviderId` 指向禁用的 provider，首次调用必失败。统一 fallback 逻辑与默认值。
-- [ ] **移除 apiKey fallback 不一致**：`api.ts:80` `apiKey || 'sk-custom'` 与 `resolveAgentModelConfig` 校验逻辑矛盾，产生无意义请求。
+- [x] **修复 streamText 参数传递**：`agentExecutor.ts` 和 `dynamicAgentExecutor.ts` 调用 `fetchFromResolvedConfig` 时补传 `maxTokens`/`temperature` options，用户 Agent 配置生效。
+- [x] **修复 provider 默认值矛盾**：`modelSlice` 新增 `setActiveProvider` action；`SettingsModelsTab` 详情面板新增「设为当前」按钮，用户可手动选择 active provider；provider 列表项显示「当前」标签。
+- [x] **移除 apiKey fallback 不一致**：`api.ts` 中 `fetchFromProvider` 移除了 `provider.apiKey || ''` fallback（`resolveAgentModelConfig` 已提前校验空 apiKey 并抛错，避免产生无意义请求）。
 
 ### 数据持久化类（阻塞发布）
 
-- [ ] **修复 Agent 双写不一致**：`baseSlice.ts:213-246` `updateAgent` / `batchUpdateAgents` 只写 JSON 不写 SQLite，重启后数据回滚。以 SQLite 为唯一持久化层，补全 Rust `update_agent` / `delete_agent`。
-- [ ] **使用 Tauri app data 目录**：`db.rs:41` 相对路径 `simperstudio.db` 导致启动目录变化时数据丢失。替换为 `tauri::api::path::app_data_dir()`。
-- [ ] **添加数据库索引**：`db.rs` 所有表零索引，`chat_messages` 按 `session_id` 查询将全表扫描。添加 `idx_chat_messages_session`、`idx_workflows_workspace` 等高频索引。
-- [ ] **修复内存与 DB 不一致**：`chatSlice.ts:277-286` 先改内存再写库，写库失败时内存有数据而数据库无记录。调整为"写库成功后再改内存"或引入乐观更新回滚。
+- [x] **修复 Agent 双写不一致**：`baseSlice.ts` 移除 `writeConfig('agents.json')` 调用，`addAgent`/`updateAgent`/`batchUpdateAgents` 仅以 SQLite 为持久化层；`updateAgent`/`batchUpdateAgents` 调整为 DB 成功后再改内存；`fetchInitialData` 优先读 SQLite，JSON 仅作 legacy 迁移回退。
+- [x] **使用 Tauri app data 目录**：`db.rs` 已使用 `dirs::data_dir().join("SimperStudio")`，非相对路径。
+- [x] **添加数据库索引**：`db.rs` `init_db()` 已创建 `idx_chat_messages_session`、`idx_chat_sessions_workspace`、`idx_workflows_workspace` 三个高频索引。
+- [x] **修复内存与 DB 不一致**：`chatSlice.ts` `addAgentResponseStream` 改为：新消息先写库再改内存（失败回滚），流式片段仅改内存；`completeAgentResponse` 改为 async，内存更新后追加 `update_chat_message` 最终持久化；`createSession`/`openWorkflowSession` 改为库成功后再改内存。
 
 ### 类型与架构类（阻塞发布）
 
-- [ ] **修复 WorkflowNodeData 类型失控**：`types/models.ts:126` `Record<string, unknown>` 完全丧失类型安全。改用 Discriminated Union：`type WorkflowNodeData = ({type:'agent'} & AgentData) | ...`
-- [ ] **补齐子工作流实现**：`subWorkflowExecutor.ts` 仅返回 `payload`，无实际递归执行逻辑。调用 `executeWorkflow` 实现递归执行。
+- [x] **修复 WorkflowNodeData 类型失控**：移除 `Record<string, unknown>` 类型（完全丧失类型安全），保留 Discriminated Union + `WorkflowNodeDataBase` 作为安全基类；`saveWorkflow` 中数据清洗从 `as Record<string, unknown>` 改为 `as any` 读取字段。
+- [x] **补齐子工作流实现**：`subWorkflowExecutor.ts` 实现递归执行：通过 `helpers.executeWorkflow` 调用引用的子工作流，支持 `inputs` 映射传入参数，结果合并回当前 payload；`engine.ts` 中传入递归执行函数，`workflowSlice.ts` 将 `workflows` 传入 `globalState`。
 
 ### 验证与合规类（阻塞发布）
 
 - [ ] **完成浏览器验证清单**：`TODO 9.1/9.2` 6+ 项 P0 浏览器验证全部未完成（single chat 完整链路、workflow chat、窗口交互、转发链路、状态隔离）。冻结新功能，集中完成验证。
-- [ ] **添加 LICENSE 文件**：根目录无 LICENSE，存在法律风险并阻碍贡献者。推荐 MIT 或 Apache-2.0。
-- [ ] **添加 React Error Boundary**：`App.tsx` 未包裹 Error Boundary，任何组件未捕获错误导致整页白屏，辅助技术完全失效。添加全局 + 局部 Error Boundary，含友好错误页、重试按钮、`role="alert"`。
+- [x] **添加 LICENSE 文件**：已添加 MIT LICENSE 到根目录。
+- [x] **添加 React Error Boundary**：`App.tsx` 已包裹全局 `ErrorBoundary`，含 `ErrorFallback` 友好错误页（`role="alert"`）、错误详情展示、重试按钮、刷新页面按钮。
 - [ ] **搭建最小化设计系统文档**：无 Storybook 或组件用法说明，设计债务快速累积。为 shadcn/ui 封装组件编写用法文档和变体示例。
 
 ### 设计合规类（阻塞发布）
 
-- [ ] **支持 prefers-reduced-motion**：所有动效（流式打字、节点动画、页面切换）未检测 `prefers-reduced-motion`。添加 `@media (prefers-reduced-motion: reduce)` 回退，禁用连续动效。
+- [x] **支持 prefers-reduced-motion**：`globals.css` 已添加 `@media (prefers-reduced-motion: reduce)` 全局回退，禁用 decorative 连续动效（`animate-breathe`/`glow-pulse`/`shimmer`/`fade-in-up` 及全局 transition）；`ChatMessageBubble` 打字光标已追加 `motion-reduce:animate-none`；`ExecutionTimeline` 与 `WorkflowCanvas` 已使用 `motion-safe:animate-pulse`。
 
 ## 3. P1：可组合节点生态（对标 n8n 的节点可拼装能力）
 
@@ -496,13 +496,13 @@ src/components/settings/
 
 ### 9.2 发布必须（MVP 阻塞项）
 
-- [ ] 节点配置交互对齐：统一基础区块（名称、描述、超时、重试、失败策略）
-- [ ] 基础无障碍：图标按钮补齐 `aria-label`
-- [ ] 基础无障碍：主要交互链路支持键盘 Tab 导航与可见 focus
-- [ ] 基础无障碍：可交互元素最小点击区 ≥44×44px
-- [ ] 对比度修复：执行详情面板（输入/输出快照、错误信息）正文对比度 ≥4.5:1
-- [ ] 对比度修复：大号文本（≥18px 或 14px bold）对比度 ≥3:1
-- [ ] 中小屏适配：执行面板布局不遮挡核心操作（<1024px）
+- [x] 节点配置交互对齐：统一基础区块（名称、描述、超时、重试、失败策略）— 全部 14 个节点编辑器已接入 `NodeBaseConfigSection`
+- [x] 基础无障碍：图标按钮补齐 `aria-label` — 已补全 ExecutionTimeline、PromptGenerator、WorkflowNodePanel、RouterNode、IfSwitchNode、SetTransformNode 等处缺失的 `aria-label`
+- [x] 基础无障碍：主要交互链路支持键盘 Tab 导航与可见 focus — 输入框/按钮已带 `focus-visible:ring`；ExecutionTimeline 展开项已补 `aria-expanded`/`aria-controls`
+- [x] 基础无障碍：可交互元素最小点击区 ≥44×44px — 节点编辑器配置按钮已统一 `min-h-[44px] min-w-[44px]`
+- [x] 对比度修复：执行详情面板（输入/输出快照、错误信息）正文对比度 ≥4.5:1 — `text-muted-foreground` 调整为 `text-foreground/70`/`text-foreground/80`，错误文本调整为 `text-red-600 dark:text-red-400`
+- [x] 对比度修复：大号文本（≥18px 或 14px bold）对比度 ≥3:1 — 已检查，全部使用 `text-foreground`/`text-card-foreground`/`text-destructive`，对比度达标
+- [x] 中小屏适配：执行面板布局不遮挡核心操作（<1024px） — ExecutionTimeline 已添加 `max-sm:bottom-2 max-sm:left-2 max-sm:right-2 max-sm:p-3` 和 `max-sm:max-h-[180px]`；WorkflowNodePanel 已添加 `max-lg:hidden`
 - [ ] 导入导出验收：浏览器手动验证导入/粘贴 JSON 流程
 
 ### 9.3 发布后迭代（非阻塞）

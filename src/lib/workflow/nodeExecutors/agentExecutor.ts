@@ -1,9 +1,11 @@
 import { NodeExecutorFn } from '../types';
+import { WorkflowAgentNodeData } from '@/types/models';
 import { resolveAgentModelConfig, shortError } from '@/lib/agentProviderRouter';
 import { fetchFromResolvedConfig } from '@/lib/api';
 
 export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
-  const agentId = node.data?.agentId;
+  const data = node.data as WorkflowAgentNodeData;
+  const agentId = data.agentId;
   if (!agentId) {
     return { ...payload, _error: 'No agent assigned to this node' };
   }
@@ -23,16 +25,19 @@ export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
 
   // Node-level overrides
   const nodeData = {
-    overrideProviderId: node.data?.overrideProviderId,
-    overrideModelId: node.data?.overrideModelId,
-    overrideSystemPrompt: node.data?.overrideSystemPrompt || node.data?.prompt || undefined,
+    overrideProviderId: data.overrideProviderId,
+    overrideModelId: data.overrideModelId,
+    overrideSystemPrompt: data.overrideSystemPrompt || data.prompt || undefined,
   };
 
   try {
     const config = resolveAgentModelConfig(agent, nodeData, settings);
     const systemPrompt = nodeData.overrideSystemPrompt || agent.systemPrompt;
 
-    const { textStream } = await fetchFromResolvedConfig(config, promptText, systemPrompt);
+    const { textStream } = await fetchFromResolvedConfig(config, promptText, systemPrompt, {
+      maxTokens: agent.maxTokens,
+      temperature: agent.temperature,
+    });
 
     let result = '';
     for await (const chunk of textStream) {
@@ -40,7 +45,7 @@ export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
     }
 
     // If schema is specified, try to parse as structured JSON output
-    if (node.data?.schema) {
+    if (data.schema) {
       try {
         const parsed = JSON.parse(result);
         // Collect loop iteration results so they are not overwritten by subsequent iterations
@@ -95,6 +100,17 @@ export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
         }
         return { ...payload, llmResult: fallback };
       }
+    }
+
+    // Collect loop iteration results even when no schema is specified
+    if (payload.loop && Array.isArray(payload._loopResults)) {
+      payload._loopResults.push({
+        nodeId: node.id,
+        iterationIndex: payload.loop.index,
+        iterationItem: payload.loop.currentItem,
+        output: result,
+        timestamp: Date.now(),
+      });
     }
 
     return { ...payload, output: result };
