@@ -674,7 +674,208 @@ components/layout/sidebar/
 
 ---
 
-## 12. 已清理的旧计划
+## 12. P10：GlobalSidebar 聊天与工作流会话拆分
+
+### 12.1 目标
+
+将当前 GlobalSidebar 的「聊天」入口拆分为两个独立入口：
+
+- **聊天**：仅管理单 Agent 会话（`mode: 'single'`）
+- **工作流会话**：管理工作流会话，保留「工作流 → 会话」父子层级
+
+**设计依据**：Single Chat 和 Workflow Chat 的数据结构不同——前者是平铺会话列表，后者是「工作流 → 会话」的父子层级。硬塞在一个侧栏里需要标签页切换来解决结构差异，拆开后每个侧栏的结构自然匹配其数据模型。
+
+### 12.2 新 GlobalSidebar 布局
+
+```
+[Logo]
+聊天          ← MessageSquare，仅 single sessions
+工作流会话     ← GitBranch 或 Workflow+聊天气泡角标，workflow → sessions
+工作流(编辑器)  ← Workflow，画布编辑
+智能体         ← Users
+提示词         ← Wand2
+---
+暗色模式       ← 底部
+设置
+```
+
+### 12.3 工作流会话侧栏结构
+
+```
+工作流会话 ContextSidebar:
+┌────────────────────────┐
+│ 狼人杀标准局             │  ← 工作流名称（可折叠）
+│   + 新建会话             │
+│   第1局 Day1             │
+│   第2局 Day2             │
+├────────────────────────┤
+│ 数据处理流水线           │
+│   + 新建会话             │
+│   昨天的运行             │
+└────────────────────────┘
+```
+
+### 12.4 任务清单
+
+#### 类型与状态
+
+- [ ] `src/stores/uiSlice.ts`
+  - [ ] `currentView` 新增 `'workflowChat'` 值
+  - [ ] 确保 `selectedChatWorkflowId` 在新视图下正常工作
+
+#### GlobalSidebar
+
+- [ ] `src/components/layout/GlobalSidebar.tsx`
+  - [ ] 在「聊天」下方新增「工作流会话」图标按钮
+  - [ ] 选中态高亮逻辑与现有按钮一致
+
+#### ContextSidebar 路由
+
+- [ ] `src/components/layout/ContextSidebar.tsx`
+  - [ ] `renderSidebarContent()` switch 新增 `'workflowChat'` case
+  - [ ] 渲染新的 `WorkflowChatSidebar` 组件
+
+#### ChatSidebar 精简
+
+- [ ] `src/components/layout/sidebar/ChatSidebar.tsx`
+  - [ ] 移除「工作流/会话」标签页切换
+  - [ ] 仅展示 `mode === 'single'` 的会话
+  - [ ] 新建会话弹窗仅支持 Agent 选择（不再弹出工作流选择）
+
+#### 新建 WorkflowChatSidebar
+
+- [ ] `src/components/layout/sidebar/WorkflowChatSidebar.tsx`
+  - [ ] 展示工作流列表（复用现有 workflow 数据）
+  - [ ] 点击工作流展开/折叠其下的会话列表
+  - [ ] 支持「+ 新建会话」（调用 `openWorkflowSession`）
+  - [ ] 支持会话删除
+  - [ ] 双击工作流 → 打开/创建该工作流的会话并展开
+
+#### AppShell
+
+- [ ] `src/components/layout/AppShell.tsx`
+  - [ ] 确认 `'workflowChat'` 不在 `VIEWS_WITHOUT_SIDEBAR` 中（需要侧栏）
+  - [ ] `showSidebar` 逻辑正确覆盖新视图
+
+#### ChatInterface
+
+- [ ] `src/components/chat/ChatInterface.tsx`
+  - [ ] 确认 `currentView === 'workflowChat'` 时走 workflow 路由逻辑
+
+#### 国际化
+
+- [ ] `src/hooks/useTranslation.ts`
+  - [ ] 新增「工作流会话」翻译键
+
+### 12.5 验收
+
+- [ ] 「聊天」入口只显示 single sessions，无工作流相关内容
+- [ ] 「工作流会话」入口显示工作流列表 + 各工作流下的会话
+- [ ] 双击工作流可打开/创建会话
+- [ ] 两个入口的会话互不干扰，切换视图状态正确
+- [ ] 切回普通 session，workflow UI 状态不污染 single chat
+
+---
+
+## 13. P11：UI/UX 设计审计整改（设计部门 6 角色联合审查）
+
+> 由 UI 设计师、UX 架构师、UX 研究员、包容性视觉专家、视觉叙事师、趣味注入师联合产出。
+
+### 13.1 P0 — 无障碍与对比度（阻塞发布）
+
+- [ ] **时间戳/模型信息对比度不足**
+  - `text-muted-foreground/50`（~2.5:1）→ 改为 `/70`（~4:1）
+  - 文件：`ChatMessageBubble.tsx`
+- [ ] **Copy/Retry 按钮对比度不足**
+  - 默认 `text-muted-foreground/50` → 改为 `/70`
+  - 文件：`ChatMessageBubble.tsx`
+- [ ] **全局 focus-visible 样式缺失**
+  - `globals.css` 添加统一 `:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }`
+  - 消除各组件各自实现 focus ring 的不一致
+- [ ] **Tooltip 延迟 3000ms → 400ms**
+  - `GlobalSidebar.tsx` `TooltipProvider delayDuration={3000}` 极其反直觉
+  - 标准值 300-700ms，建议 400ms
+- [ ] **SettingsView Tab 无障碍修复**
+  - 添加 `role="tablist"` / `role="tab"` / `role="tabpanel"`
+  - 添加 `aria-selected`、键盘方向键导航
+  - 文件：`SettingsView.tsx`
+- [ ] **WorkflowCanvas Export 按钮键盘不可达**
+  - 当前 `opacity-0 pointer-events-none group-hover:opacity-100` 模式完全不可访问
+  - 改为 DropdownMenu 或始终可见
+  - 文件：`WorkflowCanvas.tsx`
+- [ ] **ContextSidebar 折叠按钮缺 aria 属性**
+  - 添加 `aria-label`、`aria-expanded`
+  - 文件：`ContextSidebar.tsx`
+
+### 13.2 P1 — 设计系统统一
+
+- [ ] **消除硬编码颜色，统一语义 Token**
+  - GlobalSidebar logo `lunar-*` → 语义 Token
+  - WorkflowCanvas MiniMap hex → 语义 Token
+  - GenericNode `red-500/red-700/red-950` → `text-destructive` 系列
+  - SettingsModelsTab `emerald-500/orange-500/blue-500/amber-500` → 语义 Token
+  - ExecutionTimeline 同上
+- [ ] **建立统一字号阶梯**
+  - 当前 10+ 种字号 → 6 级：12/14/16/18/24/32
+  - 消除 `text-[9px]`、`text-[10px]`、`text-[11px]` 等非标字号
+- [ ] **统一间距节奏**
+  - 当前 `p-4`/`p-6`/`p-8` 混用 → 统一 4pt 网格：4/8/12/16/24/32
+- [ ] **主题色一致性**
+  - Light 紫色 `258 85% 68%` vs Dark 青色 `187 82% 53%` 色相差距过大
+  - 建议两个主题保持色相一致，仅调整明度/饱和度
+- [ ] **SettingsView 图标修正**
+  - "Appearance" 当前用 `Server` 图标 → 改为 `Palette` 或 `Paintbrush`
+- [ ] **GlobalSidebar icon 类型安全**
+  - `NavIcon` 的 `icon: any` → 改为 Lucide 的 `LucideIcon` 类型
+
+### 13.3 P1 — UX 架构加固
+
+- [ ] **ContextSidebar 魔数提取**
+  - `e.clientX - 76` 硬编码 → 提取为常量或 CSS 变量
+  - 文件：`ContextSidebar.tsx`
+- [ ] **折叠阈值统一**
+  - 当前 120px 折叠 vs 180px 最小宽度存在死区
+  - 统一为：最小 180px，低于 180px 自动折叠
+- [ ] **SettingsView 默认 Tab 改为 'general'**
+  - 当前默认 `'models'`，用户期望 "General" 在前
+- [ ] **统一保存模式**
+  - 主题切换自动保存，设置页需手动保存 → 不一致
+  - 建议统一为自动保存或统一为手动保存
+
+### 13.4 P2 — 视觉叙事与品牌
+
+- [ ] **Logo 品牌设计**
+  - 当前 "S" 字母占位符 → 设计有辨识度的 Logo（工作流节点连线抽象图形）
+- [ ] **空状态叙事优化**
+  - Chat 空状态仅一行文字 + emoji → 添加「快速开始」卡片：
+    - 试试狼人杀 Demo / 创建第一个 Agent / 拖一个工作流
+  - 文件：`SimpleChatView.tsx`、`WorkflowCanvas.tsx`
+- [ ] **首次启动 Onboarding**
+  - 新用户打开后无引导 → 3 步快速引导
+- [ ] **狼人杀 Demo 高亮**
+  - 产品最酷功能藏在列表里 → 空状态或引导中标注
+
+### 13.5 P2 — 微交互与趣味
+
+- [ ] **工作流执行成功反馈**
+  - 静态绿色状态点 → 轻微弹跳动画 + 完成提示
+- [ ] **工作流执行失败反馈**
+  - 红色状态点 + 错误文本 → 更友好的错误文案 + 一键重试按钮
+- [ ] **Agent 创建成功**
+  - Toast 提示 → Agent 头像轻微动画反馈
+- [ ] **狼人杀游戏状态**
+  - 角色头像旁的存活/死亡状态徽章
+
+### 13.6 P3 — 国际化补完
+
+- [ ] **硬编码字符串修复**
+  - SettingsGeneralTab 中文字符串绕过 `t()` 系统
+  - "Test Run" / "Running..." / "Create Agent" / "Execution Timeline" / "Export" 未翻译
+  - ContextSidebar default case 中文字符串未走 `t()`
+
+---
+
+## 14. 已清理的旧计划
 
 以下内容已被当前优先级方案覆盖，不再单独维护：
 
