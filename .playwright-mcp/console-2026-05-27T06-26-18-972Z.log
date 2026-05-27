@@ -1,0 +1,77 @@
+[     449ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[     627ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:411
+[     627ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:411
+[   65643ms] [ERROR] React has detected a change in the order of Hooks called by %s. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://react.dev/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+%s   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ SettingsModelsTab 1. useCallback                useCallback
+2. useCallback                useCallback
+3. useSyncExternalStore       useSyncExternalStore
+4. useDebugValue              useDebugValue
+5. useCallback                useCallback
+6. useCallback                useCallback
+7. useSyncExternalStore       useSyncExternalStore
+8. useDebugValue              useDebugValue
+9. useCallback                useCallback
+10. useCallback               useCallback
+11. useSyncExternalStore      useSyncExternalStore
+12. useDebugValue             useDebugValue
+13. useCallback               useCallback
+14. useCallback               useCallback
+15. useSyncExternalStore      useSyncExternalStore
+16. useDebugValue             useDebugValue
+17. useCallback               useCallback
+18. useCallback               useCallback
+19. useSyncExternalStore      useSyncExternalStore
+20. useDebugValue             useDebugValue
+21. useState                  useState
+22. useState                  useState
+23. useState                  useState
+24. useState                  useState
+25. useState                  useState
+26. useState                  useState
+27. useState                  useState
+28. useState                  useState
+29. useState                  useState
+30. useState                  useState
+31. useState                  useState
+32. useState                  useState
+33. useState                  useState
+34. useState                  useState
+35. useEffect                 useEffect
+36. useEffect                 useEffect
+37. undefined                 useEffect
+ @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5593
+[   65651ms] [ERROR] %o
+
+%s
+
+%s
+ Error: Rendered more hooks than during the previous render.
+    at updateWorkInProgressHook (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5792:19)
+    at updateEffectImpl (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:6414:20)
+    at Object.useEffect (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18946:11)
+    at exports.useEffect (http://localhost:1420/node_modules/.vite/deps/chunk-BPGYRLWZ.js?v=f2f92d79:923:36)
+    at http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779861229541:726:15
+    at SettingsModelsTab (http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779861229541:1002:47)
+    at Object.react_stack_bottom_frame (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20) The above error occurred in the <SettingsModelsTab> component. React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7000
+[   65651ms] [ERROR] ErrorBoundary caught an error: Error: Rendered more hooks than during the previous render.
+    at updateWorkInProgressHook (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5792:19)
+    at updateEffectImpl (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:6414:20)
+    at Object.useEffect (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18946:11)
+    at exports.useEffect (http://localhost:1420/node_modules/.vite/deps/chunk-BPGYRLWZ.js?v=f2f92d79:923:36)
+    at http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779861229541:726:15
+    at SettingsModelsTab (http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779861229541:1002:47)
+    at Object.react_stack_bottom_frame (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20) {componentStack: 
+    at SettingsModelsTab (http://localhost:1420/s…1420/src/components/theme/ThemeProvider.tsx:25:3)} @ http://localhost:1420/src/components/ErrorBoundary.tsx:14
+[  220885ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779863399742:0
+[  220885ms] [ERROR] [vite] Failed to reload /src/components/settings/SettingsModelsTab.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:1420/@vite/client:808
+[  268931ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:418

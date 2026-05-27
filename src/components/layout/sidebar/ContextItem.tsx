@@ -42,7 +42,7 @@ export function ContextItem({
       <button
         onClick={onClick}
         onDoubleClick={onDoubleClick}
-        className="min-w-0 flex-1 flex items-center gap-2.5 px-3 h-10 text-left active:scale-[0.98] transition-transform duration-200"
+        className="min-w-0 flex-1 flex items-center gap-2 px-3 h-10 text-left active:scale-[0.98] transition-transform duration-200"
       >
         {icon === 'workflow' && (
           <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.08]">
@@ -52,7 +52,7 @@ export function ContextItem({
         {icon === 'agent' && (
           <Avatar className="h-5 w-5 shrink-0 rounded-lg border border-foreground/[0.08]">
             <AvatarImage src={avatar} />
-            <AvatarFallback className="bg-transparent text-current text-[8px]">
+            <AvatarFallback className="bg-transparent text-current text-xs">
               {fallbackName?.slice(0, 1) || "A"}
             </AvatarFallback>
           </Avatar>
@@ -64,7 +64,7 @@ export function ContextItem({
           <DropdownMenuTrigger asChild>
             <button
               onClick={(event) => event.stopPropagation()}
-              className="mr-1 p-1.5 text-muted-foreground opacity-0 transition-all duration-400 ease-out hover:bg-hover rounded-lg group-hover:opacity-100"
+              className="mr-1 p-1 text-muted-foreground opacity-0 transition-all duration-400 ease-out hover:bg-hover rounded-lg group-hover:opacity-100"
               title={t('更多')}
             >
               <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />

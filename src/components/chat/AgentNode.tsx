@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Agent } from '@/types/models';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type AgentNodeData = {
   agent: Agent;
@@ -11,6 +12,7 @@ type AgentNodeData = {
 
 export const AgentNode = memo(({ data }: { data: AgentNodeData }) => {
   const { agent, onClick } = data;
+  const { t } = useTranslation();
 
   return (
     <div className="px-4 py-3 shadow-md rounded-xl bg-background border border-border min-w-[160px] hover:border-primary/50 transition-colors">
@@ -21,13 +23,13 @@ export const AgentNode = memo(({ data }: { data: AgentNodeData }) => {
         </div>
         <div className="min-w-0">
           <div className="font-medium text-sm truncate">{agent.name}</div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             {agent.modelProvider}/{agent.modelId}
           </div>
         </div>
       </div>
       <Button variant="outline" size="sm" className="mt-2 w-full h-7 text-xs" onClick={onClick}>
-        打开对话
+        {t('Open Chat')}
       </Button>
       <Handle type="source" position={Position.Bottom} className="!bg-primary !w-2 !h-2" />
     </div>

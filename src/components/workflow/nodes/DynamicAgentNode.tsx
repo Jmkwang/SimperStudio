@@ -152,7 +152,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     onChange={(e) => setConfigPath(e.target.value)}
                     placeholder="payload.dynamicAgentConfig"
                   />
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Path to a DynamicAgentConfig object in the payload. Use dot notation or bracket notation.
                   </p>
                 </div>
@@ -225,7 +225,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                   placeholder="{{payload.userInput}}"
                   className="resize-none h-16 text-sm"
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   If set, this template is used as the user prompt. Otherwise the entire payload is sent.
                 </p>
               </div>
@@ -333,7 +333,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
             : systemPromptTemplate || 'Configure dynamic persona...'}
         </p>
         {autoSendToNext && (
-          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Auto-forward enabled
           </p>

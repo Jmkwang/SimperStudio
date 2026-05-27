@@ -1,0 +1,34 @@
+[     542ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[     663ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[     663ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  103108ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  103108ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  326810ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  326810ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  328882ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  328882ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  347150ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  347150ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  414883ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  414884ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  416764ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  416764ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  558910ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:1420/@vite/client:864
+[  566162ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[  566277ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  566277ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  820742ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[  820833ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  820833ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[  861007ms] [ERROR] You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`. @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:1395
+[  862404ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at onClick (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx:119:30)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts:25

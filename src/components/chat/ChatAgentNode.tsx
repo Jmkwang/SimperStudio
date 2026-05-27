@@ -28,7 +28,7 @@ export function ChatAgentNode({ data }: { data: any }) {
           <div>
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
-            {data.schema && <p className="text-[10px] text-primary mt-0.5">Tool Calling Enabled</p>}
+            {data.schema && <p className="text-xs text-primary mt-0.5">Tool Calling Enabled</p>}
           </div>
         </div>
       </div>

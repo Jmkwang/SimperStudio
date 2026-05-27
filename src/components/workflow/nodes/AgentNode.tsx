@@ -69,7 +69,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
           <div>
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
-            {data.schema && <p className="text-[10px] text-primary mt-0.5">Tool Calling Enabled</p>}
+            {data.schema && <p className="text-xs text-primary mt-0.5">Tool Calling Enabled</p>}
           </div>
         </div>
 
@@ -117,7 +117,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                   placeholder="Leave empty to use the agent's default system prompt"
                   className="resize-none h-24"
                 />
-                <p className="text-[10px] text-muted-foreground">If set, this replaces the agent's system prompt for this node only.</p>
+                <p className="text-xs text-muted-foreground">If set, this replaces the agent's system prompt for this node only.</p>
               </div>
 
               {/* Node-level overrides */}
@@ -176,7 +176,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
             {data.prompt || 'Process input using assigned agent capabilities.'}
          </p>
          {data.autoSendToNext && (
-           <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
+           <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
              Auto-forward enabled
            </p>

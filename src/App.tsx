@@ -31,6 +31,8 @@ function App() {
     switch (viewMode) {
       case 'chat':
         return <ChatInterface />;
+      case 'workflowChat':
+        return <ChatInterface />;
       case 'workflow':
         return <WorkflowCanvas />;
       case 'agents':

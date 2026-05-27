@@ -60,7 +60,7 @@ export function WorkflowSidebar({
       <div className="p-2 border-b border-border">
         <button
           onClick={() => createWorkflow(t('新工作流'), activeWorkspaceId || 'default-workspace')}
-          className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl"
+          className="flex w-full items-center gap-2 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl"
         >
           <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
           <span>{t('新建工作流')}</span>

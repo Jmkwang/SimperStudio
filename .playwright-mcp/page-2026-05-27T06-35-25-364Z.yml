@@ -1,0 +1,178 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - 'generic "Container: GlobalSidebar"': GlobalSidebar
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e50]: 设置
+  - generic [ref=e51]:
+    - 'generic "Container: AppShell"': AppShell
+    - main [ref=e64]:
+      - generic [ref=e91]:
+        - 'generic "Container: SettingsView"': SettingsView
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - heading "设置" [level=2] [ref=e94]
+            - paragraph [ref=e95]: 管理全局应用设置。
+          - tablist "Settings Tabs" [ref=e96]:
+            - tab "通用" [ref=e97] [cursor=pointer]:
+              - img [ref=e98]
+              - text: 通用
+            - tab "外观" [ref=e101] [cursor=pointer]:
+              - img [ref=e102]
+              - text: 外观
+            - tab "模型" [selected] [ref=e108] [cursor=pointer]:
+              - img [ref=e109]
+              - text: 模型
+        - tabpanel [ref=e147]:
+          - generic [ref=e148]:
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - heading "模型服务商" [level=3] [ref=e151]
+                - button "添加" [ref=e152] [cursor=pointer]:
+                  - img
+                  - text: 添加
+              - generic [ref=e153]:
+                - generic [ref=e154] [cursor=pointer]:
+                  - generic [ref=e155]: O
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: OpenAI
+                    - generic [ref=e158]: https://api.openai.com/v1
+                  - img [ref=e160]
+                - generic [ref=e162] [cursor=pointer]:
+                  - generic [ref=e163]: A
+                  - generic [ref=e164]:
+                    - generic [ref=e165]: Anthropic
+                    - generic [ref=e166]: https://api.anthropic.com/v1
+                  - img [ref=e168]
+                - generic [ref=e170] [cursor=pointer]:
+                  - generic [ref=e171]: G
+                  - generic [ref=e172]:
+                    - generic [ref=e173]: Gemini
+                    - generic [ref=e174]: https://generativelanguage.googleapis.com/v1beta
+                  - img [ref=e176]
+                - generic [ref=e178] [cursor=pointer]:
+                  - generic [ref=e179]: D
+                  - generic [ref=e180]:
+                    - generic [ref=e181]: DeepSeek
+                    - generic [ref=e182]: https://api.deepseek.com
+                  - img [ref=e184]
+                - generic [ref=e186] [cursor=pointer]:
+                  - generic [ref=e187]: 硅
+                  - generic [ref=e188]:
+                    - generic [ref=e189]: 硅基流动
+                    - generic [ref=e190]: https://api.siliconflow.cn
+                  - img [ref=e192]
+            - generic [ref=e195]:
+              - generic [ref=e197]:
+                - heading "OpenAI" [level=3] [ref=e199]
+                - generic [ref=e200]:
+                  - button "设为当前" [ref=e201] [cursor=pointer]:
+                    - img
+                    - text: 设为当前
+                  - button "已禁用" [ref=e202] [cursor=pointer]:
+                    - img
+                    - text: 已禁用
+                  - button [ref=e203] [cursor=pointer]:
+                    - img
+              - generic [ref=e204]:
+                - generic [ref=e205]:
+                  - text: 名称
+                  - textbox [ref=e206]: OpenAI
+                - generic [ref=e207]:
+                  - text: API 格式
+                  - combobox [ref=e208] [cursor=pointer]:
+                    - generic: OpenAI Responses
+                    - img [ref=e209]
+                - generic [ref=e211]:
+                  - text: Base URL
+                  - textbox [ref=e212]: https://api.openai.com/v1
+                  - paragraph [ref=e213]:
+                    - text: 示例：API 请求发送至
+                    - code [ref=e214]: https://api.openai.com/v1/v1/responses
+                - generic [ref=e215]:
+                  - text: API Key
+                  - generic [ref=e216]:
+                    - textbox [ref=e217]
+                    - button "按住显示密钥" [ref=e218] [cursor=pointer]:
+                      - img
+                - generic [ref=e219]:
+                  - generic [ref=e220]:
+                    - generic [ref=e221]: 模型
+                    - generic [ref=e222]:
+                      - generic [ref=e223]: 3 models
+                      - button "测试" [ref=e224] [cursor=pointer]:
+                        - img [ref=e225]
+                        - text: 测试
+                  - generic [ref=e228]:
+                    - generic [ref=e229]:
+                      - generic [ref=e230]:
+                        - button [ref=e231] [cursor=pointer]:
+                          - img [ref=e232]
+                        - generic "点击修改分组名" [ref=e234] [cursor=pointer]: General
+                      - generic [ref=e235]: "3"
+                    - generic [ref=e236]:
+                      - generic [ref=e238]:
+                        - img [ref=e239]
+                        - generic [ref=e242]:
+                          - generic [ref=e243]: GPT-4o
+                          - generic [ref=e244]: gpt-4o
+                        - generic [ref=e245]:
+                          - button "测试该模型" [ref=e246] [cursor=pointer]:
+                            - img [ref=e247]
+                          - button "Default Model" [ref=e249] [cursor=pointer]:
+                            - img [ref=e250]
+                          - button "删除" [ref=e252] [cursor=pointer]:
+                            - img [ref=e253]
+                      - generic [ref=e255]:
+                        - img [ref=e256]
+                        - generic [ref=e259]:
+                          - generic [ref=e260]: GPT-4o Mini
+                          - generic [ref=e261]: gpt-4o-mini
+                        - generic [ref=e262]:
+                          - button "测试该模型" [ref=e263] [cursor=pointer]:
+                            - img [ref=e264]
+                          - button "Set as Default" [ref=e266] [cursor=pointer]:
+                            - img [ref=e267]
+                          - button "删除" [ref=e269] [cursor=pointer]:
+                            - img [ref=e270]
+                      - generic [ref=e272]:
+                        - img [ref=e273]
+                        - generic [ref=e276]:
+                          - generic [ref=e277]: GPT-4 Turbo
+                          - generic [ref=e278]: gpt-4-turbo
+                        - generic [ref=e279]:
+                          - button "测试该模型" [ref=e280] [cursor=pointer]:
+                            - img [ref=e281]
+                          - button "Set as Default" [ref=e283] [cursor=pointer]:
+                            - img [ref=e284]
+                          - button "删除" [ref=e286] [cursor=pointer]:
+                            - img [ref=e287]
+                  - generic [ref=e288]:
+                    - button "获取模型列表" [ref=e289] [cursor=pointer]:
+                      - img
+                      - text: 获取模型列表
+                    - button "添加模型" [ref=e290] [cursor=pointer]:
+                      - img
+                      - text: 添加模型
+      - region "Notifications alt+T"

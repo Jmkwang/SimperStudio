@@ -1,0 +1,158 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - 'generic "Container: GlobalSidebar"': GlobalSidebar
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [active] [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e50]: 设置
+  - generic [ref=e51]:
+    - 'generic "Container: AppShell"': AppShell
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - 'generic "Container: ContextSidebar"': ContextSidebar
+        - generic [ref=e83]:
+          - button "新建工作流" [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+            - generic [ref=e87]: 新建工作流
+          - generic [ref=e89]:
+            - generic [ref=e92]:
+              - button "My First Workflow" [ref=e94] [cursor=pointer]:
+                - img [ref=e96]
+                - generic [ref=e100]: My First Workflow
+              - button "更多" [ref=e101] [cursor=pointer]:
+                - img [ref=e102]
+            - generic [ref=e108]:
+              - button "Data Processing Pipeline" [ref=e109] [cursor=pointer]:
+                - img [ref=e111]
+                - generic [ref=e115]: Data Processing Pipeline
+              - button "更多" [ref=e116] [cursor=pointer]:
+                - img [ref=e117]
+            - generic [ref=e123]:
+              - button "Weekly Report Generator" [ref=e124] [cursor=pointer]:
+                - img [ref=e126]
+                - generic [ref=e130]: Weekly Report Generator
+              - button "更多" [ref=e131] [cursor=pointer]:
+                - img [ref=e132]
+            - generic [ref=e138]:
+              - button "狼人杀·标准局" [ref=e139] [cursor=pointer]:
+                - img [ref=e141]
+                - generic [ref=e145]: 狼人杀·标准局
+              - button "更多" [ref=e146] [cursor=pointer]:
+                - img [ref=e147]
+      - main [ref=e64]:
+        - generic [ref=e151]:
+          - 'generic "Container: WorkflowCanvas"': WorkflowCanvas
+          - application [ref=e152]:
+            - generic [ref=e154]:
+              - generic:
+                - generic:
+                  - img:
+                    - group "Edge from trigger-1 to agent-organize" [ref=e155] [cursor=pointer]
+                  - img:
+                    - group "Edge from trigger-1 to agent-summary" [ref=e158] [cursor=pointer]
+                  - img:
+                    - group "Edge from agent-organize to output-1" [ref=e161] [cursor=pointer]
+                  - img:
+                    - group "Edge from agent-summary to output-2" [ref=e164] [cursor=pointer]
+                - generic:
+                  - group [ref=e167]:
+                    - generic [ref=e168]:
+                      - generic [ref=e169]:
+                        - generic [ref=e170]:
+                          - img [ref=e172]
+                          - generic [ref=e174]:
+                            - paragraph [ref=e175]: User Input
+                            - paragraph [ref=e176]: Manual Execution
+                        - button "Configure trigger node" [ref=e177] [cursor=pointer]:
+                          - img [ref=e178]
+                      - generic [ref=e181]: Initiates the workflow when clicked.
+                  - group [ref=e183]:
+                    - generic [ref=e184]:
+                      - generic [ref=e186]:
+                        - generic [ref=e187]:
+                          - img [ref=e189]
+                          - generic [ref=e190]:
+                            - paragraph [ref=e191]: 整理
+                            - paragraph [ref=e192]: 整理助手
+                        - button "Configure agent node" [ref=e193] [cursor=pointer]:
+                          - img [ref=e194]
+                      - paragraph [ref=e198]: 整理并组织用户输入的内容，使其结构清晰。
+                  - group [ref=e200]:
+                    - generic [ref=e201]:
+                      - generic [ref=e203]:
+                        - generic [ref=e204]:
+                          - img [ref=e206]
+                          - generic [ref=e207]:
+                            - paragraph [ref=e208]: 总结
+                            - paragraph [ref=e209]: 总结助手
+                        - button "Configure agent node" [ref=e210] [cursor=pointer]:
+                          - img [ref=e211]
+                      - paragraph [ref=e215]: 对用户输入的内容进行总结，提取关键信息。
+                  - group [ref=e217]:
+                    - generic [ref=e218]:
+                      - generic [ref=e219]:
+                        - generic [ref=e220]:
+                          - img [ref=e222]
+                          - generic [ref=e227]:
+                            - paragraph [ref=e228]: 整理结果
+                            - paragraph [ref=e229]: Final Result
+                        - button "Configure output node" [ref=e230] [cursor=pointer]:
+                          - img [ref=e231]
+                      - generic [ref=e234]: Returns data to the user or system.
+                  - group [ref=e235]:
+                    - generic [ref=e236]:
+                      - generic [ref=e237]:
+                        - generic [ref=e238]:
+                          - img [ref=e240]
+                          - generic [ref=e245]:
+                            - paragraph [ref=e246]: 总结结果
+                            - paragraph [ref=e247]: Final Result
+                        - button "Configure output node" [ref=e248] [cursor=pointer]:
+                          - img [ref=e249]
+                      - generic [ref=e252]: Returns data to the user or system.
+            - img
+            - generic "Control Panel" [ref=e253]:
+              - button "Zoom In" [ref=e254] [cursor=pointer]:
+                - img [ref=e255]
+              - button "Zoom Out" [ref=e257] [cursor=pointer]:
+                - img [ref=e258]
+              - button "Fit View" [ref=e260] [cursor=pointer]:
+                - img [ref=e261]
+              - button "Toggle Interactivity" [ref=e263] [cursor=pointer]:
+                - img [ref=e264]
+            - img "Mini Map" [ref=e267]
+            - generic [ref=e273]:
+              - button "Add Node" [ref=e274] [cursor=pointer]:
+                - img
+                - text: Add Node
+              - button "测试运行" [ref=e275] [cursor=pointer]:
+                - img
+                - text: 测试运行
+              - button "Save" [ref=e276] [cursor=pointer]:
+                - img
+                - text: Save
+                - img
+            - link "React Flow attribution" [ref=e278] [cursor=pointer]:
+              - /url: https://reactflow.dev
+              - text: React Flow
+        - region "Notifications alt+T"

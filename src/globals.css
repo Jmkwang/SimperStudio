@@ -43,40 +43,40 @@
   }
 
   .dark {
-    /* Dark Mode - Aurora Deep Space */
-    --background: 224 16% 6%;
-    --foreground: 40 12% 94%;
+    /* Dark Mode - Material Design Standard */
+    --background: 0 0% 7%;
+    --foreground: 0 0% 92%;
 
-    --card: 224 14% 9%;
-    --card-foreground: 40 12% 94%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 92%;
 
-    --popover: 224 14% 8%;
-    --popover-foreground: 40 12% 94%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 92%;
 
-    --primary: 187 82% 53%;
-    --primary-foreground: 224 16% 6%;
+    --primary: 258 75% 72%;
+    --primary-foreground: 0 0% 6%;
 
-    --secondary: 224 10% 13%;
-    --secondary-foreground: 40 12% 94%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 92%;
 
-    --muted: 224 10% 13%;
-    --muted-foreground: 220 8% 52%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 62%;
 
-    --accent: 187 70% 60%;
-    --accent-foreground: 224 16% 6%;
+    --accent: 258 65% 68%;
+    --accent-foreground: 0 0% 6%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 10% 100% / 0.06;
-    --input: 220 10% 100% / 0.06;
-    --ring: 187 82% 53%;
+    --border: 0 0% 100% / 0.12;
+    --input: 0 0% 100% / 0.12;
+    --ring: 258 75% 72%;
 
-    --glow: 187 82% 53%;
-    --surface: 224 14% 9%;
-    --surface-elevated: 224 12% 12%;
-    --hover: 220 10% 100% / 0.04;
-    --hover-foreground: 40 12% 94%;
+    --glow: 258 75% 72%;
+    --surface: 0 0% 11%;
+    --surface-elevated: 0 0% 15%;
+    --hover: 0 0% 100% / 0.1;
+    --hover-foreground: 0 0% 92%;
   }
 }
 
@@ -165,6 +165,45 @@
     100% { background-position: 200% 0; }
   }
 
+  /* Micro-interaction: success pop bounce */
+  @keyframes success-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    50% { transform: scale(1.25); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  /* Micro-interaction: error shake */
+  @keyframes error-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+  /* Micro-interaction: icon reveal */
+  @keyframes icon-reveal {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60% { transform: scale(1.1) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  /* Micro-interaction: gentle pulse ring */
+  @keyframes ring-expand {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  /* Micro-interaction: agent avatar pop-in */
+  @keyframes agent-pop {
+    0% { transform: scale(0.7); opacity: 0; }
+    60% { transform: scale(1.15); }
+    80% { transform: scale(0.95); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  /* Micro-interaction: agent avatar glow pulse */
+  @keyframes agent-glow {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+  }
+
   .animate-breathe {
     animation: breathe 3.5s ease-in-out infinite;
   }
@@ -183,6 +222,24 @@
     );
     background-size: 200% 100%;
     animation: shimmer 2s ease-in-out infinite;
+  }
+  .animate-success-pop {
+    animation: success-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-error-shake {
+    animation: error-shake 0.4s ease-in-out both;
+  }
+  .animate-icon-reveal {
+    animation: icon-reveal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+  }
+  .animate-ring-expand {
+    animation: ring-expand 0.6s ease-out both;
+  }
+  .animate-agent-pop {
+    animation: agent-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-agent-glow {
+    animation: agent-glow 1.2s ease-out both;
   }
 }
 
@@ -203,10 +260,14 @@
     animation: none !important;
   }
 
-  .animate-fade-in-up {
+  .animate-fade-in-up,
+  .animate-agent-pop {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+  .animate-agent-glow {
+    animation: none !important;
   }
 
   .surface-glass {

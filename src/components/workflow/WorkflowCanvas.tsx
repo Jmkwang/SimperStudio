@@ -117,6 +117,7 @@ function Flow() {
   const workflowExecution = useAppStore(state => state.workflowExecution);
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
   const { theme } = useTheme();
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const { t } = useTranslation();
 
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -211,15 +212,15 @@ function Flow() {
         nodeTypes={nodeTypes}
         fitView
         className="bg-background"
-        colorMode={theme === 'dark' ? 'dark' : theme === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : 'light'}
+        colorMode={isDark ? 'dark' : 'light'}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
         <Controls className="bg-card border shadow-sm rounded-lg" />
         <MiniMap
-          bgColor={theme === 'dark' ? 'hsl(224 16% 6%)' : 'hsl(0 0% 100%)'}
-          maskColor={theme === 'dark' ? 'hsla(224, 16%, 6%, 0.65)' : 'hsla(0, 0%, 100%, 0.65)'}
-          nodeColor={theme === 'dark' ? 'hsl(220 8% 52%)' : 'hsl(240 5% 42%)'}
-          maskStrokeColor={theme === 'dark' ? 'hsl(220 8% 52%)' : 'hsl(240 8% 85%)'}
+          bgColor={isDark ? 'hsl(224 16% 6%)' : 'hsl(0 0% 100%)'}
+          maskColor={isDark ? 'hsla(224, 16%, 6%, 0.65)' : 'hsla(0, 0%, 100%, 0.65)'}
+          nodeColor={isDark ? 'hsl(220 8% 52%)' : 'hsl(240 5% 42%)'}
+          maskStrokeColor={isDark ? 'hsl(220 8% 52%)' : 'hsl(240 8% 85%)'}
         />
         <Panel position="top-right" className="flex gap-2 items-start">
            <Popover>

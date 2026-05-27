@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { Agent, Workflow } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface DualAgentChatViewProps {
   workflow: Workflow;
 }
 
 export function DualAgentChatView({ workflow }: DualAgentChatViewProps) {
+  const { t } = useTranslation();
   const agents = useAppStore((state) => state.agents);
   const sessions = useAppStore((state) => state.sessions);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
@@ -93,7 +95,7 @@ export function DualAgentChatView({ workflow }: DualAgentChatViewProps) {
               value={mainInput}
               onChange={(e) => setMainInput(e.target.value)}
               onKeyPress={handleMainKeyPress}
-              placeholder="输入消息，两个智能体将同时处理..."
+              placeholder={t('Enter message both agents')}
               className="flex-1 bg-background border-border/50 focus:border-primary"
             />
             <Button 
@@ -102,7 +104,7 @@ export function DualAgentChatView({ workflow }: DualAgentChatViewProps) {
               className="bg-primary hover:bg-primary/90"
             >
               <Send className="h-4 w-4 mr-2" />
-              发送
+              {t('Send')}
             </Button>
           </div>
         </div>

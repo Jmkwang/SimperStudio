@@ -4,29 +4,54 @@ import { Workspace, Agent, ChatSession, Settings, Workflow, ChatMessage, ModelPr
 
 const LS_KEY = 'simper_config';
 
+/** Fallback avatar mapping for built-in agents whose avatar may be missing in SQLite */
+const DEFAULT_AVATAR_MAP: Record<string, string> = {
+  'agent-organize': '/avatars/organize.svg',
+  'agent-summary': '/avatars/summary.svg',
+  'agent-1': '/avatars/architect.svg',
+  'agent-2': '/avatars/reviewer.svg',
+  'ww-host': '/avatars/judge.svg',
+  'ww-wolf-shadow': '/avatars/shadow-wolf.svg',
+  'ww-wolf-fury': '/avatars/fury-wolf.svg',
+  'ww-seer': '/avatars/star-seer.svg',
+  'ww-witch': '/avatars/poison-witch.svg',
+  'ww-guard': '/avatars/iron-guard.svg',
+  'ww-hunter': '/avatars/flame-hunter.svg',
+  'ww-villager': '/avatars/sage-villager.svg',
+};
+
 export async function readConfig<T>(name: string): Promise<T | null> {
+  let tauriRaw: string | null = null;
   try {
-    const raw = await invoke<string>('read_json_config', { name });
-    return raw ? JSON.parse(raw) as T : null;
-  } catch {
-    try {
-      const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-      return (all[name] as T) || null;
-    } catch {
-      return null;
+    tauriRaw = await invoke<string>('read_json_config', { name });
+    if (tauriRaw) {
+      return JSON.parse(tauriRaw) as T;
     }
+  } catch {
+    /* Tauri backend unavailable — fall through to localStorage */ }
+  // Fallback: read from localStorage when Tauri is unavailable or key missing
+  try {
+    const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    const val = all[name] as T;
+    return val ?? null;
+  } catch {
+    return null;
   }
 }
 
 export async function writeConfig(name: string, value: unknown) {
+  const payload = JSON.stringify(value);
   try {
-    await invoke('write_json_config', { name, value: JSON.stringify(value) });
-  } catch {
+    await invoke('write_json_config', { name, value: payload });
+  } catch (e) {
+    console.warn(`Tauri write_json_config failed for "${name}", falling back to localStorage`, e);
     try {
       const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
       all[name] = value;
       localStorage.setItem(LS_KEY, JSON.stringify(all));
-    } catch { /* quota exceeded */ }
+    } catch (lsErr) {
+      console.error(`localStorage fallback failed for "${name}"`, lsErr);
+    }
   }
 }
 
@@ -315,7 +340,11 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         // SQLite is the single source of truth for agents
         const agents = await invoke<Agent[]>('get_agents');
         if (agents.length) {
-          const parsedAgents = agents.map((a: any) => ({ ...a, parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters }));
+          const parsedAgents = agents.map((a: any) => ({
+            ...a,
+            avatar: a.avatar || DEFAULT_AVATAR_MAP[a.id] || '',
+            parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters,
+          }));
           set({ agents: parsedAgents });
         } else if (agentsConfig?.length) {
           // Fallback to JSON only for legacy migration

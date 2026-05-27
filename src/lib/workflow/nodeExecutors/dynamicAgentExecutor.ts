@@ -54,19 +54,25 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
     return { ...payload, _error: 'Dynamic Agent: no valid configuration found' };
   }
 
-  // 2. Resolve model config (three-level fallback)
+  // 2. Resolve model config (three-level fallback) and avatar inheritance
   const settings = helpers.getGlobalState?.('settings');
+  const allAgents = helpers.getGlobalState?.('agents') || [];
   let providerId = config.providerId;
   let modelId = config.modelId;
 
   // Fallback 1: from fallbackAgentId
-  if (!providerId && data.fallbackAgentId) {
-    const agents = helpers.getGlobalState?.('agents') || [];
-    const fallbackAgent = agents.find((a: Agent) => a.id === data.fallbackAgentId);
-    if (fallbackAgent) {
+  let fallbackAgent: Agent | undefined;
+  if (data.fallbackAgentId) {
+    fallbackAgent = allAgents.find((a: Agent) => a.id === data.fallbackAgentId);
+    if (fallbackAgent && !providerId) {
       providerId = fallbackAgent.providerId;
       modelId = fallbackAgent.modelId;
     }
+  }
+
+  // Inherit avatar from fallbackAgent if config has no avatar
+  if (!config.avatar && fallbackAgent?.avatar) {
+    config = { ...config, avatar: fallbackAgent.avatar };
   }
 
   // Fallback 2: from fallbackProviderId / fallbackModelId

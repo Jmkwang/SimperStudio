@@ -114,9 +114,9 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
   return (
     <div className="relative flex-1 flex flex-col h-full">
       <DebugBadge id="WorkflowTopologyPreview" />
-      <div className="absolute top-3 left-3 z-10 bg-background/80 backdrop-blur-sm border rounded-lg px-3 py-1.5 shadow-sm">
+      <div className="absolute top-3 left-3 z-10 bg-background/80 backdrop-blur-sm border rounded-lg px-3 py-1 shadow-sm">
         <div className="text-sm font-medium">{workflow.name}</div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {workflow.nodesData.length} {t('nodes')} · {workflow.edgesData.length} {t('edges')}
         </div>
       </div>
@@ -154,7 +154,7 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
           className="!rounded-lg !border !shadow-sm"
         />
       </ReactFlow>
-      <div className="absolute bottom-3 left-3 z-10 text-[10px] text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded border">
+      <div className="absolute bottom-3 left-3 z-10 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded border">
         {t('双击工作流进入会话')}
       </div>
     </div>

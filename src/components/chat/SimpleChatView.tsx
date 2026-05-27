@@ -4,11 +4,11 @@ import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Workflow, ArrowUp, ArrowDown } from "lucide-react";
+import { Send, Workflow, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { DebugBadge } from "@/components/debug/DebugBadge";
 
-function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null): { providerName: string; modelName: string } | null {
+function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null, defaultLabel = 'Default'): { providerName: string; modelName: string } | null {
   if (!agent) return null;
   const providerId = agent.providerId || activeProviderId;
   if (!providerId) return null;
@@ -19,7 +19,7 @@ function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string
     || provider.models[0];
   return {
     providerName: provider.name,
-    modelName: model?.name || agent.modelId || '默认',
+    modelName: model?.name || agent.modelId || defaultLabel,
   };
 }
 
@@ -44,7 +44,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   }, [agents, selectedAgentId]);
 
   const activeAgentModelInfo = useMemo(() =>
-    resolveAgentDisplayModel(activeAgent, settings?.providers || [], settings?.activeProviderId || null),
+    resolveAgentDisplayModel(activeAgent, settings?.providers || [], settings?.activeProviderId || null, t('Default')),
     [activeAgent, settings]
   );
 
@@ -84,13 +84,14 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   // Re-enable auto-scroll when user sends a message
   const handleSend = async () => {
     if (!input.trim() || !activeAgent) return;
+    const text = input.trim();
+    setInput("");
     autoScrollRef.current = true;
     if (multiAgentMode && agents.length > 1) {
-      await sendMessageToAgents(session.id, input, agents);
+      await sendMessageToAgents(session.id, text, agents);
     } else {
-      await sendToAgent(session.id, activeAgent.id, input);
+      await sendToAgent(session.id, activeAgent.id, text);
     }
-    setInput("");
   };
 
   const handleRetry = useCallback((agentId: string, messageId: string) => {
@@ -130,7 +131,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
               <Workflow className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>{new Date(session.updatedAt).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
@@ -148,32 +149,9 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
 
       <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
         {session.messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
-            <div className="text-4xl opacity-30">💬</div>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+            <div className="text-4xl opacity-30 select-none">💬</div>
             <p className="text-sm">{t("Start a conversation")}</p>
-            <div className="grid grid-cols-3 gap-3 mt-2 max-w-lg w-full px-4">
-              <button
-                onClick={() => setInput(t('Try Werewolf Demo'))}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all text-center"
-              >
-                <span className="text-2xl">🐺</span>
-                <span className="text-xs font-medium">{t('Try Werewolf Demo')}</span>
-              </button>
-              <button
-                onClick={() => { /* Navigate to agents view */ }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all text-center"
-              >
-                <span className="text-2xl">🤖</span>
-                <span className="text-xs font-medium">{t('Create your first Agent')}</span>
-              </button>
-              <button
-                onClick={() => { /* Navigate to workflow view */ }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all text-center"
-              >
-                <span className="text-2xl">🔄</span>
-                <span className="text-xs font-medium">{t('Design a Workflow')}</span>
-              </button>
-            </div>
           </div>
         )}
 
@@ -190,28 +168,38 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
       </div>
 
       <div className="border-t p-4 shrink-0">
-        <div className="flex gap-2 max-w-4xl mx-auto">
-          <Textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={activeAgent ? `${t("Send message")}...` : t("Select an agent")}
-            disabled={!activeAgent}
-            className="min-h-[64px] text-sm"
-          />
-          <Button
-            onClick={handleSend}
-            disabled={!input.trim() || !activeAgent}
-            className="self-end h-11 w-11"
-            aria-label={t("Send")}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="flex flex-col gap-2 max-w-4xl mx-auto">
+          {!activeAgentModelInfo && activeAgent && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-700 dark:text-yellow-400">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span className="flex-1">
+                {t("当前 Agent 未配置模型服务商。请前往「设置 > 模型」配置 API Key 并启用至少一个服务商。")}
+              </span>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={activeAgent ? `${t("Send message")}...` : t("Select an agent")}
+              disabled={!activeAgent}
+              className="min-h-[64px] text-sm"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!input.trim() || !activeAgent}
+              className="self-end h-11 w-11"
+              aria-label={t("Send")}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

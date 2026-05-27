@@ -20,7 +20,7 @@ export interface UISlice {
 
   // Actions
   setActiveWorkspace: (id: string) => void;
-  setActiveSession: (id: string) => void;
+  setActiveSession: (id: string | null) => void;
   setActiveWorkflow: (id: string | null) => void;
   setActiveAgent: (id: string | null) => void;
   setSelectedAgentCategory: (category: string | null) => void;
@@ -29,6 +29,7 @@ export interface UISlice {
   setContextSidebarTab: (tab: 'workflows' | 'sessions') => void;
   setSelectedChatWorkflowId: (id: string | null) => void;
   toggleWorkflowChatMode: (enabled: boolean) => void;
+  previewWorkflowTopology: (workflowId: string) => void;
   setWorkflowOrder: (order: string[]) => void;
   setAgentCategoryOrder: (order: string[]) => void;
   setSessionOrder: (order: string[]) => void;
@@ -66,6 +67,9 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
 
     setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
     setActiveSession: (id) => set((state: any) => {
+      if (id === null) {
+        return { activeSessionId: null };
+      }
       const session = state.sessions.find((s: ChatSession) => s.id === id);
       return {
         activeSessionId: id,
@@ -80,6 +84,7 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
     setContextSidebarTab: (tab) => set({ contextSidebarTab: tab }),
     setSelectedChatWorkflowId: (id) => set({ selectedChatWorkflowId: id }),
     toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
+    previewWorkflowTopology: (workflowId) => set({ selectedChatWorkflowId: workflowId, activeSessionId: null }),
     setWorkflowOrder: (order) => set((state: any) => {
       const next = { ...state, workflowOrder: order };
       saveSidebarOrders(next);

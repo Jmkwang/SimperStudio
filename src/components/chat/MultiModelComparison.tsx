@@ -80,7 +80,7 @@ function ComparisonCard({
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-1">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
           <span>{new Date(response.timestamp || 0).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
           {response.tokenUsage && (
             <span className="flex items-center gap-1">

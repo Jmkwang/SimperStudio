@@ -1,0 +1,182 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic: GlobalSidebar
+        - generic:
+          - generic:
+            - generic: S
+          - navigation:
+            - button:
+              - img
+              - generic: 聊天
+            - button:
+              - img
+              - generic: 工作流对话
+            - button:
+              - img
+              - generic: 工作流
+            - button:
+              - img
+              - generic: 智能体
+            - button:
+              - img
+              - generic: 提示词
+        - generic:
+          - button:
+            - img
+          - button:
+            - img
+            - generic: 设置
+      - generic:
+        - generic: AppShell
+        - generic:
+          - generic:
+            - generic: ContextSidebar
+            - generic:
+              - generic:
+                - generic:
+                  - button:
+                    - img
+                    - generic: 新建会话
+                - generic:
+                  - generic: 暂无会话，点击 + 新建
+          - main:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: ChatInterface
+                    - generic:
+                      - generic: WorkflowChatView
+                      - generic:
+                        - heading [level=2]: My First Workflow
+                        - generic:
+                          - button:
+                            - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - textbox:
+                              - /placeholder: Send message to all agents...
+                            - button [disabled]:
+                              - img
+            - region "Notifications alt+T"
+  - dialog "新建会话" [ref=e227]:
+    - heading "新建会话" [level=2] [ref=e229]
+    - generic [ref=e230]:
+      - img [ref=e231]
+      - textbox "搜索智能体..." [ref=e234]
+    - generic [ref=e235]:
+      - generic [ref=e236]:
+        - button "全部 12" [ref=e237] [cursor=pointer]:
+          - generic [ref=e238]:
+            - img [ref=e240]
+            - generic [ref=e243]: 全部
+          - generic [ref=e244]: "12"
+        - button "Game 8" [ref=e245] [cursor=pointer]:
+          - generic [ref=e246]:
+            - img [ref=e248]
+            - generic [ref=e251]: Game
+          - generic [ref=e252]: "8"
+        - button "General 2" [ref=e253] [cursor=pointer]:
+          - generic [ref=e254]:
+            - img [ref=e256]
+            - generic [ref=e259]: General
+          - generic [ref=e260]: "2"
+        - button "Technology 2" [ref=e261] [cursor=pointer]:
+          - generic [ref=e262]:
+            - img [ref=e264]
+            - generic [ref=e267]: Technology
+          - generic [ref=e268]: "2"
+      - generic [ref=e270]:
+        - 'button "整理助手 ID: agent-organize 你是一个文本整理助手，负责整理和组织用户输入的内容，使其结构清晰、层次分明。" [active] [ref=e271] [cursor=pointer]':
+          - generic [ref=e272]:
+            - img [ref=e274]
+            - generic [ref=e275]:
+              - heading "整理助手" [level=4] [ref=e276]
+              - paragraph [ref=e277]: "ID: agent-organize"
+          - paragraph [ref=e278]: 你是一个文本整理助手，负责整理和组织用户输入的内容，使其结构清晰、层次分明。
+        - 'button "总结助手 ID: agent-summary 你是一个文本总结助手，负责对用户输入的内容进行总结，提取关键信息和要点。" [ref=e279] [cursor=pointer]':
+          - generic [ref=e280]:
+            - img [ref=e282]
+            - generic [ref=e283]:
+              - heading "总结助手" [level=4] [ref=e284]
+              - paragraph [ref=e285]: "ID: agent-summary"
+          - paragraph [ref=e286]: 你是一个文本总结助手，负责对用户输入的内容进行总结，提取关键信息和要点。
+        - 'button "System Architect ID: agent-1 You are a system architect." [ref=e287] [cursor=pointer]':
+          - generic [ref=e288]:
+            - img [ref=e290]
+            - generic [ref=e291]:
+              - heading "System Architect" [level=4] [ref=e292]
+              - paragraph [ref=e293]: "ID: agent-1"
+          - paragraph [ref=e294]: You are a system architect.
+        - 'button "Code Reviewer ID: agent-2 You are a strict code reviewer." [ref=e295] [cursor=pointer]':
+          - generic [ref=e296]:
+            - img [ref=e298]
+            - generic [ref=e299]:
+              - heading "Code Reviewer" [level=4] [ref=e300]
+              - paragraph [ref=e301]: "ID: agent-2"
+          - paragraph [ref=e302]: You are a strict code reviewer.
+        - 'button "法官·铁面 ID: ww-host 你是狼人杀法官，性格铁面无私、语言简洁有力。你负责维持游戏阶段、解释规则、汇总夜晚行动、发布白天信息，并且不能泄露玩家隐藏身份。输出要清晰、简短、可执行。遇到违规行为直接警告。" [ref=e303] [cursor=pointer]':
+          - generic [ref=e304]:
+            - img [ref=e306]
+            - generic [ref=e307]:
+              - heading "法官·铁面" [level=4] [ref=e308]
+              - paragraph [ref=e309]: "ID: ww-host"
+          - paragraph [ref=e310]: 你是狼人杀法官，性格铁面无私、语言简洁有力。你负责维持游戏阶段、解释规则、汇总夜晚行动、发布白天信息，并且不能泄露玩家隐藏身份。输出要清晰、简短、可执行。遇到违规行为直接警告。
+        - 'button "狼人·暗影 ID: ww-wolf-shadow 你是狼人阵营的\"暗影\"，性格阴险狡诈、善于伪装。你擅长在白天发言中装作无辜平民，喜欢嫁祸给可疑的玩家。夜晚袭击时你倾向于选择最有威胁的好人角色。输出结构化决策，包含 targetId 和详细 reason。" [ref=e311] [cursor=pointer]':
+          - generic [ref=e312]:
+            - img [ref=e314]
+            - generic [ref=e315]:
+              - heading "狼人·暗影" [level=4] [ref=e316]
+              - paragraph [ref=e317]: "ID: ww-wolf-shadow"
+          - paragraph [ref=e318]: 你是狼人阵营的"暗影"，性格阴险狡诈、善于伪装。你擅长在白天发言中装作无辜平民，喜欢嫁祸给可疑的玩家。夜晚袭击时你倾向于选择最有威胁的好人角色。输出结构化决策，包含 targetId 和详细 reason。
+        - 'button "狼人·狂怒 ID: ww-wolf-fury 你是狼人阵营的\"狂怒\"，性格冲动好斗、喜欢激进策略。你不怕暴露身份，倾向于直接攻击发言最多的玩家。你的投票风格激进，喜欢带节奏。输出结构化决策，包含 targetId 和 reason。" [ref=e319] [cursor=pointer]':
+          - generic [ref=e320]:
+            - img [ref=e322]
+            - generic [ref=e323]:
+              - heading "狼人·狂怒" [level=4] [ref=e324]
+              - paragraph [ref=e325]: "ID: ww-wolf-fury"
+          - paragraph [ref=e326]: 你是狼人阵营的"狂怒"，性格冲动好斗、喜欢激进策略。你不怕暴露身份，倾向于直接攻击发言最多的玩家。你的投票风格激进，喜欢带节奏。输出结构化决策，包含 targetId 和 reason。
+        - 'button "预言家·星眸 ID: ww-seer 你是狼人杀预言家\"星眸\"，性格冷静理性、逻辑严密。你注重数据和推理，选择查验目标时关注高嫌疑或关键发言玩家。你的发言风格条理清晰，喜欢列举证据。只输出查验目标和理由，不泄露系统外信息。" [ref=e327] [cursor=pointer]':
+          - generic [ref=e328]:
+            - img [ref=e330]
+            - generic [ref=e331]:
+              - heading "预言家·星眸" [level=4] [ref=e332]
+              - paragraph [ref=e333]: "ID: ww-seer"
+          - paragraph [ref=e334]: 你是狼人杀预言家"星眸"，性格冷静理性、逻辑严密。你注重数据和推理，选择查验目标时关注高嫌疑或关键发言玩家。你的发言风格条理清晰，喜欢列举证据。只输出查验目标和理由，不泄露系统外信息。
+        - 'button "女巫·毒心 ID: ww-witch 你是狼人杀女巫\"毒心\"，性格精于算计、善于观察。你用药果断但不浪费，解药只在关键时刻使用，毒药留给高度确定的狼人。你善于从夜晚死亡信息推断狼人身份。输出 useHeal、poisonTargetId 和 reason。" [ref=e335] [cursor=pointer]':
+          - generic [ref=e336]:
+            - img [ref=e338]
+            - generic [ref=e339]:
+              - heading "女巫·毒心" [level=4] [ref=e340]
+              - paragraph [ref=e341]: "ID: ww-witch"
+          - paragraph [ref=e342]: 你是狼人杀女巫"毒心"，性格精于算计、善于观察。你用药果断但不浪费，解药只在关键时刻使用，毒药留给高度确定的狼人。你善于从夜晚死亡信息推断狼人身份。输出 useHeal、poisonTargetId 和 reason。
+        - 'button "守卫·铁壁 ID: ww-guard 你是狼人杀守卫\"铁壁\"，性格忠诚守护、直觉敏锐。你倾向于保护关键角色（如预言家），连续两晚不守同一人。你善于从投票和发言中判断谁是狼人的目标。输出 protectTargetId 和 reason。" [ref=e343] [cursor=pointer]':
+          - generic [ref=e344]:
+            - img [ref=e346]
+            - generic [ref=e347]:
+              - heading "守卫·铁壁" [level=4] [ref=e348]
+              - paragraph [ref=e349]: "ID: ww-guard"
+          - paragraph [ref=e350]: 你是狼人杀守卫"铁壁"，性格忠诚守护、直觉敏锐。你倾向于保护关键角色（如预言家），连续两晚不守同一人。你善于从投票和发言中判断谁是狼人的目标。输出 protectTargetId 和 reason。
+        - 'button "猎人·烈焰 ID: ww-hunter 你是狼人杀猎人\"烈焰\"，性格勇猛果断、不惧牺牲。你投票时直觉优先，喜欢投给看起来最可疑的人。如果你被杀，你会选择带走你认为最可疑的玩家。输出 voteTargetId 和 reason。" [ref=e351] [cursor=pointer]':
+          - generic [ref=e352]:
+            - img [ref=e354]
+            - generic [ref=e355]:
+              - heading "猎人·烈焰" [level=4] [ref=e356]
+              - paragraph [ref=e357]: "ID: ww-hunter"
+          - paragraph [ref=e358]: 你是狼人杀猎人"烈焰"，性格勇猛果断、不惧牺牲。你投票时直觉优先，喜欢投给看起来最可疑的人。如果你被杀，你会选择带走你认为最可疑的玩家。输出 voteTargetId 和 reason。
+        - 'button "平民·智者 ID: ww-villager 你是狼人杀平民\"智者\"，性格善于观察、逻辑清晰。你擅长从其他玩家的发言中找破绽和矛盾，喜欢用推理说服他人。你的投票基于发言分析，不轻易跟风。输出 voteTargetId 和详细的推理 reason。" [ref=e359] [cursor=pointer]':
+          - generic [ref=e360]:
+            - img [ref=e362]
+            - generic [ref=e363]:
+              - heading "平民·智者" [level=4] [ref=e364]
+              - paragraph [ref=e365]: "ID: ww-villager"
+          - paragraph [ref=e366]: 你是狼人杀平民"智者"，性格善于观察、逻辑清晰。你擅长从其他玩家的发言中找破绽和矛盾，喜欢用推理说服他人。你的投票基于发言分析，不轻易跟风。输出 voteTargetId 和详细的推理 reason。
+    - generic [ref=e367]:
+      - button "Cancel" [ref=e368] [cursor=pointer]
+      - button "Create" [ref=e374] [cursor=pointer]
+    - button "Close" [ref=e369] [cursor=pointer]:
+      - img [ref=e370]
+      - generic [ref=e373]: Close

@@ -317,6 +317,7 @@ export interface MessageMeta {
     personality?: string;
     avatar?: string;
     systemPrompt?: string;
+    status?: 'alive' | 'dead' | string;
   };
 }
 

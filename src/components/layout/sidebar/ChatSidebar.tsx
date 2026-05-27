@@ -9,6 +9,7 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 export function ChatSidebar({
   sessions,
   agents,
+  agentCategories,
   activeSessionId,
   setActiveSession,
   createSession,
@@ -18,6 +19,7 @@ export function ChatSidebar({
 }: {
   sessions: any[]
   agents: any[]
+  agentCategories: any[]
   activeSessionId: string | null
   setActiveSession: (id: string) => void
   createSession: (title: string, workspaceId: string, workflowId?: string, mode?: 'single' | 'workflow') => void
@@ -70,7 +72,7 @@ export function ChatSidebar({
       <div className="px-2 pt-2 pb-1 border-b border-border">
         <button
           onClick={() => setDialogOpen(true)}
-          className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl"
+          className="flex w-full items-center gap-2 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl"
         >
           <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
           <span>{t('新建会话')}</span>
@@ -113,6 +115,7 @@ export function ChatSidebar({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         agents={agents}
+        agentCategories={agentCategories}
         workflows={[]}
         activeWorkspaceId={activeWorkspaceId}
         onCreateSingleSession={handleCreateSingleSession}

@@ -44,6 +44,7 @@ export function SettingsView() {
           {tabs.map(tab => (
             <button
               key={tab.id}
+              id={`settings-tab-${tab.id}`}
               role="tab"
               aria-selected={activeTab === tab.id}
               aria-controls={`settings-panel-${tab.id}`}
@@ -51,7 +52,7 @@ export function SettingsView() {
               onClick={() => setActiveTab(tab.id)}
               onKeyDown={(e) => handleKeyDown(e, tab.id)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
                 activeTab === tab.id
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"

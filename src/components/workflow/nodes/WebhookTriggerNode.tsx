@@ -80,10 +80,10 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
         </Dialog>
       </div>
       <div className="p-3">
-        <div className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
+        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
           {data.webhookMethod || 'POST'} {data.webhookPath || '/webhook/...'}
         </div>
-        {data.authToken && <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Auth required</p>}
+        {data.authToken && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Auth required</p>}
       </div>
       <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-lime-500 bg-background" />
     </div>

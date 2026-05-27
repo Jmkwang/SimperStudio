@@ -94,7 +94,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
         </Dialog>
       </div>
       <div className="p-3">
-        <div className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
+        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
           {data.method || 'GET'} {data.url || 'Not configured'}
         </div>
       </div>

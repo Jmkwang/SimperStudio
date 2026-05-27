@@ -1,0 +1,77 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - 'generic "Container: GlobalSidebar"': GlobalSidebar
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e42] [cursor=pointer]:
+        - img [ref=e43]
+        - generic [ref=e46]: 设置
+  - generic [ref=e47]:
+    - 'generic "Container: AppShell"': AppShell
+    - generic [ref=e49]:
+      - generic [ref=e50]:
+        - 'generic "Container: ContextSidebar"': ContextSidebar
+        - generic [ref=e52]:
+          - button "新建会话" [ref=e54] [cursor=pointer]:
+            - img [ref=e55]
+            - generic [ref=e56]: 新建会话
+          - generic [ref=e378]:
+            - button "整理助手" [ref=e380] [cursor=pointer]:
+              - img [ref=e382]
+              - generic [ref=e383]: 整理助手
+            - button "更多" [ref=e384] [cursor=pointer]:
+              - img [ref=e385]
+      - main [ref=e60]:
+        - generic [ref=e64]:
+          - 'generic "Container: ChatInterface"': ChatInterface
+          - generic [ref=e389]:
+            - 'generic "Container: SimpleChatView"': SimpleChatView
+            - generic [ref=e391]:
+              - generic [ref=e392]:
+                - generic [ref=e393]: 整理助手
+                - generic [ref=e394]: "|"
+                - generic [ref=e395]: 未配置
+                - button [ref=e396] [cursor=pointer]:
+                  - img
+              - generic [ref=e398]: 05/27 17:13
+            - generic [ref=e400]:
+              - generic [ref=e401]: 💬
+              - paragraph [ref=e402]: 开始对话
+              - generic [ref=e403]:
+                - button "🐺 试试狼人杀 Demo" [ref=e404] [cursor=pointer]:
+                  - generic [ref=e405]: 🐺
+                  - generic [ref=e406]: 试试狼人杀 Demo
+                - button "🤖 创建第一个智能体" [ref=e407] [cursor=pointer]:
+                  - generic [ref=e408]: 🤖
+                  - generic [ref=e409]: 创建第一个智能体
+                - button "🔄 设计一个工作流" [ref=e410] [cursor=pointer]:
+                  - generic [ref=e411]: 🔄
+                  - generic [ref=e412]: 设计一个工作流
+            - generic [ref=e414]:
+              - generic [ref=e415]:
+                - img [ref=e416]
+                - generic [ref=e418]: 当前 Agent 未配置模型服务商。请前往「设置 > 模型」配置 API Key 并启用至少一个服务商。
+              - generic [ref=e419]:
+                - textbox "Send message..." [ref=e420]
+                - button "发送" [disabled]:
+                  - img
+        - region "Notifications alt+T"

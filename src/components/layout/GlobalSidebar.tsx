@@ -11,14 +11,14 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="relative flex w-[60px] flex-col items-center justify-between py-5 m-1.5 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
+      <div className="relative flex w-[60px] flex-col items-center justify-between py-5 m-1 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
         <DebugBadge id="GlobalSidebar" position="top-left" />
         <div className="flex flex-col items-center gap-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10 glow-sm">
             <span className="font-semibold text-sm tracking-wider text-primary">S</span>
           </div>
 
-          <nav className="flex flex-col gap-1.5" aria-label={t("Main Navigation")}>
+          <nav className="flex flex-col gap-2" aria-label={t("Main Navigation")}>
             <NavIcon icon={MessageSquare} label={t("Chats")} active={currentView === 'chat'} onClick={() => setCurrentView('chat')} />
             <NavIcon icon={GitBranch} label={t("Workflow Chat")} active={currentView === 'workflowChat'} onClick={() => setCurrentView('workflowChat')} />
             <NavIcon icon={Workflow} label={t("Workflows")} active={currentView === 'workflow'} onClick={() => setCurrentView('workflow')} />
@@ -27,7 +27,7 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
           </nav>
         </div>
 
-        <div className="flex flex-col items-center gap-1.5">
+        <div className="flex flex-col items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <button

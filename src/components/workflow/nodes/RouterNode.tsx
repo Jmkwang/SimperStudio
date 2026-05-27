@@ -138,7 +138,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
 
           return (
             <div key={route.id} className="flex justify-end items-center relative h-6">
-              <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[150px] font-mono mr-2" title={route.condition}>
+              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded truncate max-w-[150px] font-mono mr-2" title={route.condition}>
                 {route.condition}
               </span>
               <Handle

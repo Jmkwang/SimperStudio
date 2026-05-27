@@ -1,0 +1,51 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - 'generic "Container: GlobalSidebar"': GlobalSidebar
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e42] [cursor=pointer]:
+        - img [ref=e43]
+        - generic [ref=e46]: 设置
+  - generic [ref=e47]:
+    - 'generic "Container: AppShell"': AppShell
+    - generic [ref=e49]:
+      - generic [ref=e50]:
+        - 'generic "Container: ContextSidebar"': ContextSidebar
+        - generic [ref=e52]:
+          - button "新建会话" [ref=e54] [cursor=pointer]:
+            - img [ref=e55]
+            - generic [ref=e56]: 新建会话
+          - generic [ref=e58]: 暂无会话，点击 + 新建
+      - main [ref=e60]:
+        - generic [ref=e64]:
+          - 'generic "Container: ChatInterface"': ChatInterface
+          - generic [ref=e65]:
+            - 'generic "Container: WorkflowChatView"': WorkflowChatView
+            - generic [ref=e66]:
+              - heading "My First Workflow" [level=2] [ref=e67]
+              - button "Show workflow panel" [ref=e69] [cursor=pointer]:
+                - img [ref=e70]
+            - generic [ref=e76]:
+              - textbox "Send message to all agents..." [ref=e77]
+              - button "Send" [disabled]:
+                - img
+        - region "Notifications alt+T"

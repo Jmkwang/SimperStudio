@@ -43,14 +43,14 @@ function groupModelsByPrefix(models: ProviderModel[]) {
 }
 
 function shortError(message: string): string {
-  if (message.includes('401') || message.includes('Unauthorized')) return 'API Key 错误 (401)';
-  if (message.includes('403') || message.includes('Forbidden')) return '无权访问 (403)';
-  if (message.includes('404') || message.includes('Not Found')) return '模型不存在 (404)';
-  if (message.includes('429') || message.includes('Too Many Requests')) return '请求频率限制 (429)';
-  if (message.includes('500') || message.includes('Internal Server')) return '服务器错误 (500)';
-  if (message.includes('503') || message.includes('Service Unavailable')) return '服务不可用 (503)';
-  if (message.includes('timeout') || message.includes('Timeout')) return '请求超时';
-  if (message.includes('NetworkError') || message.includes('Failed to fetch') || message.includes('fetch')) return '网络连接失败';
+  if (message.includes('401') || message.includes('Unauthorized')) return 'API Key Error (401)';
+  if (message.includes('403') || message.includes('Forbidden')) return 'Access Denied (403)';
+  if (message.includes('404') || message.includes('Not Found')) return 'Model Not Found (404)';
+  if (message.includes('429') || message.includes('Too Many Requests')) return 'Rate Limited (429)';
+  if (message.includes('500') || message.includes('Internal Server')) return 'Server Error (500)';
+  if (message.includes('503') || message.includes('Service Unavailable')) return 'Service Unavailable (503)';
+  if (message.includes('timeout') || message.includes('Timeout')) return 'Request Timeout';
+  if (message.includes('NetworkError') || message.includes('Failed to fetch') || message.includes('fetch')) return 'Network Error';
   return message.length > 50 ? message.substring(0, 50) + '…' : message;
 }
 
@@ -88,10 +88,21 @@ export function SettingsModelsTab() {
     setModelTestStates({});
   }, [selectedProviderId]);
 
+  // Auto-expand model groups when provider changes
+  useEffect(() => {
+    if (selectedProvider) {
+      const groups = groupModelsByPrefix(selectedProvider.models);
+      const groupKeys = Object.keys(groups);
+      if (groupKeys.length > 0) {
+        setExpandedModelGroups(new Set(groupKeys));
+      }
+    }
+  }, [selectedProvider?.id]);
+
   const handleInlineAddProvider = () => {
     const newProvider: ModelProvider = {
       id: uuidv4(),
-      name: '新服务商',
+      name: t('New Provider'),
       type: 'custom',
       apiKey: '',
       baseUrl: '',
@@ -122,8 +133,8 @@ export function SettingsModelsTab() {
     setSelectedFetchedModels(new Set());
 
     try {
-      if (!selectedProvider.baseUrl) throw new Error('请先填写 Base URL');
-      if (!selectedProvider.apiKey) throw new Error('请先填写 API Key');
+      if (!selectedProvider.baseUrl) throw new Error(t('Please fill in Base URL first'));
+      if (!selectedProvider.apiKey) throw new Error(t('Please fill in API Key first'));
       const base = selectedProvider.baseUrl.trim().replace(/\/+$/, '');
       const apiBase = base.endsWith('/v1') ? base : `${base}/v1`;
       const response = await fetch(`${apiBase}/models`, {
@@ -185,11 +196,11 @@ export function SettingsModelsTab() {
       if (hasContent) {
         setModelTestStates(prev => ({ ...prev, [key]: { status: 'success' } }));
       } else {
-        setModelTestStates(prev => ({ ...prev, [key]: { status: 'error', error: '无响应', detail: 'API 未返回任何内容' } }));
+        setModelTestStates(prev => ({ ...prev, [key]: { status: 'error', error: t('No Response'), detail: t('API returned no content') } }));
       }
     } catch (err: any) {
       const message = err.message || String(err);
-      setModelTestStates(prev => ({ ...prev, [key]: { status: 'error', error: shortError(message), detail: message } }));
+      setModelTestStates(prev => ({ ...prev, [key]: { status: 'error', error: t(shortError(message)), detail: message } }));
     }
   };
 
@@ -227,7 +238,7 @@ export function SettingsModelsTab() {
           <div className="flex flex-col gap-1">
             {settings.providers.map(provider => (
               <div key={provider.id} onClick={() => setSelectedProviderId(provider.id)} className={cn(
-                "group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors",
+                "group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors",
                 selectedProviderId === provider.id
                   ? "bg-primary/10 border border-primary/20"
                   : "hover:bg-muted/50 border border-transparent"
@@ -237,14 +248,14 @@ export function SettingsModelsTab() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{provider.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{provider.baseUrl || '(空)'}</div>
+                  <div className="text-xs text-muted-foreground truncate">{provider.baseUrl || `(${t('Empty')})`}</div>
                 </div>
                 <div className="flex items-center gap-1">
                   {settings.activeProviderId === provider.id && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">当前</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">{t('Current Provider')}</span>
                   )}
                   {provider.isEnabled && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">ON</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">ON</span>
                   )}
                   <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-opacity", selectedProviderId === provider.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
                 </div>
@@ -303,7 +314,7 @@ export function SettingsModelsTab() {
                 {/* API Format */}
                 {(selectedProvider.type === 'openai' || selectedProvider.type === 'siliconflow' || selectedProvider.type === 'deepseek' || selectedProvider.type === 'custom') && (
                   <div className="space-y-2">
-                    <Label>API 格式</Label>
+                    <Label>{t('API Format')}</Label>
                     <Select value={selectedProvider.apiFormat || 'openai-chat'}
                       onValueChange={(val: 'openai-responses' | 'openai-chat' | 'anthropic-messages') => updateProvider(selectedProvider.id, { apiFormat: val })}>
                       <SelectTrigger className="w-[280px]"><SelectValue /></SelectTrigger>
@@ -321,7 +332,7 @@ export function SettingsModelsTab() {
                   <Label>{t("Base URL")}</Label>
                   <Input value={selectedProvider.baseUrl} onChange={(e) => updateProvider(selectedProvider.id, { baseUrl: e.target.value })} />
                   <p className="text-xs text-muted-foreground">
-                    示例：API 请求发送至 <code className="px-1 py-0.5 rounded bg-muted text-[11px]">{selectedProvider.baseUrl.trim().replace(/\/+$/, '')}/v1{selectedProvider.apiFormat === 'openai-responses' ? '/responses' : selectedProvider.apiFormat === 'anthropic-messages' ? '/messages' : '/chat/completions'}</code>
+                    {t('Example API request sent to')} <code className="px-1 py-0.5 rounded bg-muted text-xs">{selectedProvider.baseUrl.trim().replace(/\/+$/, '')}/v1{selectedProvider.apiFormat === 'openai-responses' ? '/responses' : selectedProvider.apiFormat === 'anthropic-messages' ? '/messages' : '/chat/completions'}</code>
                   </p>
                 </div>
 
@@ -331,7 +342,7 @@ export function SettingsModelsTab() {
                   <div className="flex gap-2">
                     <Input type="password" value={selectedProvider.apiKey} className="flex-1" id="api-key-input"
                       onChange={(e) => updateProvider(selectedProvider.id, { apiKey: e.target.value })} />
-                    <Button variant="outline" size="sm" className="h-10 px-3 shrink-0" title="按住显示密钥"
+                    <Button variant="outline" size="sm" className="h-10 px-3 shrink-0" title={t('Hold to reveal key')}
                       onMouseDown={() => { const el = document.getElementById('api-key-input') as HTMLInputElement; if (el) el.type = 'text'; }}
                       onMouseUp={() => { const el = document.getElementById('api-key-input') as HTMLInputElement; if (el) el.type = 'password'; }}
                       onMouseLeave={() => { const el = document.getElementById('api-key-input') as HTMLInputElement; if (el) el.type = 'password'; }}>
@@ -363,7 +374,7 @@ export function SettingsModelsTab() {
                           return (
                             <span className={cn("flex items-center gap-1 text-xs", errorCount === 0 ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400")}>
                               {errorCount === 0 ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-                              {successCount}/{states.length} 通过{errorCount > 0 ? `，${errorCount} 失败` : ''}
+                              {successCount}/{states.length} {t('Passed')}{errorCount > 0 ? `，${errorCount} ${t('Failed')}` : ''}
                             </span>
                           );
                         }
@@ -382,12 +393,7 @@ export function SettingsModelsTab() {
 
                   {/* Model Groups */}
                   <div className="flex flex-col gap-2">
-                    {(() => {
-                      const groups = groupModelsByPrefix(selectedProvider.models);
-                      useEffect(() => {
-                        if (Object.keys(groups).length > 0) setExpandedModelGroups(new Set(Object.keys(groups)));
-                      }, [selectedProvider?.id]);
-                      return Object.entries(groups).map(([group, models]) => (
+                    {Object.entries(groupModelsByPrefix(selectedProvider.models)).map(([group, models]) => (
                         <div key={group} className="flex flex-col">
                           <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors">
                             <div className="flex items-center gap-2">
@@ -395,7 +401,7 @@ export function SettingsModelsTab() {
                                 <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-200", expandedModelGroups.has(group) ? "" : "-rotate-90")} />
                               </button>
                               {editingGroup === group ? (
-                                <input className="text-sm font-medium bg-background border rounded px-1.5 py-0.5 w-28 outline-none focus:border-primary"
+                                <input className="text-sm font-medium bg-background border rounded px-2 py-1 w-28 outline-none focus:border-primary"
                                   value={editGroupName} onChange={(e) => setEditGroupName(e.target.value)}
                                   onBlur={() => {
                                     if (editGroupName.trim() && editGroupName !== group) {
@@ -409,10 +415,10 @@ export function SettingsModelsTab() {
                                   autoFocus />
                               ) : (
                                 <span className="text-sm font-medium cursor-pointer hover:text-primary transition-colors"
-                                  onClick={() => { setEditingGroup(group); setEditGroupName(group); }} title="点击修改分组名">{group}</span>
+                                  onClick={() => { setEditingGroup(group); setEditGroupName(group); }} title={t('Click to edit group name')}>{group}</span>
                               )}
                             </div>
-                            <span className="text-[10px] text-muted-foreground">{models.length}</span>
+                            <span className="text-xs text-muted-foreground">{models.length}</span>
                           </div>
                           {expandedModelGroups.has(group) && (
                             <div className="flex flex-col gap-1 pl-8 pr-1">
@@ -423,7 +429,7 @@ export function SettingsModelsTab() {
                                     <Bot className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                     <div className="flex-1 min-w-0">
                                       <div className="text-sm font-medium truncate">{model.name}</div>
-                                      <div className="text-[10px] text-muted-foreground font-mono truncate">{model.modelId}</div>
+                                      <div className="text-xs text-muted-foreground font-mono truncate">{model.modelId}</div>
                                     </div>
                                     <div className="flex items-center gap-0.5">
                                       {(() => {
@@ -432,8 +438,8 @@ export function SettingsModelsTab() {
                                         if (ts?.status === 'success') return <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />;
                                         if (ts?.status === 'error') return (
                                           <button className="p-0.5 rounded text-destructive hover:bg-destructive/10 transition-colors"
-                                            title={`${ts.error}\n\n${ts.detail || ''}\n（点击查看详情）`}
-                                            onClick={() => { const detail = ts.detail || ts.error || ''; alert(`测试失败详情:\n\n错误: ${ts.error}\n详细信息: ${detail}`); }}>
+                                            title={`${ts.error}\n\n${ts.detail || ''}\n${t('Click to view details')}`}
+                                            onClick={() => { const detail = ts.detail || ts.error || ''; alert(`${t('Test failure details:')}\n\n${t('Error:')} ${ts.error}\n${t('Details:')} ${detail}`); }}>
                                             <AlertTriangle className="h-3 w-3" />
                                           </button>
                                         );
@@ -456,9 +462,9 @@ export function SettingsModelsTab() {
                                     </div>
                                   </div>
                                   {modelTestStates[model.id]?.status === 'error' && (
-                                    <div className="flex items-center gap-1 pl-5 text-[10px] text-destructive/80 cursor-pointer"
-                                      onClick={() => { const ts = modelTestStates[model.id]; alert(`测试失败详情:\n\n错误: ${ts?.error}\n详细信息: ${ts?.detail || ''}`); }}
-                                      title="点击查看详细错误日志">
+                                    <div className="flex items-center gap-1 pl-5 text-xs text-destructive/80 cursor-pointer"
+                                      onClick={() => { const ts = modelTestStates[model.id]; alert(`${t('Test failure details')}:\n\n${t('Error')}: ${ts?.error}\n${t('Details')}: ${ts?.detail || ''}`); }}
+                                      title={t('Click to view error details')}>
                                       <XCircle className="h-2.5 w-2.5 shrink-0" />
                                       <span className="truncate">{modelTestStates[model.id]?.error}</span>
                                     </div>
@@ -468,8 +474,7 @@ export function SettingsModelsTab() {
                             </div>
                           )}
                         </div>
-                      ));
-                    })()}
+                      ))}
                   </div>
 
                   {/* Add Model Buttons */}
@@ -511,20 +516,20 @@ export function SettingsModelsTab() {
               <div className="text-center py-8"><XCircle className="h-8 w-8 mx-auto mb-3 text-destructive" /><p className="text-destructive font-medium">{t('Fetch failed')}</p><p className="text-sm text-muted-foreground mt-1">{fetchError}</p></div>
             )}
             {fetchStatus === 'success' && fetchedModels.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground"><p>未找到可用模型</p></div>
+              <div className="text-center py-8 text-muted-foreground"><p>{t('No models found')}</p></div>
             )}
             {fetchStatus === 'success' && fetchedModels.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-2 pb-2">
-                  <span className="text-xs text-muted-foreground">共 {fetchedModels.length} 个模型，已选择 {selectedFetchedModels.size} 个</span>
+                  <span className="text-xs text-muted-foreground">{t('models in total,')} {fetchedModels.length} {t('selected')} {selectedFetchedModels.size}</span>
                   <button onClick={() => setSelectedFetchedModels(selectedFetchedModels.size === fetchedModels.length ? new Set() : new Set(fetchedModels.map(m => m.id)))}
                     className="text-xs text-primary hover:underline">
-                    {selectedFetchedModels.size === fetchedModels.length ? '取消全选' : '全选'}
+                    {selectedFetchedModels.size === fetchedModels.length ? t('Deselect All') : t('Select All')}
                   </button>
                 </div>
                 <div className="flex flex-col gap-1 max-h-[50vh] overflow-auto">
                   {fetchedModels.map(model => (
-                    <label key={model.id} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors",
+                    <label key={model.id} className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
                       selectedFetchedModels.has(model.id) ? "bg-primary/5 border-primary/20" : "border-transparent hover:bg-muted/30")}>
                       <input type="checkbox" checked={selectedFetchedModels.has(model.id)}
                         onChange={() => setSelectedFetchedModels(prev => { const next = new Set(prev); if (next.has(model.id)) next.delete(model.id); else next.add(model.id); return next; })}
@@ -532,7 +537,7 @@ export function SettingsModelsTab() {
                       <Bot className="h-4 w-4 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate">{model.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{model.id}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{model.id}</div>
                       </div>
                     </label>
                   ))}
@@ -547,7 +552,7 @@ export function SettingsModelsTab() {
                 <Button variant="outline" onClick={handleFetchModels}><RefreshCw className="h-4 w-4 mr-1.5" />{t('Re-fetch')}</Button>
                 {fetchStatus === 'success' && fetchedModels.length > 0 && (
                   <Button onClick={handleAddFetchedModels} disabled={selectedFetchedModels.size === 0}>
-                    <Plus className="h-4 w-4 mr-1.5" />添加 {selectedFetchedModels.size > 0 ? `(${selectedFetchedModels.size})` : ''}
+                    <Plus className="h-4 w-4 mr-1.5" />{t('Add')} {selectedFetchedModels.size > 0 ? `(${selectedFetchedModels.size})` : ''}
                   </Button>
                 )}
               </>

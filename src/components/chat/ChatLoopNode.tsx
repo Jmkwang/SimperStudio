@@ -23,13 +23,13 @@ export function ChatLoopNode({ data }: { data: any }) {
       </div>
 
       <div className="p-3 space-y-1">
-        <p className="text-[11px] text-muted-foreground truncate" title={data.itemsPath || 'payload.alivePlayers'}>
+        <p className="text-xs text-muted-foreground truncate" title={data.itemsPath || 'payload.alivePlayers'}>
           items: {data.itemsPath || 'payload.alivePlayers'}
         </p>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           aliases: {data.itemAlias || 'item'} / {data.indexAlias || 'index'}
         </p>
-        <p className="text-[11px] text-muted-foreground">max: {data.maxIterations ?? 20}</p>
+        <p className="text-xs text-muted-foreground">max: {data.maxIterations ?? 20}</p>
       </div>
 
       <Handle

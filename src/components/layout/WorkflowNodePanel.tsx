@@ -14,7 +14,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
   const sidebarCollapsedBySession = useAppStore(state => state.workflowChatUI.sidebarCollapsedBySession)
 
   const activeSession = sessions.find(s => s.id === activeSessionId)
-  const isWorkflowChat = currentView === 'chat' && activeSession?.mode === 'workflow'
+  const isWorkflowChat = (currentView === 'workflowChat' || currentView === 'chat') && activeSession?.mode === 'workflow'
   const workflowForActiveSession = activeSession?.workflowId
     ? workflows.find(w => w.id === activeSession.workflowId)
     : undefined
@@ -35,11 +35,11 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
       <div className="p-2 border-b h-14 flex items-center justify-between">
         <div className="min-w-0 px-2">
           <div className="truncate text-sm font-semibold">{workflowForActiveSession?.name || 'Workflow'}</div>
-          <div className="text-[11px] text-muted-foreground">{workflowAgentNodes.length} {t('nodes')}</div>
+          <div className="text-xs text-muted-foreground">{workflowAgentNodes.length} {t('nodes')}</div>
         </div>
         <button
           onClick={() => setWorkflowSidebarCollapsed(activeSession.id, true)}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           title={t('Collapse workflow panel')}
           aria-label={t('Collapse workflow panel')}
         >
@@ -68,7 +68,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
                 <Bot className="h-4 w-4 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{node.data?.label || node.id}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">{agent?.name || agentId}</div>
+                  <div className="truncate text-xs text-muted-foreground">{agent?.name || agentId}</div>
                 </div>
               </button>
             )

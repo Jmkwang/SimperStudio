@@ -206,10 +206,11 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         workflowId, messages: [],
         createdAt: Date.now(), updatedAt: Date.now()
       };
+      // Always create in memory first so browser mode works even when Tauri is unavailable
+      set((state: any) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
       try {
         await invoke('add_chat_session', { session: newSession });
-        set((state: any) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
-      } catch { }
+      } catch { /* best-effort persistence */ }
     },
 
     createWorkflowBackedSession: async (title, workspaceId) => {
@@ -283,21 +284,22 @@ export function createChatSlice(set: any, get: any): ChatSlice {
 
     addUserMessage: async (sessionId, text, attachments = [], meta) => {
       const newMessage = createUserMessage(sessionId, text, attachments, meta);
-      try {
-        await invoke('add_chat_message', { message: { ...newMessage, content: JSON.stringify(newMessage.content) } });
-      } catch {
-        // DB write failed — do not mutate memory to keep consistency
-        return;
-      }
+      // Optimistic update: render in UI immediately, persist best-effort
       set((state: any) => ({
         sessions: state.sessions.map((s: ChatSession) => {
           if (s.id === sessionId) return { ...s, messages: [...s.messages, newMessage], updatedAt: Date.now() };
           return s;
         })
       }));
+      try {
+        await invoke('add_chat_message', { message: { ...newMessage, content: JSON.stringify(newMessage.content) } });
+      } catch {
+        // Best-effort persistence; memory already has the message
+        console.warn('Failed to persist user message to DB');
+      }
     },
 
-    addAgentResponseStream: async (sessionId, messageId, agentId, textChunk, nodeId, meta) => {
+    addAgentResponseStream: (sessionId, messageId, agentId, textChunk, nodeId, meta) => {
       // Check if this is a new message before mutating memory
       const state = get();
       const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
@@ -375,27 +377,17 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         return { sessions };
       });
 
-      // Persist new messages to DB immediately; streaming chunks are memory-only
+      // Persist new messages to DB best-effort; streaming chunks are memory-only
       if (newAssistantMsg && isNewMessage) {
         const msg: ChatMessage = newAssistantMsg;
         const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
-        try {
-          await invoke('add_chat_message', { message: msgToSave });
-        } catch {
-          // Rollback: remove the optimistic message from memory on DB failure
-          set((state: any) => ({
-            sessions: state.sessions.map((s: ChatSession) => {
-              if (s.id === sessionId) {
-                return { ...s, messages: s.messages.filter(m => m.id !== messageId) };
-              }
-              return s;
-            })
-          }));
-        }
+        void invoke('add_chat_message', { message: msgToSave }).catch(() => {
+          console.warn('Failed to persist assistant message to DB');
+        });
       }
     },
 
-    completeAgentResponse: async (sessionId, messageId, agentId, nodeId, meta) => {
+    completeAgentResponse: (sessionId, messageId, agentId, nodeId, meta) => {
       set((state: any) => ({
         sessions: state.sessions.map((s: ChatSession) => {
           if (s.id === sessionId) {
@@ -435,11 +427,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const msg = session?.messages.find((m: ChatMessage) => m.id === messageId);
       if (msg) {
         const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
-        try {
-          await invoke('update_chat_message', { message: msgToSave });
-        } catch {
-          // Best-effort persistence; memory already has the final state
-        }
+        void invoke('update_chat_message', { message: msgToSave }).catch(() => {});
       }
     },
 
@@ -478,14 +466,24 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         // Build dynamic config from inline templates (chat layer uses empty payload for literal templates)
         const dynamicName = inline?.nameTemplate?.replace(/\{\{.*?\}\}/g, '') || 'Dynamic Agent';
         const dynamicSystemPrompt = inline?.systemPromptTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
-        const dynamicAvatar = inline?.avatarTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
         const dynamicRole = inline?.roleTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
         const dynamicPersonality = inline?.personalityTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
 
-        // Resolve fallback agent for model config
+        // Resolve fallback agent for model config and avatar inheritance
         const fallbackAgent = nodeData?.fallbackAgentId
           ? agents.find((a: Agent) => a.id === nodeData.fallbackAgentId)
           : undefined;
+
+        // If no avatarTemplate is provided, inherit from fallbackAgent or match by name
+        let dynamicAvatar = inline?.avatarTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
+        if (!dynamicAvatar) {
+          if (fallbackAgent?.avatar) {
+            dynamicAvatar = fallbackAgent.avatar;
+          } else if (agents) {
+            const matched = agents.find((a: Agent) => a.name === dynamicName);
+            if (matched?.avatar) dynamicAvatar = matched.avatar;
+          }
+        }
 
         const virtualAgent: Agent = fallbackAgent || {
           id: `dynamic-${nodeId}`,

@@ -1,0 +1,198 @@
+[    2394ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[    2534ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[    2534ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:418
+[   26586ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-WMOI5JL2.js?v=f2f92d79:541
+[   26589ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-WMOI5JL2.js?v=f2f92d79:541
+[   67827ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-WMOI5JL2.js?v=f2f92d79:541
+[   67830ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-WMOI5JL2.js?v=f2f92d79:541
+[  743144ms] [ERROR] You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`. @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:1395
+[  746908ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:1420/:0
+[  748476ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:105:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateProvider (http://localhost:1420/src/stores/modelSlice.ts:98:38)
+    at onChange (http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779873495279:551:36)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts:25
+[  750568ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:105:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateProvider (http://localhost:1420/src/stores/modelSlice.ts:98:38)
+    at onChange (http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779873495279:551:36)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts:25
+[  756762ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:105:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateProvider (http://localhost:1420/src/stores/modelSlice.ts:98:38)
+    at onChange (http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779873495279:551:36)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts:25
+[  762030ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:105:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateProvider (http://localhost:1420/src/stores/modelSlice.ts:98:38)
+    at onClick (http://localhost:1420/src/components/settings/SettingsModelsTab.tsx?t=1779873495279:385:32)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts:25
+[ 1306057ms] [WARNING] Failed to persist user message to DB @ http://localhost:1420/src/stores/chatSlice.ts:265
+[ 1306057ms] [WARNING] Failed to persist assistant message to DB @ http://localhost:1420/src/stores/chatSlice.ts:347
+[ 1325645ms] [WARNING] Failed to persist user message to DB @ http://localhost:1420/src/stores/chatSlice.ts:265
+[ 1325645ms] [WARNING] Failed to persist assistant message to DB @ http://localhost:1420/src/stores/chatSlice.ts:347
+[ 1338061ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1338061ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1338061ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1338090ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1338091ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1338091ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339732ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339732ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339732ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339764ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339764ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339764ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339769ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339769ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339769ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339787ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339787ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339788ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339803ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339803ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339803ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339807ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339807ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339808ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339831ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339832ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1339832ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340681ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340681ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340682ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340695ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340695ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340695ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340713ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340713ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340713ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340738ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340738ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340738ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340763ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340763ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1340763ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341363ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341363ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341363ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341367ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341367ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341367ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341375ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341375ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341375ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341381ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341382ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341382ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341388ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341388ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341388ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341396ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341396ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341396ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341402ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341402ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341402ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341408ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341409ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341409ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341415ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341415ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341415ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341421ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341421ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341421ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341427ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341427ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341427ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341434ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341434ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341434ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341440ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341440ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341440ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341447ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341447ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341447ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341454ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341454ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341454ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341460ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341460ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341460ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341466ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341466ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341466ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341473ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341473ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341473ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341479ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341479ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341479ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341486ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341487ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341487ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341494ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341494ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341494ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341500ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341500ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341500ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341506ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341507ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341507ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341513ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341513ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341513ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341519ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341519ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341519ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341525ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341525ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341525ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341532ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341532ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341532ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341539ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341540ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341540ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341549ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341549ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341549ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341555ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341555ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341556ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341850ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341850ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341850ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341859ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341859ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341859ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341864ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e13. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341864ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e20. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840
+[ 1341864ms] [WARNING] [React Flow]: Couldn't create edge for source handle id: "null", edge id: ww-e27. Help: https://reactflow.dev/error#008 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=f2f92d79:3840

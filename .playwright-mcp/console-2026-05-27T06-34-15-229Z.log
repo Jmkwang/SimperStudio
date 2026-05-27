@@ -1,0 +1,86 @@
+[     447ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[     606ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:418
+[     606ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:418
+[   69176ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:1420/:0
+[  158593ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779863470493:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  370498ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779863470493:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  372202ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779863470493:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  374025ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779863470493:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  601833ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779864225997:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  625381ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779864225997:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  629117ms] [WARNING] Tauri write_json_config failed for "model.json", falling back to localStorage TypeError: Cannot read properties of undefined (reading 'invoke')
+    at invoke (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_core.js?v=f2f92d79:111:37)
+    at writeConfig (http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:24:11)
+    at http://localhost:1420/src/stores/modelSlice.ts:85:12
+    at setState (http://localhost:1420/node_modules/.vite/deps/zustand.js?v=f2f92d79:13:55)
+    at updateSettings (http://localhost:1420/src/stores/modelSlice.ts:83:34)
+    at handleSave (http://localhost:1420/src/components/settings/SettingsGeneralTab.tsx?t=1779864225997:64:5)
+    at executeDispatch (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13622:11)
+    at runWithFiberInDEV (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at processDispatchQueue (http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:13658:37)
+    at http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:14071:11 @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:25
+[  640840ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-WMOI5JL2.js?v=f2f92d79:541
+[  640842ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-WMOI5JL2.js?v=f2f92d79:541
+[  649059ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[  649148ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:418
+[  649148ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts?t=1779863447600:418

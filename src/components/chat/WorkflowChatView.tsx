@@ -23,7 +23,7 @@ import { ChatRouterNode } from './ChatRouterNode';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bot, Users, Send, LayoutGrid, List } from 'lucide-react';
+import { Bot, Send } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 
 export function WorkflowChatView({ session }: { session: ChatSession }) {
@@ -35,11 +35,10 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const chatLayoutMode = useAppStore(state => state.chatLayoutMode);
-  const setChatLayoutMode = useAppStore(state => state.setChatLayoutMode);
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const [multiAgentMode, setMultiAgentMode] = useState(true);
+  const [multiAgentMode] = useState(true);
   const [input, setInput] = useState("");
 
   const workflow = session.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
@@ -59,8 +58,6 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
       return agents.find(a => a.id === (node.data as Record<string, unknown>)?.agentId);
     })
     .filter(Boolean) as Agent[];
-
-  const hasMultipleAgents = linkedAgents.length > 1;
 
   if (!workflow) {
     return <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">{t('Current session is not linked to a workflow.')}</div>;
@@ -133,8 +130,9 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
 
   const handleSend = async () => {
     if (!input.trim() || linkedAgents.length === 0) return;
-    await sendMessageToAgents(session.id, input, linkedAgents);
+    const text = input.trim();
     setInput("");
+    await sendMessageToAgents(session.id, text, linkedAgents);
   };
 
   return (
@@ -143,38 +141,10 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
       <div className="p-6 pb-2 shrink-0 h-[80px] flex items-center justify-between">
         <h2 className="text-lg font-semibold">{workflow.name}</h2>
         <div className="flex items-center gap-2">
-          {hasMultipleAgents && multiAgentMode && (
-            <button
-              onClick={() => setChatLayoutMode(chatLayoutMode === 'A' ? 'B' : 'A')}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
-                chatLayoutMode === 'B'
-                  ? "bg-primary/15 text-primary border border-primary/20"
-                  : "bg-muted hover:bg-muted/70 text-muted-foreground border border-transparent"
-              }`}
-              title={chatLayoutMode === 'B' ? t("切换为并排视图") : t("切换为竖直视图")}
-            >
-              {chatLayoutMode === 'B' ? <List className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
-              {chatLayoutMode === 'B' ? 'B' : 'A'}
-            </button>
-          )}
-          {hasMultipleAgents && (
-            <button
-              onClick={() => setMultiAgentMode(!multiAgentMode)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
-                multiAgentMode
-                  ? "bg-emerald-500/20 text-emerald-500"
-                  : "bg-muted hover:bg-muted/70 text-muted-foreground"
-              }`}
-              title={multiAgentMode ? t("切换为拓扑视图") : t("切换为聊天视图")}
-            >
-              <Users className="h-3.5 w-3.5" />
-              {multiAgentMode ? t("聊天") : t("拓扑")}
-            </button>
-          )}
           {isCollapsed && (
             <button
               onClick={() => setWorkflowSidebarCollapsed(session.id, false)}
-              className="p-1.5 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
               title={t('Show workflow panel')}
             >
               <Bot className="h-4 w-4" />

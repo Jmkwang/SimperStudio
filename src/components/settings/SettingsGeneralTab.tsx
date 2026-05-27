@@ -1,9 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -24,39 +23,9 @@ export function SettingsGeneralTab() {
   const toggleDebugMode = useAppStore(state => state.toggleDebugMode);
   const { t } = useTranslation();
 
-  const [local, setLocal] = useState({
-    allowRemoteAccess: settings.allowRemoteAccess,
-    remoteAccessPort: settings.remoteAccessPort,
-    language: settings.language,
-    fontSize: settings.fontSize ?? 100,
-  });
-
   useEffect(() => {
-    setLocal({
-      allowRemoteAccess: settings.allowRemoteAccess,
-      remoteAccessPort: settings.remoteAccessPort,
-      language: settings.language,
-      fontSize: settings.fontSize ?? 100,
-    });
-  }, [settings]);
-
-  // Apply font size to document root
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${local.fontSize}%`;
-  }, [local.fontSize]);
-
-  const handleChange = (key: string, value: string | boolean | number) => {
-    setLocal(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleSave = () => {
-    updateSettings({
-      allowRemoteAccess: local.allowRemoteAccess,
-      remoteAccessPort: Number(local.remoteAccessPort),
-      language: local.language,
-      fontSize: local.fontSize,
-    });
-  };
+    document.documentElement.style.fontSize = `${settings.fontSize ?? 100}%`;
+  }, [settings.fontSize]);
 
   return (
     <div className="max-w-xl space-y-6">
@@ -68,9 +37,9 @@ export function SettingsGeneralTab() {
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="space-y-2">
           <Label>{t("Language")}</Label>
-          <Select value={local.language} onValueChange={(val) => handleChange('language', val)}>
+          <Select value={settings.language} onValueChange={(val) => updateSettings({ language: val })}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Language" />
+              <SelectValue placeholder={t('Select Language')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="en">English</SelectItem>
@@ -86,9 +55,9 @@ export function SettingsGeneralTab() {
             {FONT_SIZE_PRESETS.map(preset => (
               <button
                 key={preset.value}
-                onClick={() => handleChange('fontSize', preset.value)}
-                className={`px-3 py-1.5 rounded-md text-xs transition-colors ${
-                  local.fontSize === preset.value
+                onClick={() => updateSettings({ fontSize: preset.value })}
+                className={`px-3 py-1 rounded-md text-xs transition-colors ${
+                  (settings.fontSize ?? 100) === preset.value
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted hover:bg-muted/70 text-muted-foreground"
                 }`}
@@ -97,10 +66,6 @@ export function SettingsGeneralTab() {
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="pt-4 border-t">
-          <Button onClick={handleSave}>{t("Save Settings")}</Button>
         </div>
       </div>
 
@@ -113,8 +78,8 @@ export function SettingsGeneralTab() {
             </div>
           </div>
           <Switch
-            checked={local.allowRemoteAccess}
-            onCheckedChange={(checked: boolean) => handleChange('allowRemoteAccess', checked)}
+            checked={settings.allowRemoteAccess}
+            onCheckedChange={(checked: boolean) => updateSettings({ allowRemoteAccess: checked })}
           />
         </div>
 
@@ -125,9 +90,9 @@ export function SettingsGeneralTab() {
             type="number"
             min={1}
             max={65535}
-            value={local.remoteAccessPort || 1420}
-            disabled={!local.allowRemoteAccess}
-            onChange={(e) => handleChange('remoteAccessPort', Number(e.target.value))}
+            value={settings.remoteAccessPort || 1420}
+            disabled={!settings.allowRemoteAccess}
+            onBlur={(e) => updateSettings({ remoteAccessPort: Number(e.target.value) })}
           />
         </div>
       </div>

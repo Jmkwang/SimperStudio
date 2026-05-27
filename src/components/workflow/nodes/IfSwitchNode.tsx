@@ -92,7 +92,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
       <div className="p-3 py-2 flex flex-col gap-2 relative">
         {(data.branches || branches).map((b: any) => (
           <div key={b.id} className="flex justify-end items-center relative h-6">
-            <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[150px] font-mono mr-2" title={b.condition}>{b.label}</span>
+            <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded truncate max-w-[150px] font-mono mr-2" title={b.condition}>{b.label}</span>
             <Handle type="source" position={Position.Right} id={b.id} style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)' }} className="w-3 h-3 border-2 border-amber-500 bg-background absolute" />
           </div>
         ))}

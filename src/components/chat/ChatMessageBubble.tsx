@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AlertTriangle, ChevronDown, Bot, Copy, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, memo } from "react";
 
 interface AgentInfo {
   id?: string;
@@ -30,7 +30,7 @@ function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: 
         <div className="rounded-2xl rounded-tr-md bg-foreground/10 px-3 py-2 text-sm whitespace-pre-wrap break-words">
           {message.content.text || emptyText || ""}
         </div>
-        <span className="text-[10px] text-muted-foreground mt-0.5 mr-1">
+        <span className="text-xs text-muted-foreground mt-0.5 mr-1">
           {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
@@ -41,7 +41,7 @@ function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: 
   );
 }
 
-function AssistantBubble({
+const AssistantBubble = memo(function AssistantBubble({
   response,
   message,
   agent,
@@ -60,6 +60,7 @@ function AssistantBubble({
   const [showErrorDetail, setShowErrorDetail] = useState(false);
   const isError = response.status === 'error';
   const isStreaming = response.status === 'streaming';
+  const gameStatus = response._dynamicAgentMeta?.status;
 
   const handleCopy = () => {
     if (onCopy) {
@@ -74,21 +75,36 @@ function AssistantBubble({
       "flex justify-start gap-2 group",
       layout === 'multi' && "flex-1"
     )}>
-      <Avatar className="h-7 w-7 rounded-full shrink-0 mt-1 border shadow-sm">
-        <AvatarImage src={agent?.avatar} />
-        <AvatarFallback className="rounded-full bg-primary/10 text-primary">
-          <Bot className="h-3.5 w-3.5" />
-        </AvatarFallback>
-      </Avatar>
+      <div className="relative shrink-0 mt-1">
+        <Avatar className="h-7 w-7 rounded-full border shadow-sm">
+          <AvatarImage src={agent?.avatar} />
+          <AvatarFallback className="rounded-full bg-primary/10 text-primary">
+            <Bot className="h-3.5 w-3.5" />
+          </AvatarFallback>
+        </Avatar>
+        {gameStatus && (
+          <span
+            className={cn(
+              'absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background',
+              gameStatus === 'alive'
+                ? 'bg-green-500'
+                : gameStatus === 'dead'
+                  ? 'bg-destructive'
+                  : 'bg-muted-foreground'
+            )}
+            title={gameStatus === 'alive' ? t('Alive') : gameStatus === 'dead' ? t('Dead') : gameStatus}
+          />
+        )}
+      </div>
       <div className={cn(
         "flex flex-col items-start",
         layout === 'single' ? "max-w-[80%]" : "w-full"
       )}>
         {agent?.name && (
-          <span className="text-[11px] font-medium text-muted-foreground mb-0.5 ml-1">
+          <span className="text-xs font-medium text-muted-foreground mb-0.5 ml-1">
             {agent.name}
             {(response.providerName || response.modelName) && (
-              <span className="text-[10px] text-muted-foreground/70 ml-1.5">
+              <span className="text-xs text-muted-foreground/70 ml-1.5">
                 {response.providerName}/{response.modelName || response.modelId}
               </span>
             )}
@@ -118,15 +134,15 @@ function AssistantBubble({
               )}
             </div>
           ) : (
-            <div>{response.content.text}{isStreaming && <span className="inline-block w-1.5 h-4 ml-0.5 bg-foreground/40 animate-pulse motion-reduce:opacity-100 motion-reduce:animate-none align-text-bottom" />}</div>
+            <div>{response.content.text}</div>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5 ml-1 flex-wrap">
-          <span className="text-[10px] text-muted-foreground/70 shrink-0">
+        <div className="flex items-center gap-2 mt-0.5 ml-1 flex-wrap">
+          <span className="text-xs text-muted-foreground/70 shrink-0">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
           {(response.tokenUsage || response.duration) && (
-            <span className="text-[10px] text-muted-foreground/70 shrink-0">
+            <span className="text-xs text-muted-foreground/70 shrink-0">
               ({response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : ''}{response.tokenUsage && response.duration ? ' / ' : ''}{response.duration ? `${(response.duration / 1000).toFixed(1)}s` : ''})
             </span>
           )}
@@ -154,9 +170,17 @@ function AssistantBubble({
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  return prev.response.content.text === next.response.content.text &&
+    prev.response.status === next.response.status &&
+    prev.response.agentId === next.response.agentId &&
+    prev.response.nodeId === next.response.nodeId &&
+    prev.agent?.id === next.agent?.id &&
+    prev.agent?.avatar === next.agent?.avatar &&
+    prev.layout === next.layout;
+});
 
-export function ChatMessageBubble({
+export const ChatMessageBubble = memo(function ChatMessageBubble({
   message,
   agent,
   agents,
@@ -168,14 +192,23 @@ export function ChatMessageBubble({
   layoutMode = 'A',
 }: ChatMessageBubbleProps) {
   const resolveAgent = (response: AgentResponse): AgentInfo | undefined => {
-    // Dynamic agent meta takes precedence
+    // 1. Dynamic agent meta carries the runtime-generated name/personality
     if (response._dynamicAgentMeta) {
+      const meta = response._dynamicAgentMeta;
+      // If dynamic meta has no avatar, try to find one from the agents array
+      // (e.g. a fallback agent with a configured avatar)
+      let avatar = meta.avatar;
+      if (!avatar && agents && response.agentId) {
+        const found = agents.find(a => a.id === response.agentId);
+        if (found?.avatar) avatar = found.avatar;
+      }
       return {
         id: response.agentId,
-        name: response._dynamicAgentMeta.name,
-        avatar: response._dynamicAgentMeta.avatar,
+        name: meta.name,
+        avatar,
       };
     }
+    // 2. Standard agent lookup
     if (agents && response.agentId) {
       const found = agents.find(a => a.id === response.agentId);
       if (found) return found;
@@ -255,7 +288,7 @@ export function ChatMessageBubble({
   }
 
   return null;
-}
+});
 
 function agentResponsesFiltered(
   responses: AgentResponse[],

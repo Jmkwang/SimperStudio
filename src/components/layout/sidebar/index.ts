@@ -1,5 +1,4 @@
 export { ContextItem } from './ContextItem'
-export { AgentDetailPopover } from './AgentDetailPopover'
 export { ChatSidebar } from './ChatSidebar'
 export { WorkflowSidebar } from './WorkflowSidebar'
 export { WorkflowChatSidebar } from './WorkflowChatSidebar'

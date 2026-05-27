@@ -377,9 +377,9 @@
 
 ### 7.6 右侧：主对话区（SimpleChatView / ChatMessageBubble）
 
-- [ ] **面包屑栏添加对话时间显示**
+- [x] **面包屑栏添加对话时间显示**
   - 目标：在模型名称下方附带对话时间（如 04/19 21:06）
-  - 当前：面包屑栏只有话题名 > 模型名 | Local，无时间
+  - 当前：SimpleChatView 面包屑已显示 `session.updatedAt` 时间
   - 文件：`src/components/chat/SimpleChatView.tsx`
 
 - [x] **单条消息 Token 显示增加 ↑↓ 分项**
@@ -412,9 +412,9 @@
 
 ### 7.8 全局导航栏（GlobalSidebar）
 
-- [ ] **底部导航精简为仅暗色模式和设置**
+- [x] **底部导航精简为仅暗色模式和设置**
   - 目标：底部是暗色模式和设置图标（从上到下）
-  - 当前：底部有暗色模式 → Settings → Profile 三个图标，多了一个 Profile
+  - 当前：底部已精简为暗色模式 + Settings，Profile 已移除
   - 文件：`src/components/layout/GlobalSidebar.tsx`
 
 ## 8. P6：测试与工程化补齐
@@ -719,53 +719,53 @@ components/layout/sidebar/
 
 #### 类型与状态
 
-- [ ] `src/stores/uiSlice.ts`
-  - [ ] `currentView` 新增 `'workflowChat'` 值
-  - [ ] 确保 `selectedChatWorkflowId` 在新视图下正常工作
+- [x] `src/stores/uiSlice.ts`
+  - [x] `currentView` 新增 `'workflowChat'` 值
+  - [x] 确保 `selectedChatWorkflowId` 在新视图下正常工作
 
 #### GlobalSidebar
 
-- [ ] `src/components/layout/GlobalSidebar.tsx`
-  - [ ] 在「聊天」下方新增「工作流会话」图标按钮
-  - [ ] 选中态高亮逻辑与现有按钮一致
+- [x] `src/components/layout/GlobalSidebar.tsx`
+  - [x] 在「聊天」下方新增「工作流会话」图标按钮
+  - [x] 选中态高亮逻辑与现有按钮一致
 
 #### ContextSidebar 路由
 
-- [ ] `src/components/layout/ContextSidebar.tsx`
-  - [ ] `renderSidebarContent()` switch 新增 `'workflowChat'` case
-  - [ ] 渲染新的 `WorkflowChatSidebar` 组件
+- [x] `src/components/layout/ContextSidebar.tsx`
+  - [x] `renderSidebarContent()` switch 新增 `'workflowChat'` case
+  - [x] 渲染新的 `WorkflowChatSidebar` 组件
 
 #### ChatSidebar 精简
 
-- [ ] `src/components/layout/sidebar/ChatSidebar.tsx`
-  - [ ] 移除「工作流/会话」标签页切换
-  - [ ] 仅展示 `mode === 'single'` 的会话
-  - [ ] 新建会话弹窗仅支持 Agent 选择（不再弹出工作流选择）
+- [x] `src/components/layout/sidebar/ChatSidebar.tsx`
+  - [x] 移除「工作流/会话」标签页切换
+  - [x] 仅展示 `mode === 'single'` 的会话
+  - [x] 新建会话弹窗仅支持 Agent 选择（不再弹出工作流选择）
 
 #### 新建 WorkflowChatSidebar
 
-- [ ] `src/components/layout/sidebar/WorkflowChatSidebar.tsx`
-  - [ ] 展示工作流列表（复用现有 workflow 数据）
-  - [ ] 点击工作流展开/折叠其下的会话列表
-  - [ ] 支持「+ 新建会话」（调用 `openWorkflowSession`）
-  - [ ] 支持会话删除
-  - [ ] 双击工作流 → 打开/创建该工作流的会话并展开
+- [x] `src/components/layout/sidebar/WorkflowChatSidebar.tsx`
+  - [x] 展示工作流列表（复用现有 workflow 数据）
+  - [x] 点击工作流展开/折叠其下的会话列表
+  - [x] 支持「+ 新建会话」（调用 `openWorkflowSession`）
+  - [x] 支持会话删除
+  - [x] 双击工作流 → 打开/创建该工作流的会话并展开
 
 #### AppShell
 
-- [ ] `src/components/layout/AppShell.tsx`
-  - [ ] 确认 `'workflowChat'` 不在 `VIEWS_WITHOUT_SIDEBAR` 中（需要侧栏）
-  - [ ] `showSidebar` 逻辑正确覆盖新视图
+- [x] `src/components/layout/AppShell.tsx`
+  - [x] 确认 `'workflowChat'` 不在 `VIEWS_WITHOUT_SIDEBAR` 中（需要侧栏）
+  - [x] `showSidebar` 逻辑正确覆盖新视图
 
 #### ChatInterface
 
-- [ ] `src/components/chat/ChatInterface.tsx`
-  - [ ] 确认 `currentView === 'workflowChat'` 时走 workflow 路由逻辑
+- [x] `src/components/chat/ChatInterface.tsx`
+  - [x] 确认 `currentView === 'workflowChat'` 时走 workflow 路由逻辑
 
 #### 国际化
 
-- [ ] `src/hooks/useTranslation.ts`
-  - [ ] 新增「工作流会话」翻译键
+- [x] `src/hooks/useTranslation.ts`
+  - [x] 新增「工作流会话」翻译键
 
 ### 12.5 验收
 
@@ -783,17 +783,17 @@ components/layout/sidebar/
 
 ### 13.1 P0 — 无障碍与对比度（阻塞发布）
 
-- [ ] **时间戳/模型信息对比度不足**
-  - `text-muted-foreground/50`（~2.5:1）→ 改为 `/70`（~4:1）
+- [x] **时间戳/模型信息对比度不足**
+  - `text-muted-foreground/50`（~2.5:1）→ 已改为 `/70`（~4:1）
   - 文件：`ChatMessageBubble.tsx`
-- [ ] **Copy/Retry 按钮对比度不足**
-  - 默认 `text-muted-foreground/50` → 改为 `/70`
+- [x] **Copy/Retry 按钮对比度不足**
+  - 默认 `text-muted-foreground/50` → 已改为 `/70`
   - 文件：`ChatMessageBubble.tsx`
 - [ ] **全局 focus-visible 样式缺失**
   - `globals.css` 添加统一 `:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }`
   - 消除各组件各自实现 focus ring 的不一致
-- [ ] **Tooltip 延迟 3000ms → 400ms**
-  - `GlobalSidebar.tsx` `TooltipProvider delayDuration={3000}` 极其反直觉
+- [x] **Tooltip 延迟 3000ms → 400ms**
+  - `GlobalSidebar.tsx` 已改为 `TooltipProvider delayDuration={400}`
   - 标准值 300-700ms，建议 400ms
 - [ ] **SettingsView Tab 无障碍修复**
   - 添加 `role="tablist"` / `role="tab"` / `role="tabpanel"`
@@ -803,8 +803,8 @@ components/layout/sidebar/
   - 当前 `opacity-0 pointer-events-none group-hover:opacity-100` 模式完全不可访问
   - 改为 DropdownMenu 或始终可见
   - 文件：`WorkflowCanvas.tsx`
-- [ ] **ContextSidebar 折叠按钮缺 aria 属性**
-  - 添加 `aria-label`、`aria-expanded`
+- [x] **ContextSidebar 折叠按钮缺 aria 属性**
+  - 已添加 `aria-label`、`aria-expanded`
   - 文件：`ContextSidebar.tsx`
 
 ### 13.2 P1 — 设计系统统一
@@ -825,17 +825,16 @@ components/layout/sidebar/
   - 建议两个主题保持色相一致，仅调整明度/饱和度
 - [ ] **SettingsView 图标修正**
   - "Appearance" 当前用 `Server` 图标 → 改为 `Palette` 或 `Paintbrush`
-- [ ] **GlobalSidebar icon 类型安全**
-  - `NavIcon` 的 `icon: any` → 改为 Lucide 的 `LucideIcon` 类型
+- [x] **GlobalSidebar icon 类型安全**
+  - `NavIcon` 的 `icon` 已改为 Lucide 的 `LucideIcon` 类型
 
 ### 13.3 P1 — UX 架构加固
 
-- [ ] **ContextSidebar 魔数提取**
-  - `e.clientX - 76` 硬编码 → 提取为常量或 CSS 变量
+- [x] **ContextSidebar 魔数提取**
+  - `e.clientX - 76` 已提取为 `SIDEBAR_OFFSET_X` 等常量
   - 文件：`ContextSidebar.tsx`
-- [ ] **折叠阈值统一**
-  - 当前 120px 折叠 vs 180px 最小宽度存在死区
-  - 统一为：最小 180px，低于 180px 自动折叠
+- [x] **折叠阈值统一**
+  - 已统一：`SIDEBAR_COLLAPSE_THRESHOLD = 180`，`SIDEBAR_MIN_WIDTH = 180`，无死区
 - [ ] **SettingsView 默认 Tab 改为 'general'**
   - 当前默认 `'models'`，用户期望 "General" 在前
 - [ ] **统一保存模式**

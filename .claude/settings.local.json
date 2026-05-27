@@ -64,7 +64,21 @@
       "Bash(npx vitest *)",
       "Bash(ls -la src/lib/agentProviderRouter.ts src/components/layout/sidebar/SortableList.tsx src/components/workflow/WorkflowTopologyPreview.tsx)",
       "Bash(git log *)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(taskkill /PID 34596 /F)",
+      "Bash(cmd /c \"taskkill /PID 34596 /F\")",
+      "Bash(powershell -Command \"Stop-Process -Id 34596 -Force\")",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_wait_for",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__open-websearch__fetchWebContent"
     ]
   }
 }

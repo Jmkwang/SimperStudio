@@ -87,7 +87,7 @@ export function AgentsSidebar({
         {/* Add New Category */}
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="flex w-full items-center gap-2.5 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl mb-1"
+          className="flex w-full items-center gap-2 px-3 h-10 text-sm text-muted-foreground transition-all duration-400 ease-out hover:bg-hover hover:text-foreground rounded-xl mb-1"
         >
           <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
           <span>{t('添加智能体分类')}</span>
@@ -113,7 +113,7 @@ export function AgentsSidebar({
                     : "text-foreground border-transparent hover:bg-hover hover:border-foreground/[0.06]"
                 )}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <div className={cn(
                     "flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border",
                     isSelected ? "border-primary/20" : "border-foreground/[0.08]"
@@ -122,8 +122,8 @@ export function AgentsSidebar({
                   </div>
                   <span>{category}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground/60">{count}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground/60">{count}</span>
                 </div>
               </button>
             )

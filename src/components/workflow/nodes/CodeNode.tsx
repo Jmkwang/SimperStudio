@@ -88,7 +88,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
       </div>
       
       <div className="p-3">
-        <div className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded font-mono overflow-hidden text-ellipsis whitespace-nowrap h-8 flex items-center">
+        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono overflow-hidden text-ellipsis whitespace-nowrap h-8 flex items-center">
           {data.code || 'return payload;'}
         </div>
       </div>

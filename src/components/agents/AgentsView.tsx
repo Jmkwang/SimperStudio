@@ -24,6 +24,7 @@ interface AgentCardProps {
 }
 
 function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, t }: AgentCardProps) {
+  const isNew = agent.createdAt && Date.now() - agent.createdAt < 3000;
   return (
     <div
       className={cn(
@@ -73,7 +74,7 @@ function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, 
         </div>
       )}
       <div className="flex items-center gap-3 mb-3">
-        <Avatar className="h-10 w-10 rounded-full border shadow-sm">
+        <Avatar className={cn("h-10 w-10 rounded-full border shadow-sm", isNew && "animate-agent-pop animate-agent-glow")}>
           <AvatarImage src={agent.avatar} />
           <AvatarFallback className="rounded-full bg-primary/10 text-primary">
             <Bot className="h-5 w-5" />
@@ -399,7 +400,7 @@ export function AgentsView() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSelectedAgentCategory(null)}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                className="flex items-center gap-2 rounded-full px-3 py-1 text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
               >
                 <span>{selectedAgentCategory}</span>
                 <X className="h-3 w-3" />

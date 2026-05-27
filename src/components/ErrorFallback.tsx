@@ -1,5 +1,6 @@
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ErrorFallbackProps {
   error?: Error;
@@ -7,6 +8,7 @@ interface ErrorFallbackProps {
 }
 
 export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
+  const { t } = useTranslation();
   return (
     <div
       role="alert"
@@ -22,16 +24,16 @@ export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
 
         <div className="space-y-2">
           <h1 className="text-xl font-semibold text-foreground">
-            出错了
+            {t('Something went wrong')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            应用遇到了意外错误。你可以尝试刷新页面，或点击下方的重试按钮。
+            {t('The app encountered an unexpected error. You can try refreshing the page, or click the retry button below.')}
           </p>
         </div>
 
         {error && (
           <div className="rounded-lg border border-border bg-muted p-4 text-left">
-            <p className="text-xs font-medium text-muted-foreground mb-1">错误详情</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">{t('Error Details')}</p>
             <pre className="text-xs text-destructive whitespace-pre-wrap break-all">
               {error.message}
             </pre>
@@ -42,14 +44,14 @@ export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
           {onRetry && (
             <Button onClick={onRetry} variant="default">
               <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
-              重试
+              {t('Retry')}
             </Button>
           )}
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
           >
-            刷新页面
+            {t('Refresh Page')}
           </Button>
         </div>
       </div>

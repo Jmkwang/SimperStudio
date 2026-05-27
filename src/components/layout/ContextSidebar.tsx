@@ -123,6 +123,7 @@ export function ContextSidebar({
         return <ChatSidebar
           sessions={sessions}
           agents={agents}
+          agentCategories={agentCategories}
           activeSessionId={activeSessionId}
           setActiveSession={setActiveSession}
           createSession={createSession}
@@ -134,9 +135,13 @@ export function ContextSidebar({
         return <WorkflowChatSidebar
           workflows={workflows}
           sessions={sessions}
+          agents={agents}
+          agentCategories={agentCategories}
+          activeWorkspaceId={activeWorkspaceId}
           activeSessionId={activeSessionId}
           setActiveSession={setActiveSession}
           openWorkflowSession={openWorkflowSession}
+          createSession={createSession}
           deleteSession={deleteSession}
           deleteWorkflow={deleteWorkflow}
           t={t}

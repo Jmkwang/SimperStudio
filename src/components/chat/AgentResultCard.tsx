@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Agent, ChatMessage } from '@/types/models';
-import { Send } from 'lucide-react';
+import { Send, Bot } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface AgentResultCardProps {
   agent: Agent;
@@ -12,6 +14,7 @@ interface AgentResultCardProps {
 
 export function AgentResultCard({ agent, messages, onSendMessage }: AgentResultCardProps) {
   const [inputValue, setInputValue] = useState('');
+  const { t } = useTranslation();
 
   const handleSend = () => {
     if (inputValue.trim()) {
@@ -37,11 +40,12 @@ export function AgentResultCard({ agent, messages, onSendMessage }: AgentResultC
   return (
     <div className="flex flex-col h-full bg-card rounded-xl border border-border/50 overflow-hidden">
       <div className="flex items-center gap-3 p-4 border-b border-border/50 bg-muted/30">
-        <img 
-          src={agent.avatar} 
-          alt={agent.name}
-          className="w-10 h-10 rounded-full bg-background"
-        />
+        <Avatar className="h-10 w-10 rounded-full border shadow-sm">
+          <AvatarImage src={agent.avatar} alt={agent.name} />
+          <AvatarFallback className="rounded-full bg-primary/10 text-primary">
+            <Bot className="h-5 w-5" />
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1">
           <h3 className="font-semibold text-foreground">{agent.name}</h3>
           <p className="text-xs text-muted-foreground">{agent.systemPrompt.slice(0, 50)}...</p>
@@ -75,7 +79,7 @@ export function AgentResultCard({ agent, messages, onSendMessage }: AgentResultC
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={`问 ${agent.name}...`}
+            placeholder={t('Ask') + ' ' + agent.name + '...'}
             className="flex-1 bg-background border-border/50 focus:border-primary"
           />
           <Button 
