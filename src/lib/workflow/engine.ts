@@ -188,9 +188,22 @@ export async function executeWorkflow(
     // Default routing: follow all outgoing edges
     for (const edge of outgoingEdges) {
       const nextPayload = structuredClone(currentPayload);
+      // Preserve the shared _loopResults reference across clones so that
+      // agent nodes inside a loop can accumulate results without losing
+      // the shared array on each routing step.
+      if (Array.isArray(currentPayload._loopResults)) {
+        nextPayload._loopResults = currentPayload._loopResults;
+      }
       results[edge.target] = nextPayload;
       queue.push({ nodeId: edge.target, payload: nextPayload });
     }
+  }
+
+  // Expose accumulated loop results under the public field name so callers
+  // can access all iteration outputs without them being overwritten by
+  // the last iteration's llmResult.
+  if (Array.isArray(finalPayload._loopResults) && finalPayload._loopResults.length > 0) {
+    finalPayload.loopResults = finalPayload._loopResults;
   }
 
   onStateChange?.({ status: 'completed', currentNodeId: null, results, nodeRecords });

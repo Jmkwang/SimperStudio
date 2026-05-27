@@ -109,7 +109,7 @@ export function SettingsGeneralTab() {
           <div className="space-y-0.5">
             <Label>{t("Allow Remote Access")}</Label>
             <div className="text-sm text-muted-foreground">
-              允许局域网内其他设备访问此应用
+              {t('Allow other devices on the LAN to access this app')}
             </div>
           </div>
           <Switch
@@ -119,7 +119,7 @@ export function SettingsGeneralTab() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="remote-access-port">远程访问端口</Label>
+          <Label htmlFor="remote-access-port">{t('Remote Access Port')}</Label>
           <Input
             id="remote-access-port"
             type="number"
@@ -137,7 +137,7 @@ export function SettingsGeneralTab() {
           <div className="space-y-0.5">
             <Label>{t("Debug Mode")}</Label>
             <div className="text-sm text-muted-foreground">
-              显示界面容器 ID 标签，用于调试布局问题
+              {t('Show interface container ID labels for debugging layout issues')}
             </div>
           </div>
           <Switch

@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
 import { useAppStore } from '@/stores';
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -11,15 +10,9 @@ export function SettingsAppearanceTab() {
   const { setTheme } = useTheme();
   const { t } = useTranslation();
 
-  const [theme, setLocalTheme] = useState(settings.theme);
-
-  useEffect(() => {
-    setLocalTheme(settings.theme);
-  }, [settings]);
-
-  const handleSave = () => {
-    updateSettings({ theme });
-    setTheme(theme);
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    updateSettings({ theme: newTheme });
+    setTheme(newTheme);
   };
 
   return (
@@ -34,25 +27,21 @@ export function SettingsAppearanceTab() {
           <Label>{t("Theme Preference")}</Label>
           <div className="flex items-center gap-2 mt-2">
             <Button
-              variant={theme === 'light' ? "default" : "outline"}
+              variant={settings.theme === 'light' ? "default" : "outline"}
               size="sm"
-              onClick={() => setLocalTheme('light')}
+              onClick={() => handleThemeChange('light')}
             >{t("Light")}</Button>
             <Button
-              variant={theme === 'dark' ? "default" : "outline"}
+              variant={settings.theme === 'dark' ? "default" : "outline"}
               size="sm"
-              onClick={() => setLocalTheme('dark')}
+              onClick={() => handleThemeChange('dark')}
             >{t("Dark")}</Button>
             <Button
-              variant={theme === 'system' ? "default" : "outline"}
+              variant={settings.theme === 'system' ? "default" : "outline"}
               size="sm"
-              onClick={() => setLocalTheme('system')}
+              onClick={() => handleThemeChange('system')}
             >{t("System")}</Button>
           </div>
-        </div>
-
-        <div className="pt-4 border-t">
-          <Button onClick={handleSave}>{t("Save Settings")}</Button>
         </div>
       </div>
     </div>

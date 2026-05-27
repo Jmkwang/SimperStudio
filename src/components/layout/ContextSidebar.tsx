@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { ChevronLeft } from "lucide-react"
 import { useAppStore } from '@/stores'
 import { useTranslation } from "@/hooks/useTranslation"
-import { ChatSidebar, WorkflowSidebar, AgentsSidebar } from "./sidebar"
+import { ChatSidebar, WorkflowSidebar, WorkflowChatSidebar, AgentsSidebar } from "./sidebar"
 import { DebugBadge } from "@/components/debug/DebugBadge"
 
 export function ContextSidebarHeader() {
@@ -11,6 +11,13 @@ export function ContextSidebarHeader() {
   )
 }
 
+// Constants extracted from magic numbers
+const SIDEBAR_OFFSET_X = 76
+const SIDEBAR_COLLAPSE_THRESHOLD = 180
+const SIDEBAR_MIN_WIDTH = 180
+const SIDEBAR_MAX_WIDTH = 600
+const SIDEBAR_DEFAULT_WIDTH = 256
+
 export function ContextSidebar({
   currentView,
   defaultCollapsed = false,
@@ -18,7 +25,7 @@ export function ContextSidebar({
   currentView: string
   defaultCollapsed?: boolean
 }) {
-  const [sidebarWidth, setSidebarWidth] = useState(defaultCollapsed ? 0 : 256)
+  const [sidebarWidth, setSidebarWidth] = useState(defaultCollapsed ? 0 : SIDEBAR_DEFAULT_WIDTH)
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const isResizing = useRef(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
@@ -40,9 +47,6 @@ export function ContextSidebar({
   const activeWorkflowId = useAppStore(state => state.activeWorkflowId)
   const selectedAgentCategory = useAppStore(state => state.selectedAgentCategory)
   const setSelectedAgentCategory = useAppStore(state => state.setSelectedAgentCategory)
-  const selectedChatWorkflowId = useAppStore(state => state.selectedChatWorkflowId)
-  const setSelectedChatWorkflowId = useAppStore(state => state.setSelectedChatWorkflowId)
-
   const { t } = useTranslation()
 
   const effectiveWidth = sidebarWidth
@@ -55,13 +59,13 @@ export function ContextSidebar({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return
-      const newWidth = e.clientX - 76
-      if (newWidth < 120) {
+      const newWidth = e.clientX - SIDEBAR_OFFSET_X
+      if (newWidth < SIDEBAR_COLLAPSE_THRESHOLD) {
         setCollapsed(true)
         setSidebarWidth(0)
       } else {
         setCollapsed(false)
-        setSidebarWidth(Math.min(600, Math.max(180, newWidth)))
+        setSidebarWidth(Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, newWidth)))
       }
     }
 
@@ -83,14 +87,14 @@ export function ContextSidebar({
       setSidebarWidth(0)
     } else {
       setCollapsed(false)
-      setSidebarWidth(256)
+      setSidebarWidth(SIDEBAR_DEFAULT_WIDTH)
     }
   }, [defaultCollapsed])
 
   const toggleCollapse = () => {
     if (collapsed) {
       setCollapsed(false)
-      setSidebarWidth(256)
+      setSidebarWidth(SIDEBAR_DEFAULT_WIDTH)
     } else {
       setCollapsed(true)
       setSidebarWidth(0)
@@ -103,7 +107,9 @@ export function ContextSidebar({
         <button
           onClick={toggleCollapse}
           className="h-full w-5 flex items-center justify-center hover:bg-hover text-muted-foreground hover:text-foreground transition-all duration-400 ease-out rounded-l-xl"
-          title="Expand sidebar"
+          aria-label={t("Expand sidebar")}
+          aria-expanded={false}
+          title={t("Expand sidebar")}
         >
           <ChevronLeft className="h-3 w-3 rotate-180" strokeWidth={1.5} />
         </button>
@@ -115,18 +121,24 @@ export function ContextSidebar({
     switch (currentView) {
       case 'chat':
         return <ChatSidebar
-          workflows={workflows}
           sessions={sessions}
           agents={agents}
           activeSessionId={activeSessionId}
-          selectedChatWorkflowId={selectedChatWorkflowId}
-          setSelectedChatWorkflowId={setSelectedChatWorkflowId}
           setActiveSession={setActiveSession}
-          openWorkflowSession={openWorkflowSession}
           createSession={createSession}
           deleteSession={deleteSession}
-          deleteWorkflow={deleteWorkflow}
           activeWorkspaceId={activeWorkspaceId}
+          t={t}
+        />
+      case 'workflowChat':
+        return <WorkflowChatSidebar
+          workflows={workflows}
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          setActiveSession={setActiveSession}
+          openWorkflowSession={openWorkflowSession}
+          deleteSession={deleteSession}
+          deleteWorkflow={deleteWorkflow}
           t={t}
         />
       case 'workflow':

@@ -1,4 +1,4 @@
-import { MessageSquare, Workflow, Users, Settings, Moon, Sun, Wand2 } from "lucide-react"
+import { MessageSquare, GitBranch, Workflow, Users, Settings, Moon, Sun, Wand2, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useTheme } from "../theme/ThemeProvider"
@@ -10,16 +10,17 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
   const { t } = useTranslation()
 
   return (
-    <TooltipProvider delayDuration={3000}>
+    <TooltipProvider delayDuration={400}>
       <div className="relative flex w-[60px] flex-col items-center justify-between py-5 m-1.5 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
         <DebugBadge id="GlobalSidebar" position="top-left" />
         <div className="flex flex-col items-center gap-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-lunar-300/15 to-lunar-500/5 border border-lunar-300/8 glow-sm">
-            <span className="font-semibold text-sm tracking-wider text-lunar-200">S</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10 glow-sm">
+            <span className="font-semibold text-sm tracking-wider text-primary">S</span>
           </div>
 
-          <nav className="flex flex-col gap-1.5">
+          <nav className="flex flex-col gap-1.5" aria-label={t("Main Navigation")}>
             <NavIcon icon={MessageSquare} label={t("Chats")} active={currentView === 'chat'} onClick={() => setCurrentView('chat')} />
+            <NavIcon icon={GitBranch} label={t("Workflow Chat")} active={currentView === 'workflowChat'} onClick={() => setCurrentView('workflowChat')} />
             <NavIcon icon={Workflow} label={t("Workflows")} active={currentView === 'workflow'} onClick={() => setCurrentView('workflow')} />
             <NavIcon icon={Users} label={t("Agents")} active={currentView === 'agents'} onClick={() => setCurrentView('agents')} />
             <NavIcon icon={Wand2} label={t("Prompts")} active={currentView === 'prompts'} onClick={() => setCurrentView('prompts')} />
@@ -32,10 +33,10 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent hover:border-foreground/[0.06] hover:bg-hover transition-all duration-400 ease-out text-muted-foreground hover:text-foreground"
+                aria-label={t("Toggle Theme")}
               >
                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" strokeWidth={1.5} />
                 <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" strokeWidth={1.5} />
-                <span className="sr-only">Toggle theme</span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -50,7 +51,7 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
   )
 }
 
-function NavIcon({ icon: Icon, label, active = false, onClick }: { icon: any, label: string, active?: boolean, onClick?: () => void }) {
+function NavIcon({ icon: Icon, label, active = false, onClick }: { icon: LucideIcon, label: string, active?: boolean, onClick?: () => void }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>

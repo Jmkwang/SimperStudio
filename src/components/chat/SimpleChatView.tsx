@@ -148,9 +148,32 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
 
       <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
         {session.messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
             <div className="text-4xl opacity-30">💬</div>
             <p className="text-sm">{t("Start a conversation")}</p>
+            <div className="grid grid-cols-3 gap-3 mt-2 max-w-lg w-full px-4">
+              <button
+                onClick={() => setInput(t('Try Werewolf Demo'))}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all text-center"
+              >
+                <span className="text-2xl">🐺</span>
+                <span className="text-xs font-medium">{t('Try Werewolf Demo')}</span>
+              </button>
+              <button
+                onClick={() => { /* Navigate to agents view */ }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all text-center"
+              >
+                <span className="text-2xl">🤖</span>
+                <span className="text-xs font-medium">{t('Create your first Agent')}</span>
+              </button>
+              <button
+                onClick={() => { /* Navigate to workflow view */ }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all text-center"
+              >
+                <span className="text-2xl">🔄</span>
+                <span className="text-xs font-medium">{t('Design a Workflow')}</span>
+              </button>
+            </div>
           </div>
         )}
 

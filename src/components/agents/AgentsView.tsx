@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bot, Plus, X } from 'lucide-react';
+import { Bot, Plus, X, ChevronDown } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { cn } from '@/lib/utils';
@@ -110,6 +110,7 @@ export function AgentsView() {
   const [bulkModelId, setBulkModelId] = useState('');
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const defaultAgentState = {
     name: '',
@@ -119,17 +120,20 @@ export function AgentsView() {
     industry: 'General',
     providerId: '',
     modelId: '',
-    temperature: 0.7,
+    temperature: undefined as number | undefined,
     maxTokens: undefined as number | undefined,
     parameters: {}
   };
 
   const [formData, setFormData] = useState(defaultAgentState);
 
+  const existingCategories = Array.from(new Set(agents.map((a: any) => a.category || a.industry).filter(Boolean))) as string[];
+
   useEffect(() => {
     if (activeAgentId === '__create_new__') {
       setEditingId(null);
       setFormData(defaultAgentState);
+      setAdvancedOpen(false);
       setIsOpen(true);
       setActiveAgent(null);
     }
@@ -162,12 +166,14 @@ export function AgentsView() {
       maxTokens: agent.maxTokens,
       parameters: agent.parameters || {}
     });
+    setAdvancedOpen(agent.temperature !== undefined || agent.maxTokens !== undefined);
     setIsOpen(true);
   };
 
   const handleOpenNew = () => {
     setEditingId(null);
     setFormData(defaultAgentState);
+    setAdvancedOpen(false);
   };
 
   const toggleSelection = (id: string) => {
@@ -276,22 +282,18 @@ export function AgentsView() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="industry">{t("Industry")}</Label>
-                  <Select
+                  <Input
+                    id="industry"
+                    list="industry-suggestions"
                     value={formData.industry}
-                    onValueChange={(value: string) => setFormData({ ...formData, industry: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="General">General</SelectItem>
-                      <SelectItem value="Technology">Technology</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Education">Education</SelectItem>
-                      <SelectItem value="Creative">Creative</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                    placeholder={t("Select Industry")}
+                  />
+                  <datalist id="industry-suggestions">
+                    {existingCategories.map((cat) => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="systemPrompt">{t("System Prompt")}</Label>
@@ -347,32 +349,41 @@ export function AgentsView() {
                 </div>
 
                 <div className="border-t pt-4 mt-2">
-                  <h4 className="text-sm font-medium mb-3">{t("Advanced Parameters")}</h4>
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <div className="flex justify-between">
-                        <Label>{t("Temperature")}</Label>
-                        <span className="text-xs text-muted-foreground">{formData.temperature}</span>
+                  <button
+                    type="button"
+                    className="flex items-center justify-between w-full text-sm font-medium mb-3"
+                    onClick={() => setAdvancedOpen(!advancedOpen)}
+                  >
+                    {t("Advanced Parameters")}
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
+                  </button>
+                  {advancedOpen && (
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <div className="flex justify-between">
+                          <Label>{t("Temperature")}</Label>
+                          <span className="text-xs text-muted-foreground">{formData.temperature ?? 'Auto'}</span>
+                        </div>
+                        <Slider
+                          value={[formData.temperature ?? 0.7]}
+                          min={0}
+                          max={2}
+                          step={0.1}
+                          onValueChange={([value]: number[]) => setFormData({ ...formData, temperature: value })}
+                        />
                       </div>
-                      <Slider
-                        value={[formData.temperature]}
-                        min={0}
-                        max={2}
-                        step={0.1}
-                        onValueChange={([value]: number[]) => setFormData({ ...formData, temperature: value })}
-                      />
+                      <div className="grid gap-2">
+                        <Label htmlFor="maxTokens">{t("Max Tokens (Optional)")}</Label>
+                        <Input
+                          id="maxTokens"
+                          type="number"
+                          value={formData.maxTokens || ''}
+                          onChange={(e) => setFormData({ ...formData, maxTokens: e.target.value ? parseInt(e.target.value) : undefined })}
+                          placeholder="e.g. 2048"
+                        />
+                      </div>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="maxTokens">{t("Max Tokens (Optional)")}</Label>
-                      <Input
-                        id="maxTokens"
-                        type="number"
-                        value={formData.maxTokens || ''}
-                        onChange={(e) => setFormData({ ...formData, maxTokens: e.target.value ? parseInt(e.target.value) : undefined })}
-                        placeholder="e.g. 2048"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end pt-4 border-t">

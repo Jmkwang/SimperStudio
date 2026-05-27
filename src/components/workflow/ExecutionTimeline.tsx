@@ -3,26 +3,28 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X, RotateCcw, Download, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const statusColors: Record<string, string> = {
-  running: 'bg-blue-500 motion-safe:animate-pulse',
-  success: 'bg-emerald-500',
-  error: 'bg-red-500',
+  running: 'bg-primary motion-safe:animate-pulse',
+  success: 'bg-green-500',
+  error: 'bg-destructive',
   skipped: 'bg-muted-foreground/30',
   pending: 'bg-muted-foreground/20',
-  retrying: 'bg-amber-500 motion-safe:animate-pulse',
+  retrying: 'bg-yellow-500 motion-safe:animate-pulse',
 };
 
 const statusTextColors: Record<string, string> = {
-  running: 'text-blue-600 dark:text-blue-400',
-  success: 'text-emerald-600 dark:text-emerald-400',
-  error: 'text-red-600 dark:text-red-400',
+  running: 'text-primary',
+  success: 'text-green-600 dark:text-green-400',
+  error: 'text-destructive',
   skipped: 'text-muted-foreground',
   pending: 'text-muted-foreground',
-  retrying: 'text-amber-600 dark:text-amber-400',
+  retrying: 'text-yellow-600 dark:text-yellow-400',
 };
 
 export function ExecutionTimeline() {
+  const { t } = useTranslation();
   const workflowExecution = useAppStore(state => state.workflowExecution);
   const activeWorkflow = useAppStore(state => state.getActiveWorkflow());
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
@@ -68,11 +70,11 @@ export function ExecutionTimeline() {
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           <div className={cn('w-2 h-2 rounded-full', {
-            'bg-blue-500 motion-safe:animate-pulse': workflowExecution.status === 'running',
-            'bg-emerald-500': workflowExecution.status === 'completed',
-            'bg-red-500': workflowExecution.status === 'error',
+            'bg-primary motion-safe:animate-pulse': workflowExecution.status === 'running',
+            'bg-green-500': workflowExecution.status === 'completed',
+            'bg-destructive': workflowExecution.status === 'error',
           })} />
-          Execution Timeline
+          {t('Execution Timeline')}
         </h3>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleExport}>

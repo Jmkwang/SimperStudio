@@ -18,12 +18,12 @@ import type { ModelProvider, ProviderModel } from "@/types/models";
 import { v4 as uuidv4 } from 'uuid';
 
 const PROVIDER_COLORS: Record<string, string> = {
-  openai: 'bg-emerald-500/20 text-emerald-500',
-  anthropic: 'bg-orange-500/20 text-orange-500',
-  gemini: 'bg-blue-500/20 text-blue-500',
-  deepseek: 'bg-indigo-500/20 text-indigo-500',
-  siliconflow: 'bg-cyan-500/20 text-cyan-500',
-  custom: 'bg-purple-500/20 text-purple-500',
+  openai: 'bg-green-500/20 text-green-600 dark:text-green-400',
+  anthropic: 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+  gemini: 'bg-sky-500/20 text-sky-600 dark:text-sky-400',
+  deepseek: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
+  siliconflow: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
+  custom: 'bg-primary/20 text-primary',
 };
 
 function getModelGroup(model: ProviderModel): string {
@@ -244,7 +244,7 @@ export function SettingsModelsTab() {
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">当前</span>
                   )}
                   {provider.isEnabled && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 font-medium">ON</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">ON</span>
                   )}
                   <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-opacity", selectedProviderId === provider.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
                 </div>
@@ -274,9 +274,9 @@ export function SettingsModelsTab() {
                     }}
                   >
                     <Star className="h-4 w-4 mr-1" />
-                    {settings.activeProviderId === selectedProvider.id ? '当前服务商' : '设为当前'}
+                    {settings.activeProviderId === selectedProvider.id ? t('Current Provider') : t('Set as Current')}
                   </Button>
-                  <Button variant="ghost" size="sm" className={cn("h-8 px-2", selectedProvider.isEnabled ? "text-emerald-500" : "text-muted-foreground")}
+                  <Button variant="ghost" size="sm" className={cn("h-8 px-2", selectedProvider.isEnabled ? "text-green-600 dark:text-green-400" : "text-muted-foreground")}
                     onClick={() => updateProvider(selectedProvider.id, { isEnabled: !selectedProvider.isEnabled })}>
                     <Power className="h-4 w-4 mr-1" />
                     {selectedProvider.isEnabled ? t("Enabled") : t("Disabled")}
@@ -361,7 +361,7 @@ export function SettingsModelsTab() {
                           const successCount = states.filter(s => s.status === 'success').length;
                           const errorCount = states.filter(s => s.status === 'error').length;
                           return (
-                            <span className={cn("flex items-center gap-1 text-xs", errorCount === 0 ? "text-emerald-500" : "text-amber-500")}>
+                            <span className={cn("flex items-center gap-1 text-xs", errorCount === 0 ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400")}>
                               {errorCount === 0 ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
                               {successCount}/{states.length} 通过{errorCount > 0 ? `，${errorCount} 失败` : ''}
                             </span>
@@ -429,7 +429,7 @@ export function SettingsModelsTab() {
                                       {(() => {
                                         const ts = modelTestStates[model.id];
                                         if (ts?.status === 'testing') return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />;
-                                        if (ts?.status === 'success') return <CheckCircle className="h-3 w-3 text-emerald-500" />;
+                                        if (ts?.status === 'success') return <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />;
                                         if (ts?.status === 'error') return (
                                           <button className="p-0.5 rounded text-destructive hover:bg-destructive/10 transition-colors"
                                             title={`${ts.error}\n\n${ts.detail || ''}\n（点击查看详情）`}
@@ -439,7 +439,7 @@ export function SettingsModelsTab() {
                                         );
                                         return (
                                           <button onClick={(e) => { e.stopPropagation(); if (selectedProvider) testSingleModel(selectedProvider, model); }}
-                                            className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title="测试该模型">
+                                            className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title={t('Test this model')}>
                                             <Play className="h-3 w-3" />
                                           </button>
                                         );
@@ -502,13 +502,13 @@ export function SettingsModelsTab() {
           </DialogHeader>
           <div className="flex-1 overflow-auto py-4">
             {fetchStatus === 'idle' && (
-              <div className="text-center py-8 text-muted-foreground"><RefreshCw className="h-8 w-8 mx-auto mb-3 opacity-30" /><p>点击下方按钮获取模型列表</p></div>
+              <div className="text-center py-8 text-muted-foreground"><RefreshCw className="h-8 w-8 mx-auto mb-3 opacity-30" /><p>{t('Click the button below to fetch model list')}</p></div>
             )}
             {fetchStatus === 'fetching' && (
-              <div className="text-center py-8"><Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" /><p className="text-muted-foreground">正在获取模型列表...</p></div>
+              <div className="text-center py-8"><Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" /><p className="text-muted-foreground">{t('Fetching models...')}</p></div>
             )}
             {fetchStatus === 'error' && (
-              <div className="text-center py-8"><XCircle className="h-8 w-8 mx-auto mb-3 text-destructive" /><p className="text-destructive font-medium">获取失败</p><p className="text-sm text-muted-foreground mt-1">{fetchError}</p></div>
+              <div className="text-center py-8"><XCircle className="h-8 w-8 mx-auto mb-3 text-destructive" /><p className="text-destructive font-medium">{t('Fetch failed')}</p><p className="text-sm text-muted-foreground mt-1">{fetchError}</p></div>
             )}
             {fetchStatus === 'success' && fetchedModels.length === 0 && (
               <div className="text-center py-8 text-muted-foreground"><p>未找到可用模型</p></div>
@@ -543,8 +543,8 @@ export function SettingsModelsTab() {
           <DialogFooter className="gap-2">
             {fetchStatus !== 'fetching' && (
               <>
-                <Button variant="outline" onClick={() => setFetchDialogOpen(false)}>取消</Button>
-                <Button variant="outline" onClick={handleFetchModels}><RefreshCw className="h-4 w-4 mr-1.5" />重新获取</Button>
+                <Button variant="outline" onClick={() => setFetchDialogOpen(false)}>{t('Cancel')}</Button>
+                <Button variant="outline" onClick={handleFetchModels}><RefreshCw className="h-4 w-4 mr-1.5" />{t('Re-fetch')}</Button>
                 {fetchStatus === 'success' && fetchedModels.length > 0 && (
                   <Button onClick={handleAddFetchedModels} disabled={selectedFetchedModels.size === 0}>
                     <Plus className="h-4 w-4 mr-1.5" />添加 {selectedFetchedModels.size > 0 ? `(${selectedFetchedModels.size})` : ''}
@@ -588,24 +588,24 @@ export function SettingsModelsTab() {
       <Dialog open={testAllDialogOpen} onOpenChange={setTestAllDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>测试全部模型</DialogTitle>
-            <DialogDescription>将对 {selectedProvider?.name || ''} 下的所有模型逐一进行连通性测试</DialogDescription>
+            <DialogTitle>{t('Test All Models')}</DialogTitle>
+            <DialogDescription>{t('This test will send a short message to each model')} {selectedProvider?.name || ''}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
               <div className="space-y-1 text-sm">
-                <p className="font-medium text-amber-600 dark:text-amber-400">费用提示</p>
+                <p className="font-medium text-yellow-600 dark:text-yellow-400">{t('Cost Warning')}</p>
                 <p className="text-muted-foreground">
-                  该测试将向每个模型发送一条简短消息（"hello"），共测试 <strong>{selectedProvider?.models.length || 0}</strong> 个模型。虽然每次请求消耗的 token 极少，但仍可能产生少量 API 调用费用。请确认后继续。
+                  {t('This test will send a short message to each model')}（"hello"），{t('models in total,')} <strong>{selectedProvider?.models.length || 0}</strong> {t('models in total,')} {t('Although each request consumes very few tokens, a small API call fee may still be incurred')}。{t('Please confirm before continuing')}。
                 </p>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground">测试内容：发送 "hello" → 验证流式响应是否正常返回</div>
+            <div className="text-sm text-muted-foreground">{t('Test content: send')} "hello" → {t('Verify streaming response')}</div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setTestAllDialogOpen(false)}>取消</Button>
-            <Button onClick={() => { setTestAllDialogOpen(false); testAllModels(); }}><Play className="h-4 w-4 mr-1.5" />确认测试</Button>
+            <Button variant="outline" onClick={() => setTestAllDialogOpen(false)}>{t('Cancel')}</Button>
+            <Button onClick={() => { setTestAllDialogOpen(false); testAllModels(); }}><Play className="h-4 w-4 mr-1.5" />{t('Confirm Test')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

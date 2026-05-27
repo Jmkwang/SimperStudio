@@ -11,7 +11,7 @@ import { useAppStore } from '@/stores';
 import { Toaster } from "@/components/ui/toaster";
 import { WorkflowNodePanel } from "@/components/layout/WorkflowNodePanel";
 
-type ViewMode = 'chat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'profile' | 'prompts';
+type ViewMode = 'chat' | 'workflowChat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'profile' | 'prompts';
 
 function App() {
   const fetchInitialData = useAppStore(state => state.fetchInitialData);

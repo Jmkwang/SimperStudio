@@ -122,11 +122,11 @@ function AssistantBubble({
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5 ml-1 flex-wrap">
-          <span className="text-[10px] text-muted-foreground/50 shrink-0">
+          <span className="text-[10px] text-muted-foreground/70 shrink-0">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
           {(response.tokenUsage || response.duration) && (
-            <span className="text-[10px] text-muted-foreground/50 shrink-0">
+            <span className="text-[10px] text-muted-foreground/70 shrink-0">
               ({response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : ''}{response.tokenUsage && response.duration ? ' / ' : ''}{response.duration ? `${(response.duration / 1000).toFixed(1)}s` : ''})
             </span>
           )}
@@ -134,7 +134,7 @@ function AssistantBubble({
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleCopy}
-                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
+                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
                 aria-label={t("Copy")}
               >
                 <Copy className="h-3 w-3" />
@@ -142,7 +142,7 @@ function AssistantBubble({
               {onRetry && (
                 <button
                   onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
-                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/50 hover:text-foreground transition-colors"
+                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
                   aria-label={t("Retry")}
                 >
                   <RefreshCw className="h-3 w-3" />

@@ -2,10 +2,12 @@ import { WorkflowNode, WorkflowEdge as _WorkflowEdge } from '../../../types/mode
 import { NodeExecutorFn, ExecutionHelpers } from '../types';
 
 export const loopExecute: NodeExecutorFn = async (node, payload, _helpers) => {
-  // Expose accumulated loop results under the public field name
+  // Initialize the shared accumulator so agent nodes inside the loop can
+  // push iteration results without overwriting payload.llmResult.
+  // The public loopResults field is populated at workflow completion
+  // (engine.ts) to avoid a premature empty snapshot here.
   return {
     ...payload,
-    loopResults: payload._loopResults || payload.loopResults || [],
     loopNodeId: node.id,
   };
 };

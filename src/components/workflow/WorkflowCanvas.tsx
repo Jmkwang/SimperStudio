@@ -35,7 +35,13 @@ import { ExecutionTimeline } from './ExecutionTimeline';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus, Save, Trash2, Download, PlayCircle } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Plus, Save, Trash2, Download, PlayCircle, MoreHorizontal } from 'lucide-react';
 import { useAppStore } from '@/stores';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -50,7 +56,7 @@ const GenericNode = ({ data, id }: any) => {
       <div className="font-semibold text-sm border-b pb-1 mb-2">{data.label}</div>
       <div className="text-xs text-muted-foreground">{t("Configure in sidebar")}</div>
       <div className="mt-2 text-right">
-        <Button variant="ghost" size="sm" onClick={() => data.deleteNode && data.deleteNode(id)} className="h-6 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-1 ml-auto">
+        <Button variant="ghost" size="sm" onClick={() => data.deleteNode && data.deleteNode(id)} className="h-6 px-2 text-xs text-destructive hover:text-destructive/80 hover:bg-destructive/10 flex items-center gap-1 ml-auto">
           <Trash2 className="h-3 w-3" /> {t("Delete")}
         </Button>
       </div>
@@ -210,10 +216,10 @@ function Flow() {
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />
         <Controls className="bg-card border shadow-sm rounded-lg" />
         <MiniMap
-          bgColor={theme === 'dark' ? '#111827' : '#ffffff'}
-          maskColor={theme === 'dark' ? 'rgba(17, 24, 39, 0.65)' : 'rgba(240, 240, 240, 0.65)'}
-          nodeColor={theme === 'dark' ? '#374151' : '#e5e7eb'}
-          maskStrokeColor={theme === 'dark' ? '#374151' : '#d1d5db'}
+          bgColor={theme === 'dark' ? 'hsl(224 16% 6%)' : 'hsl(0 0% 100%)'}
+          maskColor={theme === 'dark' ? 'hsla(224, 16%, 6%, 0.65)' : 'hsla(0, 0%, 100%, 0.65)'}
+          nodeColor={theme === 'dark' ? 'hsl(220 8% 52%)' : 'hsl(240 5% 42%)'}
+          maskStrokeColor={theme === 'dark' ? 'hsl(220 8% 52%)' : 'hsl(240 8% 85%)'}
         />
         <Panel position="top-right" className="flex gap-2 items-start">
            <Popover>
@@ -280,18 +286,24 @@ function Flow() {
              disabled={workflowExecution.status === 'running'}
            >
              <PlayCircle className="h-4 w-4 mr-1" />
-             {workflowExecution.status === 'running' ? 'Running...' : 'Test Run'}
+             {workflowExecution.status === 'running' ? t('Running...') : t('Test Run')}
            </Button>
-           <div className="relative group">
-             <Button onClick={handleSave} size="sm" className="h-8 shadow-sm">
-               <Save className="h-4 w-4 mr-1" /> {t("Save")}
-             </Button>
-             <div className="absolute top-full left-0 right-0 pt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-               <Button onClick={handleExport} variant="outline" size="sm" className="h-8 w-full shadow-md bg-card">
-                 <Download className="h-4 w-4 mr-1" /> {t("Export")}
+           <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+               <Button size="sm" className="h-8 shadow-sm">
+                 <Save className="h-4 w-4 mr-1" /> {t("Save")}
+                 <MoreHorizontal className="h-3 w-3 ml-1 opacity-60" />
                </Button>
-             </div>
-           </div>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent align="end">
+               <DropdownMenuItem onClick={handleSave}>
+                 <Save className="h-4 w-4 mr-2" /> {t("Save")}
+               </DropdownMenuItem>
+               <DropdownMenuItem onClick={handleExport}>
+                 <Download className="h-4 w-4 mr-2" /> {t("Export")}
+               </DropdownMenuItem>
+             </DropdownMenuContent>
+           </DropdownMenu>
         </Panel>
       </ReactFlow>
       <ExecutionTimeline />

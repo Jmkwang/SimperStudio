@@ -83,47 +83,51 @@ export function NewSessionDialog({
     onOpenChange(false)
   }
 
+  const hasWorkflowMode = workflows.length > 0
+
   const canCreate =
     mode === 'single' ? !!selectedAgentId : !!selectedWorkflowId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] rounded-xl">
+      <DialogContent className="sm:max-w-[520px] rounded-xl">
         <DialogHeader>
           <DialogTitle>{t('新建会话')}</DialogTitle>
         </DialogHeader>
 
-        {/* Mode switch */}
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant={mode === 'single' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setMode('single')
-              setSelectedWorkflowId('')
-              setSearchQuery('')
-            }}
-            className="flex-1 gap-1.5"
-          >
-            <Bot className="h-4 w-4" />
-            {t('单个智能体对话')}
-          </Button>
-          <Button
-            type="button"
-            variant={mode === 'workflow' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setMode('workflow')
-              setSelectedAgentId('')
-              setSearchQuery('')
-            }}
-            className="flex-1 gap-1.5"
-          >
-            <Workflow className="h-4 w-4" />
-            {t('工作流对话')}
-          </Button>
-        </div>
+        {/* Mode switch — only show when workflows are available */}
+        {hasWorkflowMode && (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={mode === 'single' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setMode('single')
+                setSelectedWorkflowId('')
+                setSearchQuery('')
+              }}
+              className="flex-1 gap-1.5"
+            >
+              <Bot className="h-4 w-4" />
+              {t('单个智能体对话')}
+            </Button>
+            <Button
+              type="button"
+              variant={mode === 'workflow' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setMode('workflow')
+                setSelectedAgentId('')
+                setSearchQuery('')
+              }}
+              className="flex-1 gap-1.5"
+            >
+              <Workflow className="h-4 w-4" />
+              {t('工作流对话')}
+            </Button>
+          </div>
+        )}
 
         {/* Session name */}
         <div className="grid gap-2">
@@ -152,7 +156,7 @@ export function NewSessionDialog({
 
         {/* Agent list */}
         {mode === 'single' && (
-          <div className="grid gap-1 max-h-[240px] overflow-auto">
+          <div className="grid gap-1 max-h-[360px] overflow-auto">
             {filteredAgents.length === 0 && (
               <div className="text-center text-xs text-muted-foreground py-4">
                 {t('暂无智能体')}
@@ -187,7 +191,7 @@ export function NewSessionDialog({
 
         {/* Workflow list */}
         {mode === 'workflow' && (
-          <div className="grid gap-1 max-h-[240px] overflow-auto">
+          <div className="grid gap-1 max-h-[360px] overflow-auto">
             {filteredWorkflows.length === 0 && (
               <div className="text-center text-xs text-muted-foreground py-4">
                 {t('暂无工作流')}
