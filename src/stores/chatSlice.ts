@@ -8,6 +8,7 @@ import {
 import { fetchFromResolvedConfig } from '@/lib/api';
 import { resolveAgentModelConfig, shortError, ResolveSettings } from '@/lib/agentProviderRouter';
 import { createUserMessage, createStreamMessage, createAgentResponse } from '@/lib/messageService';
+import { debugLogger } from '@/lib/debugLogger';
 import { writeConfig } from './baseSlice';
 
 export type WorkflowChatUIState = {
@@ -230,7 +231,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       try {
         await invoke('add_workflow', { workflow: { ...newWorkflow, nodesData: '[]', edgesData: '[]' } });
         await invoke('add_chat_session', { session: newSession });
-      } catch (error) { console.error('Failed to create workflow-backed session:', error); }
+      } catch (error) { console.error('Failed to create workflow-backed session:', error); debugLogger.error('chatSlice', 'createWorkflowSession failed', { error: String(error) }); }
       set((state: any) => {
         const nextWorkflows = [...state.workflows, newWorkflow];
         void writeConfig('workflow.json', nextWorkflows);
@@ -296,6 +297,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       } catch {
         // Best-effort persistence; memory already has the message
         console.warn('Failed to persist user message to DB');
+        debugLogger.warn('chatSlice', 'persist user message failed', { sessionId });
       }
     },
 
@@ -383,6 +385,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
         void invoke('add_chat_message', { message: msgToSave }).catch(() => {
           console.warn('Failed to persist assistant message to DB');
+          debugLogger.warn('chatSlice', 'persist assistant message failed', { sessionId });
         });
       }
     },

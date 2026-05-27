@@ -72,7 +72,11 @@ export async function executeWorkflow(
     const node = nodes.find((n) => n.id === nodeId);
     let currentPayload = structuredClone(frame.payload);
 
-    const idempotentKey = `${executionId}:${nodeId}`;
+    // Include loop iteration context in the idempotent key so that nodes
+    // inside a loop body can execute once per iteration instead of being
+    // skipped after the first iteration.
+    const loopCtx = frame.payload?.loop ? `:${frame.payload.loop.nodeId}:${frame.payload.loop.index}` : '';
+    const idempotentKey = `${executionId}:${nodeId}${loopCtx}`;
     if (executedKeys.has(idempotentKey)) continue;
     executedKeys.add(idempotentKey);
 

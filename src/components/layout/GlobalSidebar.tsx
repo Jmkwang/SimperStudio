@@ -4,10 +4,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useTheme } from "../theme/ThemeProvider"
 import { useTranslation } from "@/hooks/useTranslation"
 import { DebugBadge } from "@/components/debug/DebugBadge"
+import { useDebugTrack } from "@/hooks/useDebugTrack"
 
 export function GlobalSidebar({ currentView, setCurrentView }: { currentView: string, setCurrentView: (v: string) => void }) {
   const { theme, setTheme } = useTheme()
   const { t } = useTranslation()
+  const { trackClick, debugProps } = useDebugTrack('GlobalSidebar')
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -19,11 +21,11 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
           </div>
 
           <nav className="flex flex-col gap-2" aria-label={t("Main Navigation")}>
-            <NavIcon icon={MessageSquare} label={t("Chats")} active={currentView === 'chat'} onClick={() => setCurrentView('chat')} />
-            <NavIcon icon={GitBranch} label={t("Workflow Chat")} active={currentView === 'workflowChat'} onClick={() => setCurrentView('workflowChat')} />
-            <NavIcon icon={Workflow} label={t("Workflows")} active={currentView === 'workflow'} onClick={() => setCurrentView('workflow')} />
-            <NavIcon icon={Users} label={t("Agents")} active={currentView === 'agents'} onClick={() => setCurrentView('agents')} />
-            <NavIcon icon={Wand2} label={t("Prompts")} active={currentView === 'prompts'} onClick={() => setCurrentView('prompts')} />
+            <NavIcon icon={MessageSquare} label={t("Chats")} active={currentView === 'chat'} onClick={trackClick(() => setCurrentView('chat'), 'nav:chat')} {...debugProps('nav:chat')} />
+            <NavIcon icon={GitBranch} label={t("Workflow Chat")} active={currentView === 'workflowChat'} onClick={trackClick(() => setCurrentView('workflowChat'), 'nav:workflowChat')} {...debugProps('nav:workflowChat')} />
+            <NavIcon icon={Workflow} label={t("Workflows")} active={currentView === 'workflow'} onClick={trackClick(() => setCurrentView('workflow'), 'nav:workflow')} {...debugProps('nav:workflow')} />
+            <NavIcon icon={Users} label={t("Agents")} active={currentView === 'agents'} onClick={trackClick(() => setCurrentView('agents'), 'nav:agents')} {...debugProps('nav:agents')} />
+            <NavIcon icon={Wand2} label={t("Prompts")} active={currentView === 'prompts'} onClick={trackClick(() => setCurrentView('prompts'), 'nav:prompts')} {...debugProps('nav:prompts')} />
           </nav>
         </div>
 
@@ -31,7 +33,8 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                onClick={trackClick(() => setTheme(theme === "dark" ? "light" : "dark"), 'toggle:theme')}
+                {...debugProps('toggle:theme')}
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent hover:border-foreground/[0.06] hover:bg-hover transition-all duration-400 ease-out text-muted-foreground hover:text-foreground"
                 aria-label={t("Toggle Theme")}
               >
@@ -44,7 +47,7 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
             </TooltipContent>
           </Tooltip>
 
-          <NavIcon icon={Settings} label={t("Settings")} active={currentView === 'settings'} onClick={() => setCurrentView('settings')} />
+          <NavIcon icon={Settings} label={t("Settings")} active={currentView === 'settings'} onClick={trackClick(() => setCurrentView('settings'), 'nav:settings')} {...debugProps('nav:settings')} />
         </div>
       </div>
     </TooltipProvider>

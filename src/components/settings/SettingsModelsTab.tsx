@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
+import { useDebugTrack } from "@/hooks/useDebugTrack";
 import {
   Plus, Trash2, Power, ChevronRight, Star, Minus,
   Play, CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Bot, AlertTriangle, Eye
@@ -60,6 +61,7 @@ export function SettingsModelsTab() {
   const updateProvider = useAppStore(state => state.updateProvider);
   const deleteProvider = useAppStore(state => state.deleteProvider);
   const { t } = useTranslation();
+  const { trackClick } = useDebugTrack('SettingsModelsTab');
 
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(settings.activeProviderId);
   const [newModel, setNewModel] = useState({ name: '', modelId: '', group: '' });
@@ -99,7 +101,7 @@ export function SettingsModelsTab() {
     }
   }, [selectedProvider?.id]);
 
-  const handleInlineAddProvider = () => {
+  const handleInlineAddProvider = trackClick(() => {
     const newProvider: ModelProvider = {
       id: uuidv4(),
       name: t('New Provider'),
@@ -112,7 +114,7 @@ export function SettingsModelsTab() {
     };
     addProvider(newProvider);
     setSelectedProviderId(newProvider.id);
-  };
+  }, 'provider:InlineAdd');
 
   const handleAddModel = () => {
     if (selectedProvider && newModel.modelId) {
@@ -237,7 +239,7 @@ export function SettingsModelsTab() {
           </div>
           <div className="flex flex-col gap-1">
             {settings.providers.map(provider => (
-              <div key={provider.id} onClick={() => setSelectedProviderId(provider.id)} className={cn(
+              <div key={provider.id} onClick={trackClick(() => setSelectedProviderId(provider.id), 'provider:select')} data-debug-source="SettingsModelsTab" data-debug-action="provider:select" className={cn(
                 "group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors",
                 selectedProviderId === provider.id
                   ? "bg-primary/10 border border-primary/20"
@@ -279,26 +281,26 @@ export function SettingsModelsTab() {
                     size="sm"
                     className={cn("h-8 px-2", settings.activeProviderId === selectedProvider.id ? "text-primary" : "text-muted-foreground")}
                     disabled={settings.activeProviderId === selectedProvider.id}
-                    onClick={() => {
+                    onClick={trackClick(() => {
                       const setActiveProvider = useAppStore.getState().setActiveProvider;
                       setActiveProvider(selectedProvider.id);
-                    }}
+                    }, 'provider:setActive')}
                   >
                     <Star className="h-4 w-4 mr-1" />
                     {settings.activeProviderId === selectedProvider.id ? t('Current Provider') : t('Set as Current')}
                   </Button>
                   <Button variant="ghost" size="sm" className={cn("h-8 px-2", selectedProvider.isEnabled ? "text-green-600 dark:text-green-400" : "text-muted-foreground")}
-                    onClick={() => updateProvider(selectedProvider.id, { isEnabled: !selectedProvider.isEnabled })}>
+                    onClick={trackClick(() => updateProvider(selectedProvider.id, { isEnabled: !selectedProvider.isEnabled }), 'provider:toggleEnabled')}>
                     <Power className="h-4 w-4 mr-1" />
                     {selectedProvider.isEnabled ? t("Enabled") : t("Disabled")}
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={() => {
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={trackClick(() => {
                     if (!selectedProvider) return;
                     const currentId = selectedProvider.id;
                     const remaining = settings.providers.filter(p => p.id !== currentId);
                     deleteProvider(currentId);
                     setSelectedProviderId(remaining[0]?.id || null);
-                  }}>
+                  }, 'provider:delete')}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -381,7 +383,7 @@ export function SettingsModelsTab() {
                         return null;
                       })()}
                       <span className="text-xs text-muted-foreground">{selectedProvider.models.length} {t("models")}</span>
-                      <button onClick={() => setTestAllDialogOpen(true)}
+                      <button onClick={trackClick(() => setTestAllDialogOpen(true), 'model:testAllDialog')}
                         disabled={testAllRunning || selectedProvider.models.length === 0}
                         className={cn("flex items-center gap-1 px-2 py-1 text-xs rounded-lg transition-all duration-300 border",
                           testAllRunning ? "text-muted-foreground border-border cursor-not-allowed" : "text-primary border-primary/20 hover:bg-primary/5 hover:border-primary/40")}
@@ -444,18 +446,18 @@ export function SettingsModelsTab() {
                                           </button>
                                         );
                                         return (
-                                          <button onClick={(e) => { e.stopPropagation(); if (selectedProvider) testSingleModel(selectedProvider, model); }}
+                                          <button onClick={(e) => { e.stopPropagation(); if (selectedProvider) { trackClick(() => testSingleModel(selectedProvider, model), 'model:testSingle')(); } }}
                                             className="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title={t('Test this model')}>
                                             <Play className="h-3 w-3" />
                                           </button>
                                         );
                                       })()}
-                                      <button onClick={() => handleSetDefaultModel(model.id)}
+                                      <button onClick={trackClick(() => handleSetDefaultModel(model.id), 'model:setDefault')}
                                         className={cn("p-1 rounded transition-colors", model.isDefault ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500")}
                                         title={model.isDefault ? t("Default Model") : t("Set as Default")}>
                                         <Star className={cn("h-3 w-3", model.isDefault && "fill-current")} />
                                       </button>
-                                      <button onClick={() => handleDeleteModel(model.id)}
+                                      <button onClick={trackClick(() => handleDeleteModel(model.id), 'model:delete')}
                                         className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors" title={t("Delete")}>
                                         <Minus className="h-3 w-3" />
                                       </button>
@@ -479,10 +481,10 @@ export function SettingsModelsTab() {
 
                   {/* Add Model Buttons */}
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setFetchDialogOpen(true)}>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={trackClick(() => setFetchDialogOpen(true), 'model:fetchDialog')}>
                       <RefreshCw className="h-3.5 w-3.5 mr-1.5" />{t('获取模型列表')}
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setAddModelDialogOpen(true)}>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={trackClick(() => setAddModelDialogOpen(true), 'model:addDialog')}>
                       <Plus className="h-3.5 w-3.5 mr-1.5" />{t('添加模型')}
                     </Button>
                   </div>
@@ -610,7 +612,7 @@ export function SettingsModelsTab() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setTestAllDialogOpen(false)}>{t('Cancel')}</Button>
-            <Button onClick={() => { setTestAllDialogOpen(false); testAllModels(); }}><Play className="h-4 w-4 mr-1.5" />{t('Confirm Test')}</Button>
+            <Button onClick={trackClick(() => { setTestAllDialogOpen(false); testAllModels(); }, 'model:confirmTestAll')}><Play className="h-4 w-4 mr-1.5" />{t('Confirm Test')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

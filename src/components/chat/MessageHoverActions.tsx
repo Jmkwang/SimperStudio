@@ -2,6 +2,7 @@ import { Copy, RefreshCw, Forward, RotateCcw, Quote, ThumbsUp, ThumbsDown, Bookm
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useDebugTrack } from "@/hooks/useDebugTrack";
 
 export interface MessageHoverActionsProps {
   canCopy?: boolean;
@@ -45,6 +46,7 @@ export function MessageHoverActions({
   onDelete,
 }: MessageHoverActionsProps) {
   const { t } = useTranslation();
+  const { debugProps } = useDebugTrack('MessageHoverActions');
 
   return (
     <div className="mt-2 flex flex-wrap gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
@@ -55,6 +57,7 @@ export function MessageHoverActions({
           onClick={onCopy}
           aria-label={t("Copy")}
           className="h-8 px-2"
+          {...debugProps('msg:copy')}
         >
           <Copy className="h-3 w-3" />
         </Button>
@@ -66,6 +69,7 @@ export function MessageHoverActions({
           onClick={onRerun}
           aria-label={t("Regenerate")}
           className="h-8 px-2"
+          {...debugProps('msg:rerun')}
         >
           <RefreshCw className="h-3 w-3" />
         </Button>
@@ -134,13 +138,13 @@ export function MessageHoverActions({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {canForward && (
-              <DropdownMenuItem onClick={onForward}>
+              <DropdownMenuItem onClick={onForward} {...debugProps('msg:forward')}>
                 <Forward className="mr-2 h-3 w-3" />
                 {t("Send to next")}
               </DropdownMenuItem>
             )}
             {canRerunAndForward && (
-              <DropdownMenuItem onClick={onRerunAndForward}>
+              <DropdownMenuItem onClick={onRerunAndForward} {...debugProps('msg:rerunAndForward')}>
                 <RotateCcw className="mr-2 h-3 w-3" />
                 {t("Retry and send")}
               </DropdownMenuItem>

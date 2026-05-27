@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import type { ModelProvider } from '@/types/models';
 import type { ResolvedModelConfig } from './agentProviderRouter';
+import { debugLogger } from '@/lib/debugLogger';
 
 /** 自动拼 /v1：用户只需填域名，程序补全版本路径 */
 function ensureV1(url: string): string {
@@ -71,6 +72,16 @@ export async function fetchFromModel(provider: string, modelId: string, prompt: 
 }
 
 export async function fetchFromProvider(provider: ModelProvider, modelId: string, prompt: string, systemPrompt?: string, options?: FetchOptions) {
+    const startTime = performance.now();
+    debugLogger.log('api_call', 'api', `→ ${provider.type}/${modelId}`, {
+      baseUrl: provider.baseUrl,
+      apiFormat: provider.apiFormat,
+      promptPreview: prompt.slice(0, 120),
+      systemPromptPreview: systemPrompt?.slice(0, 80),
+      maxTokens: options?.maxTokens,
+      temperature: options?.temperature,
+    });
+
     let model;
 
     if (provider.type === 'openai' || provider.type === 'custom' || provider.type === 'siliconflow' || provider.type === 'deepseek') {
@@ -106,11 +117,16 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
         throw new Error(`Unsupported provider type: ${provider.type}`);
     }
 
-    return streamText({
+    const result = streamText({
         model,
         system: systemPrompt,
         prompt,
         maxTokens: options?.maxTokens,
         temperature: options?.temperature,
     });
+
+    const duration = performance.now() - startTime;
+    debugLogger.log('api_response', 'api', `← ${provider.type}/${modelId}`, { durationMs: Math.round(duration) }, 'info', duration);
+
+    return result;
 }

@@ -233,6 +233,7 @@
 - [ ] 对齐 loop 聚合与 `payload.llmResult` 关系，避免覆盖。
 - [ ] 明确 `forwardAgentReplyToNext` 与 `executeWorkflow` 的职责边界（聊天转发 vs 正式运行时）。
 - [ ] 狼人杀样例回归：屠边、狼刀优先、女巫药剂、猎人开枪、平票 PK、`breakCondition`、`maxIterations`。
+- [ ] **引擎执行结果写入聊天消息**：当前 `executeWorkflow` 引擎的 LLM 调用（`agentExecutor` / `dynamicAgentExecutor`）结果仅存在引擎内部 `results`，不写入 chat session messages。用户点击"执行工作流"后看不到法官生成角色、狼人决策、发言等内容。需在引擎节点执行完成后调用 `addAgentResponseStream` / `completeAgentResponse` 将每个节点的 LLM 回复写入会话，使执行过程在聊天区可见。涉及文件：`engine.ts`（需传入 chat slice 的写入回调）、`workflowSlice.ts`（桥接引擎与 chat slice）、`WorkflowChatView.tsx`（关联执行状态与消息渲染）。
 
 ## 5. P3：可观测与运维能力（可定位、可重放、可发布）
 

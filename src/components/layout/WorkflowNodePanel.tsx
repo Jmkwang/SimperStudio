@@ -19,7 +19,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
     ? workflows.find(w => w.id === activeSession.workflowId)
     : undefined
   const workflowAgentNodes = (workflowForActiveSession?.nodesData || []).filter(
-    node => node.type === 'agent' && node.data?.agentId
+    node => (node.type === 'agent' || node.type === 'dynamic-agent') && (node.data?.agentId || node.type === 'dynamic-agent')
   )
   const collapsed = activeSession
     ? (sidebarCollapsedBySession[activeSession.id] ?? true)
@@ -56,9 +56,12 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
         <div className="text-xs text-muted-foreground mb-2">{t('Agent Nodes')}</div>
         <div className="flex flex-col gap-1">
           {workflowAgentNodes.map(node => {
-            const agentId = node.data?.agentId
+            const isDynamic = node.type === 'dynamic-agent'
+            const agentId = isDynamic ? `dynamic-${node.id}` : node.data?.agentId
             if (!agentId) return null
             const agent = agents.find(item => item.id === agentId)
+            const displayName = node.data?.label || (isDynamic ? 'Dynamic Agent' : node.id)
+            const subName = isDynamic ? (node.data?.inlineConfig?.nameTemplate || 'Dynamic Agent') : (agent?.name || agentId)
             return (
               <button
                 key={node.id}
@@ -67,8 +70,8 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
               >
                 <Bot className="h-4 w-4 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{node.data?.label || node.id}</div>
-                  <div className="truncate text-xs text-muted-foreground">{agent?.name || agentId}</div>
+                  <div className="truncate font-medium">{displayName}</div>
+                  <div className="truncate text-xs text-muted-foreground">{subName}</div>
                 </div>
               </button>
             )

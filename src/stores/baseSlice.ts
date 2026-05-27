@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { v4 as uuidv4 } from 'uuid';
 import { Workspace, Agent, ChatSession, Settings, Workflow, ChatMessage, ModelProvider, AgentCategory } from '../types/models';
+import { debugLogger } from '@/lib/debugLogger';
 
 const LS_KEY = 'simper_config';
 
@@ -45,12 +46,14 @@ export async function writeConfig(name: string, value: unknown) {
     await invoke('write_json_config', { name, value: payload });
   } catch (e) {
     console.warn(`Tauri write_json_config failed for "${name}", falling back to localStorage`, e);
+    debugLogger.warn('baseSlice', `writeConfig fallback for "${name}"`, { error: String(e) });
     try {
       const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
       all[name] = value;
       localStorage.setItem(LS_KEY, JSON.stringify(all));
     } catch (lsErr) {
       console.error(`localStorage fallback failed for "${name}"`, lsErr);
+      debugLogger.error('baseSlice', `localStorage fallback failed for "${name}"`, { error: String(lsErr) });
     }
   }
 }
@@ -232,6 +235,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         set((state: any) => ({ workspaces: [...state.workspaces, newWorkspace] }));
       } catch (error) {
         console.error('Failed to add workspace', error);
+        debugLogger.error('baseSlice', 'addWorkspace failed', { error: String(error) });
       }
     },
 
@@ -248,6 +252,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         set({ agents: nextAgents });
       } catch (error) {
         console.error('Failed to add agent:', error);
+        debugLogger.error('baseSlice', 'addAgent failed', { error: String(error) });
         throw error;
       }
     },
@@ -274,6 +279,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         set({ agents: nextAgents });
       } catch (e) {
         console.error('Failed to update agent in DB:', e);
+        debugLogger.error('baseSlice', 'updateAgent DB failed', { agentId: id, error: String(e) });
       }
     },
 
@@ -298,6 +304,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           successfulIds.add(agent.id);
         } catch (e) {
           console.error('Failed to batch update agent in DB:', e);
+          debugLogger.error('baseSlice', 'batchUpdateAgents DB failed', { agentId: agent.id, error: String(e) });
         }
       }
       const nextAgents = agents.map((agent: Agent) =>

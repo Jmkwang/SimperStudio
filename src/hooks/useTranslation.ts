@@ -270,6 +270,11 @@ const translations: Translations = {
     'Ask': 'Ask',
     'Enter message both agents': 'Enter a message, both agents will process simultaneously...',
     'Send': 'Send',
+    'Run Workflow': 'Run Workflow',
+    'Stop': 'Stop',
+    'Dismiss': 'Dismiss',
+    'Workflow completed': 'Workflow completed',
+    'No API provider configured. Please set up a provider with a valid API key in Settings > Models.': 'No API provider configured. Please set up a provider with a valid API key in Settings > Models.',
 
     // Chinese keys used in source code (backward-compatible mappings)
     '智能体对话': 'Agent Chat',
@@ -595,6 +600,11 @@ const translations: Translations = {
     'Ask': '问',
     'Enter message both agents': '输入消息，两个智能体将同时处理...',
     'Send': '发送',
+    'Run Workflow': '执行工作流',
+    'Stop': '停止',
+    'Dismiss': '关闭',
+    'Workflow completed': '工作流执行完成',
+    'No API provider configured. Please set up a provider with a valid API key in Settings > Models.': '未配置 API 服务商。请在 设置 > 模型 中配置一个有效的 API Key。',
 
     // Chinese keys used in source code (backward-compatible mappings)
     '智能体对话': '智能体对话',

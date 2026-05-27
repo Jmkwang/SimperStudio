@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Workflow, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { DebugBadge } from "@/components/debug/DebugBadge";
+import { useDebugTrack } from "@/hooks/useDebugTrack";
 
 function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null, defaultLabel = 'Default'): { providerName: string; modelName: string } | null {
   if (!agent) return null;
@@ -32,6 +33,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const [input, setInput] = useState("");
   const [selectedAgentId] = useState<string | null>(null);
+  const { trackClick } = useDebugTrack('SimpleChatView');
   const [multiAgentMode] = useState(false);
   const [showTopology, setShowTopology] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,7 +127,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowTopology(!showTopology)}
+              onClick={trackClick(() => setShowTopology(!showTopology), 'chat:toggleTopology')}
               className="ml-2 h-8 w-8 p-0"
             >
               <Workflow className="h-4 w-4" />
@@ -192,9 +194,11 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
               className="min-h-[64px] text-sm"
             />
             <Button
-              onClick={handleSend}
+              onClick={trackClick(handleSend, 'chat:send')}
               disabled={!input.trim() || !activeAgent}
               className="self-end h-11 w-11"
+              data-debug-source="SimpleChatView"
+              data-debug-action="chat:send"
               aria-label={t("Send")}
             >
               <Send className="h-4 w-4" />

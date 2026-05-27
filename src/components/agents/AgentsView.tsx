@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Bot, Plus, X, ChevronDown } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { DebugBadge } from '@/components/debug/DebugBadge';
+import { useDebugTrack } from '@/hooks/useDebugTrack';
 import { cn } from '@/lib/utils';
 
 interface AgentCardProps {
@@ -104,6 +105,7 @@ export function AgentsView() {
   const providers = settings.providers || [];
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const { trackClick } = useDebugTrack('AgentsView');
   const batchUpdateAgents = useAppStore(state => state.batchUpdateAgents);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -244,7 +246,7 @@ export function AgentsView() {
             </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleOpenNew}>
+                <Button onClick={trackClick(handleOpenNew, 'agent:openCreate')} data-debug-source="AgentsView" data-debug-action="agent:openCreate">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Agent
                 </Button>
@@ -388,7 +390,7 @@ export function AgentsView() {
                 </div>
               </div>
               <div className="flex justify-end pt-4 border-t">
-                <Button onClick={handleSave}>{editingId ? t('Save Changes') : t('Create Agent')}</Button>
+                <Button onClick={trackClick(handleSave, editingId ? 'agent:update' : 'agent:create')} data-debug-source="AgentsView" data-debug-action={editingId ? 'agent:update' : 'agent:create'}>{editingId ? t('Save Changes') : t('Create Agent')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -545,14 +547,14 @@ export function AgentsView() {
             <Button
               size="sm"
               disabled={!bulkProviderId}
-              onClick={handleBulkApply}
+              onClick={trackClick(handleBulkApply, 'agent:bulkApply')}
             >
               {t('Apply')}
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              onClick={exitBulkMode}
+              onClick={trackClick(exitBulkMode, 'agent:exitBulk')}
             >
               {t('Done')}
             </Button>

@@ -58,7 +58,7 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
     selectedAgentCategory: null,
     workflowChatMode: false,
     chatLayoutMode: 'B',
-    debugMode: true,
+    debugMode: false,
     contextSidebarTab: 'workflows',
     selectedChatWorkflowId: null,
     workflowOrder: [],

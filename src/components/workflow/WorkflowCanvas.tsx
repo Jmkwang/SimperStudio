@@ -47,6 +47,7 @@ import { useTheme } from '@/components/theme/ThemeProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { DebugBadge } from '@/components/debug/DebugBadge';
+import { useDebugTrack } from '@/hooks/useDebugTrack';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
 const GenericNode = ({ data, id }: any) => {
@@ -119,6 +120,7 @@ function Flow() {
   const { theme } = useTheme();
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const { t } = useTranslation();
+  const { trackClick, track } = useDebugTrack('WorkflowCanvas');
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -156,6 +158,7 @@ function Flow() {
   );
 
   const addNode = (type: string, label: string) => {
+    track('click', `addNode:${type}`, { label });
     const defaultDataBuilder = nodeDefaultDataBuilders[type];
     const defaultData = defaultDataBuilder ? defaultDataBuilder() : {};
 
@@ -168,15 +171,15 @@ function Flow() {
     setNodes((nds) => [...nds, newNode]);
   };
 
-  const handleSave = () => {
+  const handleSave = trackClick(() => {
     if (activeWorkflow) {
       saveWorkflow(activeWorkflow.id, nodes as any, edges as any);
       console.log('Workflow saved!');
       toast.success(t('Workflow saved successfully!'));
     }
-  };
+  }, 'workflow:save');
 
-  const handleExport = () => {
+  const handleExport = trackClick(() => {
     const exportData = {
       nodes: nodes.map(n => ({ id: n.id, type: n.type, position: n.position, data: { ...n.data, deleteNode: undefined } })),
       edges,
@@ -190,7 +193,7 @@ function Flow() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(t('Workflow exported'));
-  };
+  }, 'workflow:export');
 
   // Re-sync local state when activeWorkflow changes
   useEffect(() => {
@@ -266,7 +269,7 @@ function Flow() {
            </Popover>
            <Button
              variant="outline"
-             onClick={() => {
+             onClick={trackClick(() => {
                const isWerewolf = activeWorkflow?.name === 'Werewolf Game Logic';
                const initialPayload = isWerewolf
                  ? {
@@ -281,7 +284,7 @@ function Flow() {
                    }
                  : { text: "Hello from test input!", value: 75 };
                executeWorkflow(activeWorkflow!.id, initialPayload);
-             }}
+             }, 'workflow:test-run')}
              size="sm"
              className="h-8 shadow-sm"
              disabled={workflowExecution.status === 'running'}

@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Workflow, WorkflowNode, WorkflowEdge, WorkflowNodeData } from '../types/models';
 import { writeConfig } from './baseSlice';
 import { executeWorkflow as engineExecuteWorkflow } from '../lib/workflow/engine';
+import { debugLogger } from '@/lib/debugLogger';
 
 export type WorkflowExecutionState = {
   status: 'idle' | 'running' | 'completed' | 'error';
@@ -371,6 +372,7 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
         }
       } catch (error) {
         console.error('Failed to save workflow:', error);
+        debugLogger.error('workflowSlice', 'saveWorkflow failed', { workflowId: id, error: String(error) });
       }
     },
 
@@ -381,6 +383,7 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
         await Promise.all(linkedSessions.map((s: any) => invoke('delete_chat_session', { id: s.id })));
       } catch (error) {
         console.error('Failed to delete workflow:', error);
+        debugLogger.error('workflowSlice', 'deleteWorkflow failed', { workflowId: id, error: String(error) });
       }
       set((state: any) => {
         const workflows = state.workflows.filter((w: Workflow) => w.id !== id);
@@ -412,6 +415,10 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
       const abortController = new AbortController();
       set({ _abortController: abortController });
 
+      // Global timeout: 5 minutes to prevent indefinite hangs
+      const GLOBAL_TIMEOUT_MS = 5 * 60 * 1000;
+      const timeoutId = setTimeout(() => abortController.abort(), GLOBAL_TIMEOUT_MS);
+
       try {
         const result = await engineExecuteWorkflow(
           workflow.nodesData,
@@ -423,10 +430,13 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
         );
         return result.finalPayload;
       } catch (e: any) {
-        console.error('Workflow execution failed:', e);
+        const msg = e.name === 'AbortError' ? 'Workflow timed out after 5 minutes' : (e.message || String(e));
+        console.error('Workflow execution failed:', msg);
+        debugLogger.error('workflowSlice', 'executeWorkflow failed', { error: msg });
         setWorkflowExecutionState({ status: 'error' });
-        return initialPayload;
+        return { ...initialPayload, _error: msg };
       } finally {
+        clearTimeout(timeoutId);
         set({ _abortController: null });
       }
     },

@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { GlobalSidebar } from "./GlobalSidebar"
 import { ContextSidebar, ContextSidebarHeader } from "./ContextSidebar"
 import { DebugBadge } from "@/components/debug/DebugBadge"
+import { DebugOverlay } from "@/components/debug/DebugOverlay"
+import { useAppStore } from '@/stores'
 
 const VIEWS_WITHOUT_SIDEBAR = new Set(['prompts', 'settings', 'profile'])
 
@@ -14,6 +17,20 @@ export function AppShell({
   setCurrentView: (v: string) => void,
 }) {
   const showSidebar = !VIEWS_WITHOUT_SIDEBAR.has(currentView)
+  const debugMode = useAppStore(state => state.debugMode)
+  const toggleDebugMode = useAppStore(state => state.toggleDebugMode)
+
+  // Keyboard shortcut: Ctrl+Shift+D to toggle debug mode
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        toggleDebugMode()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [toggleDebugMode])
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
@@ -35,6 +52,7 @@ export function AppShell({
           </main>
         </div>
       </div>
+      {debugMode && <DebugOverlay />}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { X, RotateCcw, Download, ChevronDown, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useDebugTrack } from '@/hooks/useDebugTrack';
 
 const statusConfig: Record<string, {
   dotClass: string;
@@ -65,6 +66,7 @@ export function ExecutionTimeline() {
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const prevStatusRef = useRef(workflowExecution.status);
   const [showGlobalFeedback, setShowGlobalFeedback] = useState(false);
+  const { trackClick } = useDebugTrack('ExecutionTimeline');
 
   useEffect(() => {
     const prev = prevStatusRef.current;
@@ -170,15 +172,15 @@ export function ExecutionTimeline() {
               variant="outline"
               size="sm"
               className="h-7 px-2 text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={handleRerunAll}
+              onClick={trackClick(handleRerunAll, 'timeline:rerunAll')}
             >
               <RotateCcw className="h-3 w-3 mr-1" /> {t('一键重试')}
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleExport}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={trackClick(handleExport, 'timeline:export')}>
             <Download className="h-3 w-3 mr-1" /> Export
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setWorkflowExecutionState({ status: 'idle' })} aria-label="Close execution timeline">
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={trackClick(() => setWorkflowExecutionState({ status: 'idle' }), 'timeline:close')} aria-label="Close execution timeline">
             <X className="h-3 w-3" />
           </Button>
         </div>
