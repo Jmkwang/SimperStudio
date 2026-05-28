@@ -11,6 +11,30 @@ import { createUserMessage, createStreamMessage, createAgentResponse } from '@/l
 import { debugLogger } from '@/lib/debugLogger';
 import { writeConfig } from './baseSlice';
 
+// ── Session-level Stream Abort Controllers ──
+// AbortController is not serializable, so we keep it outside Zustand state.
+const sessionAbortControllers = new Map<string, AbortController>();
+
+function abortSessionStream(sessionId: string) {
+  const ctrl = sessionAbortControllers.get(sessionId);
+  if (ctrl) {
+    ctrl.abort();
+    sessionAbortControllers.delete(sessionId);
+  }
+}
+
+function setSessionStream(sessionId: string, controller: AbortController) {
+  // Abort any existing stream for this session first
+  abortSessionStream(sessionId);
+  sessionAbortControllers.set(sessionId, controller);
+}
+
+function clearSessionStream(sessionId: string, controller: AbortController) {
+  if (sessionAbortControllers.get(sessionId) === controller) {
+    sessionAbortControllers.delete(sessionId);
+  }
+}
+
 export type WorkflowChatUIState = {
   sidebarCollapsedBySession: Record<string, boolean>;
   windows: WorkflowConversationWindow[];
@@ -53,11 +77,12 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
 }
 
 async function runAgentResponse({
-  sessionId, messageId, agent, prompt, nodeId, nodeData,
+  sessionId, messageId, agent, prompt, nodeId, nodeData, signal,
   addAgentResponseStream, completeAgentResponse, getSettings,
 }: {
   sessionId: string; messageId: string; agent: Agent; prompt: string; nodeId?: string;
   nodeData?: Pick<WorkflowAgentNodeData, 'overrideProviderId' | 'overrideModelId' | 'overrideSystemPrompt'>;
+  signal?: AbortSignal;
   addAgentResponseStream: any; completeAgentResponse: any; getSettings: () => any;
 }) {
   addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId);
@@ -76,9 +101,11 @@ async function runAgentResponse({
       temperature: agent.temperature,
     });
 
-    // 4. Stream chunks + backfill model info on first chunk
+    // 4. Stream chunks + backfill model info on first chunk, with abort support
     let firstChunk = true;
     for await (const textPart of result.textStream) {
+      // Check for cancellation — stop consuming on abort
+      if (signal?.aborted) break;
       if (firstChunk && textPart) {
         addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId, {
           providerId: config.provider.id,
@@ -157,6 +184,7 @@ const MOCK_SESSIONS: ChatSession[] = [
 export interface ChatSlice {
   sessions: ChatSession[];
   workflowChatUI: WorkflowChatUIState;
+  activeStreamingSessionIds: string[];
 
   createSession: (title: string, workspaceId: string, workflowId?: string, mode?: 'single' | 'workflow') => void;
   createWorkflowBackedSession: (title: string, workspaceId: string) => Promise<void>;
@@ -167,12 +195,13 @@ export interface ChatSlice {
   addUserMessage: (sessionId: string, text: string, attachments?: MessageAttachment[], meta?: MessageMeta) => void;
   addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string, nodeId?: string, meta?: MessageMeta) => void;
   completeAgentResponse: (sessionId: string, messageId: string, agentId: string, nodeId?: string, meta?: MessageMeta) => void;
+  cancelSessionStream: (sessionId: string) => void;
   sendMessageToAgents: (sessionId: string, prompt: string, agents: Agent[], options?: { attachments?: MessageAttachment[]; nodeId?: string; nodeData?: any; meta?: MessageMeta; addUserMessage?: boolean }) => Promise<string | undefined>;
   sendToWorkflowAgent: (sessionId: string, nodeId: string, prompt: string, options?: { addUserMessage?: boolean; triggeredBy?: MessageMeta['triggeredBy']; forwardFromMessageId?: string }) => Promise<string | undefined>;
   forwardAgentReplyToNext: (sessionId: string, fromNodeId: string, messageId: string, agentId: string, triggeredBy?: MessageMeta['triggeredBy']) => Promise<void>;
   rerunAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<string | undefined>;
   rerunAndForwardAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<void>;
-  sendToAgent: (sessionId: string, agentId: string, prompt: string, options?: { addUserMessage?: boolean }) => Promise<string | undefined>;
+  sendToAgent: (sessionId: string, agentId: string, prompt: string, options?: { addUserMessage?: boolean; attachments?: MessageAttachment[] }) => Promise<string | undefined>;
   retryAgentResponse: (sessionId: string, messageId: string, agentId: string, prompt: string, nodeId?: string) => Promise<void>;
 
   linkWorkflowToSession: (sessionId: string, workflowId: string) => void;
@@ -193,6 +222,7 @@ export interface ChatSlice {
 export function createChatSlice(set: any, get: any): ChatSlice {
   return {
     sessions: MOCK_SESSIONS,
+    activeStreamingSessionIds: [],
     workflowChatUI: {
       sidebarCollapsedBySession: {},
       windows: [],
@@ -454,13 +484,31 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       if (options.addUserMessage !== false) {
         get().addUserMessage(sessionId, prompt, options.attachments || [], options.meta);
       }
-      await Promise.all(agents.map((agent: Agent) => runAgentResponse({
-        sessionId, messageId, agent, prompt: promptWithAttachments, nodeId: options.nodeId,
-        nodeData: options.nodeData,
-        addAgentResponseStream: get().addAgentResponseStream,
-        completeAgentResponse: get().completeAgentResponse,
-        getSettings: () => get().settings,
-      })));
+
+      // Set up shared abort controller for all agents in this session
+      const controller = new AbortController();
+      setSessionStream(sessionId, controller);
+      set((state: any) => ({
+        activeStreamingSessionIds: state.activeStreamingSessionIds.includes(sessionId)
+          ? state.activeStreamingSessionIds
+          : [...state.activeStreamingSessionIds, sessionId],
+      }));
+
+      try {
+        await Promise.all(agents.map((agent: Agent) => runAgentResponse({
+          sessionId, messageId, agent, prompt: promptWithAttachments, nodeId: options.nodeId,
+          nodeData: options.nodeData,
+          signal: controller.signal,
+          addAgentResponseStream: get().addAgentResponseStream,
+          completeAgentResponse: get().completeAgentResponse,
+          getSettings: () => get().settings,
+        })));
+      } finally {
+        clearSessionStream(sessionId, controller);
+        set((state: any) => ({
+          activeStreamingSessionIds: state.activeStreamingSessionIds.filter((id: string) => id !== sessionId),
+        }));
+      }
       return messageId;
     },
 
@@ -600,16 +648,40 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const { agents } = get();
       const agent = agents.find((a: Agent) => a.id === agentId);
       if (!agent) return undefined;
+      const attachments = options.attachments || [];
       if (options.addUserMessage !== false) {
-        get().addUserMessage(sessionId, prompt, [], { targetAgentId: agentId });
+        get().addUserMessage(sessionId, prompt, attachments, { targetAgentId: agentId });
       }
       const messageId = uuidv4();
-      await runAgentResponse({
-        sessionId, messageId, agent, prompt, nodeData: undefined,
-        addAgentResponseStream: get().addAgentResponseStream,
-        completeAgentResponse: get().completeAgentResponse,
-        getSettings: () => get().settings,
-      });
+
+      // Build prompt with attachment context
+      const promptWithAttachments = attachments.length > 0
+        ? `${prompt}\n\n附件：${attachments.map((file: MessageAttachment) => `${file.name} (${file.mimeType})`).join('、')}`
+        : prompt;
+
+      // Set up abort controller for this session
+      const controller = new AbortController();
+      setSessionStream(sessionId, controller);
+      set((state: any) => ({
+        activeStreamingSessionIds: state.activeStreamingSessionIds.includes(sessionId)
+          ? state.activeStreamingSessionIds
+          : [...state.activeStreamingSessionIds, sessionId],
+      }));
+
+      try {
+        await runAgentResponse({
+          sessionId, messageId, agent, prompt: promptWithAttachments, nodeData: undefined,
+          signal: controller.signal,
+          addAgentResponseStream: get().addAgentResponseStream,
+          completeAgentResponse: get().completeAgentResponse,
+          getSettings: () => get().settings,
+        });
+      } finally {
+        clearSessionStream(sessionId, controller);
+        set((state: any) => ({
+          activeStreamingSessionIds: state.activeStreamingSessionIds.filter((id: string) => id !== sessionId),
+        }));
+      }
       return messageId;
     },
 
@@ -658,6 +730,13 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         },
       },
     })),
+
+    cancelSessionStream: (sessionId) => {
+      abortSessionStream(sessionId);
+      set((state: any) => ({
+        activeStreamingSessionIds: state.activeStreamingSessionIds.filter((id: string) => id !== sessionId),
+      }));
+    },
 
     openWorkflowAgentWindow: (sessionId, workflowId, nodeId, agentId) => set((state: any) => {
       const existingWindow = state.workflowChatUI.windows.find((w: WorkflowConversationWindow) => w.sessionId === sessionId && w.nodeId === nodeId);

@@ -233,7 +233,17 @@
 - [ ] 对齐 loop 聚合与 `payload.llmResult` 关系，避免覆盖。
 - [ ] 明确 `forwardAgentReplyToNext` 与 `executeWorkflow` 的职责边界（聊天转发 vs 正式运行时）。
 - [ ] 狼人杀样例回归：屠边、狼刀优先、女巫药剂、猎人开枪、平票 PK、`breakCondition`、`maxIterations`。
-- [ ] **引擎执行结果写入聊天消息**：当前 `executeWorkflow` 引擎的 LLM 调用（`agentExecutor` / `dynamicAgentExecutor`）结果仅存在引擎内部 `results`，不写入 chat session messages。用户点击"执行工作流"后看不到法官生成角色、狼人决策、发言等内容。需在引擎节点执行完成后调用 `addAgentResponseStream` / `completeAgentResponse` 将每个节点的 LLM 回复写入会话，使执行过程在聊天区可见。涉及文件：`engine.ts`（需传入 chat slice 的写入回调）、`workflowSlice.ts`（桥接引擎与 chat slice）、`WorkflowChatView.tsx`（关联执行状态与消息渲染）。
+- [ ] **引擎执行结果写入聊天消息**：当前 engine 的 agent/dynamic-agent 节点 LLM 结果仅存在 `results` 不写入 chat session messages。需在 engine 执行时调用 chat slice 的写入回调，使执行过程在聊天区可见。涉及文件：`types.ts`（`ExecutionOptions.onNodeResult`）、`engine.ts`（调用回调）、`workflowSlice.ts`（桥接实现）。
+
+### 4.4 2026-05-29 本轮修复
+
+- [x] **引擎循环幂等键修复**：`engine.ts` 幂等键从 `${executionId}:${nodeId}` 改为包含循环上下文 `${executionId}:${nodeId}:${loopNodeId}:${loopIndex}`，使循环体内节点每轮迭代独立执行。
+- [x] **工作流执行入口**：`WorkflowChatView` 标题栏添加"执行工作流"按钮，调用 `executeWorkflow` 引擎顺序执行。`workflowSlice.ts` 添加 5 分钟全局超时保护。
+- [x] **流式响应取消机制**：`chatSlice.ts` 新增 session 级 `AbortController` Map + `cancelSessionStream` action + `activeStreamingSessionIds` 状态。SimpleChatView / WorkflowChatView / WorkflowAgentWindow / AgentChatWindow 四个输入区的发送按钮在流式响应中变为红色停止按钮，点击可中断。
+- [x] **附件上传功能**：SimpleChatView / WorkflowChatView 输入区添加 Paperclip 附件按钮 + 文件选择 + 文件名 chips（`max-w-[160px] truncate`）。`sendToAgent` 接口增加 `attachments` 参数，附件信息注入 prompt 和用户消息。用户消息气泡显示附件名称+大小标签。
+- [x] **复制成功动画**：`ChatMessageBubble` AssistantBubble 复制按钮点击后 `Copy`→`Check`（绿色）2s 渐回。
+- [x] **WorkflowNodePanel 动态节点展示**：面板过滤从 `node.type === 'agent'` 扩展为包含 `dynamic-agent`，修复 agent 查找逻辑。
+- [x] **Agent 列表去重**：SimpleChatView/WorkflowChatView 的 agent 列表按 `id` 去重，修复同一 agent 显示两次的问题。
 
 ## 5. P3：可观测与运维能力（可定位、可重放、可发布）
 
@@ -813,13 +823,11 @@ components/layout/sidebar/
 - [x] **Tooltip 延迟 3000ms → 400ms**
   - `GlobalSidebar.tsx` 已改为 `TooltipProvider delayDuration={400}`
   - 标准值 300-700ms，建议 400ms
-- [ ] **SettingsView Tab 无障碍修复**
-  - 添加 `role="tablist"` / `role="tab"` / `role="tabpanel"`
-  - 添加 `aria-selected`、键盘方向键导航
+- [x] **SettingsView Tab 无障碍修复**
+  - 当前已使用 `role="tab"` / `aria-selected` / `aria-controls` 及键盘方向键导航
   - 文件：`SettingsView.tsx`
-- [ ] **WorkflowCanvas Export 按钮键盘不可达**
-  - 当前 `opacity-0 pointer-events-none group-hover:opacity-100` 模式完全不可访问
-  - 改为 DropdownMenu 或始终可见
+- [x] **WorkflowCanvas Export 按钮键盘不可达**
+  - 当前使用 `DropdownMenu` 实现，默认键盘可达
   - 文件：`WorkflowCanvas.tsx`
 - [x] **ContextSidebar 折叠按钮缺 aria 属性**
   - 已添加 `aria-label`、`aria-expanded`
@@ -841,8 +849,8 @@ components/layout/sidebar/
 - [ ] **主题色一致性**
   - Light 紫色 `258 85% 68%` vs Dark 青色 `187 82% 53%` 色相差距过大
   - 建议两个主题保持色相一致，仅调整明度/饱和度
-- [ ] **SettingsView 图标修正**
-  - "Appearance" 当前用 `Server` 图标 → 改为 `Palette` 或 `Paintbrush`
+- [x] **SettingsView 图标修正**
+  - "Appearance" 当前用 `Palette` 图标
 - [x] **GlobalSidebar icon 类型安全**
   - `NavIcon` 的 `icon` 已改为 Lucide 的 `LucideIcon` 类型
 
@@ -853,8 +861,8 @@ components/layout/sidebar/
   - 文件：`ContextSidebar.tsx`
 - [x] **折叠阈值统一**
   - 已统一：`SIDEBAR_COLLAPSE_THRESHOLD = 180`，`SIDEBAR_MIN_WIDTH = 180`，无死区
-- [ ] **SettingsView 默认 Tab 改为 'general'**
-  - 当前默认 `'models'`，用户期望 "General" 在前
+- [x] **SettingsView 默认 Tab 改为 'general'**
+  - 当前默认 `'general'`
 - [ ] **统一保存模式**
   - 主题切换自动保存，设置页需手动保存 → 不一致
   - 建议统一为自动保存或统一为手动保存
@@ -878,10 +886,13 @@ components/layout/sidebar/
 
 ### 13.5 P2 — 微交互与趣味
 
-- [ ] **工作流执行成功反馈**
-  - 静态绿色状态点 → 轻微弹跳动画 + 完成提示
-- [ ] **工作流执行失败反馈**
-  - 红色状态点 + 错误文本 → 更友好的错误文案 + 一键重试按钮
+- [x] **工作流执行成功反馈** ✅ 已实现
+  - Settings 新增 `executionFeedback` 开关
+  - 执行完成后全局 Toast 提示 + `screen-shake` CSS 动画
+  - 文件：`globals.css`（`@keyframes screen-shake`）、`workflowSlice.ts`（toast + shake）、`SettingsGeneralTab.tsx`（开关）
+- [x] **工作流执行失败反馈** ✅ 已实现
+  - 引擎报错时 Toast 错误提示 + 屏幕震动（通过同一 `executionFeedback` 开关控制）
+  - 文件：`workflowSlice.ts`
 - [ ] **Agent 创建成功**
   - Toast 提示 → Agent 头像轻微动画反馈
 - [ ] **狼人杀游戏状态**
@@ -902,5 +913,115 @@ components/layout/sidebar/
 
 - 旧"多小窗并发验证矩阵"。新方案不再以多小窗并列作为主要聊天形态，而是在 workflow chat 中使用可重叠节点窗口。
 - 旧"群聊版会话窗口 V1 草稿"。其核心目标已并入 single chat 普通群聊式消息流与通用气泡组件。
+- 旧"2~4 周里程碑"。当前改为按 P0/P1/P2/P3/P4/P5/P6 优先级推进。
+- 旧狼人杀多版设计全文。保留仍需执行的规则回归与 loop/runtime 相关项。
+
+---
+
+## 15. P12：代码审查发现问题（2026-05-29）
+
+> 从用户角度全模块代码审查产出，按严重程度分级。
+
+### 15.1 P0 — 功能死代码 / 不可达逻辑
+
+- [x] **SimpleChatView `showTopology` 按钮无任何效果** ✅ 已修复 (2026-05-29)
+  - `SimpleChatView.tsx` — 接入 `AgentTopologyView`，点击按钮切换聊天/拓扑视图
+  - 同时新增 Agent 选择下拉框（DropdownMenu），支持在多 Agent 间切换
+  - 移除死代码：`multiAgentMode`、`sendMessageToAgents`、硬编码 `selectedAgentId`
+
+- [x] **SimpleChatView Agent 选择器无法使用** ✅ 已修复 (2026-05-29)
+  - `selectedAgentId` 改为可切换状态，默认使用 `agents[0]`
+  - 面包屑栏添加 DropdownMenu：头像 + 名称 + ChevronDown，点击展开所有 Agent 列表
+
+- [x] **WorkflowChatView 拓扑/聊天模式切换待适配** ✅ 已修复 (2026-05-29)
+  - `multiAgentMode` 改为可切换：`const [multiAgentMode, setMultiAgentMode] = useState(true)`
+  - 标题栏右侧新增拓扑/聊天切换按钮（GitBranch / MessageSquare 图标）
+
+### 15.2 P1 — 交互体验缺陷
+
+- [x] **服务商删除无确认弹窗**
+  - `SettingsModelsTab.tsx:641-662` — 已使用 `Dialog` 实现删除确认弹窗
+  - 影响：已修复
+
+- [x] **API Key 显示使用 DOM 操作绕过 React**
+  - `SettingsModelsTab.tsx` — 已使用 React 状态管理，无 `getElementById` 操作
+  - 影响：已修复
+
+- [x] **模型错误详情使用 `alert()` 弹窗**
+  - `SettingsModelsTab.tsx` — 已移除 `alert()` 调用，使用 Toast 或 Dialog 展示错误
+  - 影响：已修复
+
+- [x] **工作流画布新建节点位置随机**
+  - `WorkflowCanvas.tsx` — 已使用视窗中心坐标 (`screenToFlowPosition`)
+  - 影响：已修复
+
+- [x] **主题切换按钮不支持 System 模式**
+  - `GlobalSidebar.tsx:14-18` — 已循环 light → dark → system
+  - 影响：已修复
+
+- [x] **新节点放置不在用户视窗内**
+  - 使用视窗中心坐标作为节点初始位置
+  - 影响：已修复
+
+### 15.3 P2 — UI / 文案问题
+
+- [ ] **新建服务商默认模型硬编码 `gpt-4o`**
+  - `SettingsModelsTab.tsx:118` — `PROVIDER_DEFAULTS.custom` 默认模型 ID 是 `gpt-4o`
+  - 对 Anthropic/Gemini/DeepSeek 服务商需要手动删除再添加
+
+- [x] **新建服务商默认启用（与设计意图矛盾）**
+  - `SettingsModelsTab.tsx:125` — `isEnabled: false`
+  - 已修复
+
+- [x] **"Create Agent" 按钮未国际化**
+  - `AgentsView.tsx` — 已使用 `t('Create Agent')`
+  - 已修复
+
+- [x] **最后一个模型无法删除且无提示**
+  - `SettingsModelsTab.tsx:188-189` — 已使用 `toast.warning()` 提示
+  - 已修复
+
+- [ ] **测试全部模型对话框文案重复**
+  - `SettingsModelsTab.tsx:547` — `{t('models in total,')}` 在抓取模型对话框中使用，语法不够自然
+  - 待优化
+
+- [x] **Token 显示格式问题**
+  - `ChatMessageBubble.tsx:146` — 已使用 `.filter(Boolean).join(' / ')`，无多余斜杠
+  - 已修复
+
+### 15.4 P3 — 架构 / 代码质量
+
+- [x] **WorkflowCanvas 双重 effect 导致节点不必要重置** ✅ 经审查已修复 (此前已完成)
+  - `WorkflowCanvas.tsx` — 实际代码中仅一个 useEffect 监听 `activeWorkflow?.id`，无另一个 effect 导致重复触发问题
+  - 影响：已修复
+
+- [x] **狼人杀测试数据硬编码在通用画布中** ✅ 已修复
+  - `Workflow.ts` 类型新增 `testPayload?: Record<string, any>` 字段
+  - `workflowSlice.ts` 狼人杀 mock 数据预填 `testPayload`
+  - `WorkflowCanvas.tsx` 改为读取 `(activeWorkflow as Workflow)?.testPayload`
+  - 画布不再通过工作流名称判断，新增场景只需在 workflow 数据中设置 `testPayload`
+
+- [x] **多处 `useState` 当作常量使用** ✅ 经审查已修复 (此前已完成)
+  - `SimpleChatView.tsx` — `selectedAgentId`/`multiAgentMode`/`showTopology` 均有 setter 实际使用
+  - `WorkflowChatView.tsx` — `multiAgentMode` 有 setter 使用
+  - 影响：已修复
+
+- [x] **Agent `isNew` 检测不可靠** ✅ 已修复
+  - `AgentsView.tsx` — 改用 `useRef(initializedRef)` 模式区分初始加载与后续新增
+  - 首次加载所有 agent 不触发入口动画；仅检测新增 agent
+
+### 15.5 P4 — 类型与数据模型
+
+- [x] **Agent 类型残留废弃字段** ⚠️ 保留说明
+  - `models.ts:23-28` — `modelProvider`/`apiKey`/`baseUrl` 仍被 `baseSlice.ts` migration 代码使用
+  - 在 legacy 数据迁移逻辑移除前不能删除，已更新注释明确说明
+
+- [x] **Settings 残留旧版单服务商字段** ⚠️ 保留说明
+  - `models.ts:268-282` — 13 个旧字段仍被 `api.ts` fallback 路径使用
+  - 在移除旧版 API fallback 前不能删除，已更新注释明确说明
+
+- [x] **`ContextSidebar` default case 为死代码** ✅ 已评估（保留）
+  - `ContextSidebar.tsx:169-172` — 硬编码中文提示，`VIEWS_WITHOUT_SIDEBAR` 已确保永不可达
+  - 为 switch exhaustive 类型安全保留此分支
 - 旧"2~4 周里程碑"。当前改为按 P0/P1/P2/P3/P4/P5/P6 优先级推进。
 - 旧狼人杀多版设计全文。保留仍需执行的规则回归与 loop/runtime 相关项。

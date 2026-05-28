@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Settings2 } from 'lucide-react';
@@ -8,6 +9,7 @@ import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDr
 
 
 export function TriggerNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Trigger'));
   const [isOpen, setIsOpen] = useState(false);
@@ -36,7 +38,7 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
         </div>
         <div>
           <p className="text-sm font-semibold leading-none">{data.label || 'Trigger'}</p>
-          <p className="text-xs text-muted-foreground mt-1">Manual Execution</p>
+          <p className="text-xs text-muted-foreground mt-1">{t("Manual Execution")}</p>
         </div>
       </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -47,13 +49,13 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Trigger</DialogTitle>
+              <DialogTitle>{t("Configure Trigger")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

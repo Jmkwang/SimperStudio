@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function IfSwitchNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const [isOpen, setIsOpen] = useState(false);
@@ -68,7 +70,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label>Branches (first match wins)</Label>
-                  <Button variant="outline" size="sm" onClick={addBranch} className="h-7 px-2 text-xs"><Plus className="h-3 w-3 mr-1" />Add</Button>
+                  <Button variant="outline" size="sm" onClick={addBranch} className="h-7 px-2 text-xs"><Plus className="h-3 w-3 mr-1" />{t("Add")}</Button>
                 </div>
                 <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2">
                   {branches.map((b, i) => (
@@ -84,7 +86,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

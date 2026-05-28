@@ -18,12 +18,12 @@ export interface Agent {
   maxTokens?: number;
   parameters?: any;
 
-  // Legacy fields — kept for backward compatibility, no longer used in UI
-  /** @deprecated Use providerId instead */
+  // Kept for legacy data migration (baseSlice.ts migration logic still reads these)
+  /** @deprecated Use providerId instead — only used in migration */
   modelProvider?: 'local' | 'openai' | 'anthropic' | 'google' | 'siliconflow' | 'custom';
-  /** @deprecated Use modelId instead */
+  /** @deprecated Use modelId instead — only used in migration */
   apiKey?: string;
-  /** @deprecated Provider-level API config no longer needed */
+  /** @deprecated Provider-level API config no longer needed — only used in migration */
   baseUrl?: string;
 
   createdAt?: number;
@@ -233,6 +233,7 @@ export interface Workflow {
   nodesData: WorkflowNode[];
   edgesData: WorkflowEdge[];
   status: 'active' | 'inactive';
+  testPayload?: Record<string, any>;
   createdAt: number;
   updatedAt: number;
 }
@@ -265,6 +266,7 @@ export interface Settings {
   allowRemoteAccess: boolean;
   remoteAccessPort: number;
   fontSize?: number; // percentage, e.g. 100 = default, 115 = 115%
+  executionFeedback?: boolean; // screen shake + toast on workflow complete
   // Legacy fields for backward compatibility
   apiProvider?: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
   openaiKey?: string;

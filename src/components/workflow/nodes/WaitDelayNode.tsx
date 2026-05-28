@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { useState } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function WaitDelayNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -58,12 +60,12 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>Wait Mode</Label>
+                <Label>{t("Wait Mode")}</Label>
                 <Select value={mode} onValueChange={(v) => setMode(v as 'fixed' | 'until')}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fixed">Fixed Delay</SelectItem>
-                    <SelectItem value="until">Until Condition</SelectItem>
+                    <SelectItem value="fixed">{t("Fixed Delay")}</SelectItem>
+                    <SelectItem value="until">{t("Until Condition")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -81,7 +83,7 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
               )}
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

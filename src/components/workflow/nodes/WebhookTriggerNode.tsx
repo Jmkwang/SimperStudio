@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { useState } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -49,12 +51,12 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Webhook Trigger</DialogTitle>
+              <DialogTitle>{t("Configure Webhook Trigger")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>HTTP Method</Label>
+                <Label>{t("HTTP Method")}</Label>
                 <Select value={method} onValueChange={setMethod}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -65,7 +67,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label>Webhook Path</Label>
+                <Label>{t("Webhook Path")}</Label>
                 <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/webhook/my-hook" className="font-mono text-xs" />
               </div>
               <div className="grid gap-2">
@@ -74,7 +76,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -83,7 +85,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
         <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
           {data.webhookMethod || 'POST'} {data.webhookPath || '/webhook/...'}
         </div>
-        {data.authToken && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Auth required</p>}
+        {data.authToken && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t("Auth required")}</p>}
       </div>
       <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-lime-500 bg-background" />
     </div>

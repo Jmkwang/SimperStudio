@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { ChatSession, WorkflowNode, WorkflowNodeData, Agent } from '@/types/models';
 import { useAppStore } from '@/stores';
 import {
@@ -23,7 +23,7 @@ import { ChatRouterNode } from './ChatRouterNode';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bot, Send, PlayCircle, Square, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bot, Send, PlayCircle, Square, Loader2, AlertCircle, CheckCircle2, MessageSquare, GitBranch, Paperclip, X } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
 
@@ -34,6 +34,8 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const workflowChatUI = useAppStore(state => state.workflowChatUI);
   const setWorkflowSidebarCollapsed = useAppStore(state => state.setWorkflowSidebarCollapsed);
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
+  const cancelSessionStream = useAppStore(state => state.cancelSessionStream);
+  const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const chatLayoutMode = useAppStore(state => state.chatLayoutMode);
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
@@ -44,8 +46,10 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const { theme } = useTheme();
   const { trackClick } = useDebugTrack('WorkflowChatView');
 
-  const [multiAgentMode] = useState(true);
+  const [multiAgentMode, setMultiAgentMode] = useState(true);
   const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const workflow = session.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
 
@@ -63,7 +67,8 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
       }
       return agents.find(a => a.id === (node.data as Record<string, unknown>)?.agentId);
     })
-    .filter(Boolean) as Agent[];
+    .filter(Boolean)
+    .filter((a, i, arr) => arr.findIndex(x => (x as Agent).id === (a as Agent).id) === i) as Agent[];
 
   if (!workflow) {
     return <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">{t('Current session is not linked to a workflow.')}</div>;
@@ -137,8 +142,33 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const handleSend = async () => {
     if (!input.trim() || linkedAgents.length === 0) return;
     const text = input.trim();
+    const files = [...attachments];
     setInput("");
-    await sendMessageToAgents(session.id, text, linkedAgents);
+    setAttachments([]);
+    const attachmentList = files.length > 0 ? files.map(f => ({
+      id: f.name + Date.now(),
+      name: f.name,
+      mimeType: f.type,
+      size: f.size,
+      kind: (f.type.startsWith('image/') ? 'image' : 'file') as 'image' | 'file',
+    })) : undefined;
+    await sendMessageToAgents(session.id, text, linkedAgents, { attachments: attachmentList });
+  };
+
+  const isStreaming = activeStreamingSessionIds.includes(session.id);
+
+  const handleStop = () => {
+    cancelSessionStream(session.id);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachments(prev => [...prev, ...files]);
+    e.target.value = '';
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const [runError, setRunError] = useState<string | null>(null);
@@ -216,6 +246,15 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
               <Bot className="h-4 w-4" />
             </button>
           )}
+          <button
+            onClick={trackClick(() => setMultiAgentMode(!multiAgentMode), 'workflow:toggleMode')}
+            className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
+            title={multiAgentMode ? t('拓扑') : t('聊天')}
+            data-debug-source="WorkflowChatView"
+            data-debug-action="workflow:toggleMode"
+          >
+            {multiAgentMode ? <GitBranch className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 
@@ -260,12 +299,24 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
             ))}
           </div>
           <div className="border-t p-4 shrink-0">
-            <div className="flex gap-2 max-w-4xl mx-auto">
+            <div className="flex gap-2 max-w-4xl mx-auto relative">
+              {attachments.length > 0 && (
+                <div className="absolute bottom-full left-0 right-0 flex flex-wrap gap-1.5 p-2 pb-0 max-w-full">
+                  {attachments.map((file, i) => (
+                    <div key={i} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs max-w-[160px] overflow-hidden">
+                      <span className="truncate">{file.name}</span>
+                      <button onClick={() => handleRemoveAttachment(i)} className="shrink-0 hover:text-foreground text-muted-foreground" aria-label={t('Remove')}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <Textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey && !isStreaming) {
                     e.preventDefault();
                     handleSend();
                   }
@@ -273,16 +324,42 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
                 placeholder={`${t("Send message to all agents")}...`}
                 className="min-h-[64px] text-sm"
               />
-              <Button
-                onClick={trackClick(handleSend, 'workflow:send')}
-                disabled={!input.trim()}
-                className="self-end h-11 w-11"
-                aria-label={t("Send")}
-                data-debug-source="WorkflowChatView"
-                data-debug-action="workflow:send"
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                multiple
+                onChange={handleFileSelect}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="self-end h-11 w-11 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label={t('Attach file')}
+                disabled={isStreaming}
               >
-                <Send className="h-4 w-4" />
-              </Button>
+                <Paperclip className="h-4 w-4" />
+              </button>
+              {isStreaming ? (
+                <Button
+                  onClick={trackClick(handleStop, 'workflow:stop')}
+                  variant="destructive"
+                  className="self-end h-11 w-11"
+                  aria-label={t('Stop')}
+                >
+                  <Square className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={trackClick(handleSend, 'workflow:send')}
+                  disabled={!input.trim()}
+                  className="self-end h-11 w-11"
+                  aria-label={t("Send")}
+                  data-debug-source="WorkflowChatView"
+                  data-debug-action="workflow:send"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

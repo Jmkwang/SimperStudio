@@ -1,0 +1,7 @@
+[     465ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=53e7325f:20102
+[     627ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:444
+[     627ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:444
+[   12972ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-SH5KZEFT.js?v=53e7325f:541
+[   12975ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ http://localhost:1420/node_modules/.vite/deps/chunk-SH5KZEFT.js?v=53e7325f:541
+[  903099ms] [WARNING] [React Flow]: It looks like you've created a new nodeTypes or edgeTypes object. If this wasn't on purpose please define the nodeTypes/edgeTypes outside of the component or memoize them. Help: https://reactflow.dev/error#002 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=53e7325f:3840
+[  917159ms] [WARNING] [React Flow]: It looks like you've created a new nodeTypes or edgeTypes object. If this wasn't on purpose please define the nodeTypes/edgeTypes outside of the component or memoize them. Help: https://reactflow.dev/error#002 @ http://localhost:1420/node_modules/.vite/deps/@xyflow_react.js?v=53e7325f:3840

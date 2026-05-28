@@ -1,7 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
 import { Repeat } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function ChatLoopNode({ data }: { data: any }) {
+  const { t } = useTranslation();
   return (
     <div className="w-[240px] rounded-xl border border-violet-200 dark:border-violet-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle
@@ -16,8 +18,8 @@ export function ChatLoopNode({ data }: { data: any }) {
             <Repeat className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Loop'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Iteration Control</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Loop')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Iteration Control')}</p>
           </div>
         </div>
       </div>

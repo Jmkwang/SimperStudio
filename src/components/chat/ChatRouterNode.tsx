@@ -1,7 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
 import { SplitSquareHorizontal } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function ChatRouterNode({ data }: { data: any }) {
+  const { t } = useTranslation();
   const routes = data.routes || [
     { id: 'route-1', condition: 'payload.value > 50' },
     { id: 'route-2', condition: 'payload.value <= 50' }
@@ -20,8 +22,8 @@ export function ChatRouterNode({ data }: { data: any }) {
             <SplitSquareHorizontal className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Router'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Condition Branching</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Router')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Condition Branching')}</p>
           </div>
         </div>
       </div>

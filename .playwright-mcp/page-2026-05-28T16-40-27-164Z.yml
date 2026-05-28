@@ -1,0 +1,159 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e50]: 设置
+  - generic [ref=e53]:
+    - generic [ref=e527]:
+      - button "新建工作流会话" [ref=e529] [cursor=pointer]:
+        - img [ref=e530]
+        - generic [ref=e531]: 新建工作流会话
+      - generic [ref=e533]:
+        - generic [ref=e536]:
+          - generic [ref=e537]:
+            - button "My First Workflow 1" [active] [ref=e538] [cursor=pointer]:
+              - img [ref=e539]
+              - img [ref=e542]
+              - generic [ref=e546]: My First Workflow
+              - generic [ref=e547]: "1"
+            - button "更多" [ref=e548] [cursor=pointer]:
+              - img [ref=e549]
+          - generic [ref=e610]:
+            - generic [ref=e611]:
+              - button "My First Workflow" [ref=e612] [cursor=pointer]:
+                - img [ref=e614]
+                - generic [ref=e618]: My First Workflow
+              - button "更多" [ref=e619] [cursor=pointer]:
+                - img [ref=e620]
+            - button "新建会话" [ref=e624] [cursor=pointer]:
+              - img [ref=e625]
+              - text: 新建会话
+        - generic [ref=e556]:
+          - button "Data Processing Pipeline 1" [ref=e557] [cursor=pointer]:
+            - img [ref=e558]
+            - img [ref=e561]
+            - generic [ref=e565]: Data Processing Pipeline
+            - generic [ref=e566]: "1"
+          - button "更多" [ref=e567] [cursor=pointer]:
+            - img [ref=e568]
+        - generic [ref=e575]:
+          - button "Weekly Report Generator 1" [ref=e576] [cursor=pointer]:
+            - img [ref=e577]
+            - img [ref=e580]
+            - generic [ref=e584]: Weekly Report Generator
+            - generic [ref=e585]: "1"
+          - button "更多" [ref=e586] [cursor=pointer]:
+            - img [ref=e587]
+        - generic [ref=e594]:
+          - button "狼人杀·标准局 1" [ref=e595] [cursor=pointer]:
+            - img [ref=e596]
+            - img [ref=e599]
+            - generic [ref=e603]: 狼人杀·标准局
+            - generic [ref=e604]: "1"
+          - button "更多" [ref=e605] [cursor=pointer]:
+            - img [ref=e606]
+    - main [ref=e64]:
+      - generic [ref=e626]:
+        - generic [ref=e627]:
+          - generic [ref=e628]: My First Workflow
+          - generic [ref=e629]: 5 个节点 · 4 edges
+        - application [ref=e630]:
+          - generic [ref=e632]:
+            - generic:
+              - generic:
+                - img:
+                  - group "Edge from trigger-1 to agent-organize"
+                - img:
+                  - group "Edge from trigger-1 to agent-summary"
+                - img:
+                  - group "Edge from agent-organize to output-1"
+                - img:
+                  - group "Edge from agent-summary to output-2"
+              - generic:
+                - group:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic:
+                          - paragraph: User Input
+                          - paragraph: Manual Execution
+                    - generic: Initiates the workflow when clicked.
+                - group:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic:
+                          - paragraph: 整理
+                          - paragraph: 整理助手
+                    - generic:
+                      - paragraph: 整理并组织用户输入的内容，使其结构清晰。
+                - group:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic:
+                          - paragraph: 总结
+                          - paragraph: 总结助手
+                    - generic:
+                      - paragraph: 对用户输入的内容进行总结，提取关键信息。
+                - group:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic:
+                          - paragraph: 整理结果
+                          - paragraph: Final Result
+                    - generic: Returns data to the user or system.
+                - group:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic:
+                          - paragraph: 总结结果
+                          - paragraph: Final Result
+                    - generic: Returns data to the user or system.
+          - img
+          - generic "Control Panel" [ref=e640]:
+            - button "Zoom In" [ref=e641] [cursor=pointer]:
+              - img [ref=e642]
+            - button "Zoom Out" [ref=e644] [cursor=pointer]:
+              - img [ref=e645]
+            - button "Fit View" [ref=e647] [cursor=pointer]:
+              - img [ref=e648]
+          - img "Mini Map" [ref=e651]
+          - link "React Flow attribution" [ref=e658] [cursor=pointer]:
+            - /url: https://reactflow.dev
+            - text: React Flow
+        - generic [ref=e660]: 双击工作流进入会话
+      - region "Notifications alt+T"

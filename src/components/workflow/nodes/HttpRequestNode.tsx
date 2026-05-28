@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDr
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
 export function HttpRequestNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -57,7 +59,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure HTTP Request</DialogTitle>
+              <DialogTitle>{t("Configure HTTP Request")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
@@ -88,7 +90,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
               )}
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

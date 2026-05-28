@@ -111,6 +111,21 @@ export function SettingsGeneralTab() {
           />
         </div>
       </div>
+
+      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>{t("Execution Feedback")}</Label>
+            <div className="text-sm text-muted-foreground">
+              {t('Screen shake and notification when workflow completes')}
+            </div>
+          </div>
+          <Switch
+            checked={settings.executionFeedback !== false}
+            onCheckedChange={(checked: boolean) => updateSettings({ executionFeedback: checked })}
+          />
+        </div>
+      </div>
     </div>
   );
 }

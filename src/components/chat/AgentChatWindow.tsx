@@ -3,7 +3,7 @@ import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Send, X } from 'lucide-react';
+import { Send, Square, X } from 'lucide-react';
 import { AgentChatWindowData } from '@/types/models';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChatMessageBubble } from './ChatMessageBubble';
@@ -13,6 +13,10 @@ const DEFAULT_HEIGHT = 480;
 
 export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowData }) {
   const [input, setInput] = useState('');
+  const sendToAgent = useAppStore(state => state.sendToAgent);
+  const cancelSessionStream = useAppStore(state => state.cancelSessionStream);
+  const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
+  const isStreaming = activeStreamingSessionIds.includes(windowData.sessionId);
   const pos = windowData.position;
   const size = windowData.size || { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
   const { t } = useTranslation();
@@ -20,7 +24,6 @@ export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowDat
   const sessions = useAppStore(state => state.sessions);
   const agents = useAppStore(state => state.agents);
   const closeAgentChatWindow = useAppStore(state => state.closeAgentChatWindow);
-  const sendToAgent = useAppStore(state => state.sendToAgent);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
 
   const agent = agents.find(item => item.id === windowData.agentId);
@@ -127,8 +130,14 @@ export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowDat
                 placeholder={t('发送消息给智能体...')}
                 className="min-h-[64px] text-sm"
               />
-              <Button onClick={handleSend} disabled={!input.trim()} className="self-end h-11 w-11" aria-label={t('Send')}>
-                <Send className="h-4 w-4" />
+              <Button
+                onClick={isStreaming ? () => cancelSessionStream(windowData.sessionId) : handleSend}
+                disabled={!isStreaming && !input.trim()}
+                variant={isStreaming ? 'destructive' : 'default'}
+                className="self-end h-11 w-11"
+                aria-label={isStreaming ? t('Stop') : t('Send')}
+              >
+                {isStreaming ? <Square className="h-4 w-4" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </div>

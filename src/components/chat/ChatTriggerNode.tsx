@@ -1,7 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
 import { Play } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function ChatTriggerNode({ data }: { data: any }) {
+  const { t } = useTranslation();
   return (
     <div className="w-[200px] rounded-xl border bg-card text-card-foreground shadow-sm">
       <Handle
@@ -15,13 +17,13 @@ export function ChatTriggerNode({ data }: { data: any }) {
             <Play className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Trigger'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Manual Execution</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Trigger')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Manual Execution')}</p>
           </div>
         </div>
       </div>
       <div className="p-3 text-xs text-muted-foreground">
-        Initiates the workflow when clicked.
+        {t('Initiates the workflow when clicked.')}
       </div>
     </div>
   );

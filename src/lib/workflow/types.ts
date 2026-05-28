@@ -24,6 +24,10 @@ export interface ExecutionOptions {
   startNodeId?: string;
   concurrency?: number;
   signal?: AbortSignal;
+  /** Called after each node completes successfully (including pass-through nodes like output).
+   *  The engine does NOT await this callback — it fires and forgets so execution isn't slowed
+   *  by side effects such as writing to chat. */
+  onNodeResult?: (nodeId: string, nodeType: string, payload: any, nodeData: any) => void;
 }
 
 export interface ExecutionContext {

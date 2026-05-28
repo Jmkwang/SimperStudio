@@ -10,6 +10,7 @@ import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import { useDebugTrack } from "@/hooks/useDebugTrack";
+import { toast } from "sonner";
 import {
   Plus, Trash2, Power, ChevronRight, Star, Minus,
   Play, CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Bot, AlertTriangle, Eye
@@ -17,6 +18,15 @@ import {
 import { fetchFromProvider } from "@/lib/api";
 import type { ModelProvider, ProviderModel } from "@/types/models";
 import { v4 as uuidv4 } from 'uuid';
+
+const PROVIDER_DEFAULTS: Record<string, { name: string; baseUrl: string; defaultModel: string }> = {
+  openai: { name: 'OpenAI', baseUrl: 'https://api.openai.com', defaultModel: 'gpt-4o' },
+  anthropic: { name: 'Anthropic', baseUrl: 'https://api.anthropic.com', defaultModel: 'claude-sonnet-4-5' },
+  gemini: { name: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com', defaultModel: 'gemini-2.0-flash' },
+  deepseek: { name: 'DeepSeek', baseUrl: 'https://api.deepseek.com', defaultModel: 'deepseek-chat' },
+  siliconflow: { name: 'SiliconFlow', baseUrl: 'https://api.siliconflow.cn', defaultModel: 'deepseek-ai/DeepSeek-V3' },
+  custom: { name: 'Custom', baseUrl: '', defaultModel: 'gpt-4o' },
+};
 
 const PROVIDER_COLORS: Record<string, string> = {
   openai: 'bg-green-500/20 text-green-600 dark:text-green-400',
@@ -77,6 +87,9 @@ export function SettingsModelsTab() {
   const [modelTestStates, setModelTestStates] = useState<Record<string, { status: 'idle' | 'testing' | 'success' | 'error'; error?: string; detail?: string }>>({});
   const [testAllDialogOpen, setTestAllDialogOpen] = useState(false);
   const [testAllRunning, setTestAllRunning] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [expandedError, setExpandedError] = useState<string | null>(null);
 
   const selectedProvider = settings.providers.find(p => p.id === selectedProviderId);
 
@@ -102,15 +115,16 @@ export function SettingsModelsTab() {
   }, [selectedProvider?.id]);
 
   const handleInlineAddProvider = trackClick(() => {
+    const defaults = PROVIDER_DEFAULTS.custom;
     const newProvider: ModelProvider = {
       id: uuidv4(),
-      name: t('New Provider'),
+      name: defaults.name,
       type: 'custom',
       apiKey: '',
-      baseUrl: '',
-      isEnabled: true,
+      baseUrl: defaults.baseUrl,
+      isEnabled: false,
       apiFormat: 'openai-chat',
-      models: [{ id: uuidv4(), name: 'Default Model', modelId: 'gpt-4o', isDefault: true }],
+      models: [{ id: uuidv4(), name: 'Default Model', modelId: defaults.defaultModel, isDefault: true }],
     };
     addProvider(newProvider);
     setSelectedProviderId(newProvider.id);
@@ -171,7 +185,10 @@ export function SettingsModelsTab() {
   };
 
   const handleDeleteModel = (modelId: string) => {
-    if (!selectedProvider || selectedProvider.models.length <= 1) return;
+    if (!selectedProvider || selectedProvider.models.length <= 1) {
+      toast.warning(t('至少保留一个模型'));
+      return;
+    }
     const newModels = selectedProvider.models.filter(m => m.id !== modelId);
     if (newModels.length > 0 && !newModels.some(m => m.isDefault)) newModels[0].isDefault = true;
     updateProvider(selectedProvider.id, { models: newModels });
@@ -257,7 +274,7 @@ export function SettingsModelsTab() {
                     <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">{t('Current Provider')}</span>
                   )}
                   {provider.isEnabled && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">ON</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">{t('ON')}</span>
                   )}
                   <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-opacity", selectedProviderId === provider.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
                 </div>
@@ -296,11 +313,8 @@ export function SettingsModelsTab() {
                   </Button>
                   <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={trackClick(() => {
                     if (!selectedProvider) return;
-                    const currentId = selectedProvider.id;
-                    const remaining = settings.providers.filter(p => p.id !== currentId);
-                    deleteProvider(currentId);
-                    setSelectedProviderId(remaining[0]?.id || null);
-                  }, 'provider:delete')}>
+                    setDeleteConfirmOpen(true);
+                  }, 'provider:deleteConfirm')}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -342,12 +356,12 @@ export function SettingsModelsTab() {
                 <div className="space-y-2">
                   <Label>{t("API Key")}</Label>
                   <div className="flex gap-2">
-                    <Input type="password" value={selectedProvider.apiKey} className="flex-1" id="api-key-input"
+                    <Input type={showApiKey ? "text" : "password"} value={selectedProvider.apiKey} className="flex-1"
                       onChange={(e) => updateProvider(selectedProvider.id, { apiKey: e.target.value })} />
-                    <Button variant="outline" size="sm" className="h-10 px-3 shrink-0" title={t('Hold to reveal key')}
-                      onMouseDown={() => { const el = document.getElementById('api-key-input') as HTMLInputElement; if (el) el.type = 'text'; }}
-                      onMouseUp={() => { const el = document.getElementById('api-key-input') as HTMLInputElement; if (el) el.type = 'password'; }}
-                      onMouseLeave={() => { const el = document.getElementById('api-key-input') as HTMLInputElement; if (el) el.type = 'password'; }}>
+                    <Button variant="outline" size="sm" className="h-10 px-3 shrink-0" title={t('按住查看 Key')}
+                      onMouseDown={() => setShowApiKey(true)}
+                      onMouseUp={() => setShowApiKey(false)}
+                      onMouseLeave={() => setShowApiKey(false)}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>
@@ -440,8 +454,8 @@ export function SettingsModelsTab() {
                                         if (ts?.status === 'success') return <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />;
                                         if (ts?.status === 'error') return (
                                           <button className="p-0.5 rounded text-destructive hover:bg-destructive/10 transition-colors"
-                                            title={`${ts.error}\n\n${ts.detail || ''}\n${t('Click to view details')}`}
-                                            onClick={() => { const detail = ts.detail || ts.error || ''; alert(`${t('Test failure details:')}\n\n${t('Error:')} ${ts.error}\n${t('Details:')} ${detail}`); }}>
+                                            title={`${ts.error}\n\n${ts.detail || ''}`}
+                                            onClick={(e) => { e.stopPropagation(); setExpandedError(expandedError === model.id ? null : model.id); }}>
                                             <AlertTriangle className="h-3 w-3" />
                                           </button>
                                         );
@@ -464,11 +478,18 @@ export function SettingsModelsTab() {
                                     </div>
                                   </div>
                                   {modelTestStates[model.id]?.status === 'error' && (
-                                    <div className="flex items-center gap-1 pl-5 text-xs text-destructive/80 cursor-pointer"
-                                      onClick={() => { const ts = modelTestStates[model.id]; alert(`${t('Test failure details')}:\n\n${t('Error')}: ${ts?.error}\n${t('Details')}: ${ts?.detail || ''}`); }}
-                                      title={t('Click to view error details')}>
-                                      <XCircle className="h-2.5 w-2.5 shrink-0" />
-                                      <span className="truncate">{modelTestStates[model.id]?.error}</span>
+                                    <div className="flex flex-col gap-1 pl-5 text-xs">
+                                      <div className="flex items-center gap-1 text-destructive/80 cursor-pointer"
+                                        onClick={() => setExpandedError(expandedError === model.id ? null : model.id)}
+                                        title={t('点击查看错误详情')}>
+                                        <XCircle className="h-2.5 w-2.5 shrink-0" />
+                                        <span className="truncate">{modelTestStates[model.id]?.error}</span>
+                                      </div>
+                                      {expandedError === model.id && (
+                                        <div className="bg-destructive/10 border border-destructive/20 rounded p-2 text-destructive/90 font-mono text-[11px] whitespace-pre-wrap">
+                                          {modelTestStates[model.id]?.detail || modelTestStates[model.id]?.error}
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -604,7 +625,7 @@ export function SettingsModelsTab() {
               <div className="space-y-1 text-sm">
                 <p className="font-medium text-yellow-600 dark:text-yellow-400">{t('Cost Warning')}</p>
                 <p className="text-muted-foreground">
-                  {t('This test will send a short message to each model')}（"hello"），{t('models in total,')} <strong>{selectedProvider?.models.length || 0}</strong> {t('models in total,')} {t('Although each request consumes very few tokens, a small API call fee may still be incurred')}。{t('Please confirm before continuing')}。
+                  {t('此测试会向每个模型发送简短消息')}（"hello"），{t('共')} <strong>{selectedProvider?.models.length || 0}</strong> {t('个模型')}。{t('Although each request consumes very few tokens, a small API call fee may still be incurred')}。{t('Please confirm before continuing')}。
                 </p>
               </div>
             </div>
@@ -613,6 +634,29 @@ export function SettingsModelsTab() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setTestAllDialogOpen(false)}>{t('Cancel')}</Button>
             <Button onClick={trackClick(() => { setTestAllDialogOpen(false); testAllModels(); }, 'model:confirmTestAll')}><Play className="h-4 w-4 mr-1.5" />{t('Confirm Test')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Provider Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('删除服务商')}</DialogTitle>
+            <DialogDescription>
+              {t('确定要删除服务商')}「{selectedProvider?.name}」{t('吗？此操作不可撤销，该服务商下的所有模型配置将被删除。')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>{t('取消')}</Button>
+            <Button variant="destructive" onClick={() => {
+              if (!selectedProvider) return;
+              const currentId = selectedProvider.id;
+              const remaining = settings.providers.filter(p => p.id !== currentId);
+              deleteProvider(currentId);
+              setSelectedProviderId(remaining[0]?.id || null);
+              setDeleteConfirmOpen(false);
+            }}>{t('确认删除')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

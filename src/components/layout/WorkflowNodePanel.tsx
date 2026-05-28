@@ -19,7 +19,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
     ? workflows.find(w => w.id === activeSession.workflowId)
     : undefined
   const workflowAgentNodes = (workflowForActiveSession?.nodesData || []).filter(
-    node => (node.type === 'agent' || node.type === 'dynamic-agent') && (node.data?.agentId || node.type === 'dynamic-agent')
+    node => (node.type === 'agent' || node.type === 'dynamic-agent') && ((node.data as any)?.agentId || node.type === 'dynamic-agent')
   )
   const collapsed = activeSession
     ? (sidebarCollapsedBySession[activeSession.id] ?? true)
@@ -56,12 +56,13 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
         <div className="text-xs text-muted-foreground mb-2">{t('Agent Nodes')}</div>
         <div className="flex flex-col gap-1">
           {workflowAgentNodes.map(node => {
+            const d = node.data as any;
             const isDynamic = node.type === 'dynamic-agent'
-            const agentId = isDynamic ? `dynamic-${node.id}` : node.data?.agentId
+            const agentId = isDynamic ? `dynamic-${node.id}` : d?.agentId
             if (!agentId) return null
             const agent = agents.find(item => item.id === agentId)
-            const displayName = node.data?.label || (isDynamic ? 'Dynamic Agent' : node.id)
-            const subName = isDynamic ? (node.data?.inlineConfig?.nameTemplate || 'Dynamic Agent') : (agent?.name || agentId)
+            const displayName = d?.label || (isDynamic ? 'Dynamic Agent' : node.id)
+            const subName = isDynamic ? (d?.inlineConfig?.nameTemplate || 'Dynamic Agent') : (agent?.name || agentId)
             return (
               <button
                 key={node.id}

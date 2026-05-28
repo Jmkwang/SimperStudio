@@ -11,6 +11,12 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
   const { t } = useTranslation()
   const { trackClick, debugProps } = useDebugTrack('GlobalSidebar')
 
+  const cycleTheme = () => {
+    const order: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+    const idx = order.indexOf(theme);
+    setTheme(order[(idx + 1) % order.length]);
+  };
+
   return (
     <TooltipProvider delayDuration={400}>
       <div className="relative flex w-[60px] flex-col items-center justify-between py-5 m-1 mr-0 rounded-2xl bg-surface border border-border shadow-inner-glow">
@@ -33,13 +39,19 @@ export function GlobalSidebar({ currentView, setCurrentView }: { currentView: st
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={trackClick(() => setTheme(theme === "dark" ? "light" : "dark"), 'toggle:theme')}
+                onClick={trackClick(cycleTheme, 'toggle:theme')}
                 {...debugProps('toggle:theme')}
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent hover:border-foreground/[0.06] hover:bg-hover transition-all duration-400 ease-out text-muted-foreground hover:text-foreground"
                 aria-label={t("Toggle Theme")}
               >
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" strokeWidth={1.5} />
-                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" strokeWidth={1.5} />
+                <Sun className={theme === 'light' ? "h-4 w-4" : "hidden"} strokeWidth={1.5} />
+                <Moon className={theme === 'dark' ? "h-4 w-4" : "hidden"} strokeWidth={1.5} />
+                {theme === 'system' && (
+                  <span className="flex items-center gap-[1px]">
+                    <Sun className="h-3 w-3" strokeWidth={1.5} />
+                    <Moon className="h-3 w-3" strokeWidth={1.5} />
+                  </span>
+                )}
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">

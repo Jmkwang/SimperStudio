@@ -1,0 +1,69 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e50]: 设置
+  - generic [ref=e53]:
+    - generic [ref=e56]:
+      - button "新建会话" [ref=e58] [cursor=pointer]:
+        - img [ref=e59]
+        - generic [ref=e60]: 新建会话
+      - generic [ref=e62]: 暂无会话，点击 + 新建
+    - main [ref=e64]:
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - img [ref=e74]
+          - img [ref=e77]
+        - generic [ref=e80]:
+          - heading "智能对话" [level=2] [ref=e81]
+          - paragraph [ref=e82]: 与 AI 智能体一对一交流，获取精准回答和创意灵感。
+        - generic [ref=e83]:
+          - paragraph [ref=e84]: 快速开始
+          - generic [ref=e85]:
+            - button "整理助手 AI 智能体" [ref=e86] [cursor=pointer]:
+              - img [ref=e88]
+              - generic [ref=e91]:
+                - generic [ref=e92]: 整理助手
+                - generic [ref=e93]: AI 智能体
+              - img [ref=e94]
+            - button "总结助手 AI 智能体" [ref=e96] [cursor=pointer]:
+              - img [ref=e98]
+              - generic [ref=e101]:
+                - generic [ref=e102]: 总结助手
+                - generic [ref=e103]: AI 智能体
+              - img [ref=e104]
+            - button "System Architect AI 智能体" [ref=e106] [cursor=pointer]:
+              - img [ref=e108]
+              - generic [ref=e111]:
+                - generic [ref=e112]: System Architect
+                - generic [ref=e113]: AI 智能体
+              - img [ref=e114]
+            - button "Code Reviewer AI 智能体" [ref=e116] [cursor=pointer]:
+              - img [ref=e118]
+              - generic [ref=e121]:
+                - generic [ref=e122]: Code Reviewer
+                - generic [ref=e123]: AI 智能体
+              - img [ref=e124]
+        - paragraph [ref=e126]: 或从左侧面板选择已有会话继续对话
+      - region "Notifications alt+T"

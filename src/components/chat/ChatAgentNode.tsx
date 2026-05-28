@@ -2,8 +2,10 @@ import { Handle, Position } from '@xyflow/react';
 import { Bot } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAppStore } from '@/stores';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function ChatAgentNode({ data }: { data: any }) {
+  const { t } = useTranslation();
   const agents = useAppStore(state => state.agents);
   const activeAgent = data.agentId ? agents.find(a => a.id === data.agentId) : undefined;
 
@@ -26,15 +28,15 @@ export function ChatAgentNode({ data }: { data: any }) {
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
-            <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
-            {data.schema && <p className="text-xs text-primary mt-0.5">Tool Calling Enabled</p>}
+            <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || t('Agent Node')}</p>
+            <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || t('Select an Agent')}</p>
+            {data.schema && <p className="text-xs text-primary mt-0.5">{t('Tool Calling Enabled')}</p>}
           </div>
         </div>
       </div>
       <div className="p-3">
         <p className="text-xs text-muted-foreground line-clamp-2 italic">
-          {data.prompt || 'Process input using assigned agent capabilities.'}
+          {data.prompt || t('Process input using assigned agent capabilities.')}
         </p>
       </div>
       <Handle

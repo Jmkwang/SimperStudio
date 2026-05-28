@@ -1,9 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import { invoke } from '@tauri-apps/api/core';
-import { Workflow, WorkflowNode, WorkflowEdge, WorkflowNodeData } from '../types/models';
+import { Workflow, WorkflowNode, WorkflowEdge, WorkflowNodeData, ChatSession } from '../types/models';
 import { writeConfig } from './baseSlice';
 import { executeWorkflow as engineExecuteWorkflow } from '../lib/workflow/engine';
 import { debugLogger } from '@/lib/debugLogger';
+import { toast } from 'sonner';
 
 export type WorkflowExecutionState = {
   status: 'idle' | 'running' | 'completed' | 'error';
@@ -87,6 +88,7 @@ const MOCK_WORKFLOWS: Workflow[] = [
     id: 'werewolf-standard',
     workspaceId: 'default-workspace',
     name: '狼人杀·标准局',
+    testPayload: {},
     nodesData: [
       { id: 'ww-trigger', type: 'trigger', position: { x: 50, y: 450 }, data: { label: '开始游戏' } },
       { id: 'ww-init', type: 'code', position: { x: 300, y: 450 }, data: {
@@ -420,9 +422,24 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
     },
 
     executeWorkflow: async (workflowId, initialPayload, options) => {
-      const { workflows, setWorkflowExecutionState } = get();
+      const { workflows, setWorkflowExecutionState, sessions } = get();
       const workflow = workflows.find((w: Workflow) => w.id === workflowId);
       if (!workflow) return initialPayload;
+
+      // Find an existing workflow chat session so engine results can be written to chat
+      const workflowSession = sessions.find(
+        (s: ChatSession) => s.workflowId === workflowId && s.mode === 'workflow'
+      );
+      const workflowSessionId: string | null = workflowSession?.id || null;
+
+      // Create a user message for the trigger payload (one per execution)
+      let executionMessageId: string | null = null;
+      if (workflowSessionId) {
+        const { addUserMessage } = get();
+        executionMessageId = uuidv4();
+        const triggerText = `⚙️ Workflow execution started\n\n**Input:**\n\`\`\`json\n${JSON.stringify(initialPayload, null, 2)}\n\`\`\``;
+        addUserMessage(workflowSessionId, triggerText, [], { workflowId, triggeredBy: 'system' as any });
+      }
 
       const abortController = new AbortController();
       set({ _abortController: abortController });
@@ -436,16 +453,67 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
           workflow.nodesData,
           workflow.edgesData,
           initialPayload,
-          { ...options, signal: abortController.signal },
+          {
+            ...options,
+            signal: abortController.signal,
+            onNodeResult: (nodeId: string, nodeType: string, payload: any, nodeData: any) => {
+              // Fire-and-forget: write agent/dynamic-agent results to the workflow chat session
+              if (!workflowSessionId || !executionMessageId) return;
+              if (nodeType !== 'agent' && nodeType !== 'dynamic-agent') return;
+
+              const state = get();
+              const llmResult = payload.llmResult ?? payload.output;
+              if (llmResult == null) return;
+
+              const responseText = typeof llmResult === 'object' && llmResult !== null
+                ? JSON.stringify(llmResult, null, 2)
+                : String(llmResult);
+
+              let agentId: string;
+              let dynamicMeta: any;
+
+              if (nodeType === 'dynamic-agent') {
+                const meta = payload._dynamicAgentMeta || {};
+                agentId = `dynamic-${nodeId}`;
+                dynamicMeta = meta;
+              } else {
+                agentId = nodeData?.agentId || `unknown-${nodeId}`;
+                dynamicMeta = undefined;
+              }
+
+              state.addAgentResponseStream(workflowSessionId, executionMessageId, agentId, responseText, nodeId, {
+                workflowId,
+                workflowNodeId: nodeId,
+                ...(dynamicMeta ? { _dynamicAgentMeta: dynamicMeta } : {}),
+              });
+              state.completeAgentResponse(workflowSessionId, executionMessageId, agentId, nodeId);
+            },
+          },
           (stateUpdate) => setWorkflowExecutionState(stateUpdate),
           { agents: get().agents, settings: get().settings, workflows: get().workflows },
         );
+
+        // Execution feedback (toast + screen shake)
+        const { settings: currentSettings } = get();
+        if (currentSettings?.executionFeedback !== false) {
+          toast.success(result.status === 'completed' ? 'Workflow completed!' : 'Workflow execution failed');
+          triggerScreenShake();
+        }
+
         return result.finalPayload;
       } catch (e: any) {
         const msg = e.name === 'AbortError' ? 'Workflow timed out after 5 minutes' : (e.message || String(e));
         console.error('Workflow execution failed:', msg);
         debugLogger.error('workflowSlice', 'executeWorkflow failed', { error: msg });
         setWorkflowExecutionState({ status: 'error' });
+
+        // Error feedback
+        const { settings: currentSettings } = get();
+        if (currentSettings?.executionFeedback !== false) {
+          toast.error('Workflow execution failed');
+          triggerScreenShake();
+        }
+
         return { ...initialPayload, _error: msg };
       } finally {
         clearTimeout(timeoutId);
@@ -453,4 +521,18 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
       }
     },
   };
+}
+
+/**
+ * Trigger a brief screen-shake animation on the root element.
+ * Adds a CSS class that kicks off the shake keyframes, then removes it after the animation ends.
+ */
+function triggerScreenShake() {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.classList.add('animate-screen-shake');
+  const cleanup = () => root.classList.remove('animate-screen-shake');
+  root.addEventListener('animationend', cleanup, { once: true });
+  // Fallback: remove after 600ms if animationend doesn't fire
+  setTimeout(cleanup, 600);
 }

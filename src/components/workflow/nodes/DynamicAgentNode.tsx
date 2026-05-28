@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Sparkles, Settings2 } from 'lucide-react';
 import { useAppStore } from '@/stores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const agents = useAppStore((state) => state.agents);
   const providers = useAppStore((state) => state.settings?.providers) || [];
@@ -112,14 +114,14 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[480px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Dynamic Agent</DialogTitle>
+              <DialogTitle>{t("Configure Dynamic Agent")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
 
               {/* Config Source */}
               <div className="grid gap-2">
-                <Label>Configuration Source</Label>
+                <Label>{t("Configuration Source")}</Label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -145,7 +147,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
               {/* Payload Mode */}
               {configSource === 'payload' && (
                 <div className="grid gap-2">
-                  <Label htmlFor="configPath">Config Path</Label>
+                  <Label htmlFor="configPath">{t("Config Path")}</Label>
                   <Input
                     id="configPath"
                     value={configPath}
@@ -161,9 +163,9 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
               {/* Inline Mode */}
               {configSource === 'inline' && (
                 <div className="grid gap-3 border border-purple-100 dark:border-purple-900/30 rounded-lg p-3 bg-purple-50/20 dark:bg-purple-950/10">
-                  <h5 className="text-xs font-medium text-purple-700 dark:text-purple-400">Inline Templates</h5>
+                  <h5 className="text-xs font-medium text-purple-700 dark:text-purple-400">{t("Inline Templates")}</h5>
                   <div className="grid gap-2">
-                    <Label htmlFor="nameTemplate" className="text-xs">Name Template</Label>
+                    <Label htmlFor="nameTemplate" className="text-xs">{t("Name Template")}</Label>
                     <Input
                       id="nameTemplate"
                       value={nameTemplate}
@@ -183,7 +185,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="roleTemplate" className="text-xs">Role Template</Label>
+                    <Label htmlFor="roleTemplate" className="text-xs">{t("Role Template")}</Label>
                     <Input
                       id="roleTemplate"
                       value={roleTemplate}
@@ -193,7 +195,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="personalityTemplate" className="text-xs">Personality Template</Label>
+                    <Label htmlFor="personalityTemplate" className="text-xs">{t("Personality Template")}</Label>
                     <Input
                       id="personalityTemplate"
                       value={personalityTemplate}
@@ -203,7 +205,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="avatarTemplate" className="text-xs">Avatar Template</Label>
+                    <Label htmlFor="avatarTemplate" className="text-xs">{t("Avatar Template")}</Label>
                     <Input
                       id="avatarTemplate"
                       value={avatarTemplate}
@@ -232,15 +234,15 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
 
               {/* Fallback Model */}
               <div className="border border-amber-200 dark:border-amber-900/40 rounded-lg p-3 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
-                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">Model Fallback Chain</h5>
+                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">{t("Model Fallback Chain")}</h5>
                 <div className="grid gap-2">
-                  <Label className="text-xs">Fallback Agent</Label>
+                  <Label className="text-xs">{t("Fallback Agent")}</Label>
                   <Select value={fallbackAgentId} onValueChange={setFallbackAgentId}>
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">{t("None")}</SelectItem>
                       {agents.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.name}
@@ -250,7 +252,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-xs">Fallback Provider</Label>
+                  <Label className="text-xs">{t("Fallback Provider")}</Label>
                   <Select
                     value={fallbackProviderId}
                     onValueChange={(v) => {
@@ -262,7 +264,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">{t("None")}</SelectItem>
                       {providers.filter(p => p.isEnabled).map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
@@ -272,7 +274,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-xs">Fallback Model</Label>
+                  <Label className="text-xs">{t("Fallback Model")}</Label>
                   <Select
                     value={fallbackModelId}
                     onValueChange={setFallbackModelId}
@@ -282,7 +284,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                       <SelectValue placeholder={fallbackProviderId ? 'Select model' : 'Select provider first'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Default</SelectItem>
+                      <SelectItem value="">{t("Default")}</SelectItem>
                       {selectedFallbackProvider?.models.map((m) => (
                         <SelectItem key={m.id} value={m.modelId}>
                           {m.name}
@@ -295,7 +297,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
 
               {/* Output */}
               <div className="grid gap-2">
-                <Label htmlFor="outputField">Output Field</Label>
+                <Label htmlFor="outputField">{t("Output Field")}</Label>
                 <Input
                   id="outputField"
                   value={outputField}
@@ -307,7 +309,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
 
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <Label>Auto Send to Next</Label>
+                  <Label>{t("Auto Send to Next")}</Label>
                   <p className="text-xs text-muted-foreground">Automatically forward this agent&apos;s reply to the next agent node.</p>
                 </div>
                 <Switch checked={autoSendToNext} onCheckedChange={setAutoSendToNext} />

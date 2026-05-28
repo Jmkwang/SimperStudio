@@ -1,7 +1,7 @@
 import { ChatMessage, AgentResponse } from "@/types/models";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "@/hooks/useTranslation";
-import { AlertTriangle, ChevronDown, Bot, Copy, RefreshCw } from "lucide-react";
+import { AlertTriangle, ChevronDown, Bot, Copy, Check, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, memo } from "react";
 
@@ -24,12 +24,23 @@ interface ChatMessageBubbleProps {
 }
 
 function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: string }) {
+  const attachments = message.content?.attachments;
   return (
     <div className="flex justify-end gap-2">
       <div className="max-w-[80%] flex flex-col items-end">
         <div className="rounded-2xl rounded-tr-md bg-foreground/10 px-3 py-2 text-sm whitespace-pre-wrap break-words">
           {message.content.text || emptyText || ""}
         </div>
+        {attachments && attachments.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {attachments.map((att: any) => (
+              <div key={att.id} className="flex items-center gap-1 rounded-md bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground max-w-[140px] overflow-hidden">
+                <span className="truncate">{att.name}</span>
+                <span className="shrink-0">({(att.size / 1024).toFixed(0)}KB)</span>
+              </div>
+            ))}
+          </div>
+        )}
         <span className="text-xs text-muted-foreground mt-0.5 mr-1">
           {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
@@ -58,6 +69,7 @@ const AssistantBubble = memo(function AssistantBubble({
 }) {
   const { t } = useTranslation();
   const [showErrorDetail, setShowErrorDetail] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isError = response.status === 'error';
   const isStreaming = response.status === 'streaming';
   const gameStatus = response._dynamicAgentMeta?.status;
@@ -68,6 +80,8 @@ const AssistantBubble = memo(function AssistantBubble({
     } else {
       navigator.clipboard.writeText(response.content.text).catch(() => {});
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -143,17 +157,21 @@ const AssistantBubble = memo(function AssistantBubble({
           </span>
           {(response.tokenUsage || response.duration) && (
             <span className="text-xs text-muted-foreground/70 shrink-0">
-              ({response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : ''}{response.tokenUsage && response.duration ? ' / ' : ''}{response.duration ? `${(response.duration / 1000).toFixed(1)}s` : ''})
+              ({[
+                response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : '',
+                response.duration ? `${(response.duration / 1000).toFixed(1)}s` : '',
+              ].filter(Boolean).join(' / ')})
             </span>
           )}
           {!isStreaming && (
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleCopy}
-                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
+                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors relative"
                 aria-label={t("Copy")}
               >
-                <Copy className="h-3 w-3" />
+                <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
+                <Check className={`h-3 w-3 absolute text-green-500 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
               </button>
               {onRetry && (
                 <button

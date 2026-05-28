@@ -1,0 +1,4 @@
+[    1142ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=53e7325f:20102
+[    1524ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:444
+[    1524ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:444
+[  194368ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:1420/@vite/client:864

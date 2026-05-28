@@ -1,0 +1,84 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e10]
+          - generic [ref=e12]: 聊天
+        - button "工作流对话" [ref=e13] [cursor=pointer]:
+          - img [ref=e14]
+          - generic [ref=e18]: 工作流对话
+        - button "工作流" [ref=e19] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e42] [cursor=pointer]:
+        - img [ref=e43]
+        - generic [ref=e46]: 设置
+  - generic [ref=e49]:
+    - generic [ref=e52]:
+      - button "新建工作流" [ref=e54] [cursor=pointer]:
+        - img [ref=e55]
+        - generic [ref=e56]: 新建工作流
+      - generic [ref=e58]:
+        - generic [ref=e61]:
+          - button "My First Workflow" [ref=e62] [cursor=pointer]:
+            - img [ref=e64]
+            - generic [ref=e68]: My First Workflow
+          - button "更多" [ref=e69] [cursor=pointer]:
+            - img [ref=e70]
+        - generic [ref=e76]:
+          - button "Data Processing Pipeline" [ref=e77] [cursor=pointer]:
+            - img [ref=e79]
+            - generic [ref=e83]: Data Processing Pipeline
+          - button "更多" [ref=e84] [cursor=pointer]:
+            - img [ref=e85]
+        - generic [ref=e91]:
+          - button "Weekly Report Generator" [ref=e92] [cursor=pointer]:
+            - img [ref=e94]
+            - generic [ref=e98]: Weekly Report Generator
+          - button "更多" [ref=e99] [cursor=pointer]:
+            - img [ref=e100]
+        - generic [ref=e106]:
+          - button "狼人杀·标准局" [ref=e107] [cursor=pointer]:
+            - img [ref=e109]
+            - generic [ref=e113]: 狼人杀·标准局
+          - button "更多" [ref=e114] [cursor=pointer]:
+            - img [ref=e115]
+    - main [ref=e120]:
+      - application [ref=e125]:
+        - img
+        - generic "Control Panel" [ref=e128]:
+          - button "Zoom In" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+          - button "Zoom Out" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+          - button "Fit View" [ref=e135] [cursor=pointer]:
+            - img [ref=e136]
+          - button "Toggle Interactivity" [ref=e138] [cursor=pointer]:
+            - img [ref=e139]
+        - img "Mini Map" [ref=e142]
+        - generic [ref=e143]:
+          - button "Add Node" [ref=e144] [cursor=pointer]:
+            - img
+            - text: Add Node
+          - button "测试运行" [ref=e145] [cursor=pointer]:
+            - img
+            - text: 测试运行
+          - button "Save" [ref=e146] [cursor=pointer]:
+            - img
+            - text: Save
+            - img
+        - link "React Flow attribution" [ref=e148] [cursor=pointer]:
+          - /url: https://reactflow.dev
+          - text: React Flow
+      - region "Notifications alt+T"

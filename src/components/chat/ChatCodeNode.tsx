@@ -1,7 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
 import { Code2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function ChatCodeNode({ data }: { data: any }) {
+  const { t } = useTranslation();
   return (
     <div className="w-[220px] rounded-xl border border-blue-200 dark:border-blue-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle
@@ -15,8 +17,8 @@ export function ChatCodeNode({ data }: { data: any }) {
             <Code2 className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Code Snippet'}</p>
-            <p className="text-xs text-muted-foreground mt-1">JS Execution</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Code Snippet')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('JS Execution')}</p>
           </div>
         </div>
       </div>

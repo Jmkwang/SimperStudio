@@ -1,7 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { FileOutput } from 'lucide-react';
 
 export function ChatOutputNode({ data }: { data: any }) {
+  const { t } = useTranslation();
   return (
     <div className="w-[200px] rounded-xl border bg-card text-card-foreground shadow-sm">
       <Handle
@@ -15,13 +17,13 @@ export function ChatOutputNode({ data }: { data: any }) {
             <FileOutput className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Output'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Final Result</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Output')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Final Result')}</p>
           </div>
         </div>
       </div>
       <div className="p-3 text-xs text-muted-foreground">
-        Returns data to the user or system.
+        {t('Returns data to the user or system.')}
       </div>
     </div>
   );

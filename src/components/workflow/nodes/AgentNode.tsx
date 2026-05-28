@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Bot, Settings2 } from 'lucide-react';
 import { useAppStore } from '@/stores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -12,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function AgentNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const agents = useAppStore(state => state.agents);
   const providers = useAppStore(state => state.settings?.providers) || [];
@@ -69,7 +71,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
           <div>
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
-            {data.schema && <p className="text-xs text-primary mt-0.5">Tool Calling Enabled</p>}
+            {data.schema && <p className="text-xs text-primary mt-0.5">{t("Tool Calling Enabled")}</p>}
           </div>
         </div>
 
@@ -81,12 +83,12 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Agent Node</DialogTitle>
+              <DialogTitle>{t("Configure Agent Node")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>Assigned Agent</Label>
+                <Label>{t("Assigned Agent")}</Label>
                 <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an agent" />
@@ -109,7 +111,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="systemPrompt">Override System Prompt</Label>
+                <Label htmlFor="systemPrompt">{t("Override System Prompt")}</Label>
                 <Textarea
                   id="systemPrompt"
                   value={overrideSystemPrompt}
@@ -124,13 +126,13 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               <div className="border border-amber-200 dark:border-amber-900/40 rounded-lg p-3 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
                 <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">Node-level Overrides (local only)</h5>
                 <div className="grid gap-2">
-                  <Label className="text-xs">Override Provider</Label>
+                  <Label className="text-xs">{t("Override Provider")}</Label>
                   <Select value={overrideProviderId} onValueChange={(v) => { setOverrideProviderId(v); setOverrideModelId(''); }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Use agent default" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Use agent default</SelectItem>
+                      <SelectItem value="">{t("Use agent default")}</SelectItem>
                       {providers.filter(p => p.isEnabled).map(p => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
@@ -138,13 +140,13 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-xs">Override Model</Label>
+                  <Label className="text-xs">{t("Override Model")}</Label>
                   <Select value={overrideModelId} onValueChange={setOverrideModelId} disabled={!overrideProviderId}>
                     <SelectTrigger>
                       <SelectValue placeholder={overrideProviderId ? "Use provider default" : "Select a provider first"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Use provider default</SelectItem>
+                      <SelectItem value="">{t("Use provider default")}</SelectItem>
                       {selectedOverrideProvider?.models.map(m => (
                         <SelectItem key={m.id} value={m.modelId}>{m.name}</SelectItem>
                       ))}
@@ -155,7 +157,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
 
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <Label>Auto Send to Next</Label>
+                  <Label>{t("Auto Send to Next")}</Label>
                   <p className="text-xs text-muted-foreground">Automatically forward this agent's reply to the next agent node.</p>
                 </div>
                 <Switch
@@ -165,7 +167,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

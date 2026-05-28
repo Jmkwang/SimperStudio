@@ -4,7 +4,7 @@ import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Minus, Send, X, Layers } from 'lucide-react';
+import { Minus, Send, Square, X, Layers } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
@@ -24,6 +24,9 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
   const focusWorkflowAgentWindow = useAppStore(state => state.focusWorkflowAgentWindow);
   const toggleWorkflowAgentWindowMinimized = useAppStore(state => state.toggleWorkflowAgentWindowMinimized);
   const sendToWorkflowAgent = useAppStore(state => state.sendToWorkflowAgent);
+  const cancelSessionStream = useAppStore(state => state.cancelSessionStream);
+  const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
+  const isStreaming = activeStreamingSessionIds.includes(windowData.sessionId);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
 
   const agent = agents.find(item => item.id === windowData.agentId);
@@ -169,8 +172,14 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
                 placeholder={t('Send to current node agent...')}
                 className="min-h-[64px] text-sm"
               />
-              <Button onClick={handleSend} disabled={!input.trim()} className="self-end h-11 w-11" aria-label={t('Send')}>
-                <Send className="h-4 w-4" />
+              <Button
+                onClick={isStreaming ? () => cancelSessionStream(windowData.sessionId) : handleSend}
+                disabled={!isStreaming && !input.trim()}
+                variant={isStreaming ? 'destructive' : 'default'}
+                className="self-end h-11 w-11"
+                aria-label={isStreaming ? t('Stop') : t('Send')}
+              >
+                {isStreaming ? <Square className="h-4 w-4" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </div>

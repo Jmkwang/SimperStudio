@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,10 +22,10 @@ interface AgentCardProps {
   onToggle: (id: string) => void;
   onEdit: (agent: any) => void;
   t: (key: string) => string;
+  isNew?: boolean;
 }
 
-function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, t }: AgentCardProps) {
-  const isNew = agent.createdAt && Date.now() - agent.createdAt < 3000;
+function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, t, isNew }: AgentCardProps) {
   return (
     <div
       className={cn(
@@ -111,6 +111,8 @@ export function AgentsView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProviderId, setBulkProviderId] = useState('');
   const [bulkModelId, setBulkModelId] = useState('');
+  const [recentAgentIds, setRecentAgentIds] = useState<Set<string>>(new Set());
+  const initializedRef = useRef(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -154,6 +156,36 @@ export function AgentsView() {
       setEditingId(null);
     }
   };
+
+  // Track newly created agents for entrance animation (5s window)
+  // On first load, mark all existing agents as "not new" so only
+  // agents created during this session get the entrance animation.
+  useEffect(() => {
+    if (agents.length > 0 && !initializedRef.current) {
+      initializedRef.current = true;
+      setRecentAgentIds(new Set(agents.map(a => a.id)));
+    }
+  }, [agents]);
+
+  useEffect(() => {
+    if (!initializedRef.current || agents.length === 0) return;
+    const newIds = agents.filter(a => !recentAgentIds.has(a.id)).map(a => a.id);
+    if (newIds.length > 0) {
+      setRecentAgentIds(prev => {
+        const next = new Set(prev);
+        newIds.forEach(id => next.add(id));
+        return next;
+      });
+      const timer = setTimeout(() => {
+        setRecentAgentIds(prev => {
+          const next = new Set(prev);
+          newIds.forEach(id => next.delete(id));
+          return next;
+        });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [agents.length]);
 
   const handleEdit = (agent: any) => {
     setEditingId(agent.id);
@@ -248,7 +280,7 @@ export function AgentsView() {
               <DialogTrigger asChild>
                 <Button onClick={trackClick(handleOpenNew, 'agent:openCreate')} data-debug-source="AgentsView" data-debug-action="agent:openCreate">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Agent
+                  {t('Create Agent')}
                 </Button>
               </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
@@ -447,6 +479,7 @@ export function AgentsView() {
                       onToggle={toggleSelection}
                       onEdit={handleEdit}
                       t={t}
+                      isNew={recentAgentIds.has(agent.id)}
                     />
                   ))}
               </div>

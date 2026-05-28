@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ interface FieldMapping {
 }
 
 export function SetTransformNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -72,8 +74,8 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label>Field Mappings</Label>
-                  <Button variant="outline" size="sm" onClick={addMapping} className="h-7 px-2 text-xs"><Plus className="h-3 w-3 mr-1" />Add</Button>
+                  <Label>{t("Field Mappings")}</Label>
+                  <Button variant="outline" size="sm" onClick={addMapping} className="h-7 px-2 text-xs"><Plus className="h-3 w-3 mr-1" />{t("Add")}</Button>
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                   {mappings.map((m, i) => (
@@ -96,7 +98,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

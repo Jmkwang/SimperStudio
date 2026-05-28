@@ -1,0 +1,90 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: S
+      - navigation "Main Navigation" [ref=e8]:
+        - button "聊天" [ref=e9] [cursor=pointer]:
+          - img [ref=e11]
+          - generic [ref=e13]: 聊天
+        - button "工作流对话" [active] [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+          - generic [ref=e19]: 工作流对话
+        - button "工作流" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e25]: 工作流
+        - button "智能体" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e32]: 智能体
+        - button "提示词" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+          - generic [ref=e37]: 提示词
+    - generic [ref=e38]:
+      - button "切换主题" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+      - button "设置" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e50]: 设置
+  - generic [ref=e53]:
+    - generic [ref=e527]:
+      - button "新建工作流会话" [ref=e529] [cursor=pointer]:
+        - img [ref=e530]
+        - generic [ref=e531]: 新建工作流会话
+      - generic [ref=e533]:
+        - generic [ref=e537]:
+          - button "My First Workflow 1" [ref=e538] [cursor=pointer]:
+            - img [ref=e539]
+            - img [ref=e542]
+            - generic [ref=e546]: My First Workflow
+            - generic [ref=e547]: "1"
+          - button "更多" [ref=e548] [cursor=pointer]:
+            - img [ref=e549]
+        - generic [ref=e556]:
+          - button "Data Processing Pipeline 1" [ref=e557] [cursor=pointer]:
+            - img [ref=e558]
+            - img [ref=e561]
+            - generic [ref=e565]: Data Processing Pipeline
+            - generic [ref=e566]: "1"
+          - button "更多" [ref=e567] [cursor=pointer]:
+            - img [ref=e568]
+        - generic [ref=e575]:
+          - button "Weekly Report Generator 1" [ref=e576] [cursor=pointer]:
+            - img [ref=e577]
+            - img [ref=e580]
+            - generic [ref=e584]: Weekly Report Generator
+            - generic [ref=e585]: "1"
+          - button "更多" [ref=e586] [cursor=pointer]:
+            - img [ref=e587]
+        - generic [ref=e594]:
+          - button "狼人杀·标准局 1" [ref=e595] [cursor=pointer]:
+            - img [ref=e596]
+            - img [ref=e599]
+            - generic [ref=e603]: 狼人杀·标准局
+            - generic [ref=e604]: "1"
+          - button "更多" [ref=e605] [cursor=pointer]:
+            - img [ref=e606]
+    - main [ref=e64]:
+      - generic [ref=e290]:
+        - generic [ref=e292]:
+          - generic [ref=e293]:
+            - generic [ref=e294]: 整理助手
+            - button "整理助手" [ref=e295] [cursor=pointer]:
+              - img [ref=e297]
+              - generic [ref=e298]: 整理助手
+              - img [ref=e299]
+            - generic [ref=e301]: "|"
+            - generic [ref=e302]: 未配置
+            - button "拓扑视图" [ref=e513] [cursor=pointer]:
+              - img
+          - generic [ref=e305]: 05/29 00:39
+        - generic [ref=e515]:
+          - generic [ref=e516]: 💬
+          - paragraph [ref=e517]: 开始对话
+        - generic [ref=e519]:
+          - generic [ref=e520]:
+            - img [ref=e521]
+            - generic [ref=e523]: 当前 Agent 未配置模型服务商。请前往「设置 > 模型」配置 API Key 并启用至少一个服务商。
+          - generic [ref=e524]:
+            - textbox "Send message..." [ref=e525]
+            - button "发送" [disabled]:
+              - img
+      - region "Notifications alt+T"

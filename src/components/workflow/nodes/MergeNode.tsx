@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { useState } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function MergeNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -50,30 +52,30 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Merge</DialogTitle>
+              <DialogTitle>{t("Configure Merge")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>Merge Strategy</Label>
+                <Label>{t("Merge Strategy")}</Label>
                 <Select value={strategy} onValueChange={setStrategy}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="append">Append (concat arrays)</SelectItem>
-                    <SelectItem value="byKey">Merge by Key</SelectItem>
+                    <SelectItem value="byKey">{t("Merge by Key")}</SelectItem>
                     <SelectItem value="waitForAll">Wait for All (combine objects)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {strategy === 'byKey' && (
                 <div className="grid gap-2">
-                  <Label>Merge Key</Label>
+                  <Label>{t("Merge Key")}</Label>
                   <Input value={mergeKey} onChange={(e) => setMergeKey(e.target.value)} placeholder="id" className="font-mono text-xs" />
                 </div>
               )}
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

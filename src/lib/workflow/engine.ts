@@ -122,6 +122,7 @@ export async function executeWorkflow(
       results[nodeId] = currentPayload;
       nodeRecords[nodeId] = { status: 'success', startTime: nodeStartTime, endTime: Date.now(), durationMs: Date.now() - nodeStartTime, attempts: 1 };
       onStateChange?.({ nodeRecords: { ...nodeRecords } });
+      options.onNodeResult?.(nodeId, node.type, currentPayload, node?.data);
       continue;
     }
 
@@ -175,6 +176,7 @@ export async function executeWorkflow(
     nodeRecords[nodeId] = { status: 'success', startTime: nodeStartTime, endTime: nodeEnd, durationMs: nodeEnd - nodeStartTime, attempts: nodeRecords[nodeId]?.attempts || 1 };
     results[nodeId] = currentPayload;
     onStateChange?.({ nodeRecords: { ...nodeRecords } });
+    options.onNodeResult?.(nodeId, node?.type || '', currentPayload, node?.data);
 
     // Routing
     const outgoingEdges = nodeEdges;

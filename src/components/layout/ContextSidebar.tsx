@@ -166,11 +166,7 @@ export function ContextSidebar({
           t={t}
         />
       default:
-        return (
-          <div className="flex h-full items-center justify-center p-6 text-xs text-muted-foreground">
-            {t('此视图暂无侧边栏内容。')}
-          </div>
-        )
+        return null
     }
   }
 

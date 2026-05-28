@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -14,7 +14,8 @@ import {
   Connection,
   BackgroundVariant,
   Panel,
-  ReactFlowProvider
+  ReactFlowProvider,
+  useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TriggerNode } from './nodes/TriggerNode';
@@ -48,6 +49,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
+import type { Workflow } from '@/types/models';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
 const GenericNode = ({ data, id }: any) => {
@@ -121,6 +123,8 @@ function Flow() {
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const { t } = useTranslation();
   const { trackClick, track } = useDebugTrack('WorkflowCanvas');
+  const reactFlowInstance = useReactFlow();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -133,10 +137,10 @@ function Flow() {
   // Load active workflow into canvas
   useEffect(() => {
     if (activeWorkflow) {
-      setNodes((activeWorkflow.nodesData || []).map((n: any) => ({ 
-        ...n, 
+      setNodes((activeWorkflow.nodesData || []).map((n: any) => ({
+        ...n,
         className: workflowExecution.currentNodeId === n.id ? 'ring-2 ring-primary ring-offset-2 motion-safe:animate-pulse' : '',
-        data: { ...n.data, deleteNode } 
+        data: { ...n.data, deleteNode }
       })));
       setEdges(activeWorkflow.edgesData || []);
     }
@@ -162,10 +166,20 @@ function Flow() {
     const defaultDataBuilder = nodeDefaultDataBuilders[type];
     const defaultData = defaultDataBuilder ? defaultDataBuilder() : {};
 
+    // Place node at viewport center, with slight random offset
+    let position = { x: 100, y: 100 };
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      position = reactFlowInstance.screenToFlowPosition({
+        x: rect.left + rect.width / 2 + (Math.random() - 0.5) * 60,
+        y: rect.top + rect.height / 2 + (Math.random() - 0.5) * 60,
+      });
+    }
+
     const newNode: Node = {
       id: `${type}-${nodes.length + 1}-${Date.now()}`,
       type: type,
-      position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
+      position,
       data: { label, deleteNode, ...defaultData },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -195,16 +209,8 @@ function Flow() {
     toast.success(t('Workflow exported'));
   }, 'workflow:export');
 
-  // Re-sync local state when activeWorkflow changes
-  useEffect(() => {
-    if (activeWorkflow) {
-      setNodes((activeWorkflow.nodesData || []).map((n: any) => ({ ...n, data: { ...n.data, deleteNode } })));
-      setEdges(activeWorkflow.edgesData || []);
-    }
-  }, [activeWorkflow]);
-
   return (
-    <div className="flex-1 w-full h-full relative bg-background">
+    <div ref={containerRef} className="flex-1 w-full h-full relative bg-background">
       <DebugBadge id="WorkflowCanvas" />
       <ReactFlow
         nodes={nodes}
@@ -270,19 +276,7 @@ function Flow() {
            <Button
              variant="outline"
              onClick={trackClick(() => {
-               const isWerewolf = activeWorkflow?.name === 'Werewolf Game Logic';
-               const initialPayload = isWerewolf
-                 ? {
-                     phase: "night",
-                     gameStatus: "playing",
-                     players: [
-                       { id: "p1", role: "werewolf", status: "alive" },
-                       { id: "p2", role: "seer", status: "alive" },
-                       { id: "p3", role: "witch", status: "alive" },
-                       { id: "p4", role: "villager", status: "alive" }
-                     ]
-                   }
-                 : { text: "Hello from test input!", value: 75 };
+               const initialPayload = (activeWorkflow as Workflow)?.testPayload ?? { text: "Hello from test input!", value: 75 };
                executeWorkflow(activeWorkflow!.id, initialPayload);
              }, 'workflow:test-run')}
              size="sm"

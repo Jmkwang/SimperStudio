@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { useState } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function LoopNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
 
   const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Loop'));
@@ -55,7 +57,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
           </div>
           <div>
             <p className="text-sm font-semibold leading-none">{data.label || 'Loop'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Iteration Control</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("Iteration Control")}</p>
           </div>
         </div>
 
@@ -67,13 +69,13 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[520px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Loop Node</DialogTitle>
+              <DialogTitle>{t("Configure Loop Node")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
 
               <div className="grid gap-2">
-                <Label htmlFor="items-path">Items Path</Label>
+                <Label htmlFor="items-path">{t("Items Path")}</Label>
                 <Input
                   id="items-path"
                   value={itemsPath}
@@ -84,7 +86,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="item-alias">Item Alias</Label>
+                  <Label htmlFor="item-alias">{t("Item Alias")}</Label>
                   <Input
                     id="item-alias"
                     value={itemAlias}
@@ -94,7 +96,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="index-alias">Index Alias</Label>
+                  <Label htmlFor="index-alias">{t("Index Alias")}</Label>
                   <Input
                     id="index-alias"
                     value={indexAlias}
@@ -105,7 +107,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="max-iterations">Max Iterations</Label>
+                <Label htmlFor="max-iterations">{t("Max Iterations")}</Label>
                 <Input
                   id="max-iterations"
                   type="number"
@@ -129,7 +131,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

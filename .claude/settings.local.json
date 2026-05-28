@@ -81,7 +81,19 @@
       "mcp__open-websearch__fetchWebContent",
       "Bash(where node *)",
       "Bash(netstat -ano)",
-      "Bash(taskkill //F //PID 40636)"
+      "Bash(taskkill //F //PID 40636)",
+      "Bash(cat ~/.config/aionui-skills/SKILL.md 2>/dev/null || echo \"NOT_FOUND\")",
+      "Bash(mkdir -p ~/.config/aionui-skills)",
+      "Bash(curl -s https://skills.aionui.com/SKILL.md)",
+      "WebFetch(domain:skills.aionui.com)",
+      "Bash(claude plugin *)",
+      "mcp__open-websearch__fetchGithubReadme",
+      "mcp__open-websearch__search",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__playwright__browser_run_code_unsafe",
+      "Bash(git stash *)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(npx.cmd tsc *)"
     ]
   }
 }

@@ -24,7 +24,7 @@ export const AgentNode = memo(({ data }: { data: AgentNodeData }) => {
         <div className="min-w-0">
           <div className="font-medium text-sm truncate">{agent.name}</div>
           <div className="text-xs text-muted-foreground">
-            {agent.modelProvider}/{agent.modelId}
+            {agent.modelId || 'No model'}
           </div>
         </div>
       </div>

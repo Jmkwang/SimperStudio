@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { useAppStore } from '@/stores';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const workflows = useAppStore(state => state.workflows);
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +60,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>Target Workflow</Label>
+                <Label>{t("Target Workflow")}</Label>
                 <Select value={subWorkflowId} onValueChange={setSubWorkflowId}>
                   <SelectTrigger><SelectValue placeholder="Select a workflow" /></SelectTrigger>
                   <SelectContent>
@@ -74,7 +76,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

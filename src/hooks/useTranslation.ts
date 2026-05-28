@@ -274,6 +274,8 @@ const translations: Translations = {
     'Stop': 'Stop',
     'Dismiss': 'Dismiss',
     'Workflow completed': 'Workflow completed',
+    'Attach file': 'Attach file',
+    'Remove': 'Remove',
     'No API provider configured. Please set up a provider with a valid API key in Settings > Models.': 'No API provider configured. Please set up a provider with a valid API key in Settings > Models.',
 
     // Chinese keys used in source code (backward-compatible mappings)
@@ -604,6 +606,8 @@ const translations: Translations = {
     'Stop': '停止',
     'Dismiss': '关闭',
     'Workflow completed': '工作流执行完成',
+    'Attach file': '附件',
+    'Remove': '移除',
     'No API provider configured. Please set up a provider with a valid API key in Settings > Models.': '未配置 API 服务商。请在 设置 > 模型 中配置一个有效的 API Key。',
 
     // Chinese keys used in source code (backward-compatible mappings)

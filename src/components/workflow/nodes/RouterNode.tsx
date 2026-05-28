@@ -1,4 +1,5 @@
 import { Handle, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
 
 export function RouterNode({ id, data }: { id: string, data: any }) {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   
@@ -72,7 +74,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
           </div>
           <div>
             <p className="text-sm font-semibold leading-none">{data.label || 'Router'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Condition Branching</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("Condition Branching")}</p>
           </div>
         </div>
 
@@ -84,7 +86,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Router</DialogTitle>
+              <DialogTitle>{t("Configure Router")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
@@ -126,7 +128,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("Save Changes")}</Button>
             </div>
           </DialogContent>
         </Dialog>

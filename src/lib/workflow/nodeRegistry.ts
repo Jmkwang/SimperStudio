@@ -40,6 +40,19 @@ export function getExecutor(nodeType: string): RegisteredExecutor | undefined {
   return registry.get(nodeType);
 }
 
+/**
+ * Dynamically register a new node type at runtime.
+ * Enables plugins and external integrations to add custom nodes
+ * without modifying the registry source file.
+ */
+export function registerNodeType(type: string, executor: RegisteredExecutor): void {
+  if (registry.has(type)) {
+    console.warn(`Node type "${type}" is already registered. Overwriting.`);
+  }
+  register(executor);
+  console.log(`Node type "${type}" registered successfully.`);
+}
+
 export function executeNode(
   node: WorkflowNode,
   payload: any,
@@ -119,6 +132,20 @@ async function handleLoopRouting(
 
   if (!Array.isArray(resolvedItems)) {
     return { nextFrames: [], skipDefault: true };
+  }
+
+  // Before computing next iterations, capture the current llmResult into
+  // the shared _loopResults accumulator so it survives across iterations.
+  // This prevents each iteration's agent result from overwriting the previous one.
+  if (payload.llmResult !== undefined) {
+    if (!Array.isArray(payload._loopResults)) {
+      payload._loopResults = [];
+    }
+    payload._loopResults.push(payload.llmResult);
+  }
+  // Also capture into a per-iteration structured form for downstream consumption
+  if (payload.loopNodeId === node.id && payload._loopResults) {
+    payload._loopResults = payload._loopResults;
   }
 
   const loopResult = await computeLoopIterations(node, payload, helpers);
