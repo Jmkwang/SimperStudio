@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
@@ -16,7 +16,8 @@ type ViewMode = 'chat' | 'workflowChat' | 'workflow' | 'agents' | 'workspaces' |
 function App() {
   const fetchInitialData = useAppStore(state => state.fetchInitialData);
   const fontSize = useAppStore(state => state.settings.fontSize);
-  const [viewMode, setViewMode] = useState<ViewMode>('chat');
+  const viewMode = useAppStore(state => state.currentView) as ViewMode;
+  const setCurrentView = useAppStore(state => state.setCurrentView);
 
   useEffect(() => {
     fetchInitialData();
@@ -56,7 +57,7 @@ function App() {
     <ErrorBoundary>
       <AppShell
         currentView={viewMode}
-        setCurrentView={(v) => setViewMode(v as ViewMode)}
+        setCurrentView={(v) => setCurrentView(v)}
       >
         <div className="flex flex-col h-full">
           <div className="flex-1 relative overflow-hidden flex">

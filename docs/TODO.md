@@ -248,17 +248,17 @@
 
 - [x] 支持重跑：整次重跑（Test Run）、从失败节点重跑（时间线按钮）、单节点重跑。
 - [x] 支持导出执行日志（JSON）用于问题复盘。
-- [ ] 支持基础告警钩子（本地通知/后续扩展 Webhook）。
+- [x] 支持基础告警钩子（本地通知/后续扩展 Webhook）。
 
 ### 5.4 验收（可观测 UI 对齐）
 
 - [x] 执行时间线 UI 与 `docs/Design_Specs.md` 对齐：节点状态 `running/success/error/skipped/retrying` 视觉可区分。
 - [x] 错误态信息包含可恢复动作（如重试/从失败节点重跑），避免"只有报错无下一步"。
 - [x] `running/retrying` 动效支持 `prefers-reduced-motion`，在降动效模式下关闭脉冲，仅保留必要淡入淡出。
-- [ ] 执行详情（输入/输出快照、错误信息）在浅色/深色模式下对比度达标（正文≥4.5:1，大号文本≥3:1）。
-- [ ] 执行日志列表与详情面板交互控件满足最小点击区 44×44px。
-- [ ] 时间线与错误面板中的图标按钮补齐 `aria-label`，关键操作可通过键盘 Tab 到达并触发。
-- [ ] 中小屏（<1024px）下执行面板布局不遮挡核心操作；侧栏/详情抽屉开合行为符合响应式规则。
+- [x] 执行详情（输入/输出快照、错误信息）在浅色/深色模式下对比度达标（正文≥4.5:1，大号文本≥3:1）。
+- [x] 执行日志列表与详情面板交互控件满足最小点击区 44×44px。
+- [x] 时间线与错误面板中的图标按钮补齐 `aria-label`，关键操作可通过键盘 Tab 到达并触发。
+- [x] 中小屏（<1024px）下执行面板布局不遮挡核心操作；侧栏/详情抽屉开合行为符合响应式规则。
 
 ## 6. P4：多服务商模型管理
 
@@ -512,15 +512,19 @@ src/components/settings/
 - [ ] UI：会话列表顶部固定 "+ 新增会话" 按钮
 - [ ] UI：列表项采用「头像/图标 + 助手名称」形式
 - [ ] UI：列表项三点菜单（编辑/删除/更多）
-- [ ] UI：面包屑栏添加对话时间显示
+- [x] UI：面包屑栏添加对话时间显示
 - [x] UI：单条消息 Token 显示增加 ↑↓ 分项
 - [ ] UI：AI 回复去除左边框线，改为无明显气泡框
 - [x] UI：模型来源根据 agent 配置动态显示
 - [ ] UI：多模型对比卡片添加快捷操作栏（复制/刷新/引用/点赞/收藏/删除/更多）
 - [ ] UI：多模型对比卡片添加状态图标和时间
-- [ ] UI：GlobalSidebar 底部精简为仅暗色模式和设置（移除 Profile）
+- [x] UI：GlobalSidebar 底部精简为仅暗色模式和设置（移除 Profile）
 - [ ] UI：中小屏（<768px）抽屉式侧栏适配
-- [ ] 首次启动体验：新手引导 / 空状态设计 / 狼人杀 Demo 高亮
+- [x] **空状态设计**：单聊视图 `SimpleChatPlaceholder`（智能体快速入口卡片）、工作流对话视图 `WorkflowChatPlaceholder`（工作流快速入口卡片）
+- [x] **视图状态持久化**：`currentView` 存入 localStorage，刷新后恢复上次视图；`workflowChat` 视图无会话时显示占位而非自动跳转
+- [x] **移除自动创建默认会话**：`fetchInitialData` 不再自动创建/选中 single session，首次打开应用时 `activeSessionId` 为 `null`
+- [ ] 新手引导 / Onboarding 流程
+- [ ] 狼人杀 Demo 高亮
 
 ### 9.4 P7：V1.0 发布标准（待拆分）
 
@@ -768,6 +772,18 @@ components/layout/sidebar/
 - [x] `src/hooks/useTranslation.ts`
   - [x] 新增「工作流会话」翻译键
 
+#### 新增文件
+
+- [x] `src/components/chat/SimpleChatPlaceholder.tsx` — 单聊空状态占位组件（Agent 快速入口卡片）
+- [x] `src/components/chat/WorkflowChatPlaceholder.tsx` — 工作流对话空状态占位组件（Workflow 快速入口卡片）
+- [x] `src/stores/uiSlice.ts` — 新增 `currentView` 状态、`setCurrentView` action（localStorage 持久化）
+- [x] `src/App.tsx` — `viewMode` 从 store 读取，移除 `useState`，切换视图自动持久化
+
+#### 修改文件
+
+- [x] `src/components/chat/ChatInterface.tsx` — 按 `currentView` 区分空状态：`chat` → `SimpleChatPlaceholder`，`workflowChat` → `WorkflowChatPlaceholder`
+- [x] `src/stores/baseSlice.ts` — `fetchInitialData` 移除自动创建/选中 single session 逻辑，首次打开 `activeSessionId` 为 `null`
+
 ### 12.5 验收
 
 - [ ] 「聊天」入口只显示 single sessions，无工作流相关内容
@@ -775,6 +791,7 @@ components/layout/sidebar/
 - [ ] 双击工作流可打开/创建会话
 - [ ] 两个入口的会话互不干扰，切换视图状态正确
 - [ ] 切回普通 session，workflow UI 状态不污染 single chat
+- [ ] 刷新后恢复上次视图（workflowChat 显示占位，chat 显示智能体占位）
 
 ---
 
@@ -790,9 +807,9 @@ components/layout/sidebar/
 - [x] **Copy/Retry 按钮对比度不足**
   - 默认 `text-muted-foreground/50` → 已改为 `/70`
   - 文件：`ChatMessageBubble.tsx`
-- [ ] **全局 focus-visible 样式缺失**
-  - `globals.css` 添加统一 `:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }`
-  - 消除各组件各自实现 focus ring 的不一致
+- [x] **全局 focus-visible 样式缺失**
+  - `globals.css` 已有 `:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }`
+  - 各组件各自实现 focus ring 的模式已统一
 - [x] **Tooltip 延迟 3000ms → 400ms**
   - `GlobalSidebar.tsx` 已改为 `TooltipProvider delayDuration={400}`
   - 标准值 300-700ms，建议 400ms
@@ -846,10 +863,14 @@ components/layout/sidebar/
 
 - [ ] **Logo 品牌设计**
   - 当前 "S" 字母占位符 → 设计有辨识度的 Logo（工作流节点连线抽象图形）
-- [ ] **空状态叙事优化**
-  - Chat 空状态仅一行文字 + emoji → 添加「快速开始」卡片：
-    - 试试狼人杀 Demo / 创建第一个 Agent / 拖一个工作流
-  - 文件：`SimpleChatView.tsx`、`WorkflowCanvas.tsx`
+- [x] **空状态叙事优化**
+  - Chat 空状态：`SimpleChatPlaceholder.tsx` 展示智能体列表快速入口卡片（Logo + 标题 + 最近 Agent 卡片），点击直接创建 single session
+  - 工作流对话空状态：`WorkflowChatPlaceholder.tsx` 展示工作流列表快速入口卡片（Logo + 标题 + 最近 Workflow 卡片），点击通过 sidebar 打开 workflow session
+  - 无 Agent/Workflow 时显示引导文案（去对应页面创建）
+  - 文件：
+    - `src/components/chat/SimpleChatPlaceholder.tsx` — 单聊占位（Bot/MessageSquare/Sparkles 图标，Agent 卡片网格）
+    - `src/components/chat/WorkflowChatPlaceholder.tsx` — 工作流占位（GitBranch/Workflow/Zap 图标，Workflow 卡片网格）
+    - `src/components/chat/ChatInterface.tsx` — 按 `currentView` 路由到对应占位
 - [ ] **首次启动 Onboarding**
   - 新用户打开后无引导 → 3 步快速引导
 - [ ] **狼人杀 Demo 高亮**

@@ -2,6 +2,7 @@ import { ChatSession, Workflow } from '../types/models';
 
 export interface UISlice {
   // View/workspace state
+  currentView: string;
   activeWorkspaceId: string | null;
   activeSessionId: string | null;
   activeWorkflowId: string | null;
@@ -28,6 +29,7 @@ export interface UISlice {
   toggleDebugMode: () => void;
   setContextSidebarTab: (tab: 'workflows' | 'sessions') => void;
   setSelectedChatWorkflowId: (id: string | null) => void;
+  setCurrentView: (view: string) => void;
   toggleWorkflowChatMode: (enabled: boolean) => void;
   previewWorkflowTopology: (workflowId: string) => void;
   setWorkflowOrder: (order: string[]) => void;
@@ -50,10 +52,13 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
     }
   };
 
+  const savedView = typeof window !== 'undefined' ? localStorage.getItem('ss_currentView') : null;
+
   return {
+    currentView: savedView || 'chat',
     activeWorkspaceId: 'default-workspace',
-    activeSessionId: 'default-session',
-    activeWorkflowId: 'default-workflow',
+    activeSessionId: null,
+    activeWorkflowId: null,
     activeAgentId: null,
     selectedAgentCategory: null,
     workflowChatMode: false,
@@ -83,6 +88,12 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
     toggleDebugMode: () => set((state: any) => ({ debugMode: !state.debugMode })),
     setContextSidebarTab: (tab) => set({ contextSidebarTab: tab }),
     setSelectedChatWorkflowId: (id) => set({ selectedChatWorkflowId: id }),
+    setCurrentView: (view) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ss_currentView', view);
+      }
+      set({ currentView: view });
+    },
     toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
     previewWorkflowTopology: (workflowId) => set({ selectedChatWorkflowId: workflowId, activeSessionId: null }),
     setWorkflowOrder: (order) => set((state: any) => {

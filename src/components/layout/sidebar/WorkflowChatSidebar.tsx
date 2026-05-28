@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { Plus, ChevronDown, Workflow, MoreHorizontal, Trash2 } from "lucide-react"
+import { Plus, ChevronDown, Workflow, MoreHorizontal, Trash2, Pencil } from "lucide-react"
 import { ContextItem } from "./ContextItem"
 import { SortableList } from "./SortableList"
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 import { NewSessionDialog } from "./NewSessionDialog"
+import { EditNameDialog } from "./EditNameDialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/stores"
@@ -39,10 +40,13 @@ export function WorkflowChatSidebar({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: 'session' | 'workflow' } | null>(null)
+  const [editItem, setEditItem] = useState<{ id: string; name: string; type: 'session' | 'workflow' } | null>(null)
 
   const workflowOrder = useAppStore(state => state.workflowOrder)
   const setWorkflowOrder = useAppStore(state => state.setWorkflowOrder)
   const previewWorkflowTopology = useAppStore(state => state.previewWorkflowTopology)
+  const renameSession = useAppStore(state => state.renameSession)
+  const renameWorkflow = useAppStore(state => state.renameWorkflow)
 
   const sortedWorkflows = workflowOrder.length > 0
     ? [...workflows].sort((a, b) => {
@@ -180,6 +184,15 @@ export function WorkflowChatSidebar({
                         <DropdownMenuItem
                           onClick={(event) => {
                             event.stopPropagation()
+                            setEditItem({ id: workflow.id, name: workflow.name, type: 'workflow' })
+                          }}
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+                          {t('编辑')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(event) => {
+                            event.stopPropagation()
                             handleDeleteClick(workflow.id, workflow.name, 'workflow')
                           }}
                           className="text-destructive focus:text-destructive"
@@ -203,6 +216,7 @@ export function WorkflowChatSidebar({
                             active={activeSessionId === session.id}
                             deletable={true}
                             onClick={() => handleSessionSelect(session.id)}
+                            onEdit={() => setEditItem({ id: session.id, name: session.title, type: 'session' })}
                             onDelete={() => handleDeleteClick(session.id, session.title, 'session')}
                             t={t}
                           />
@@ -257,6 +271,21 @@ export function WorkflowChatSidebar({
         onCreateSingleSession={() => {}}
         onCreateWorkflowSession={handleCreateWorkflowSession}
         defaultMode="workflow"
+        t={t}
+      />
+      <EditNameDialog
+        open={!!editItem}
+        onOpenChange={(open) => { if (!open) setEditItem(null) }}
+        title={editItem?.type === 'workflow' ? t('重命名工作流') : t('重命名会话')}
+        value={editItem?.name || ''}
+        onConfirm={(name) => {
+          if (!editItem) return
+          if (editItem.type === 'workflow') {
+            renameWorkflow(editItem.id, name)
+          } else {
+            renameSession(editItem.id, name)
+          }
+        }}
         t={t}
       />
     </div>

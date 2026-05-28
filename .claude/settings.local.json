@@ -79,7 +79,9 @@
       "mcp__playwright__browser_wait_for",
       "mcp__Claude_Preview__preview_start",
       "mcp__open-websearch__fetchWebContent",
-      "Bash(where node *)"
+      "Bash(where node *)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //PID 40636)"
     ]
   }
 }

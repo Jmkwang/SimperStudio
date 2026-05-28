@@ -390,7 +390,11 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
             const messages = await invoke<ChatMessage[]>('get_chat_messages', { sessionId: sessions[i].id });
             sessions[i].messages = messages.map((m: any) => ({ ...m, content: JSON.parse(m.content as unknown as string) }));
           }
-          set({ sessions: sessions.map(normalizeSession) });
+          const dbSessions = sessions.map(normalizeSession);
+          set({ sessions: dbSessions });
+
+          // Do not auto-create or auto-select any session on startup
+          // Let the user land on the placeholder for their last view
 
           const workflows = await invoke<Workflow[]>('get_workflows', { workspaceId: defaultWorkspaceId });
           if (workflowsConfig?.length) {
@@ -416,6 +420,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         }
       } catch (error) {
         console.log('Running in browser mode without Tauri backend - using default data');
+        // Browser mode fallback: do not auto-create or auto-select sessions
       }
     },
   };

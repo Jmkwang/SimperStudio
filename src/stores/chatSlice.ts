@@ -162,6 +162,7 @@ export interface ChatSlice {
   createWorkflowBackedSession: (title: string, workspaceId: string) => Promise<void>;
   openWorkflowSession: (workflowId: string) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
+  renameSession: (id: string, title: string) => void;
 
   addUserMessage: (sessionId: string, text: string, attachments?: MessageAttachment[], meta?: MessageMeta) => void;
   addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string, nodeId?: string, meta?: MessageMeta) => void;
@@ -281,6 +282,15 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         const activeSession = sessions.find((s: ChatSession) => s.id === activeSessionId);
         return { sessions, activeSessionId, activeWorkflowId: activeSession?.workflowId || state.activeWorkflowId };
       });
+    },
+
+    renameSession: (id, title) => {
+      set((state: any) => ({
+        sessions: state.sessions.map((s: ChatSession) =>
+          s.id === id ? { ...s, title, updatedAt: Date.now() } : s
+        ),
+      }));
+      try { invoke('update_chat_session', { id, title }); } catch { /* best-effort */ }
     },
 
     addUserMessage: async (sessionId, text, attachments = [], meta) => {

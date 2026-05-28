@@ -5,6 +5,7 @@ import { SortableList } from "./SortableList"
 import { useAppStore } from "@/stores"
 import { NewSessionDialog } from "./NewSessionDialog"
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
+import { EditNameDialog } from "./EditNameDialog"
 
 export function ChatSidebar({
   sessions,
@@ -30,9 +31,11 @@ export function ChatSidebar({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [editItem, setEditItem] = useState<{ id: string; name: string } | null>(null)
   const sessionOrder = useAppStore(state => state.sessionOrder)
   const setSessionOrder = useAppStore(state => state.setSessionOrder)
   const setActiveAgent = useAppStore(state => state.setActiveAgent)
+  const renameSession = useAppStore(state => state.renameSession)
 
   const singleSessions = sessions.filter(s => s.mode === 'single' || !s.workflowId)
 
@@ -98,6 +101,7 @@ export function ChatSidebar({
                   active={activeSessionId === s.id}
                   deletable={true}
                   onClick={() => handleSessionSelect(s.id)}
+                  onEdit={() => setEditItem({ id: s.id, name: s.title })}
                   onDelete={() => handleDeleteClick(s.id, s.title)}
                   t={t}
                 />
@@ -127,6 +131,14 @@ export function ChatSidebar({
         onOpenChange={setDeleteDialogOpen}
         title={itemToDelete?.name || ''}
         onConfirm={handleConfirmDelete}
+        t={t}
+      />
+      <EditNameDialog
+        open={!!editItem}
+        onOpenChange={(open) => { if (!open) setEditItem(null) }}
+        title={t('重命名会话')}
+        value={editItem?.name || ''}
+        onConfirm={(name) => { if (editItem) renameSession(editItem.id, name) }}
         t={t}
       />
     </div>

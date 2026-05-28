@@ -13,6 +13,7 @@ export function ContextItem({
   deletable = false,
   onClick,
   onDoubleClick,
+  onEdit,
   onDelete,
   t,
 }: {
@@ -24,6 +25,7 @@ export function ContextItem({
   deletable?: boolean,
   onClick?: () => void,
   onDoubleClick?: () => void,
+  onEdit?: () => void,
   onDelete?: () => void,
   t: (key: string) => string,
 }) {
@@ -73,6 +75,7 @@ export function ContextItem({
           <DropdownMenuContent align="end" className="rounded-2xl">
             <DropdownMenuItem onClick={(event) => {
               event.stopPropagation();
+              onEdit?.();
             }}>
               <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
               {t('编辑')}

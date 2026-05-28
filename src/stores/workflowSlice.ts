@@ -20,6 +20,7 @@ export interface WorkflowSlice {
   createWorkflow: (name: string, workspaceId: string) => void;
   saveWorkflow: (id: string, nodes: WorkflowNode[], edges: WorkflowEdge[]) => void;
   deleteWorkflow: (id: string) => Promise<void>;
+  renameWorkflow: (id: string, name: string) => void;
 
   setWorkflowExecutionState: (state: Partial<WorkflowExecutionState>) => void;
   executeWorkflow: (workflowId: string, initialPayload: Record<string, any>, options?: { startNodeId?: string; concurrency?: number }) => Promise<Record<string, any>>;
@@ -395,6 +396,17 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
         void writeConfig('workflow.json', workflows);
         return { workflows, sessions, activeWorkflowId, activeSessionId };
       });
+    },
+
+    renameWorkflow: (id, name) => {
+      set((state: any) => {
+        const workflows = state.workflows.map((w: Workflow) =>
+          w.id === id ? { ...w, name, updatedAt: Date.now() } : w
+        );
+        void writeConfig('workflow.json', workflows);
+        return { workflows };
+      });
+      try { invoke('update_workflow', { id, name }); } catch { /* best-effort */ }
     },
 
     setWorkflowExecutionState: (updates) => set((state: any) => ({

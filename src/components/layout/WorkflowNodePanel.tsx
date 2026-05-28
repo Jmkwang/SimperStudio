@@ -39,7 +39,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
         </div>
         <button
           onClick={() => setWorkflowSidebarCollapsed(activeSession.id, true)}
-          className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           title={t('Collapse workflow panel')}
           aria-label={t('Collapse workflow panel')}
         >
@@ -66,7 +66,8 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
               <button
                 key={node.id}
                 onClick={() => openWorkflowAgentWindow(activeSession.id, workflowForActiveSession!.id, node.id, agentId)}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted/70"
+                className="flex w-full items-center gap-2 rounded-lg px-3 min-h-[44px] text-left text-sm hover:bg-muted/70"
+                aria-label={`${t('打开')} ${displayName}`}
               >
                 <Bot className="h-4 w-4 text-muted-foreground" />
                 <div className="min-w-0 flex-1">

@@ -5,6 +5,7 @@ import { X, RotateCcw, Download, ChevronDown, ChevronRight, CheckCircle2, AlertC
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
+import { toast } from 'sonner';
 
 const statusConfig: Record<string, {
   dotClass: string;
@@ -73,6 +74,12 @@ export function ExecutionTimeline() {
     const curr = workflowExecution.status;
     if (prev === 'running' && (curr === 'completed' || curr === 'error')) {
       setShowGlobalFeedback(true);
+      // Toast notification for workflow completion/failure
+      if (curr === 'completed') {
+        toast.success(t('工作流执行完成'));
+      } else {
+        toast.error(t('工作流执行失败'));
+      }
       const timer = setTimeout(() => setShowGlobalFeedback(false), 3000);
       return () => clearTimeout(timer);
     }
@@ -171,16 +178,17 @@ export function ExecutionTimeline() {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="min-h-[44px] px-2 text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={trackClick(handleRerunAll, 'timeline:rerunAll')}
+              aria-label={t('一键重试')}
             >
               <RotateCcw className="h-3 w-3 mr-1" /> {t('一键重试')}
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={trackClick(handleExport, 'timeline:export')}>
+          <Button variant="ghost" size="sm" className="min-h-[44px] px-2 text-xs" onClick={trackClick(handleExport, 'timeline:export')} aria-label={t('导出执行日志')}>
             <Download className="h-3 w-3 mr-1" /> Export
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={trackClick(() => setWorkflowExecutionState({ status: 'idle' }), 'timeline:close')} aria-label="Close execution timeline">
+          <Button variant="ghost" size="sm" className="min-h-[44px] px-2 text-xs" onClick={trackClick(() => setWorkflowExecutionState({ status: 'idle' }), 'timeline:close')} aria-label={t('关闭执行时间线')}>
             <X className="h-3 w-3" />
           </Button>
         </div>
@@ -216,7 +224,7 @@ export function ExecutionTimeline() {
           return (
             <div key={node.id} className="border rounded-lg overflow-hidden">
               <button
-                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+                className="w-full flex items-center gap-3 px-3 min-h-[44px] text-left hover:bg-muted/50 transition-colors"
                 onClick={() => setExpandedNode(isExpanded ? null : node.id)}
                 aria-expanded={isExpanded}
                 aria-controls={`node-detail-${node.id}`}
@@ -251,7 +259,7 @@ export function ExecutionTimeline() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    className="min-h-[44px] px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={(e) => { e.stopPropagation(); handleRerunFromNode(node.id); }}
                     aria-label={`${t('重试节点')} ${node.data?.label || node.id}`}
                   >
@@ -271,12 +279,13 @@ export function ExecutionTimeline() {
                         <AlertCircle className="h-3 w-3 text-destructive" />
                         <span className="text-xs font-medium text-destructive">{t('执行出错')}</span>
                       </div>
-                      <p className="text-xs text-destructive/80">{record.error}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400">{record.error}</p>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="mt-2 h-6 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                        className="mt-2 min-h-[44px] text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
                         onClick={() => handleRerunFromNode(node.id)}
+                        aria-label={`${t('重新执行节点')} ${node.data?.label || node.id}`}
                       >
                         <RotateCcw className="h-3 w-3 mr-1" /> {t('重新执行')}
                       </Button>

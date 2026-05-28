@@ -3,6 +3,8 @@ import { useAppStore } from '@/stores';
 import { WorkflowChatView } from './WorkflowChatView';
 import { SimpleChatView } from './SimpleChatView';
 import { WorkflowTopologyPreview } from '@/components/workflow/WorkflowTopologyPreview';
+import { WorkflowChatPlaceholder } from './WorkflowChatPlaceholder';
+import { SimpleChatPlaceholder } from './SimpleChatPlaceholder';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { debugLogger } from '@/lib/debugLogger';
 
@@ -10,6 +12,7 @@ export function ChatInterface() {
   const activeSession = useAppStore(state => state.getActiveSession());
   const workflows = useAppStore(state => state.workflows);
   const selectedChatWorkflowId = useAppStore(state => state.selectedChatWorkflowId);
+  const currentView = useAppStore(state => state.currentView);
   const debugMode = useAppStore(state => state.debugMode);
   const prevModeRef = useRef<string | undefined>(undefined);
 
@@ -31,19 +34,29 @@ export function ChatInterface() {
       ? workflows.find(w => w.id === selectedChatWorkflowId)
       : undefined;
 
-    if (selectedWorkflow) {
+    // workflowChat view: show workflow preview or workflow placeholder
+    if (currentView === 'workflowChat') {
+      if (selectedWorkflow) {
+        return (
+          <div className="relative flex-1 flex flex-col h-full">
+            <DebugBadge id="ChatInterface" />
+            <WorkflowTopologyPreview key={selectedWorkflow.id} workflow={selectedWorkflow} />
+          </div>
+        );
+      }
       return (
         <div className="relative flex-1 flex flex-col h-full">
           <DebugBadge id="ChatInterface" />
-          <WorkflowTopologyPreview key={selectedWorkflow.id} workflow={selectedWorkflow} />
+          <WorkflowChatPlaceholder />
         </div>
       );
     }
 
+    // chat view: show single-chat placeholder (agents-based)
     return (
-      <div className="relative flex-1 flex items-center justify-center">
+      <div className="relative flex-1 flex flex-col h-full">
         <DebugBadge id="ChatInterface" />
-        No active session
+        <SimpleChatPlaceholder />
       </div>
     );
   }
