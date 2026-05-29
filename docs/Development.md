@@ -7,7 +7,9 @@
 ### 核心特性
 
 - 🎯 **多 Agent 协作聊天**：支持 `@提及` 多智能体并发对话、流式响应、消息转发/重运行、浮窗 Agent 聊天系统
-- 🔄 **可视化工作流引擎**：基于 React Flow 的拖拽式工作流编排，13 种节点类型，DAG 队列驱动执行
+- 🛑 **流式响应取消**：发送按钮在流式响应中变为红色停止按钮，可随时中断 LLM 回复
+- 📎 **附件上传**：聊天输入区支持上传文件附件，文件名+大小展示在用户气泡中，附件信息注入 LLM prompt
+- 🔄 **可视化工作流引擎**：基于 React Flow 的拖拽式工作流编排，13+3 种节点类型，DAG 队列驱动执行
 - 🔁 **Loop 节点迭代**：支持数组遍历、条件中断、结果聚合
 - 📊 **条件路由节点**：基于 JavaScript 表达式的动态分支分发（Router + IF/Switch）
 - 💻 **代码执行节点**：支持自定义 JS 逻辑与状态转换（Web Worker 隔离执行）
@@ -106,6 +108,7 @@ SimperStudio/
 │   │   │   └── nodes/                    # 工作流节点组件
 │   │   │       ├── TriggerNode.tsx       # 触发器节点
 │   │   │       ├── AgentNode.tsx         # Agent 节点
+│   │   │       ├── DynamicAgentNode.tsx  # 动态 Agent 节点
 │   │   │       ├── OutputNode.tsx        # 输出节点
 │   │   │       ├── RouterNode.tsx        # 条件路由节点
 │   │   │       ├── CodeNode.tsx          # 代码执行节点
@@ -156,10 +159,11 @@ SimperStudio/
 │   │       ├── helpers.ts                # withTimeout、表达式求值、Schema 校验
 │   │       ├── nodeRegistry.ts           # 节点类型→执行器注册表
 │   │       ├── types.ts                  # 引擎内部类型
-│   │       └── nodeExecutors/            # 13 种节点执行器
+│   │       └── nodeExecutors/            # 14 种节点执行器
 │   │           ├── agentExecutor.ts
 │   │           ├── codeExecutor.ts
 │   │           ├── conditionExecutor.ts
+│   │           ├── dynamicAgentExecutor.ts
 │   │           ├── httpExecutor.ts
 │   │           ├── loopExecutor.ts
 │   │           ├── mergeExecutor.ts
@@ -219,7 +223,7 @@ src/stores/
 | Slice | 状态 | 核心 Actions |
 |-------|------|-------------|
 | **baseSlice** | workspaces, agents, agentCategories | `fetchInitialData`, `addAgent`, `updateAgent`, `batchUpdateAgents`, `addAgentCategory` |
-| **chatSlice** | sessions, workflowChatUI | `createSession`, `openWorkflowSession`, `sendMessageToAgents`, `sendToWorkflowAgent`, `forwardAgentReplyToNext`, 窗口管理 |
+| **chatSlice** | sessions, workflowChatUI, activeStreamingSessionIds | `createSession`, `openWorkflowSession`, `sendMessageToAgents`, `sendToWorkflowAgent`, `forwardAgentReplyToNext`, `cancelSessionStream`, 窗口管理 |
 | **modelSlice** | settings (providers, activeProviderId) | `updateSettings`, `addProvider`, `updateProvider`, `deleteProvider`, `setActiveProvider` |
 | **uiSlice** | activeWorkspaceId/SessionId/WorkflowId/AgentId, debugMode | 各 active ID setter, `toggleDebugMode` |
 | **workflowSlice** | workflows, workflowExecution, _abortController | `createWorkflow`, `saveWorkflow`, `deleteWorkflow`, `executeWorkflow`, `cancelWorkflowExecution` |
@@ -364,7 +368,7 @@ lib/workflow/
 - **AbortSignal 支持**：用户可随时取消执行
 - **onStateChange 回调**：实时通知 UI 更新执行状态
 
-#### 节点类型支持（13 种）
+#### 节点类型支持（14 种）
 
 | 分类 | 节点 | 说明 |
 |------|------|------|
@@ -771,6 +775,15 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ## 版本历史
 
+### v0.4.3 (2026-05-29)
+- **循环幂等键修复**：引擎幂等键加入循环上下文 `${executionId}:${nodeId}:${loopNodeId}:${loopIndex}`，使循环体内节点每轮迭代独立执行，修复狼人杀非首轮角色不执行的问题
+- **工作流执行入口**：WorkflowChatView 标题栏添加"执行工作流"按钮，调用 `executeWorkflow` 引擎顺序执行；workflowSlice 添加 5 分钟全局超时保护
+- **流式响应取消机制**：chatSlice 新增 session 级 AbortController + `cancelSessionStream` + `activeStreamingSessionIds`。SimpleChatView / WorkflowChatView / WorkflowAgentWindow / AgentChatWindow 四个输入区的发送按钮在流式响应中变为红色停止按钮，点击可中断
+- **附件上传功能**：输入区添加 Paperclip 附件按钮 + 文件选择 + chips 显示。`sendToAgent` 接口增加 `attachments` 参数，附件信息注入 prompt。用户气泡显示附件名称+大小标签
+- **复制成功动画**：ChatMessageBubble 复制按钮点击后 `Copy`→`Check`（绿色）2s 渐回
+- **WorkflowNodePanel 动态节点支持**：面板过滤扩展为包含 `dynamic-agent`，修复 agent 查找逻辑
+- **Agent 列表去重**：SimpleChatView/WorkflowChatView 的 agent 列表按 `id` 去重，修复同一 agent 显示两次的问题
+
 ### v0.4.2 (2026-05-27)
 - **UI/UX 设计审计**：6 角色联合审查（UI 设计师、UX 架构师、UX 研究员、包容性视觉专家、视觉叙事师、趣味注入师），产出 P0-P3 分级整改清单
 - **边框间距修复**：GlobalSidebar 与 ContextSidebar 边框重叠问题，调整 margin 为 6px 间距
@@ -1002,5 +1015,5 @@ get_workflows, add_workflow, update_workflow, delete_workflow
 ---
 
 **文档维护**：本文件随项目更新自动维护。
-**最后更新**：2026-05-27
-**版本**：v0.4.2
+**最后更新**：2026-05-29
+**版本**：v0.4.3

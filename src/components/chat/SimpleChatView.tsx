@@ -3,20 +3,10 @@ import { ChatSession, ModelProvider, ProviderModel } from "@/types/models";
 import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Send, Workflow, ArrowUp, ArrowDown, AlertTriangle, ChevronDown, Square, Paperclip, X } from "lucide-react";
+import { Send, ArrowUp, ArrowDown, AlertTriangle, Square, Paperclip, X } from "lucide-react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
-import { AgentTopologyView } from "./AgentTopologyView";
 import { DebugBadge } from "@/components/debug/DebugBadge";
 import { useDebugTrack } from "@/hooks/useDebugTrack";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot } from "lucide-react";
 
 function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null, defaultLabel = 'Default'): { providerName: string; modelName: string } | null {
   if (!agent) return null;
@@ -42,10 +32,11 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const cancelSessionStream = useAppStore(state => state.cancelSessionStream);
   const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
+  const setActiveProvider = useAppStore(state => state.setActiveProvider);
   const [input, setInput] = useState("");
   const [selectedAgentId, setSelectedAgentId] = useState<string>(agents[0]?.id || '');
-  const [showTopology, setShowTopology] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { trackClick } = useDebugTrack('SimpleChatView');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -141,97 +132,31 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   return (
     <div className="flex flex-col h-full relative">
       <DebugBadge id="SimpleChatView" position="bottom-left" />
-      {/* Breadcrumb Bar */}
-      <div className="border-b px-6 py-2 flex items-center justify-between shrink-0">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2 text-sm">
+      {/* Breadcrumb Bar — simple title + timestamp */}
+      <div className="border-b px-6 py-2 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="text-sm">
             <span className="font-medium">{session.title}</span>
-            {activeAgent && agents.length > 1 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                    <Avatar className="h-5 w-5 rounded-full">
-                      <AvatarImage src={activeAgent.avatar} />
-                      <AvatarFallback className="rounded-full bg-primary/10 text-primary">
-                        <Bot className="h-3 w-3" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{activeAgent.name}</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  {agents.map(agent => (
-                    <DropdownMenuItem
-                      key={agent.id}
-                      onClick={() => setSelectedAgentId(agent.id)}
-                      className="flex items-center gap-2"
-                    >
-                      <Avatar className="h-5 w-5 rounded-full">
-                        <AvatarImage src={agent.avatar} />
-                        <AvatarFallback className="rounded-full bg-primary/10 text-primary">
-                          <Bot className="h-3 w-3" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{agent.name}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {activeAgent && agents.length === 1 && (
-              <>
-                <span className="text-muted-foreground">›</span>
-                <span>{activeAgent.name}</span>
-              </>
-            )}
-            {activeAgentModelInfo && (
-              <>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-muted-foreground">
-                  {activeAgentModelInfo.providerName} / {activeAgentModelInfo.modelName}
-                </span>
-              </>
-            )}
-            {!activeAgentModelInfo && activeAgent && (
-              <>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-muted-foreground">{t("未配置")}</span>
-              </>
-            )}
-            {agents.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={trackClick(() => setShowTopology(!showTopology), 'chat:toggleTopology')}
-                className="ml-2 h-8 w-8 p-0"
-                title={showTopology ? t('返回聊天') : t('拓扑视图')}
-              >
-                <Workflow className="h-4 w-4" />
-              </Button>
-            )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{new Date(session.updatedAt).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+          <div className="text-xs text-muted-foreground/50">
+            {new Date(session.updatedAt).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
-        {totalTokens > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{t("Total")}: {totalTokens}</span>
-            <ArrowUp className="h-3 w-3" />
-            <span>{promptTokens}</span>
-            <ArrowDown className="h-3 w-3" />
-            <span>{completionTokens}</span>
-          </div>
-        )}
       </div>
 
-      {showTopology && agents.length > 1 ? (
-        <AgentTopologyView sessionId={session.id} />
-      ) : (
-        <>
-          <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
-            {session.messages.length === 0 && (
+      {totalTokens > 0 && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-6">
+          <span>{t("Total")}: {totalTokens}</span>
+          <ArrowUp className="h-3 w-3" />
+          <span>{promptTokens}</span>
+          <ArrowDown className="h-3 w-3" />
+          <span>{completionTokens}</span>
+        </div>
+      )}
+
+      {/* Main chat area */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
+        {session.messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                 <div className="text-4xl opacity-30 select-none">💬</div>
                 <p className="text-sm">{t("Start a conversation")}</p>
@@ -259,75 +184,114 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                   </span>
                 </div>
               )}
-              <div className="flex gap-2 relative">
-                {attachments.length > 0 && (
-                  <div className="absolute bottom-full left-0 right-0 flex flex-wrap gap-1.5 p-2 pb-0 max-w-full">
-                    {attachments.map((file, i) => (
-                      <div key={i} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs max-w-[160px] overflow-hidden">
-                        <span className="truncate">{file.name}</span>
-                        <button onClick={() => handleRemoveAttachment(i)} className="shrink-0 hover:text-foreground text-muted-foreground" aria-label={t('Remove')}>
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
+              <div className="flex flex-col gap-1">
+                <div className="relative border rounded-lg">
+                  {attachments.length > 0 && (
+                    <div className="absolute bottom-full left-0 right-0 flex flex-wrap gap-1.5 p-2 pb-0 max-w-full">
+                      {attachments.map((file, i) => (
+                        <div key={i} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs max-w-[160px] overflow-hidden">
+                          <span className="truncate">{file.name}</span>
+                          <button onClick={() => handleRemoveAttachment(i)} className="shrink-0 hover:text-foreground text-muted-foreground" aria-label={t('Remove')}>
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Textarea
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && !e.shiftKey && !isStreaming) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder={activeAgent ? `${t("Send message")}...` : t("Select an agent")}
+                    disabled={!activeAgent}
+                    className="min-h-[80px] text-sm border-0 focus-visible:ring-0 resize-none pb-10"
+                  />
+                  {/* Bottom bar inside input */}
+                  <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileSelect} />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors"
+                        aria-label={t('Attach file')}
+                        disabled={isStreaming}
+                      >
+                        <Paperclip className="h-3.5 w-3.5" />
+                      </button>
+                      {activeAgentModelInfo && (
+                        <div className="relative">
+                          <button
+                            onClick={() => setModelPickerOpen(!modelPickerOpen)}
+                            className="text-[10px] text-muted-foreground/40 hover:text-foreground/60 leading-none transition-colors"
+                            aria-label={t('Switch model')}
+                          >
+                            {activeAgentModelInfo.providerName}/{activeAgentModelInfo.modelName}
+                          </button>
+                          {modelPickerOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setModelPickerOpen(false)} />
+                              <div className="absolute bottom-full left-0 mb-1 z-50 min-w-[180px] rounded-lg border bg-popover p-1 shadow-md">
+                                {settings.providers?.filter((p: any) => p.isEnabled).map((provider: any) => (
+                                  <div key={provider.id}>
+                                    <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">{provider.name}</div>
+                                    {(provider.models || []).map((model: any) => {
+                                      const isActive = (provider.id === settings.activeProviderId) &&
+                                        (model.modelId === (activeAgentModelInfo?.modelName || ''));
+                                      return (
+                                        <button
+                                          key={model.id || model.modelId}
+                                          onClick={() => { setActiveProvider(provider.id); setModelPickerOpen(false) }}
+                                          className={`w-full text-left px-3 py-1.5 text-xs rounded-md flex items-center gap-2 ${
+                                            isActive ? 'bg-primary/10 text-primary font-medium' : 'text-foreground/80 hover:bg-muted'
+                                          }`}
+                                        >
+                                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-primary' : 'bg-transparent'}`} />
+                                          <span className="truncate">{model.name || model.modelId}</span>
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {isStreaming ? (
+                      <button
+                        onClick={handleStop}
+                        className="h-7 w-7 flex items-center justify-center rounded text-destructive hover:bg-destructive/10 transition-colors"
+                        aria-label={t('Stop')}
+                      >
+                        <Square className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={trackClick(handleSend, 'chat:send')}
+                        disabled={!input.trim() || !activeAgent}
+                        className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors disabled:opacity-30"
+                        aria-label={t("Send")}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
-                )}
-                <Textarea
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter" && !e.shiftKey && !isStreaming) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder={activeAgent ? `${t("Send message")}...` : t("Select an agent")}
-                  disabled={!activeAgent}
-                  className="min-h-[64px] text-sm"
-                />
-                {/* Attachment button */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  multiple
-                  onChange={handleFileSelect}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="self-end h-11 w-11 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  aria-label={t('Attach file')}
-                  disabled={isStreaming}
-                >
-                  <Paperclip className="h-4 w-4" />
-                </button>
-                {/* Send / Stop button */}
-                {isStreaming ? (
-                  <Button
-                    onClick={trackClick(handleStop, 'chat:stop')}
-                    variant="destructive"
-                    className="self-end h-11 w-11"
-                    aria-label={t('Stop')}
-                  >
-                    <Square className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={trackClick(handleSend, 'chat:send')}
-                    disabled={!input.trim() || !activeAgent}
-                    className="self-end h-11 w-11"
-                    data-debug-source="SimpleChatView"
-                    data-debug-action="chat:send"
-                    aria-label={t("Send")}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                </div>
+                {/* Model label below input, right-aligned */}
+                {!activeAgentModelInfo && activeAgent && (
+                  <div className="text-[10px] text-muted-foreground/40 text-right pr-1">
+                    {t("未配置")}
+                  </div>
                 )}
               </div>
             </div>
           </div>
-        </>
-      )}
-    </div>
-  );
-}
+        </div>
+      );
+    }

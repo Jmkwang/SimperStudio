@@ -1,7 +1,6 @@
 import { ChatMessage, AgentResponse } from "@/types/models";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "@/hooks/useTranslation";
-import { AlertTriangle, ChevronDown, Bot, Copy, Check, RefreshCw } from "lucide-react";
+import { AlertTriangle, ChevronDown, Copy, Check, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, memo } from "react";
 
@@ -86,36 +85,15 @@ const AssistantBubble = memo(function AssistantBubble({
       "flex justify-start gap-2 group",
       layout === 'multi' && "flex-1"
     )}>
-      <div className="relative shrink-0 mt-1">
-        <Avatar className="h-7 w-7 rounded-full border shadow-sm">
-          <AvatarImage src={agent?.avatar} />
-          <AvatarFallback className="rounded-full bg-primary/10 text-primary">
-            <Bot className="h-3.5 w-3.5" />
-          </AvatarFallback>
-        </Avatar>
-        {gameStatus && (
-          <span
-            className={cn(
-              'absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background',
-              gameStatus === 'alive'
-                ? 'bg-green-500'
-                : gameStatus === 'dead'
-                  ? 'bg-destructive'
-                  : 'bg-muted-foreground'
-            )}
-            title={gameStatus === 'alive' ? t('Alive') : gameStatus === 'dead' ? t('Dead') : gameStatus}
-          />
-        )}
-      </div>
       <div className={cn(
         "flex flex-col items-start",
         layout === 'single' ? "max-w-[80%]" : "w-full"
       )}>
         {agent?.name && (
-          <span className="text-xs font-medium text-muted-foreground mb-0.5 ml-1">
+          <span className="text-xs font-medium text-muted-foreground/40 mb-0.5 ml-1">
             {agent.name}
             {(response.providerName || response.modelName) && (
-              <span className="text-xs text-muted-foreground/70 ml-1.5">
+              <span className="text-xs text-muted-foreground/40 ml-1.5">
                 {response.providerName}/{response.modelName || response.modelId}
               </span>
             )}
@@ -146,39 +124,41 @@ const AssistantBubble = memo(function AssistantBubble({
             <div>{response.content.text}</div>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5 ml-1 flex-wrap">
-          <span className="text-xs text-muted-foreground/70 shrink-0">
+        <div className="flex items-start justify-between gap-2 mt-0.5 ml-1">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            {(response.tokenUsage || response.duration) && (
+              <span className="text-xs text-muted-foreground/70 shrink-0">
+                ({[
+                  response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : '',
+                  response.duration ? `${(response.duration / 1000).toFixed(1)}s` : '',
+                ].filter(Boolean).join(' / ')})
+              </span>
+            )}
+            {!isStreaming && (
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={handleCopy}
+                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors relative"
+                  aria-label={t("Copy")}
+                >
+                  <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
+                  <Check className={`h-3 w-3 absolute text-green-500 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
+                </button>
+                {onRetry && (
+                  <button
+                    onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
+                    className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
+                    aria-label={t("Retry")}
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground/50 shrink-0">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
-          {(response.tokenUsage || response.duration) && (
-            <span className="text-xs text-muted-foreground/70 shrink-0">
-              ({[
-                response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : '',
-                response.duration ? `${(response.duration / 1000).toFixed(1)}s` : '',
-              ].filter(Boolean).join(' / ')})
-            </span>
-          )}
-          {!isStreaming && (
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={handleCopy}
-                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors relative"
-                aria-label={t("Copy")}
-              >
-                <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
-                <Check className={`h-3 w-3 absolute text-green-500 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
-              </button>
-              {onRetry && (
-                <button
-                  onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
-                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
-                  aria-label={t("Retry")}
-                >
-                  <RefreshCw className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

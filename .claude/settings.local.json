@@ -99,7 +99,10 @@
       "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\ChatSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
       "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\WorkflowChatSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
       "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\WorkflowSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
-      "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\AgentsSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")"
+      "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\AgentsSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
+      "Bash(dir /s /b src\\\\components\\\\layout\\\\ContextSidebar*)",
+      "Bash(dir /s /b src\\\\components\\\\layout\\\\sidebar\\\\*)",
+      "Bash(dir /s /b G:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\ContextSidebar*)"
     ]
   }
 }

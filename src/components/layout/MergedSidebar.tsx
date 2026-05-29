@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
+import { NewSessionDialog } from './sidebar/NewSessionDialog'
 
 type Mode = 'agent' | 'workflow'
 
@@ -17,7 +18,7 @@ interface NavItem {
   labelKey: string
 }
 const AGENT_NAV: NavItem[] = [
-  { id: 'chat', icon: '💬', labelKey: '聊天' },
+  { id: 'chat', icon: '💬', labelKey: '新增会话' },
   { id: 'agents', icon: '🤖', labelKey: '智能体' },
   { id: 'prompts', icon: '🪄', labelKey: '提示词' },
 ]
@@ -47,6 +48,8 @@ export function MergedSidebar() {
   const workflows = useAppStore(s => s.workflows)
   const agents = useAppStore(s => s.agents)
   const createSession = useAppStore(s => s.createSession)
+  const renameSession = useAppStore(s => s.renameSession)
+  const deleteSession = useAppStore(s => s.deleteSession)
   const createWorkflow = useAppStore(s => s.createWorkflow)
   const deleteWorkflow = useAppStore(s => s.deleteWorkflow)
   const activeWorkspaceId = useAppStore(s => s.activeWorkspaceId)
@@ -54,6 +57,7 @@ export function MergedSidebar() {
   const activeSessionId = useAppStore(s => s.activeSessionId)
   const setActiveWorkflow = useAppStore(s => s.setActiveWorkflow)
   const setActiveSession = useAppStore(s => s.setActiveSession)
+  const setActiveAgent = useAppStore(s => s.setActiveAgent)
 
   /* ───── mode ───── */
   const [sidebarMode, setSidebarMode] = useState<Mode>('agent')
@@ -61,6 +65,14 @@ export function MergedSidebar() {
 
   /* ───── active nav (defaults to first item of mode) ───── */
   const [activeNav, setActiveNav] = useState<string>('chat')
+
+  /* ───── dialogs & interaction state ───── */
+  const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false)
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null)
+  const [menuItemId, setMenuItemId] = useState<string | null>(null)
+  const [renameItemId, setRenameItemId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
 
   /* ───── dark / colours ───── */
   const isDark = useMemo(() => {
@@ -76,7 +88,7 @@ export function MergedSidebar() {
     hover: isDark ? '#262626' : '#e5e5e5',
     active: isDark ? '#262626' : '#e0e0e0',
     indicator: isDark ? '#60a5fa' : '#3b82f6',
-    border: isDark ? '#2a2a2a' : '#d1d5db',
+    border: isDark ? '#3a3a3a' : '#b0b0b0',
     pillBg: isDark ? '#262626' : '#ebebeb',
     activeText: isDark ? '#ffffff' : '#111111',
     activeTextMuted: isDark ? '#ffffff' : '#111111',
@@ -126,22 +138,33 @@ export function MergedSidebar() {
   }, [activeNav, t])
 
   const handlePrimary = () => {
-    if (activeNav === 'chat')       createSession(t('新对话'), activeWorkspaceId || 'default-workspace', undefined, 'single')
+    if (activeNav === 'chat' || activeNav === 'workflowChat') {
+      setNewSessionDialogOpen(true)
+    }
     else if (activeNav === 'workflow') createWorkflow(t('新工作流'), activeWorkspaceId || 'default-workspace')
-    else if (activeNav === 'workflowChat') createSession(t('新对话'), activeWorkspaceId || 'default-workspace', undefined, 'single')
     else if (activeNav === 'agents') {
-      // open agents list view — user can create from there
       setCurrentView('agents')
     }
   }
 
-  /* ───── nav click ───── */
+  /* ───── dialog callbacks ───── */
+  const handleCreateSingleSession = (title: string, workspaceId: string, agentId: string) => {
+    createSession(title, workspaceId, undefined, 'single')
+    setActiveAgent(agentId)
+    setCurrentView('chat')
+  }
+
+  const handleCreateWorkflowSession = (title: string, workspaceId: string, workflowId: string) => {
+    createSession(title, workspaceId, workflowId, 'workflow')
+    setCurrentView('workflowChat')
+  }
+
+  /* ───── nav click — opens new-session dialog for chat/workflowChat ───── */
   const handleNavClick = (item: NavItem) => {
     setActiveNav(item.id)
     setCurrentView(item.id)
-    // auto-select first workflow when entering editor
-    if (item.id === 'workflow' && !activeWorkflowId && workflows.length > 0) {
-      setActiveWorkflow(workflows[0].id)
+    if (item.id === 'chat' || item.id === 'workflowChat') {
+      setNewSessionDialogOpen(true)
     }
   }
 
@@ -178,7 +201,7 @@ export function MergedSidebar() {
           <span>🤖</span> 智能体
         </button>
         <button
-          onClick={() => { setSidebarMode('workflow'); setActiveNav('workflow'); setCurrentView('workflow'); }}
+          onClick={() => { setSidebarMode('workflow'); setActiveNav('workflowChat'); setCurrentView('workflowChat'); }}
           style={{
             flex: 1, border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -193,25 +216,6 @@ export function MergedSidebar() {
           <span>⚡</span> 工作流
         </button>
       </div>
-
-      {/* ══════ Primary Action ══════ */}
-      <button
-        onClick={handlePrimary}
-        style={{
-          width: '100%', height: 38, marginTop: 12,
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 12px', borderRadius: 8,
-          background: c.pillBg, color: c.activeText,
-          fontSize: '0.875rem', fontWeight: 500,
-          border: 'none', cursor: 'pointer',
-          transition: 'background 150ms ease', flexShrink: 0,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-        onMouseLeave={e => { e.currentTarget.style.background = c.pillBg }}
-      >
-        <span style={{ fontSize: '1.125rem', fontWeight: 300, lineHeight: 1 }}>+</span>
-        <span>{primaryLabel}</span>
-      </button>
 
       {/* ══════ Nav Items ══════ */}
       <nav style={{ marginTop: 16, flexShrink: 0 }}>
@@ -260,26 +264,13 @@ export function MergedSidebar() {
           marginBottom: 8, padding: '0 4px', flexShrink: 0,
         }}>
           <span style={{ fontSize: '0.75rem', color: c.textMuted, fontWeight: 400 }}>{rLabel}</span>
-          {showDelete && (
-            <button
-              onClick={handlePrimary}
-              style={{
-                width: 20, height: 20, borderRadius: 4, border: 'none',
-                background: 'transparent', color: c.textMuted, fontSize: '1rem',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                lineHeight: 1,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = c.text }}
-              onMouseLeave={e => { e.currentTarget.style.color = c.textMuted }}
-              title={t('新建工作流')}
-            >+</button>
-          )}
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {recents.length > 0 ? recents.map((item) => {
             const isSelected = showDelete
               ? activeWorkflowId === item.id
               : (activeNav === 'workflow' ? activeWorkflowId === item.id : activeSessionId === item.id)
+            const isHovered = hoveredItemId === item.id
             return (
               <button
                 key={item.id}
@@ -298,17 +289,14 @@ export function MergedSidebar() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   height: 32, padding: '0 12px', borderRadius: 6,
-                  width: '100%', border: 'none',
+                  width: '100%', border: 'none', position: 'relative',
                   background: isSelected ? c.active : 'transparent',
                   color: isSelected ? c.activeText : c.text,
                   fontSize: '0.875rem', cursor: 'pointer', textAlign: 'left',
                   transition: 'background 150ms ease',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = c.hover; e.currentTarget.style.color = c.text }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = isSelected ? c.active : 'transparent'
-                  e.currentTarget.style.color = isSelected ? c.activeText : c.text
-                }}
+                onMouseEnter={e => { setHoveredItemId(item.id); e.currentTarget.style.background = c.hover; e.currentTarget.style.color = c.text }}
+                onMouseLeave={e => { setHoveredItemId(null); e.currentTarget.style.background = isSelected ? c.active : 'transparent'; e.currentTarget.style.color = isSelected ? c.activeText : c.text }}
               >
                 <span style={{
                   width: 5, height: 5, borderRadius: '50%',
@@ -318,8 +306,43 @@ export function MergedSidebar() {
                 <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.title}
                 </span>
-                {item.time && (
+                {!isHovered && item.time && (
                   <span style={{ fontSize: '0.75rem', color: c.textDim, flexShrink: 0 }}>{item.time}</span>
+                )}
+                {isHovered && !showDelete && (
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setMenuItemId(menuItemId === item.id ? null : item.id) }}
+                      style={{
+                        width: 18, height: 18, borderRadius: 4, border: 'none',
+                        background: 'transparent', color: c.textMuted, fontSize: '0.75rem',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 0, lineHeight: 1,
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.color = c.text }}
+                      onMouseLeave={e => { e.currentTarget.style.color = c.textMuted }}
+                      title={t('更多')}
+                    >⋮</button>
+                    {menuItemId === item.id && (
+                      <div style={{
+                        position: 'absolute', right: 0, top: '100%', zIndex: 50,
+                        background: c.bg, border: `1px solid ${c.border}`,
+                        borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        minWidth: 120, padding: 4,
+                      }}>
+                        <button onClick={e => { e.stopPropagation(); setRenameItemId(item.id); setRenameValue(item.title); setMenuItemId(null) }}
+                          style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: c.text, fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
+                          onMouseEnter={e => e.currentTarget.style.background = c.hover}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >{t('重命名')}</button>
+                        <button onClick={e => { e.stopPropagation(); setDeleteItem({ id: item.id, name: item.title }); setMenuItemId(null) }}
+                          style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: '#ef4444', fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
+                          onMouseEnter={e => e.currentTarget.style.background = c.hover}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >{t('删除')}</button>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {showDelete && (
                   <button
@@ -385,6 +408,75 @@ export function MergedSidebar() {
           >⚙️</button>
         </div>
       </div>
+
+      {/* ══════ Dialogs ══════ */}
+      <NewSessionDialog
+        open={newSessionDialogOpen}
+        onOpenChange={setNewSessionDialogOpen}
+        agents={agents}
+        agentCategories={[]}
+        workflows={workflows}
+        activeWorkspaceId={activeWorkspaceId}
+        onCreateSingleSession={handleCreateSingleSession}
+        onCreateWorkflowSession={handleCreateWorkflowSession}
+        t={t}
+      />
+      {renameItemId && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.3)',
+        }} onClick={() => setRenameItemId(null)}>
+          <div style={{
+            background: c.bg, borderRadius: 8, padding: 16, minWidth: 280,
+            border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 12, color: c.text }}>{t('重命名')}</div>
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { renameSession(renameItemId, renameValue); setRenameItemId(null); } }}
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${c.border}`,
+                background: c.hover, color: c.text, fontSize: '0.875rem', outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+              <button onClick={() => setRenameItemId(null)}
+                style={{ padding: '6px 16px', borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: '0.8rem' }}
+              >{t('取消')}</button>
+              <button onClick={() => { renameSession(renameItemId, renameValue); setRenameItemId(null) }}
+                style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: c.indicator, color: c.white, cursor: 'pointer', fontSize: '0.8rem' }}
+              >{t('确定')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteItem && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.3)',
+        }} onClick={() => setDeleteItem(null)}>
+          <div style={{
+            background: c.bg, borderRadius: 8, padding: 16, minWidth: 280,
+            border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 8, color: c.text }}>{t('删除')}</div>
+            <div style={{ fontSize: '0.8rem', color: c.textMuted, marginBottom: 12 }}>{t('确定删除')} "{deleteItem.name}"?</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={() => setDeleteItem(null)}
+                style={{ padding: '6px 16px', borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: '0.8rem' }}
+              >{t('取消')}</button>
+              <button onClick={() => { deleteSession(deleteItem.id); setDeleteItem(null) }}
+                style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: '0.8rem' }}
+              >{t('确定')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

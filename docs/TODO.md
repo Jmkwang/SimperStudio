@@ -137,7 +137,7 @@
 - [ ] **完成浏览器验证清单**：`TODO 9.1/9.2` 6+ 项 P0 浏览器验证全部未完成（single chat 完整链路、workflow chat、窗口交互、转发链路、状态隔离）。冻结新功能，集中完成验证。
 - [x] **添加 LICENSE 文件**：已添加 MIT LICENSE 到根目录。
 - [x] **添加 React Error Boundary**：`App.tsx` 已包裹全局 `ErrorBoundary`，含 `ErrorFallback` 友好错误页（`role="alert"`）、错误详情展示、重试按钮、刷新页面按钮。
-- [ ] **搭建最小化设计系统文档**：无 Storybook 或组件用法说明，设计债务快速累积。为 shadcn/ui 封装组件编写用法文档和变体示例。
+- [x] **搭建最小化设计系统文档**：已创建 `docs/Design_System.md`，覆盖颜色令牌、Button/Textarea/Dialog/DropdownMenu/Avatar/Tooltip/Select 组件使用规范与变体、布局模式、无障碍规范、主题切换、`cn()` 模式。
 
 ### 设计合规类（阻塞发布）
 
@@ -233,7 +233,7 @@
 - [ ] 对齐 loop 聚合与 `payload.llmResult` 关系，避免覆盖。
 - [ ] 明确 `forwardAgentReplyToNext` 与 `executeWorkflow` 的职责边界（聊天转发 vs 正式运行时）。
 - [ ] 狼人杀样例回归：屠边、狼刀优先、女巫药剂、猎人开枪、平票 PK、`breakCondition`、`maxIterations`。
-- [ ] **引擎执行结果写入聊天消息**：当前 engine 的 agent/dynamic-agent 节点 LLM 结果仅存在 `results` 不写入 chat session messages。需在 engine 执行时调用 chat slice 的写入回调，使执行过程在聊天区可见。涉及文件：`types.ts`（`ExecutionOptions.onNodeResult`）、`engine.ts`（调用回调）、`workflowSlice.ts`（桥接实现）。
+- [x] **引擎执行结果写入聊天消息**：`workflowSlice.ts` 的 `onNodeResult` 回调在 engine 执行 agent/dynamic-agent 节点后，通过 `addAgentResponseStream`/`completeAgentResponse` 将 LLM 回复写入 workflow chat session。涉及文件：`types.ts`（`ExecutionOptions.onNodeResult`）、`engine.ts`（调用回调）、`workflowSlice.ts`（桥接实现，含 toast + screenShake 反馈）。
 
 ### 4.4 2026-05-29 本轮修复
 
