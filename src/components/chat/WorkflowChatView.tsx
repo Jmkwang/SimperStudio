@@ -136,7 +136,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
 
   const initialEdges = useMemo(() => workflow.edgesData || [], [workflow]);
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes as any[]);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   const handleSend = async () => {

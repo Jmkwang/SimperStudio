@@ -65,6 +65,7 @@ export interface WorkflowNodeDataBase {
   onError?: 'stop' | 'continue' | 'route-to-error';
   inputSchema?: string;
   outputSchema?: string;
+  schema?: string;
 }
 
 export interface WorkflowAgentNodeData extends WorkflowNodeDataBase {

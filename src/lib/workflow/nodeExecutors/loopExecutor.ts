@@ -22,12 +22,13 @@ export async function computeLoopIterations(
   payload: any,
   helpers: ExecutionHelpers
 ): Promise<LoopIterationResult> {
-  const itemsPath = String(node.data?.itemsPath || 'payload.alivePlayers');
-  const itemAlias = String(node.data?.itemAlias || 'item');
-  const indexAlias = String(node.data?.indexAlias || 'index');
-  const maxIterationsValue = Number(node.data?.maxIterations);
+  const d = node.data as any;
+  const itemsPath = String(d?.itemsPath || 'payload.alivePlayers');
+  const itemAlias = String(d?.itemAlias || 'item');
+  const indexAlias = String(d?.indexAlias || 'index');
+  const maxIterationsValue = Number(d?.maxIterations);
   const maxIterations = maxIterationsValue > 0 ? maxIterationsValue : 20;
-  const breakCondition = String(node.data?.breakCondition || '').trim();
+  const breakCondition = String(d?.breakCondition || '').trim();
 
   const resolvedItems = helpers.getByPath(payload, String(itemsPath));
   const items = Array.isArray(resolvedItems) ? resolvedItems : [];

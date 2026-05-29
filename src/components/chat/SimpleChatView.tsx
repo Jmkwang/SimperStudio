@@ -34,7 +34,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
   const setActiveProvider = useAppStore(state => state.setActiveProvider);
   const [input, setInput] = useState("");
-  const [selectedAgentId, setSelectedAgentId] = useState<string>(agents[0]?.id || '');
+  const [_selectedAgentId, _setSelectedAgentId] = useState<string>(agents[0]?.id || '');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,9 +44,9 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const autoScrollRef = useRef(true);
 
   const activeAgent = useMemo(() => {
-    if (selectedAgentId) return agents.find(a => a.id === selectedAgentId);
+    if (_selectedAgentId) return agents.find(a => a.id === _selectedAgentId);
     return agents[0] || null;
-  }, [agents, selectedAgentId]);
+  }, [agents, _selectedAgentId]);
 
   const activeAgentModelInfo = useMemo(() =>
     resolveAgentDisplayModel(activeAgent, settings?.providers || [], settings?.activeProviderId || null, t('Default')),

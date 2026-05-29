@@ -88,7 +88,7 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
     return (workflow.nodesData || []).map((node: WorkflowNode) => {
       const nodeType = node.type || 'default';
 
-      if (nodeType === 'agent' && node.data?.agentId) {
+      if (nodeType === 'agent' && (node.data as any)?.agentId) {
         return {
           ...node,
           type: 'agent',
@@ -108,7 +108,7 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
 
   const initialEdges = useMemo(() => workflow.edgesData || [], [workflow]);
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes as any[]);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   return (

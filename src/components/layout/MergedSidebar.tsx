@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -50,7 +50,6 @@ export function MergedSidebar() {
   const createSession = useAppStore(s => s.createSession)
   const renameSession = useAppStore(s => s.renameSession)
   const deleteSession = useAppStore(s => s.deleteSession)
-  const createWorkflow = useAppStore(s => s.createWorkflow)
   const deleteWorkflow = useAppStore(s => s.deleteWorkflow)
   const activeWorkspaceId = useAppStore(s => s.activeWorkspaceId)
   const activeWorkflowId = useAppStore(s => s.activeWorkflowId)
@@ -127,25 +126,6 @@ export function MergedSidebar() {
   }, [sidebarMode, activeNav, sessions, workflows, agents])
 
   const rLabel = recentsLabelFor(activeNav)
-
-  /* ───── primary action ───── */
-  const primaryLabel = useMemo(() => {
-    if (activeNav === 'chat')       return t('新建会话')
-    if (activeNav === 'agents')     return t('新建智能体')
-    if (activeNav === 'workflow')   return t('新建工作流')
-    if (activeNav === 'workflowChat') return t('新建会话')
-    return t('新建')
-  }, [activeNav, t])
-
-  const handlePrimary = () => {
-    if (activeNav === 'chat' || activeNav === 'workflowChat') {
-      setNewSessionDialogOpen(true)
-    }
-    else if (activeNav === 'workflow') createWorkflow(t('新工作流'), activeWorkspaceId || 'default-workspace')
-    else if (activeNav === 'agents') {
-      setCurrentView('agents')
-    }
-  }
 
   /* ───── dialog callbacks ───── */
   const handleCreateSingleSession = (title: string, workspaceId: string, agentId: string) => {

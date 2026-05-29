@@ -68,7 +68,7 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
     if (!nextNodeId || visited.has(nextNodeId)) continue;
     visited.add(nextNodeId);
     const node = workflow.nodesData.find((item) => item.id === nextNodeId);
-    if (node?.type === 'agent' && node.data?.agentId) return node;
+    if (node?.type === 'agent' && (node.data as any)?.agentId) return node;
     workflow.edgesData
       .filter((edge) => edge.source === nextNodeId)
       .forEach((edge) => queue.push(edge.target));
@@ -583,14 +583,15 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       }
 
       // Standard agent node
-      const agent = agents.find((item: Agent) => item.id === node?.data?.agentId);
+      const agent = agents.find((item: Agent) => item.id === (node?.data as any)?.agentId);
       if (!agent) return undefined;
 
       // Node-level overrides (local to this workflow node, do not mutate global Agent config)
+      const nd = node?.data as any;
       const nodeData = {
-        overrideProviderId: node.data?.overrideProviderId,
-        overrideModelId: node.data?.overrideModelId,
-        overrideSystemPrompt: node.data?.overrideSystemPrompt || node.data?.prompt || undefined,
+        overrideProviderId: nd?.overrideProviderId,
+        overrideModelId: nd?.overrideModelId,
+        overrideSystemPrompt: nd?.overrideSystemPrompt || nd?.prompt || undefined,
       };
 
       const messageId = await get().sendMessageToAgents(sessionId, prompt, [agent], {
@@ -599,7 +600,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         addUserMessage: options.addUserMessage !== false,
         meta: { workflowId: workflow.id, workflowNodeId: nodeId, targetAgentId: agent.id, forwardFromMessageId: options.forwardFromMessageId, triggeredBy: options.triggeredBy || 'user' },
       });
-      if (node.data?.autoSendToNext && messageId) {
+      if (nd?.autoSendToNext && messageId) {
         await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, agent.id, 'auto');
       }
       return messageId;
@@ -623,7 +624,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const currentMessage = session?.messages.find((message: ChatMessage) => message.id === messageId);
       const currentResponse = currentMessage?.agentResponses?.find((response: any) => response.agentId === agentId && response.nodeId === fromNodeId);
       const nextNode = findNextAgentNode(workflow, fromNodeId);
-      if (!session || !workflow || !currentResponse || !nextNode?.data?.agentId) return;
+      if (!session || !workflow || !currentResponse || !nextNode || !(nextNode?.data as any)?.agentId) return;
       await get().sendToWorkflowAgent(sessionId, nextNode.id, currentResponse.content.text, {
         addUserMessage: true, triggeredBy, forwardFromMessageId: messageId,
       });
@@ -638,7 +639,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const session = sessions.find((item: ChatSession) => item.id === sessionId);
       const workflow = session?.workflowId ? workflows.find((item: Workflow) => item.id === session.workflowId) : undefined;
       const node = getAgentNode(workflow, nodeId);
-      const agent = agents.find((item: Agent) => item.id === node?.data?.agentId);
+      const agent = agents.find((item: Agent) => item.id === (node?.data as any)?.agentId);
       if (!agent) return;
       const messageId = await get().rerunAgentReply(sessionId, nodeId, prompt);
       if (messageId) await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, agent.id, 'reload');

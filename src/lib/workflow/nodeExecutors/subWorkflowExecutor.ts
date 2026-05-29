@@ -1,4 +1,4 @@
-import { WorkflowNode, WorkflowSubWorkflowNodeData } from '../../../types/models';
+import { WorkflowSubWorkflowNodeData } from '../../../types/models';
 import { NodeExecutorFn } from '../types';
 
 /**

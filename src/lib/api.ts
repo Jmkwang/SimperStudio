@@ -121,8 +121,8 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
         model,
         system: systemPrompt,
         prompt,
-        maxTokens: options?.maxTokens,
-        temperature: options?.temperature,
+        ...(options?.maxTokens ? { maxTokens: options.maxTokens } : {}),
+        ...(options?.temperature ? { temperature: options.temperature } : {}),
     });
 
     const duration = performance.now() - startTime;

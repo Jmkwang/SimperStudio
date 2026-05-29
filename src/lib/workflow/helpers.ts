@@ -108,7 +108,6 @@ class ExprParser {
 
   private current(): ExprToken { return this.tokens[this.pos] || { type: 'eof', value: '' }; }
   private advance(): ExprToken { return this.tokens[this.pos++] || { type: 'eof', value: '' }; }
-  private peek(): ExprToken { return this.tokens[this.pos + 1] || { type: 'eof', value: '' }; }
 
   parse(): ExprNode { return this.parseTernary(); }
 

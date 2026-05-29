@@ -68,7 +68,6 @@ const AssistantBubble = memo(function AssistantBubble({
   const [copied, setCopied] = useState(false);
   const isError = response.status === 'error';
   const isStreaming = response.status === 'streaming';
-  const gameStatus = response._dynamicAgentMeta?.status;
 
   const handleCopy = () => {
     if (onCopy) {

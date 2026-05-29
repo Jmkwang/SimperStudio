@@ -17,8 +17,9 @@ export function computeMergePayload(
   incomingEdges: WorkflowEdge[],
   results: Record<string, any>
 ): any {
-  const strategy = node.data?.strategy || 'append';
-  const mergeKey = node.data?.mergeKey || 'id';
+  const d = node.data as any;
+  const strategy = d?.strategy || 'append';
+  const mergeKey = d?.mergeKey || 'id';
   const incomingResults: any[] = [];
   for (const edge of incomingEdges) {
     if (results[edge.source]) incomingResults.push(results[edge.source]);

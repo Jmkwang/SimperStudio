@@ -93,7 +93,8 @@ async function handleConditionSwitchRouting(
   edges: WorkflowEdge[],
   helpers: ExecutionHelpers
 ): Promise<{ nextFrames: Array<{ nodeId: string; payload: any }>; skipDefault: boolean }> {
-  const routesOrBranches = node.data?.routes || node.data?.branches || [];
+  const d = node.data as any;
+  const routesOrBranches = d?.routes || d?.branches || [];
   let matchedId: string | null = null;
 
   for (const item of routesOrBranches as any[]) {
@@ -127,7 +128,7 @@ async function handleLoopRouting(
   edges: WorkflowEdge[],
   helpers: ExecutionHelpers
 ): Promise<{ nextFrames: Array<{ nodeId: string; payload: any }>; skipDefault: boolean }> {
-  const itemsPath = String(node.data?.itemsPath || 'payload.alivePlayers');
+  const itemsPath = String((node.data as any)?.itemsPath || 'payload.alivePlayers');
   const resolvedItems = helpers.getByPath(payload, String(itemsPath));
 
   if (!Array.isArray(resolvedItems)) {

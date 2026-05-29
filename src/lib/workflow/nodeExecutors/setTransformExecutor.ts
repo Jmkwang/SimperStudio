@@ -2,9 +2,10 @@ import { WorkflowNode as _WorkflowNode } from '../../../types/models';
 import { NodeExecutorFn } from '../types';
 
 export const setTransformExecute: NodeExecutorFn = async (node, payload, helpers) => {
-  const mappings = (node.data?.mappings || []) as { sourcePath: string; targetPath: string }[];
-  const constantsRaw = String(node.data?.constants || '');
-  const whitelistRaw = String(node.data?.whitelist || '');
+  const d = node.data as any;
+  const mappings = (d?.mappings || []) as { sourcePath: string; targetPath: string }[];
+  const constantsRaw = String(d?.constants || '');
+  const whitelistRaw = String(d?.whitelist || '');
   let result: any = {};
   for (const m of mappings) {
     const val = helpers.getByPath(payload, m.sourcePath);
