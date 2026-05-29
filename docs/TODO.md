@@ -1070,10 +1070,47 @@ AppShell
 - 更新 `sidebar/index.ts` 导出
 
 #### T4: 主题变量对齐
-- **文件**: `src/globals.css`
-- 新增 CSS 变量: `--sidebar-bg`, `--sidebar-text`, `--sidebar-hover`, `--sidebar-active`, `--sidebar-indicator`
-- Light/Dark 双色值
-- `[data-theme="dark"]` 下 sidebar bg `#111111`
+- [x] **文件**: `src/globals.css`
+- [x] 新增 CSS 变量: `--sidebar-bg`, `--sidebar-text`, `--sidebar-hover`, `--sidebar-active`, `--sidebar-indicator`
+- [x] Light/Dark 双色值
+- [x] `[data-theme="dark"]` 下 sidebar bg `#111111`
+
+### 16.3 完成状态
+
+MergedSidebar 已在 v0.4.4 中实现：
+- `MergedSidebar.tsx` 已创建，260px dark sidebar (MergedSidebar)
+- 布局：Mode Switcher / Nav Items / Recents / Gateway 四区块
+- 侧边栏已从 AppShell 中分离，MergedSidebar 直接替代原侧栏
+- 主题变量已对齐（`src/globals.css`），Light/Dark 双色值
+- **待确认**：原 P13 T3 (清理旧侧栏文件) 需确认是否执行
+
+## 17. 版本 v0.4.4 — 本轮完整改动 (2026-05-29~30)
+
+### 侧栏与导航
+- [x] **MergedSidebar 创建**：合并 GlobalSidebar + ContextSidebar 为统一 260px 侧栏，Mode Switcher Pill 切换智能体/工作流模式，Nav Items 动态切换，Recents 按 updatedAt 排序
+- [x] **导航样式提升**：活跃态左侧蓝色指示条、hover 背景、无边框 inline-style 渲染
+- [x] **新增会话弹窗**：点击"新增会话"打开 NewSessionDialog，选择 agent 后创建会话
+- [x] **会话列表悬停菜单**：hover 时隐藏时间、显示 `⋮` 菜单（重命名/删除）
+- [x] **删除 recents "＋"按钮**：去除右上角多余创建入口
+
+### 聊天界面
+- [x] **面包屑简化**：去除左侧栏图标/选择器/拓扑按钮、去除模型名称（移至输入框）
+- [x] **集成式输入框**：发送/附件整合进 textarea 内底部栏，无边框（border-0）、左下附件+模型名、右下发送按钮、无紫色块
+- [x] **模型切换器**：点击输入框左下角模型名弹出服务商/模型选择器，实时切换 activeProvider
+- [x] **助手图标去除**：ChatMessageBubble 移除 Avatar，agent 名颜色暗化（text-muted-foreground/40）
+- [x] **时间位置调整**：气泡底部改为 flex justify-between，时间在最右侧（shrink-0）
+
+### 引擎与基础设施
+- [x] **循环幂等键修复**：engine 幂等键加入循环上下文，循环体内节点每轮迭代独立执行
+- [x] **工作流执行入口**：WorkflowChatView 添加"执行工作流"按钮，5 分钟全局超时
+- [x] **引擎结果写入聊天**：onNodeResult 回调将 agent/dynamic-agent 节点 LLM 回复写入 chat session
+- [x] **流式响应取消**：session 级 AbortController，四个输入区发送↔停止按钮切换
+- [x] **附件上传**：Paperclip + 文件选择 + chips + attachments 参数传递 + 用户气泡展示
+
+### 文档
+- [x] **搭建 Design_System.md**：8 个组件使用规范 + 设计令牌 + 无障碍规范 + 布局模式
+- [x] **Development.md 版本历史更新**：v0.4.4 记录
+- [x] **TODO.md 全面同步**：标记已完成项，新增本轮改动清单
 
 #### T5: 路由/视图校验
 - 确认 5 个视图（chat/workflowChat/workflow/agents/prompts）在 MergedSidebar 中正确导航

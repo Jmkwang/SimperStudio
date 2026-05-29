@@ -28,8 +28,11 @@
 - 🔍 **多模型对比**：同一 prompt 发送多模型，对比回复
 - 🗺️ **拓扑可视化**：ReactFlow 节点图展示工作流结构（编辑模式 + 只读聊天模式）
 - 📦 **工作流导入导出**：JSON 文件导入/导出，粘贴导入
-- 🌍 **多语言支持**：English / 中文 / Español
-- 📡 **远程访问**：局域网访问开关 + 端口配置
+- 🧩 **动态 Agent 节点**：运行时配置 Agent（inline 模板 / payload 模式），支持模板变量替换、三级模型回退
+- 🔀 **工作流执行引擎**：BFS 队列驱动，支持 agent/dynamic-agent/code/condition/loop/http/set/merge/wait/subworkflow/trigger 14 种节点，`onNodeResult` 回调写入聊天
+- 🎨 **MergedSidebar**：统一 260px 深色侧栏，Mode Switcher（智能体/工作流）、Nav Items、Recents、Gateway
+- 📎 **附件上传**：聊天输入区支持文件附件，文件名+大小展示在用户气泡中，附件信息注入 LLM prompt
+- 🛑 **流式响应取消**：发送按钮在流式响应中变为红色停止按钮，可随时中断
 
 > 完整的功能清单详见 [Features.md](./Features.md)
 
@@ -775,6 +778,12 @@ A: 进入 "Settings" → "Models" 标签页：
 
 ## 版本历史
 
+### v0.4.4 (2026-05-30)
+- **MergedSidebar 合并侧栏**：将 GlobalSidebar(60px) + ContextSidebar(260px) 合并为统一 260px 侧栏，Mode Switcher Pill 切换智能体/工作流模式，Recents 按 updatedAt 排序，Gateway 含主题切换+设置
+- **聊天界面大修**：面包屑简化（去除左侧栏/选择器/拓扑/模型名），集成式输入框（发送/附件整合进 textarea 内），模型切换器（点击模型名弹出 provider/model 选择器），助手图标去除，时间右对齐
+- **引擎结果写入聊天**：onNodeResult 回调将 agent/dynamic-agent 节点的 LLM 回复写入 chat session，附带 toast + screenShake 反馈
+- **设计系统文档**：创建 `docs/Design_System.md`，覆盖颜色令牌、8 个组件使用规范、无障碍规范、布局模式
+
 ### v0.4.3 (2026-05-29)
 - **循环幂等键修复**：引擎幂等键加入循环上下文 `${executionId}:${nodeId}:${loopNodeId}:${loopIndex}`，使循环体内节点每轮迭代独立执行，修复狼人杀非首轮角色不执行的问题
 - **工作流执行入口**：WorkflowChatView 标题栏添加"执行工作流"按钮，调用 `executeWorkflow` 引擎顺序执行；workflowSlice 添加 5 分钟全局超时保护
@@ -1015,5 +1024,5 @@ get_workflows, add_workflow, update_workflow, delete_workflow
 ---
 
 **文档维护**：本文件随项目更新自动维护。
-**最后更新**：2026-05-29
-**版本**：v0.4.3
+**最后更新**：2026-05-30
+**版本**：v0.4.4
