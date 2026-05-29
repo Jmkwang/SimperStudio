@@ -1,0 +1,91 @@
+[    2736ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[    2944ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:5199/src/stores/baseSlice.ts:444
+[    2944ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:5199/src/stores/baseSlice.ts:444
+[   89780ms] [ERROR] You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`. @ http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:1395
+[ 1173047ms] [ERROR] %o
+
+%s
+
+%s
+ ReferenceError: mode is not defined
+    at MergedSidebar (http://localhost:5199/src/components/layout/MergedSidebar.tsx?t=1780046838559:163:28)
+    at Object.react_stack_bottom_frame (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20)
+    at runWithFiberInDEV (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at performUnitOfWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12561:98)
+    at workLoopSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12424:43)
+    at renderRootSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12408:13)
+    at performWorkOnRoot (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:11827:37) The above error occurred in the <MergedSidebar> component. React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7000
+[ 1173047ms] [ERROR] ErrorBoundary caught an error: ReferenceError: mode is not defined
+    at MergedSidebar (http://localhost:5199/src/components/layout/MergedSidebar.tsx?t=1780046838559:163:28)
+    at Object.react_stack_bottom_frame (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20)
+    at runWithFiberInDEV (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at performUnitOfWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12561:98)
+    at workLoopSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12424:43)
+    at renderRootSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12408:13)
+    at performWorkOnRoot (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:11827:37) {componentStack: 
+    at MergedSidebar (http://localhost:5199/src/c…5199/src/components/theme/ThemeProvider.tsx:25:3)} @ http://localhost:5199/src/components/ErrorBoundary.tsx:14
+[ 1179016ms] [ERROR] %o
+
+%s
+
+%s
+ ReferenceError: mode is not defined
+    at MergedSidebar (http://localhost:5199/src/components/layout/MergedSidebar.tsx?t=1780046844545:142:28)
+    at Object.react_stack_bottom_frame (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20)
+    at runWithFiberInDEV (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at performUnitOfWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12561:98)
+    at workLoopSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12424:43)
+    at renderRootSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12408:13)
+    at performWorkOnRoot (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:11827:37) The above error occurred in the <MergedSidebar> component. React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7000
+[ 1179016ms] [ERROR] ErrorBoundary caught an error: ReferenceError: mode is not defined
+    at MergedSidebar (http://localhost:5199/src/components/layout/MergedSidebar.tsx?t=1780046844545:142:28)
+    at Object.react_stack_bottom_frame (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20)
+    at runWithFiberInDEV (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at performUnitOfWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12561:98)
+    at workLoopSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12424:43)
+    at renderRootSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12408:13)
+    at performWorkOnRoot (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:11827:37) {componentStack: 
+    at MergedSidebar (http://localhost:5199/src/c…5199/src/components/theme/ThemeProvider.tsx:25:3)} @ http://localhost:5199/src/components/ErrorBoundary.tsx:14
+[ 1182562ms] [ERROR] %o
+
+%s
+
+%s
+ ReferenceError: mode is not defined
+    at MergedSidebar (http://localhost:5199/src/components/layout/MergedSidebar.tsx?t=1780046848063:142:28)
+    at Object.react_stack_bottom_frame (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20)
+    at runWithFiberInDEV (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at performUnitOfWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12561:98)
+    at workLoopSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12424:43)
+    at renderRootSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12408:13)
+    at performWorkOnRoot (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:11827:37) The above error occurred in the <MergedSidebar> component. React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7000
+[ 1182563ms] [ERROR] ErrorBoundary caught an error: ReferenceError: mode is not defined
+    at MergedSidebar (http://localhost:5199/src/components/layout/MergedSidebar.tsx?t=1780046848063:142:28)
+    at Object.react_stack_bottom_frame (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:18509:20)
+    at renderWithHooks (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:5654:24)
+    at updateFunctionComponent (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:7475:21)
+    at beginWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:8525:20)
+    at runWithFiberInDEV (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:997:72)
+    at performUnitOfWork (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12561:98)
+    at workLoopSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12424:43)
+    at renderRootSync (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:12408:13)
+    at performWorkOnRoot (http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:11827:37) {componentStack: 
+    at MergedSidebar (http://localhost:5199/src/c…5199/src/components/theme/ThemeProvider.tsx:25:3)} @ http://localhost:5199/src/components/ErrorBoundary.tsx:14
+[ 1237048ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5199/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[ 1237165ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:5199/src/stores/baseSlice.ts:444
+[ 1237165ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:5199/src/stores/baseSlice.ts:444

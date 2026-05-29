@@ -93,7 +93,13 @@
       "mcp__playwright__browser_run_code_unsafe",
       "Bash(git stash *)",
       "mcp__sequential-thinking__sequentialthinking",
-      "Bash(npx.cmd tsc *)"
+      "Bash(npx.cmd tsc *)",
+      "Bash(dir /b \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\")",
+      "Bash(findstr /i \"sidebar\")",
+      "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\ChatSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
+      "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\WorkflowChatSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
+      "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\WorkflowSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")",
+      "Bash(move \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\AgentsSidebar.tsx\" \"E:\\\\workspace\\\\SimperStudio\\\\src\\\\components\\\\layout\\\\sidebar\\\\__archive__\")"
     ]
   }
 }

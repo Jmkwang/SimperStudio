@@ -28,7 +28,7 @@ function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: 
   return (
     <div className="flex justify-end gap-2">
       <div className="max-w-[80%] flex flex-col items-end">
-        <div className="rounded-2xl rounded-tr-md bg-foreground/10 px-3 py-2 text-sm whitespace-pre-wrap break-words">
+        <div className="rounded-2xl rounded-tr-md bg-[#2563eb] dark:bg-[#3b82f6] px-3 py-2 text-sm text-white whitespace-pre-wrap break-words">
           {message.content.text || emptyText || ""}
         </div>
         {attachments && attachments.length > 0 && (
@@ -41,13 +41,10 @@ function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: 
             ))}
           </div>
         )}
-        <span className="text-xs text-muted-foreground mt-0.5 mr-1">
+        <span className="text-xs text-white/70 dark:text-white/60 mt-0.5 mr-1">
           {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
-      <Avatar className="h-7 w-7 rounded-full shrink-0 mt-1">
-        <AvatarFallback className="rounded-full bg-muted text-muted-foreground text-xs">U</AvatarFallback>
-      </Avatar>
     </div>
   );
 }
@@ -125,10 +122,8 @@ const AssistantBubble = memo(function AssistantBubble({
           </span>
         )}
         <div className={cn(
-          "py-1.5 text-sm whitespace-pre-wrap break-words w-full rounded-lg px-3",
-          isError
-            ? "border border-destructive/30 bg-destructive/5"
-            : "bg-muted/30"
+          "w-full",
+          isError && "border border-destructive/30 bg-destructive/5 rounded-lg px-3 py-1.5"
         )}>
           {isError ? (
             <div className="space-y-1.5">

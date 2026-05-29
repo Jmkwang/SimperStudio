@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio — Merged Sidebar 主题</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       THEME: SimperStudio — Merged Sidebar
+       Combined 260px dark nav + content area
+       ============================================ */
+    :root {
+      /* Sidebar — deep dark */
+      --sb-bg: #1a1a1a;
+      --sb-text: #d4d4d4;
+      --sb-text-muted: #737373;
+      --sb-text-dim: #525252;
+      --sb-hover: #262626;
+      --sb-active: #262626;
+      --sb-active-indicator: #3b82f6;
+      --sb-border: #2a2a2a;
+      --sb-pill-bg: #262626;
+      --sb-pill-active: #1a1a1a;
+      --sb-rec稠-dot: #525252;
+      --sb-gateway-icon: #3b82f6;
+
+      /* Main content — light */
+      --mc-bg: #ffffff;
+      --mc-text: #1f2937;
+      --mc-text-secondary: #6b7280;
+      --mc-text-dim: #9ca3af;
+      --mc-border: #e5e7eb;
+      --mc-hover: #f9fafb;
+
+      /* Chat */
+      --user-bubble: #2563eb;
+      --user-text: #ffffff;
+      --user-time: rgba(255,255,255,0.65);
+      --ai-avatar: #111111;
+      --ai-avatar-text: #ffffff;
+      --ai-name: #2563eb;
+
+      /* Tool cards */
+      --tool-bg: #eff6ff;
+      --tool-border: #bfdbfe;
+      --tool-icon: #2563eb;
+      --result-bg: #f0fdf4;
+      --result-border: #bbf7d0;
+      --result-icon: #22c55e;
+
+      /* Input */
+      --input-bg: #ffffff;
+      --input-border: #d1d5db;
+      --input-focus: rgba(37,99,235,0.15);
+      --input-ph: #a1a1aa;
+
+      /* Tabs */
+      --tab-bg: #f3f4f6;
+      --tab-active: #ffffff;
+
+      /* Fonts */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="dark"] {
+      --sb-bg: #1a1a1a;
+      --sb-text: #d4d4d8;
+      --sb-text-muted: #71717a;
+      --sb-text-dim: #525252;
+      --sb-hover: #262626;
+      --sb-active: #262626;
+      --sb-active-indicator: #60a5fa;
+      --sb-border: #2a2a2a;
+      --sb-pill-bg: #262626;
+      --sb-pill-active: #1a1a1a;
+      --sb-rec稠-dot: #525252;
+      --sb-gateway-icon: #60a5fa;
+
+      --mc-bg: #18181b;
+      --mc-text: #e5e7eb;
+      --mc-text-secondary: #9ca3af;
+      --mc-text-dim: #71717a;
+      --mc-border: #27272a;
+      --mc-hover: #1f1f1f;
+
+      --user-bubble: #3b82f6;
+      --user-text: #ffffff;
+      --user-time: rgba(255,255,255,0.55);
+      --ai-avatar: #60a5fa;
+      --ai-avatar-text: #ffffff;
+      --ai-name: #60a5fa;
+
+      --tool-bg: #1e293b;
+      --tool-border: #334155;
+      --tool-icon: #60a5fa;
+      --result-bg: #052e16;
+      --result-border: #166534;
+      --result-icon: #4ade80;
+
+      --input-bg: #27272a;
+      --input-border: #3f3f46;
+      --input-focus: rgba(59,130,246,0.25);
+      --input-ph: #525252;
+
+      --tab-bg: #1f1f1f;
+      --tab-active: #27272a;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { height:100%; overflow:hidden; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--mc-bg);
+      color: var(--mc-text);
+      font-size:14px; line-height:1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background: #525252; border-radius:2px; }
+    button { cursor:pointer; font-family:var(--font-sans); border:none; background:none; }
+    input::placeholder, textarea::placeholder { color:var(--input-ph); }
+
+    /* ============================================
+       LAYOUT
+       ============================================ */
+    .app { display:flex; height:100vh; width:100vw; }
+
+    /* ---------- SIDEBAR (260px, merged) ---------- */
+    .sidebar {
+      width:260px; min-width:260px;
+      background:var(--sb-bg);
+      display:flex; flex-direction:column;
+      padding:12px 16px;
+      height:100vh;
+    }
+
+    /* ===== Mode Switcher ===== */
+    .mode-switcher {
+      display:flex;
+      background:var(--sb-pill-bg);
+      border-radius:9999px;
+      padding:3px;
+      gap:2px;
+      height:36px;
+    }
+    .mode-btn {
+      flex:1;
+      display:flex; align-items:center; justify-content:center;
+      gap:6px;
+      border-radius:9999px;
+      padding:0 12px;
+      font-size:13px; font-weight:500;
+      color:var(--sb-text-muted);
+      background:transparent;
+      transition:all 150ms ease-out;
+    }
+    .mode-btn.active {
+      background:var(--sb-pill-active);
+      color:#ffffff;
+    }
+    .mode-btn:not(.active):hover { color:var(--sb-text); }
+
+    /* ===== Primary Action ===== */
+    .primary-action {
+      width:100%; height:38px;
+      margin-top:12px;
+      display:flex; align-items:center; gap:8px;
+      padding:0 12px;
+      border-radius:8px;
+      background:var(--sb-pill-bg);
+      color:#ffffff;
+      font-size:14px; font-weight:500;
+      transition:background 150ms ease;
+    }
+    .primary-action:hover { background:var(--sb-hover); }
+    .primary-action .plus { font-size:18px; font-weight:300; line-height:1; }
+
+    /* ===== Main Navigation ===== */
+    .nav-section { margin-top:16px; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px;
+      height:36px; padding:0 12px;
+      border-radius:6px;
+      font-size:14px; color:var(--sb-text);
+      transition:all 150ms ease;
+      position:relative;
+    }
+    .nav-item:hover { background:var(--sb-hover); color:#e5e5e5; }
+    .nav-item.active {
+      background:var(--sb-active);
+      color:#ffffff;
+    }
+    .nav-item.active::before {
+      content:''; position:absolute; left:-16px; top:50%;
+      transform:translateY(-50%);
+      width:3px; height:18px;
+      border-radius:0 3px 3px 0;
+      background:var(--sb-active-indicator);
+    }
+    .nav-item .nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; color:var(--sb-text-muted); }
+    .nav-item.active .nav-icon { color:var(--sb-active-indicator); }
+    .nav-item .nav-badge {
+      margin-left:auto;
+      font-size:11px; color:var(--sb-text-dim);
+      background:var(--sb-pill-bg); padding:1px 7px; border-radius:10px;
+    }
+
+    /* ===== Recents ===== */
+    .recents-section {
+      flex:1; min-height:0;
+      display:flex; flex-direction:column;
+      margin-top:20px;
+    }
+    .recents-label {
+      font-size:12px; color:var(--sb-text-muted);
+      font-weight:400; margin-bottom:8px;
+      padding:0 4px;
+    }
+    .recents-list { flex:1; overflow-y:auto; }
+    .recents-item {
+      display:flex; align-items:center; gap:10px;
+      height:32px; padding:0 12px;
+      border-radius:6px;
+      font-size:13px; color:var(--sb-text-muted);
+      transition:all 150ms ease;
+    }
+    .recents-item:hover { background:var(--sb-hover); color:var(--sb-text); }
+    .recents-item.active { background:var(--sb-active); color:#ffffff; }
+    .recents-item .dot {
+      width:5px; height:5px; border-radius:50%;
+      background:var(--sb-rec稠-dot); flex-shrink:0;
+    }
+    .recents-item.active .dot { background:var(--sb-active-indicator); }
+    .recents-item .r-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .recents-item .r-meta { font-size:11px; color:var(--sb-text-dim); flex-shrink:0; }
+
+    /* ===== Gateway ===== */
+    .gateway {
+      margin-top:auto; padding-top:8px;
+      border-top:1px solid var(--sb-border);
+      display:flex; align-items:center; justify-content:space-between;
+      height:44px;
+    }
+    .gateway-left { display:flex; align-items:center; gap:8px; }
+    .gateway-logo {
+      width:18px; height:18px; border-radius:4px;
+      background:var(--sb-gateway-icon); color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700;
+    }
+    .gateway-name { font-size:14px; font-weight:500; color:#ffffff; }
+    .gateway-right { display:flex; align-items:center; gap:6px; }
+    .gateway-btn {
+      width:32px; height:32px;
+      border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--sb-text-muted); font-size:16px;
+      transition:all 150ms ease;
+    }
+    .gateway-btn:hover { background:var(--sb-hover); color:var(--sb-text); }
+    .gateway-dropdown {
+      position:relative;
+    }
+    .gateway-dropdown-btn {
+      width:32px; height:32px;
+      border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--sb-text-muted); font-size:14px;
+      transition:all 150ms ease;
+    }
+    .gateway-dropdown-btn:hover { background:var(--sb-hover); color:var(--sb-text); }
+
+    /* ---------- MAIN CONTENT ---------- */
+    .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+
+    /* Header */
+    .main-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 24px;
+      border-bottom:1px solid var(--mc-border);
+      flex-shrink:0;
+    }
+    .main-header .left h2 { font-size:17px; font-weight:600; }
+    .main-header .left .sub { font-size:12px; color:var(--mc-text-secondary); margin-top:1px; }
+    .main-header .right { display:flex; align-items:center; gap:8px; }
+
+    .view-tabs {
+      display:flex; gap:1px;
+      background:var(--tab-bg); padding:2px; border-radius:8px;
+      border:1px solid var(--mc-border);
+    }
+    .view-tab {
+      padding:5px 12px; border-radius:6px;
+      font-size:12px; font-weight:500; color:var(--mc-text-secondary);
+      transition:all 150ms ease;
+    }
+    .view-tab:hover { color:var(--mc-text); }
+    .view-tab.active { background:var(--tab-active); color:var(--mc-text); box-shadow:0 1px 2px rgba(0,0,0,0.06); }
+
+    .run-btn {
+      padding:6px 16px; border-radius:8px;
+      border:1px solid var(--mc-border);
+      font-size:13px; font-weight:500; color:var(--mc-text);
+      transition:all 150ms ease;
+    }
+    .run-btn:hover { background:var(--mc-hover); }
+
+    /* Messages */
+    .msg-stream {
+      flex:1; overflow-y:auto;
+      padding:20px 24px;
+      display:flex; flex-direction:column; gap:18px;
+    }
+    .msg-user { display:flex; justify-content:flex-end; }
+    .msg-user .bubble {
+      max-width:70%;
+      background:var(--user-bubble); color:var(--user-text);
+      padding:10px 16px;
+      border-radius:12px 4px 12px 12px;
+      font-size:14px; line-height:1.6;
+    }
+    .msg-user .bubble .time { display:block; font-size:11px; color:var(--user-time); margin-top:5px; text-align:right; }
+
+    .msg-ai { display:flex; gap:10px; align-items:flex-start; }
+    .msg-ai .avatar {
+      width:30px; height:30px; border-radius:50%;
+      background:var(--ai-avatar); color:var(--ai-avatar-text);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:600; font-size:12px; flex-shrink:0; margin-top:2px;
+    }
+    .msg-ai .content { flex:1; min-width:0; }
+    .msg-ai .content .name { font-size:12px; font-weight:600; color:var(--ai-name); margin-bottom:3px; }
+    .msg-ai .content .text { font-size:14px; line-height:1.6; }
+    .msg-ai .content .time { display:block; font-size:11px; color:var(--mc-text-dim); margin-top:5px; }
+
+    .tool-card {
+      margin:6px 0 3px;
+      border:1px solid var(--tool-border); border-radius:8px;
+      background:var(--tool-bg); overflow:hidden;
+    }
+    .tool-card .hdr {
+      display:flex; align-items:center; gap:8px; padding:7px 11px; cursor:pointer; user-select:none;
+    }
+    .tool-card .hdr .t-icon {
+      width:18px; height:18px; border-radius:4px;
+      background:var(--tool-icon); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0;
+    }
+    .tool-card .hdr .t-label { flex:1; font-size:12px; font-weight:500; }
+    .tool-card .hdr .t-toggle { font-size:10px; color:var(--mc-text-dim); transition:transform 200ms; }
+    .tool-card .hdr .t-toggle.open { transform:rotate(180deg); }
+    .tool-card .body {
+      border-top:1px solid var(--tool-border); padding:7px 11px; display:none; font-size:12px;
+    }
+    .tool-card .body.open { display:block; }
+    .tool-card .body .link { color:var(--tool-icon); text-decoration:underline; cursor:pointer; }
+
+    .tool-result {
+      margin:3px 0 6px;
+      border:1px solid var(--result-border); border-radius:8px;
+      background:var(--result-bg); padding:7px 11px;
+      display:flex; align-items:center; gap:7px;
+    }
+    .tool-result .r-icon {
+      width:18px; height:18px; border-radius:4px;
+      background:var(--result-icon); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0;
+    }
+    .tool-result .r-label { font-size:12px; font-weight:500; }
+
+    /* Input */
+    .input-area { flex-shrink:0; padding:10px 24px 16px; border-top:1px solid var(--mc-border); }
+    .input-box { display:flex; gap:8px; align-items:flex-end; max-width:860px; margin:0 auto; }
+    .input-box textarea {
+      flex:1; min-height:44px; padding:10px 14px;
+      border:1px solid var(--input-border); border-radius:10px;
+      background:var(--input-bg); color:var(--mc-text);
+      font-family:var(--font-sans); font-size:14px; line-height:1.5;
+      resize:none; outline:none;
+      transition:border-color 200ms, box-shadow 200ms;
+    }
+    .input-box textarea:focus { border-color:var(--user-bubble); box-shadow:0 0 0 3px var(--input-focus); }
+    .input-box .send-btn {
+      width:44px; height:44px; border-radius:50%;
+      background:var(--tab-bg); color:var(--mc-text-secondary);
+      display:flex; align-items:center; justify-content:center; font-size:16px;
+      transition:all 200ms; flex-shrink:0;
+    }
+    .input-box .send-btn:hover { background:var(--user-bubble); color:#ffffff; }
+    .input-hint { text-align:center; font-size:11px; color:var(--mc-text-dim); margin-top:6px; }
+
+    /* View containers */
+    .view-container { flex:1; display:none; min-height:0; flex-direction:column; }
+    .view-container.active { display:flex; }
+
+    /* Workflow canvas mini */
+    .wf-area { flex:1; position:relative; overflow:hidden; }
+    .wf-grid {
+      position:absolute; inset:0;
+      background-image:radial-gradient(circle,var(--mc-border) 1px,transparent 1px);
+      background-size:24px 24px; opacity:0.3;
+    }
+    .wf-nodes {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      gap:40px; flex-wrap:wrap; padding:40px;
+    }
+    .wf-node {
+      width:170px; background:var(--tab-active);
+      border:1px solid var(--mc-border); border-radius:12px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden;
+    }
+    .wf-node .hdr { padding:10px 12px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--mc-border); }
+    .wf-node .hdr .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .wf-node .hdr .lbl { font-size:13px; font-weight:600; }
+    .wf-node .body { padding:8px 12px; font-size:11px; color:var(--mc-text-secondary); }
+
+    /* Execution Timeline */
+    .exec-tl {
+      position:absolute; bottom:12px; left:12px; right:12px;
+      max-width:680px; margin:0 auto;
+      background:var(--tab-active); backdrop-filter:blur(12px);
+      border:1px solid var(--mc-border); border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.08); padding:12px 14px; z-index:10;
+    }
+    .exec-tl .tl-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .exec-tl .tl-hdr .tl-title { font-size:13px; font-weight:600; }
+    .exec-tl .tl-hdr .tl-actions { display:flex; gap:4px; }
+    .exec-tl .tl-hdr .tl-actions button {
+      width:30px; height:30px; border-radius:6px;
+      font-size:13px; color:var(--mc-text-secondary);
+      transition:background 150ms;
+    }
+    .exec-tl .tl-hdr .tl-actions button:hover { background:var(--mc-hover); }
+    .tl-nodes { display:flex; flex-direction:column; gap:3px; }
+    .tl-node {
+      display:flex; align-items:center; gap:8px;
+      padding:5px 8px; border-radius:5px; font-size:12px;
+    }
+    .tl-node:hover { background:var(--mc-hover); }
+    .tl-node .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .tl-node .dot.green { background:#22c55e; }
+    .tl-node .dot.blue { background:#3b82f6; animation:pulse 1.5s infinite; }
+    .tl-node .dot.gray { background:var(--mc-text-dim); }
+    .tl-node .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-node .s { font-size:11px; color:var(--mc-text-secondary); }
+    .tl-node .d { font-size:11px; font-family:var(--font-mono); color:var(--mc-text-dim); }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* Floating agent window */
+    .agent-fw {
+      position:absolute; width:300px; height:380px;
+      background:var(--tab-active); border:1px solid var(--mc-border);
+      border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.1);
+      display:flex; flex-direction:column; z-index:20; overflow:hidden;
+    }
+    .agent-fw .hdr {
+      padding:10px 14px; border-bottom:1px solid var(--mc-border);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .agent-fw .hdr .name { font-size:13px; font-weight:600; }
+    .agent-fw .hdr .act { display:flex; gap:4px; }
+    .agent-fw .hdr .act button {
+      width:26px; height:26px; border-radius:5px;
+      font-size:12px; color:var(--mc-text-dim);
+    }
+    .agent-fw .hdr .act button:hover { background:var(--mc-hover); }
+    .agent-fw .body { flex:1; overflow-y:auto; padding:10px 14px; }
+    .agent-fw .fw-inp { padding:8px 14px; border-top:1px solid var(--mc-border); display:flex; gap:6px; }
+    .agent-fw .fw-inp input { flex:1; height:32px; padding:0 10px; border:1px solid var(--input-border); border-radius:6px; background:var(--input-bg); color:var(--mc-text); font-size:12px; outline:none; }
+
+    /* Agents grid */
+    .agents-grid { flex:1; overflow-y:auto; padding:20px 24px; }
+    .agents-grid .grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px;
+    }
+    .agent-card {
+      border:1px solid var(--mc-border); border-radius:10px; padding:12px;
+      background:var(--tab-active);
+    }
+    .agent-card .a-hdr { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .agent-card .a-hdr .a-icon {
+      width:28px; height:28px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center; font-size:14px;
+    }
+    .agent-card .a-hdr .a-name { font-size:14px; font-weight:600; }
+    .agent-card .a-desc { font-size:12px; color:var(--mc-text-secondary); }
+
+    /* Settings */
+    .settings-view { flex:1; display:flex; overflow:hidden; }
+    .settings-view .s-left { width:180px; border-right:1px solid var(--mc-border); padding:12px 0; }
+    .settings-view .s-left .s-tab {
+      padding:8px 16px; font-size:13px; color:var(--mc-text-secondary);
+      cursor:pointer;
+    }
+    .settings-view .s-left .s-tab:hover { background:var(--mc-hover); }
+    .settings-view .s-left .s-tab.active { color:var(--mc-text); font-weight:500; border-left:3px solid var(--user-bubble); }
+
+    /* Theme toggle button */
+    .theme-toggle-btn {
+      position:fixed; bottom:12px; right:12px; z-index:999;
+      padding:5px 12px; border-radius:20px;
+      border:1px solid var(--mc-border); background:var(--tab-active);
+      font-size:11px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ MERGED SIDEBAR (260px) ============ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+      <button class="mode-btn active" data-mode="chat" onclick="switchMode('chat')">
+        <span>💬</span> 聊天
+      </button>
+      <button class="mode-btn" data-mode="workflow" onclick="switchMode('workflow')">
+        <span>⚡</span> 工作流
+      </button>
+    </div>
+
+    <!-- Primary Action -->
+    <button class="primary-action" id="primaryAction" onclick="handlePrimaryAction()">
+      <span class="plus">+</span>
+      <span id="primaryLabel">新建会话</span>
+    </button>
+
+    <!-- Main Navigation -->
+    <div class="nav-section" id="navSection">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Recents -->
+    <div class="recents-section">
+      <div class="recents-label" id="recentsLabel">最近会话</div>
+      <div class="recents-list" id="recentsList">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Gateway -->
+    <div class="gateway">
+      <div class="gateway-left">
+        <div class="gateway-logo">S</div>
+        <span class="gateway-name">SimperStudio</span>
+      </div>
+      <div class="gateway-right">
+        <button class="gateway-btn" title="主题切换" onclick="toggleTheme()">🌓</button>
+        <div class="gateway-dropdown">
+          <button class="gateway-dropdown-btn" title="设置" onclick="switchView('settings')">⚙️</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main">
+
+    <!-- ===== VIEW: Chat ===== -->
+    <div class="view-container active" id="v-chat">
+      <div class="main-header">
+        <div class="left">
+          <h2>工作流编排讨论</h2>
+          <div class="sub">agent: architect · 2026-05-29 3:58 PM</div>
+        </div>
+        <div class="right">
+          <div class="view-tabs">
+            <button class="view-tab active">💬 聊天</button>
+            <button class="view-tab">⌘ Shell</button>
+            <button class="view-tab">📁 文件</button>
+          </div>
+        </div>
+      </div>
+      <div class="msg-stream">
+        <div class="msg-user">
+          <div class="bubble">帮我设计一个狼人杀的工作流架构，需要包含主持人分配角色、玩家发言、投票和夜晚行动。<span class="time">3:58:42 PM</span></div>
+        </div>
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="name">Architect</div>
+            <div class="text">好的，我来设计一个完整的狼人杀工作流架构。先分析需求：<br><br><strong>核心流程：</strong><br>1. 主持人 Agent 动态生成角色分配<br>2. Loop 节点遍历每个玩家发言<br>3. 条件路由判断白天/黑夜阶段<br>4. Dynamic Agent 节点为每个角色赋予独立性格<br><br>先看看现有的狼人杀工作流定义。</div>
+            <span class="time">3:58:45 PM</span>
+          </div>
+        </div>
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="tool-card">
+              <div class="hdr" onclick="toggleTool(this)"><div class="t-icon">🔧</div><span class="t-label">Using read_file</span><span class="t-toggle">▼</span></div>
+              <div class="body"><span class="link">View input parameters</span></div>
+            </div>
+            <div class="tool-card">
+              <div class="hdr" onclick="toggleTool(this)"><div class="t-icon">🔍</div><span class="t-label">Using grep_search</span><span class="t-toggle">▼</span></div>
+              <div class="body"><span class="link">View input parameters</span></div>
+            </div>
+            <div class="tool-result"><div class="r-icon">✓</div><span class="r-label">Tool Result — found werewolf-standard workflow</span></div>
+            <span class="time">3:58:52 PM</span>
+          </div>
+        </div>
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="name">Architect</div>
+            <div class="text">找到了。我建议用 <strong>Dynamic Agent</strong> 动态生成角色，配合 <strong>Loop</strong> 串行发言，<strong>Merge</strong> 收集中午/夜晚结果。</div>
+            <span class="time">3:59:05 PM</span>
+          </div>
+        </div>
+        <div class="msg-user">
+          <div class="bubble">很好，再加一个 Merge 节点来收集中午和夜晚的结果，在白天投票前汇总。<span class="time">3:59:30 PM</span></div>
+        </div>
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="name">Architect</div>
+            <div class="text">好主意！用 Merge（by-key）合并昼夜结果，传给 Router 判断是否触发平票 PK。</div>
+            <div class="tool-card">
+              <div class="hdr" onclick="toggleTool(this)"><div class="t-icon">✏️</div><span class="t-label">Using edit_workflow</span><span class="t-toggle">▼</span></div>
+              <div class="body"><span class="link">View input parameters</span></div>
+            </div>
+            <div class="tool-result"><div class="r-icon">✓</div><span class="r-label">Workflow updated — Merge node added after Loop</span></div>
+            <span class="time">3:59:42 PM</span>
+          </div>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="发送消息... (@ 提及 Agent)"></textarea>
+          <button class="send-btn">➤</button>
+        </div>
+        <div class="input-hint">Enter 发送 · Shift+Enter 换行 · @ 引用 Agent</div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: WorkflowChat ===== -->
+    <div class="view-container" id="v-workflowChat">
+      <div class="main-header">
+        <div class="left">
+          <h2>狼人杀标准局 · 第 3 局</h2>
+          <div class="sub">workflow: werewolf-standard · 8 nodes</div>
+        </div>
+        <div class="right">
+          <button class="run-btn">▶ 执行工作流</button>
+        </div>
+      </div>
+      <div class="wf-area">
+        <div class="wf-grid"></div>
+        <div class="wf-nodes">
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#10b981"></div><span class="lbl">Trigger</span></div><div class="body">Manual Execution</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#3b82f6"></div><span class="lbl">主持人 Agent</span></div><div class="body">分配角色 · 主持流程</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#8b5cf6"></div><span class="lbl">Dynamic Agent</span></div><div class="body">角色性格生成</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#ec4899"></div><span class="lbl">Loop x8</span></div><div class="body">遍历玩家发言</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#f97316"></div><span class="lbl">Merge</span></div><div class="body">按 key 合并</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#f59e0b"></div><span class="lbl">Router</span></div><div class="body">Day/Night 分支</div></div>
+        </div>
+        <div class="agent-fw" style="top:50px;right:20px;">
+          <div class="hdr"><span class="name">🤖 主持人 Agent</span><div class="act"><button>─</button><button>✕</button></div></div>
+          <div class="body">
+            <div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--mc-text-dim)">3:59 PM</span></div>
+            <div style="padding:8px 10px;background:var(--mc-hover);border-radius:8px;font-size:13px;margin-bottom:8px;">🎭 角色：狼人×2、预言家、女巫、守卫、猎人、村民×2</div>
+            <div style="margin-bottom:6px;"><span style="font-size:11px;color:var(--mc-text-dim)">4:00 PM</span></div>
+            <div style="padding:8px 10px;background:var(--mc-hover);border-radius:8px;font-size:13px;">🌙 夜晚阶段：请狼人击杀目标</div>
+          </div>
+          <div class="fw-inp"><input placeholder="向主持人发送消息..."><button class="send-btn" style="width:32px;height:32px;font-size:12px;">➤</button></div>
+        </div>
+        <div class="exec-tl">
+          <div class="tl-hdr"><span class="tl-title">⏱ 执行时间线</span><div class="tl-actions"><button>📥</button><button>✕</button></div></div>
+          <div class="tl-nodes">
+            <div class="tl-node"><div class="dot green"></div><span class="n">Trigger</span><span class="s">Completed</span><span class="d">12ms</span></div>
+            <div class="tl-node"><div class="dot green"></div><span class="n">主持人 Agent</span><span class="s">Completed</span><span class="d">2.4s</span></div>
+            <div class="tl-node"><div class="dot green"></div><span class="n">Dynamic Agent</span><span class="s">Completed</span><span class="d">3.1s</span></div>
+            <div class="tl-node"><div class="dot blue"></div><span class="n">Loop (3/8)</span><span class="s">Running</span><span class="d">12.7s</span></div>
+            <div class="tl-node"><div class="dot gray"></div><span class="n">Merge</span><span class="s">Waiting</span><span class="d">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Settings ===== -->
+    <div class="view-container" id="v-settings">
+      <div class="main-header">
+        <div class="left"><h2>设置</h2><div class="sub">模型服务商 · 外观 · 通用</div></div>
+      </div>
+      <div class="settings-view">
+        <div class="s-left">
+          <div class="s-tab active">模型服务商</div>
+          <div class="s-tab">外观</div>
+          <div class="s-tab">通用</div>
+        </div>
+        <div style="flex:1;padding:20px 24px;overflow-y:auto;">
+          <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">模型服务商</h3>
+          <div class="wf-node" style="margin-bottom:10px;">
+            <div class="hdr"><div class="dot" style="background:#10b981"></div><span class="lbl">OpenAI</span><span style="margin-left:auto;font-size:11px;color:var(--mc-text-secondary)">当前</span></div>
+            <div class="body" style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">GPT-4o</span>
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">GPT-4o-mini</span>
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">o3</span>
+            </div>
+          </div>
+          <div class="wf-node" style="margin-bottom:10px;">
+            <div class="hdr"><div class="dot" style="background:#a855f7"></div><span class="lbl">Anthropic</span></div>
+            <div class="body" style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">Claude Sonnet 4</span>
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">Claude Haiku 3.5</span>
+            </div>
+          </div>
+          <div class="wf-node">
+            <div class="hdr"><div class="dot" style="background:#f59e0b"></div><span class="lbl">Google</span></div>
+            <div class="body" style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">Gemini 2.5 Pro</span>
+              <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--mc-hover);border:1px solid var(--mc-border);">Gemini 2.5 Flash</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Global theme toggle -->
+<button class="theme-toggle-btn" onclick="toggleTheme()">🌓 切换主题</button>
+
+<script>
+  // ================================
+  // STATE
+  // ================================
+  let currentMode = 'chat';
+  let currentView = 'chat';
+
+  // ================================
+  // SIDEBAR NAV DATA
+  // ================================
+  const navByMode = {
+    chat: [
+      { id:'chat', icon:'💬', label:'聊天', badge:'5' },
+      { id:'workflowChat', icon:'🔀', label:'工作流会话', badge:'3' },
+      { id:'agents', icon:'🤖', label:'智能体', badge:'12' },
+      { id:'prompts', icon:'🪄', label:'提示词' },
+    ],
+    workflow: [
+      { id:'workflow', icon:'⚡', label:'工作流编辑器', badge:'4' },
+      { id:'workflowChat', icon:'🔀', label:'工作流会话', badge:'3' },
+      { id:'agents', icon:'🤖', label:'智能体', badge:'12' },
+      { id:'prompts', icon:'🪄', label:'提示词' },
+    ]
+  };
+
+  const recentsByMode = {
+    chat: [
+      { title:'工作流编排讨论', time:'3m ago' },
+      { title:'API 端点设计评审', time:'1h ago' },
+      { title:'Worker 线程泄漏调试', time:'3h ago' },
+      { title:'数据库迁移计划', time:'yesterday' },
+    ],
+    workflow: [
+      { title:'狼人杀标准局', time:'now' },
+      { title:'数据处理流水线', time:'3h ago' },
+      { title:'报告生成工作流', time:'yesterday' },
+    ]
+  };
+
+  // ================================
+  // RENDER FUNCTIONS
+  // ================================
+  function renderNav(mode) {
+    const items = navByMode[mode];
+    const el = document.getElementById('navSection');
+    el.innerHTML = items.map(item => `
+      <div class="nav-item ${item.id === currentView ? 'active' : ''}" data-view="${item.id}" onclick="switchView('${item.id}')">
+        <span class="nav-icon">${item.icon}</span>
+        <span>${item.label}</span>
+        ${item.badge ? `<span class="nav-badge">${item.badge}</span>` : ''}
+      </div>
+    `).join('');
+  }
+
+  function renderRecents(mode) {
+    const items = recentsByMode[mode];
+    const list = document.getElementById('recentsList');
+    const label = document.getElementById('recentsLabel');
+    label.textContent = mode === 'chat' ? '最近会话' : '最近工作流';
+    list.innerHTML = items.map((item, i) => `
+      <div class="recents-item ${i === 0 ? 'active' : ''}">
+        <span class="dot"></span>
+        <span class="r-title">${item.title}</span>
+        <span class="r-meta">${item.time}</span>
+      </div>
+    `).join('');
+  }
+
+  function updatePrimaryAction(mode) {
+    const label = document.getElementById('primaryLabel');
+    label.textContent = mode === 'chat' ? '新建会话' : '新建工作流';
+  }
+
+  // ================================
+  // SWITCH MODE
+  // ================================
+  function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    updatePrimaryAction(mode);
+    renderNav(mode);
+    renderRecents(mode);
+
+    // Default view for mode
+    const defaultView = mode === 'chat' ? 'chat' : 'workflow';
+    if (currentView !== 'settings') {
+      switchView(defaultView);
+    }
+  }
+
+  // ================================
+  // SWITCH VIEW
+  // ================================
+  function switchView(viewId) {
+    currentView = viewId;
+
+    // Hide all view containers
+    document.querySelectorAll('.view-container').forEach(c => c.classList.remove('active'));
+
+    // Show target
+    const containerId = viewId === 'workflow' ? 'v-workflowChat'
+      : viewId === 'settings' ? 'v-settings'
+      : viewId === 'workflowChat' ? 'v-workflowChat'
+      : 'v-' + viewId;
+    const target = document.getElementById(containerId);
+    if (target) target.classList.add('active');
+
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.view === viewId);
+    });
+  }
+
+  // ================================
+  // TOOL CARD TOGGLE
+  // ================================
+  function toggleTool(el) {
+    const body = el.parentElement.nextElementSibling;
+    const arrow = el.querySelector('.t-toggle');
+    if (body) { body.classList.toggle('open'); if(arrow) arrow.classList.toggle('open'); }
+  }
+
+  // ================================
+  // THEME
+  // ================================
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+
+  function handlePrimaryAction() {
+    alert(currentMode === 'chat' ? '新建会话弹窗' : '新建工作流弹窗');
+  }
+
+  // ================================
+  // INIT
+  // ================================
+  switchMode('chat');
+
+  // Auto-expand first tool cards
+  setTimeout(() => {
+    document.querySelectorAll('.tool-card').forEach((card, i) => {
+      if(i < 2) {
+        const body = card.querySelector('.body');
+        const arr = card.querySelector('.t-toggle');
+        if(body) body.classList.add('open');
+        if(arr) arr.classList.add('open');
+      }
+    });
+  }, 100);
+</script>
+
+</body>
+</html>

@@ -51,9 +51,9 @@ export function SimpleChatPlaceholder() {
                   <button
                     key={agent.id}
                     onClick={() => handleAgentClick(agent.name)}
-                    className="group flex items-center gap-3 rounded-xl border border-border bg-card/50 p-3 text-left transition-all duration-200 hover:bg-muted/50 hover:border-primary/20 hover:shadow-sm"
+                    className="group flex items-center gap-3 rounded-lg border border-border bg-card/50 p-2.5 text-left transition-all duration-200 hover:bg-muted/50 hover:border-primary/20 hover:shadow-sm"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/50 border border-border/50 group-hover:bg-primary/10 group-hover:border-primary/15 transition-colors">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/50 border border-border/50 group-hover:bg-primary/10 group-hover:border-primary/15 transition-colors">
                       <Bot className="h-4 w-4 text-muted-foreground group-hover:text-primary/70 transition-colors" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -69,7 +69,7 @@ export function SimpleChatPlaceholder() {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <div className="rounded-xl border border-dashed border-foreground/[0.08] bg-muted/20 px-6 py-4 text-center">
+              <div className="rounded-lg border border-dashed border-foreground/[0.08] bg-muted/20 px-6 py-4 text-center">
                 <p className="text-xs text-muted-foreground">
                   {t('暂无智能体，请先在「智能体」中创建智能体。')}
                 </p>

@@ -1,0 +1,40 @@
+[    2348ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5201/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:20102
+[    2598ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:5201/src/stores/baseSlice.ts:444
+[    2598ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:5201/src/stores/baseSlice.ts:444
+[ 1019500ms] [ERROR] In HTML, %s cannot be a descendant of <%s>.
+This will cause a hydration error.%s <button> button 
+
+  <ThemeProvider defaultTheme="system" storageKey="simper-stu...">
+    <App>
+      <ErrorBoundary>
+        <AppShell currentView="workflow" setCurrentView={function setCurrentView}>
+          <div className="flex h-scr...">
+            <MergedSidebar>
+              <aside className="flex flex-..." style={{width:260, ...}}>
+                <DebugBadge>
+                <div>
+                <button>
+                <nav>
+                <div style={{flex:1,minHeight:0, ...}}>
+                  <div>
+                  <div style={{flex:1, ...}}>
+>                   <button
+>                     onClick={function onClick}
+>                     style={{display:"flex",alignItems:"center",gap:10,height:32,padding:"0 12px",borderRadius:6,width:"100%",border:"none", ...}}
+>                     onMouseEnter={function onMouseEnter}
+>                     onMouseLeave={function onMouseLeave}
+>                   >
+                      <span>
+                      <span>
+                      <span>
+>                     <button
+>                       onClick={function onClick}
+>                       style={{width:18,height:18,borderRadius:4,border:"none",background:"transparent",color:"#9ca3af",fontSize:"0.75rem", ...}}
+>                       onMouseEnter={function onMouseEnter}
+>                       onMouseLeave={function onMouseLeave}
+>                       title="删除工作流"
+>                     >
+                    ...
+                ...
+            ...
+ @ http://localhost:5201/node_modules/.vite/deps/react-dom_client.js?v=f2f92d79:2155

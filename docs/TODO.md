@@ -1023,5 +1023,59 @@ components/layout/sidebar/
 - [x] **`ContextSidebar` default case 为死代码** ✅ 已评估（保留）
   - `ContextSidebar.tsx:169-172` — 硬编码中文提示，`VIEWS_WITHOUT_SIDEBAR` 已确保永不可达
   - 为 switch exhaustive 类型安全保留此分支
-- 旧"2~4 周里程碑"。当前改为按 P0/P1/P2/P3/P4/P5/P6 优先级推进。
-- 旧狼人杀多版设计全文。保留仍需执行的规则回归与 loop/runtime 相关项。
+
+---
+
+## 16. P13：合并侧栏 UI 升级
+
+> 将 GlobalSidebar(60px) + ContextSidebar(260px) 合并为统一 260px 深色侧栏，参考 Claude Code 风格的导航结构。
+
+### 16.1 目标布局
+
+```
+AppShell
+├── MergedSidebar (260px, bg #1a1a1a)
+│   ├── Mode Switcher          ← Pill 形状: [💬 聊天 | ⚡ 工作流]
+│   ├── Primary Action         ← "+ 新建会话" / "+ 新建工作流"
+│   ├── Nav Items              ← 5 视图: 聊天/工作流会话/工作流/智能体/提示词
+│   │                            (text + icon + count badge, 活跃态左侧蓝色指示条)
+│   ├── Recents                ← 最近 5 条会话/工作流
+│   └── Gateway                ← Logo S + SimperStudio + 主题切换 + 设置
+└── <main> content area
+```
+
+### 16.2 实施任务
+
+#### T1: 创建 MergedSidebar 组件
+- **文件**: `src/components/layout/MergedSidebar.tsx`
+- 260px fixed, bg-[#1a1a1a], 内边距 16px, 独立滚动
+- 5 个区块: Mode Switcher / Primary Action / Nav Items / Recents / Gateway
+- Nav items 从 `currentView` 读活跃态, 点击调用 `setCurrentView`
+- Mode Switcher Pill 切换: "聊天" 和 "工作流" 两种模式（Nav items 动态变化）
+- Recents 从 sessions/workflows 取前 5 条按 updatedAt 排序
+- Primary Action 调用 `createSession()` / `createWorkflow()`
+- Gateway: 主题切换（light/dark/system 循环）+ 设置入口
+
+#### T2: 精简 AppShell
+- **文件**: `src/components/layout/AppShell.tsx`
+- 移除 GlobalSidebar 引用和 ContextSidebar 引用
+- 替换为 MergedSidebar（固定宽度，不可折叠/缩放）
+- 移除 ContextSidebarHeader 和 resize handle
+- main content 区域不再有 border-l 和 rounded-l
+
+#### T3: 清理旧侧栏组件
+- 删除: `GlobalSidebar.tsx`, `ContextSidebar.tsx`
+- 归档: `ChatSidebar.tsx`, `WorkflowChatSidebar.tsx`, `WorkflowSidebar.tsx`, `AgentsSidebar.tsx`
+- 保留: `ContextItem.tsx`, `SortableList.tsx`, `NewSessionDialog.tsx`, `DeleteConfirmDialog.tsx`
+- 更新 `sidebar/index.ts` 导出
+
+#### T4: 主题变量对齐
+- **文件**: `src/globals.css`
+- 新增 CSS 变量: `--sidebar-bg`, `--sidebar-text`, `--sidebar-hover`, `--sidebar-active`, `--sidebar-indicator`
+- Light/Dark 双色值
+- `[data-theme="dark"]` 下 sidebar bg `#111111`
+
+#### T5: 路由/视图校验
+- 确认 5 个视图（chat/workflowChat/workflow/agents/prompts）在 MergedSidebar 中正确导航
+- settings/profile 不显示侧栏（仅 Gateway）
+- Recents 内容随视图联动

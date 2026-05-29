@@ -27,5 +27,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src", "tailwind.config.js"],
+  "exclude": ["src/components/layout/sidebar/__archive__"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

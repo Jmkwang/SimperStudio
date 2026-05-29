@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio - Claude Code AI Theme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       THEME: Claude Code AI Assistant Interface
+       Design prompt: Modern developer tools aesthetic
+       ============================================ */
+
+    /* ---------- Design Tokens ---------- */
+    :root {
+      /* Sidebar */
+      --sidebar-bg: #1a1a1a;
+      --sidebar-text: #e5e7eb;
+      --sidebar-text-muted: #9ca3af;
+      --sidebar-hover: #2a2a2a;
+      --sidebar-active: #333333;
+      --sidebar-border: #2a2a2a;
+      --sidebar-item-count: #6b7280;
+
+      /* Main */
+      --main-bg: #ffffff;
+      --main-text: #1f2937;
+      --main-text-secondary: #6b7280;
+      --main-border: #e5e7eb;
+
+      /* Chat */
+      --user-bubble-bg: #2563eb;
+      --user-bubble-text: #ffffff;
+      --user-bubble-time: rgba(255,255,255,0.7);
+      --ai-avatar-bg: #1a1a1a;
+      --ai-avatar-text: #ffffff;
+      --ai-name: #2563eb;
+
+      /* Tool cards */
+      --tool-card-bg: #eff6ff;
+      --tool-card-border: #bfdbfe;
+      --tool-card-icon: #2563eb;
+      --tool-result-bg: #f0fdf4;
+      --tool-result-border: #bbf7d0;
+      --tool-result-icon: #22c55e;
+
+      /* Input */
+      --input-bg: #ffffff;
+      --input-border: #d1d5db;
+      --input-focus: #2563eb;
+      --input-placeholder: #9ca3af;
+      --send-btn-bg: #e5e7eb;
+      --send-btn-icon: #6b7280;
+      --send-btn-hover: #2563eb;
+      --send-btn-icon-hover: #ffffff;
+
+      /* Header */
+      --header-bg: #ffffff;
+      --header-border: #e5e7eb;
+      --header-tab-hover: #f3f4f6;
+      --header-tab-active: #e5e7eb;
+      --header-session-label: #6b7280;
+
+      /* Fonts */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Shadows */
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-elevated: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+    }
+
+    /* ---------- Dark Mode ---------- */
+    [data-theme="dark"] {
+      --sidebar-bg: #111111;
+      --sidebar-text: #d1d5db;
+      --sidebar-text-muted: #6b7280;
+      --sidebar-hover: #1f1f1f;
+      --sidebar-active: #2a2a2a;
+      --sidebar-border: #222222;
+      --sidebar-item-count: #525252;
+
+      --main-bg: #18181b;
+      --main-text: #e5e7eb;
+      --main-text-secondary: #9ca3af;
+      --main-border: #27272a;
+
+      --user-bubble-bg: #3b82f6;
+      --user-bubble-text: #ffffff;
+      --user-bubble-time: rgba(255,255,255,0.6);
+      --ai-avatar-bg: #3b82f6;
+      --ai-avatar-text: #ffffff;
+      --ai-name: #60a5fa;
+
+      --tool-card-bg: #1e293b;
+      --tool-card-border: #334155;
+      --tool-card-icon: #60a5fa;
+      --tool-result-bg: #052e16;
+      --tool-result-border: #166534;
+      --tool-result-icon: #4ade80;
+
+      --input-bg: #27272a;
+      --input-border: #3f3f46;
+      --input-focus: #3b82f6;
+      --input-placeholder: #71717a;
+      --send-btn-bg: #3f3f46;
+      --send-btn-icon: #a1a1aa;
+      --send-btn-hover: #3b82f6;
+      --send-btn-icon-hover: #ffffff;
+
+      --header-bg: #18181b;
+      --header-border: #27272a;
+      --header-tab-hover: #27272a;
+      --header-tab-active: #3f3f46;
+      --header-session-label: #a1a1aa;
+
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-elevated: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.3);
+    }
+
+    /* ---------- Base Reset ---------- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--main-bg);
+      color: var(--main-text);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+      height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    /* ---------- Layout ---------- */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ---------- Sidebar (260px, dark) ---------- */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--sidebar-border);
+    }
+    .sidebar-header {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--sidebar-border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .sidebar-header .project-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .sidebar-header .project-info { flex: 1; min-width: 0; }
+    .sidebar-header .project-info .title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+    .sidebar-header .project-info .subtitle {
+      font-size: 11px;
+      color: var(--sidebar-text-muted);
+      line-height: 1.3;
+      margin-top: 1px;
+    }
+    .sidebar-header .header-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .sidebar-header .header-actions button {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--sidebar-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 150ms ease;
+    }
+    .sidebar-header .header-actions button:hover {
+      background: var(--sidebar-hover);
+      color: #ffffff;
+    }
+
+    /* Project dropdown */
+    .project-dropdown {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--sidebar-text-muted);
+      cursor: pointer;
+      transition: background 150ms ease;
+      border-bottom: 1px solid var(--sidebar-border);
+    }
+    .project-dropdown:hover { background: var(--sidebar-hover); }
+    .project-dropdown .folder-icon { font-size: 14px; flex-shrink: 0; }
+    .project-dropdown .project-name { color: var(--sidebar-text); font-weight: 500; }
+    .project-dropdown .path-truncated { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-dropdown .chevron { flex-shrink: 0; font-size: 10px; margin-left: auto; }
+
+    /* Conversation list */
+    .conversation-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .conversation-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 150ms ease;
+      font-size: 13px;
+    }
+    .conversation-item:hover { background: var(--sidebar-hover); }
+    .conversation-item.active { background: var(--sidebar-active); }
+    .conversation-item .msg-icon { font-size: 14px; flex-shrink: 0; color: var(--sidebar-text-muted); }
+    .conversation-item .conv-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .conversation-item .conv-time { font-size: 11px; color: var(--sidebar-text-muted); flex-shrink: 0; }
+    .conversation-item .conv-count {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--sidebar-item-count);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* New Session button */
+    .new-session-btn {
+      margin: 8px 12px 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--sidebar-border);
+      background: transparent;
+      color: var(--sidebar-text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 150ms ease;
+    }
+    .new-session-btn:hover {
+      background: var(--sidebar-hover);
+      color: #ffffff;
+      border-color: var(--sidebar-hover);
+    }
+    .new-session-btn .plus-icon { font-size: 16px; font-weight: 300; }
+
+    /* ---------- Main Area ---------- */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--main-bg);
+      min-width: 0;
+    }
+
+    /* Header bar */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--header-border);
+      background: var(--header-bg);
+      flex-shrink: 0;
+    }
+    .header-bar .session-info { line-height: 1.4; }
+    .header-bar .session-info .session-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--main-text);
+    }
+    .header-bar .session-info .session-meta {
+      font-size: 12px;
+      color: var(--header-session-label);
+      margin-top: 1px;
+    }
+    .header-bar .header-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--header-tab-hover);
+      padding: 3px;
+      border-radius: 8px;
+    }
+    .header-bar .header-tabs .tab-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--main-text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 150ms ease;
+    }
+    .header-bar .header-tabs .tab-btn:hover { background: var(--header-tab-hover); color: var(--main-text); }
+    .header-bar .header-tabs .tab-btn.active {
+      background: var(--header-tab-active);
+      color: var(--main-text);
+    }
+
+    /* Message stream */
+    .message-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* User message */
+    .message-user {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .message-user .bubble {
+      max-width: 70%;
+      background: var(--user-bubble-bg);
+      color: var(--user-bubble-text);
+      padding: 10px 16px;
+      border-radius: 12px 4px 12px 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      position: relative;
+    }
+    .message-user .bubble .time {
+      display: block;
+      font-size: 11px;
+      color: var(--user-bubble-time);
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    /* AI message */
+    .message-ai {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .message-ai .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--ai-avatar-bg);
+      color: var(--ai-avatar-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 13px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .message-ai .content { flex: 1; min-width: 0; }
+    .message-ai .content .ai-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ai-name);
+      margin-bottom: 4px;
+    }
+    .message-ai .content .ai-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--main-text);
+    }
+    .message-ai .content .ai-time {
+      display: block;
+      font-size: 11px;
+      color: var(--main-text-secondary);
+      margin-top: 6px;
+    }
+
+    /* Tool call card */
+    .tool-card {
+      margin: 8px 0 4px;
+      border: 1px solid var(--tool-card-border);
+      border-radius: 10px;
+      background: var(--tool-card-bg);
+      overflow: hidden;
+    }
+    .tool-card .tool-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tool-card .tool-header .tool-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background: var(--tool-card-icon);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .tool-card .tool-header .tool-label {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--main-text);
+    }
+    .tool-card .tool-header .tool-toggle {
+      font-size: 10px;
+      color: var(--main-text-secondary);
+      transition: transform 200ms ease;
+    }
+    .tool-card .tool-header .tool-toggle.expanded {
+      transform: rotate(180deg);
+    }
+    .tool-card .tool-body {
+      border-top: 1px solid var(--tool-card-border);
+      padding: 8px 12px;
+      display: none;
+    }
+    .tool-card .tool-body.open { display: block; }
+    .tool-card .tool-body .view-params {
+      font-size: 12px;
+      color: var(--tool-card-icon);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* Tool result */
+    .tool-result {
+      margin: 4px 0 8px;
+      border: 1px solid var(--tool-result-border);
+      border-radius: 10px;
+      background: var(--tool-result-bg);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tool-result .result-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: var(--tool-result-icon);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .tool-result .result-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--main-text);
+    }
+
+    /* ---------- Input Area ---------- */
+    .input-area {
+      flex-shrink: 0;
+      padding: 12px 24px 20px;
+      border-top: 1px solid var(--main-border);
+    }
+    .input-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .input-wrapper textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 10px 14px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--main-text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+    .input-wrapper textarea:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .input-wrapper textarea::placeholder { color: var(--input-placeholder); }
+    .input-wrapper .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--send-btn-bg);
+      color: var(--send-btn-icon);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 200ms ease;
+      flex-shrink: 0;
+    }
+    .input-wrapper .send-btn:hover {
+      background: var(--send-btn-hover);
+      color: var(--send-btn-icon-hover);
+    }
+    .input-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--main-text-secondary);
+      margin-top: 8px;
+    }
+    .input-hint kbd {
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: var(--header-tab-hover);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    /* ---------- Utility ---------- */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .text-xs { font-size: 12px; }
+    .text-sm { font-size: 14px; }
+    .text-muted { color: var(--main-text-secondary); }
+    .font-mono { font-family: var(--font-mono); }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 100;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--main-border);
+      background: var(--main-bg);
+      color: var(--main-text);
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: var(--shadow-elevated);
+      font-family: var(--font-sans);
+    }
+    .theme-toggle:hover { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <!-- Header -->
+      <div class="sidebar-header">
+        <div class="project-icon">C</div>
+        <div class="project-info">
+          <div class="title">Claude Code UI</div>
+          <div class="subtitle">AI coding assistant interface</div>
+        </div>
+        <div class="header-actions">
+          <button title="Refresh">↻</button>
+          <button title="New Folder">+</button>
+        </div>
+      </div>
+
+      <!-- Project dropdown -->
+      <div class="project-dropdown">
+        <span class="folder-icon">📁</span>
+        <span class="project-name">Claude Code demo</span>
+        <span class="path-truncated">...it/opensource/claudeui</span>
+        <span class="chevron">▼</span>
+      </div>
+
+      <!-- Conversation list -->
+      <div class="conversation-list">
+        <div class="conversation-item active">
+          <span class="msg-icon">💬</span>
+          <span class="conv-title">Refactoring auth flow</span>
+          <span class="conv-time">3 mins ago</span>
+          <span class="conv-count">5</span>
+        </div>
+        <div class="conversation-item">
+          <span class="msg-icon">💬</span>
+          <span class="conv-title">API endpoint design review</span>
+          <span class="conv-time">1h ago</span>
+          <span class="conv-count">3</span>
+        </div>
+        <div class="conversation-item">
+          <span class="msg-icon">💬</span>
+          <span class="conv-title">Debug memory leak in worker threads</span>
+          <span class="conv-time">3h ago</span>
+          <span class="conv-count">12</span>
+        </div>
+        <div class="conversation-item">
+          <span class="msg-icon">💬</span>
+          <span class="conv-title">Database schema migration plan</span>
+          <span class="conv-time">yesterday</span>
+          <span class="conv-count">2</span>
+        </div>
+        <div class="conversation-item">
+          <span class="msg-icon">💬</span>
+          <span class="conv-title">Docker Compose setup for dev env</span>
+          <span class="conv-time">2d ago</span>
+          <span class="conv-count">8</span>
+        </div>
+        <div class="conversation-item">
+          <span class="msg-icon">💬</span>
+          <span class="conv-title">TypeScript types refactor</span>
+          <span class="conv-time">3d ago</span>
+          <span class="conv-count">1</span>
+        </div>
+      </div>
+
+      <!-- New Session button -->
+      <button class="new-session-btn">
+        <span class="plus-icon">+</span>
+        New Session
+      </button>
+    </aside>
+
+    <!-- ============ MAIN AREA ============ -->
+    <main class="main-area">
+
+      <!-- Header bar -->
+      <header class="header-bar">
+        <div class="session-info">
+          <div class="session-title">Refactoring auth flow</div>
+          <div class="session-meta">
+            Session ID: a8f3c2b1 &middot; 2026-05-29 3:58:42 PM
+          </div>
+        </div>
+        <div class="header-tabs">
+          <button class="tab-btn active">
+            <span>💬</span> Chat
+          </button>
+          <button class="tab-btn">
+            <span>⌘</span> Shell
+          </button>
+          <button class="tab-btn">
+            <span>📁</span> Files
+          </button>
+        </div>
+      </header>
+
+      <!-- Message stream -->
+      <div class="message-stream">
+
+        <!-- User message -->
+        <div class="message-user">
+          <div class="bubble">
+            Help me refactor the authentication flow to use JWT tokens instead of session-based auth. I want to see a comparison of the old and new approach.
+            <span class="time">3:58:42 PM</span>
+          </div>
+        </div>
+
+        <!-- AI message -->
+        <div class="message-ai">
+          <div class="avatar">C</div>
+          <div class="content">
+            <div class="ai-name">Claude</div>
+            <div class="ai-text">
+              I'll help you refactor from session-based to JWT authentication. Here's a comparison of the two approaches:
+
+              <br><br>
+              <strong>Session-based (Current):</strong>
+              <br>
+              Uses in-memory session store, which doesn't scale horizontally without Redis.
+
+              <br><br>
+              <strong>JWT-based (Proposed):</strong>
+              <br>
+              Stateless tokens with claims embedded. No server-side storage needed.
+
+              <br><br>
+              Let me look at your current implementation first.
+            </div>
+            <span class="ai-time">3:58:45 PM</span>
+          </div>
+        </div>
+
+        <!-- Tool call card: read_file -->
+        <div class="message-ai">
+          <div class="avatar">C</div>
+          <div class="content">
+            <div class="tool-card">
+              <div class="tool-header" onclick="toggleToolBody(this)">
+                <div class="tool-icon">🔧</div>
+                <span class="tool-label">Using read_file</span>
+                <span class="tool-toggle" id="arrow1">▼</span>
+              </div>
+              <div class="tool-body" id="body1">
+                <span class="view-params">View input parameters</span>
+              </div>
+            </div>
+            <div class="tool-card">
+              <div class="tool-header" onclick="toggleToolBody(this)">
+                <div class="tool-icon">🔍</div>
+                <span class="tool-label">Using grep_search</span>
+                <span class="tool-toggle" id="arrow2">▼</span>
+              </div>
+              <div class="tool-body" id="body2">
+                <span class="view-params">View input parameters</span>
+              </div>
+            </div>
+            <div class="tool-result">
+              <div class="result-icon">✓</div>
+              <span class="result-label">Tool Result</span>
+            </div>
+            <span class="ai-time">3:58:52 PM</span>
+          </div>
+        </div>
+
+        <!-- AI message with code analysis -->
+        <div class="message-ai">
+          <div class="avatar">C</div>
+          <div class="content">
+            <div class="ai-name">Claude</div>
+            <div class="ai-text">
+              I've found your current auth middleware. Here's the plan:
+
+              <br><br>
+              <strong>Current (session-based):</strong><br>
+              <code style="background: var(--header-tab-hover); padding: 2px 6px; border-radius: 4px; font-size: 13px;">
+                req.session.userId → authenticate via session store
+              </code>
+
+              <br><br>
+              <strong>New (JWT-based):</strong><br>
+              <code style="background: var(--header-tab-hover); padding: 2px 6px; border-radius: 4px; font-size: 13px;">
+                req.headers.authorization → verify JWT → extract payload
+              </code>
+
+              <br><br>
+              Would you like me to proceed with the implementation?
+            </div>
+            <span class="ai-time">3:59:05 PM</span>
+          </div>
+        </div>
+
+        <!-- User message -->
+        <div class="message-user">
+          <div class="bubble">
+            Yes, go ahead! Also add refresh token rotation.
+            <span class="time">3:59:30 PM</span>
+          </div>
+        </div>
+
+        <!-- AI message with tool calls -->
+        <div class="message-ai">
+          <div class="avatar">C</div>
+          <div class="content">
+            <div class="ai-name">Claude</div>
+            <div class="ai-text">
+              Great plan. I'll add both access and refresh token support. Let me start by creating the JWT utility module.
+            </div>
+            <div class="tool-card">
+              <div class="tool-header" onclick="toggleToolBody(this)">
+                <div class="tool-icon">✏️</div>
+                <span class="tool-label">Using edit_file</span>
+                <span class="tool-toggle" id="arrow3">▼</span>
+              </div>
+              <div class="tool-body" id="body3">
+                <span class="view-params">View input parameters</span>
+              </div>
+            </div>
+            <div class="tool-result">
+              <div class="result-icon">✓</div>
+              <span class="result-label">Tool Result</span>
+            </div>
+            <span class="ai-time">3:59:42 PM</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input area -->
+      <div class="input-area">
+        <div class="input-wrapper">
+          <textarea rows="1" placeholder="Ask Claude to help with your code... (@ to reference files)"></textarea>
+          <button class="send-btn" title="Send">➤</button>
+        </div>
+        <div class="input-hint">
+          Press <kbd>Enter</kbd> to send &middot; <kbd>Shift+Enter</kbd> for new line &middot; <kbd>@</kbd> to reference files
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Theme toggle button -->
+  <button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+
+  <script>
+    // Tool card expand/collapse
+    function toggleToolBody(header) {
+      const body = header.nextElementSibling;
+      const arrow = header.querySelector('.tool-toggle');
+      if (body) {
+        body.classList.toggle('open');
+        arrow.classList.toggle('expanded');
+      }
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    }
+
+    // Auto-expand first tool card
+    document.querySelectorAll('.tool-card').forEach((card, i) => {
+      if (i < 2) {
+        const header = card.querySelector('.tool-header');
+        const body = card.querySelector('.tool-body');
+        if (body) {
+          body.classList.add('open');
+          const arrow = header.querySelector('.tool-toggle');
+          if (arrow) arrow.classList.add('expanded');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

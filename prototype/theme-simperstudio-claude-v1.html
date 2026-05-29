@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio × Claude Code 主题原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       THEME SYSTEM — SimperStudio × Claude Code
+       ============================================ */
+
+    /* ---------- Design Tokens ---------- */
+    :root {
+      /* Global Sidebar (deep dark, narrow 60px) */
+      --gs-bg: #111111;
+      --gs-text: #a1a1aa;
+      --gs-text-active: #ffffff;
+      --gs-hover-bg: #1f1f1f;
+      --gs-active-bg: #2a2a2a;
+      --gs-active-indicator: #3b82f6;
+      --gs-logo-bg: linear-gradient(135deg, #3b82f6, #2563eb);
+      --gs-logo-text: #ffffff;
+      --gs-border: #1f1f1f;
+
+      /* Context Sidebar (semi-dark, 260px) */
+      --cs-bg: #1a1a1a;
+      --cs-text: #e5e7eb;
+      --cs-text-muted: #a1a1aa;
+      --cs-text-dim: #71717a;
+      --cs-hover-bg: #27272a;
+      --cs-active-bg: #2f2f32;
+      --cs-active-indicator: #3b82f6;
+      --cs-border: #27272a;
+      --cs-input-bg: #27272a;
+      --cs-input-border: #3f3f46;
+      --cs-input-text: #e5e7eb;
+      --cs-count-bg: #3f3f46;
+      --cs-count-text: #d4d4d8;
+      --cs-fold-icon: #3b82f6;
+
+      /* Main Content */
+      --mc-bg: #ffffff;
+      --mc-text: #1f2937;
+      --mc-text-secondary: #6b7280;
+      --mc-text-dim: #9ca3af;
+      --mc-border: #e5e7eb;
+      --mc-hover-bg: #f9fafb;
+
+      /* Chat */
+      --user-bubble-bg: #2563eb;
+      --user-bubble-text: #ffffff;
+      --user-bubble-time: rgba(255,255,255,0.65);
+      --ai-avatar-bg: #111111;
+      --ai-avatar-text: #ffffff;
+      --ai-name-color: #2563eb;
+
+      /* Tool cards */
+      --tool-card-bg: #eff6ff;
+      --tool-card-border: #bfdbfe;
+      --tool-card-icon: #2563eb;
+      --tool-result-bg: #f0fdf4;
+      --tool-result-border: #bbf7d0;
+      --tool-result-icon: #22c55e;
+
+      /* Workflow topology */
+      --wf-node-bg: #ffffff;
+      --wf-node-border: #e5e7eb;
+      --wf-node-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --wf-trigger: #10b981;
+      --wf-agent: #3b82f6;
+      --wf-code: #8b5cf6;
+      --wf-condition: #f59e0b;
+      --wf-loop: #ec4899;
+      --wf-output: #6b7280;
+
+      /* Execution timeline */
+      --et-bg: rgba(255,255,255,0.96);
+      --et-border: #e5e7eb;
+      --et-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+      /* Buttons */
+      --btn-primary-bg: #2563eb;
+      --btn-primary-text: #ffffff;
+      --btn-primary-hover: #1d4ed8;
+      --btn-ghost-hover: #f3f4f6;
+
+      /* Input */
+      --input-bg: #ffffff;
+      --input-border: #d1d5db;
+      --input-focus-ring: rgba(37,99,235,0.15);
+      --input-placeholder: #a1a1aa;
+
+      /* Tabs */
+      --tab-bg: #f3f4f6;
+      --tab-active-bg: #ffffff;
+      --tab-active-text: #1f2937;
+      --tab-border: #e5e7eb;
+
+      /* Fonts */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    /* ---------- Dark Mode ---------- */
+    [data-theme="dark"] {
+      --gs-bg: #0a0a0a;
+      --gs-text: #525252;
+      --gs-text-active: #fafafa;
+      --gs-hover-bg: #141414;
+      --gs-active-bg: #1f1f1f;
+      --gs-active-indicator: #60a5fa;
+      --gs-logo-bg: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      --gs-border: #181818;
+
+      --cs-bg: #111111;
+      --cs-text: #d4d4d8;
+      --cs-text-muted: #71717a;
+      --cs-text-dim: #525252;
+      --cs-hover-bg: #1a1a1a;
+      --cs-active-bg: #222222;
+      --cs-border: #1f1f1f;
+      --cs-input-bg: #1a1a1a;
+      --cs-input-border: #27272a;
+      --cs-input-text: #d4d4d8;
+      --cs-count-bg: #27272a;
+      --cs-count-text: #a1a1aa;
+      --cs-fold-icon: #60a5fa;
+
+      --mc-bg: #18181b;
+      --mc-text: #e5e7eb;
+      --mc-text-secondary: #9ca3af;
+      --mc-text-dim: #71717a;
+      --mc-border: #27272a;
+      --mc-hover-bg: #1f1f1f;
+
+      --user-bubble-bg: #3b82f6;
+      --user-bubble-text: #ffffff;
+      --user-bubble-time: rgba(255,255,255,0.55);
+      --ai-avatar-bg: #60a5fa;
+      --ai-avatar-text: #ffffff;
+      --ai-name-color: #60a5fa;
+
+      --tool-card-bg: #1e293b;
+      --tool-card-border: #334155;
+      --tool-card-icon: #60a5fa;
+      --tool-result-bg: #052e16;
+      --tool-result-border: #166534;
+      --tool-result-icon: #4ade80;
+
+      --wf-node-bg: #27272a;
+      --wf-node-border: #3f3f46;
+      --wf-node-shadow: 0 1px 3px rgba(0,0,0,0.4);
+
+      --et-bg: rgba(24,24,27,0.96);
+      --et-border: #27272a;
+      --et-shadow: 0 4px 12px rgba(0,0,0,0.4);
+
+      --btn-primary-bg: #3b82f6;
+      --btn-primary-text: #ffffff;
+      --btn-primary-hover: #2563eb;
+      --btn-ghost-hover: #1f1f1f;
+
+      --input-bg: #27272a;
+      --input-border: #3f3f46;
+      --input-focus-ring: rgba(59,130,246,0.25);
+      --input-placeholder: #525252;
+
+      --tab-bg: #1f1f1f;
+      --tab-active-bg: #27272a;
+      --tab-active-text: #fafafa;
+      --tab-border: #3f3f46;
+    }
+
+    /* ---------- Base ---------- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--mc-bg);
+      color: var(--mc-text);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    button { cursor: pointer; font-family: var(--font-sans); }
+    input::placeholder, textarea::placeholder { color: var(--input-placeholder); }
+
+    /* ============================================
+       LAYOUT SHELL
+       ============================================ */
+    .app { display: flex; height: 100vh; width: 100vw; }
+
+    /* ---------- Global Sidebar (60px) ---------- */
+    .global-sidebar {
+      width: 60px; min-width: 60px;
+      background: var(--gs-bg);
+      border-right: 1px solid var(--gs-border);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 0;
+      gap: 4px;
+    }
+    .gs-logo {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--gs-logo-bg);
+      color: var(--gs-logo-text);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .gs-divider { width: 28px; height: 1px; background: var(--gs-border); margin: 4px 0; }
+    .gs-nav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .gs-nav-item {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--gs-text);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      transition: all 150ms ease;
+      position: relative;
+    }
+    .gs-nav-item:hover { background: var(--gs-hover-bg); color: var(--gs-text-active); }
+    .gs-nav-item.active { background: var(--gs-active-bg); color: var(--gs-text-active); }
+    .gs-nav-item.active::before {
+      content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; border-radius: 0 3px 3px 0;
+      background: var(--gs-active-indicator);
+    }
+    .gs-bottom { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: auto; }
+
+    /* ---------- Context Sidebar (260px) ---------- */
+    .context-sidebar {
+      width: 260px; min-width: 260px;
+      background: var(--cs-bg);
+      border-right: 1px solid var(--cs-border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Context Sidebar — header */
+    .cs-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--cs-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cs-header h3 {
+      font-size: 13px; font-weight: 600; color: var(--cs-text);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .cs-header .cs-add-btn {
+      width: 28px; height: 28px;
+      border-radius: 6px; border: none;
+      background: transparent; color: var(--cs-text-muted);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: background 150ms ease;
+    }
+    .cs-header .cs-add-btn:hover { background: var(--cs-hover-bg); color: var(--cs-text); }
+
+    /* Context Sidebar — search */
+    .cs-search {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--cs-border);
+    }
+    .cs-search input {
+      width: 100%; height: 32px;
+      padding: 0 10px;
+      border-radius: 6px; border: 1px solid var(--cs-input-border);
+      background: var(--cs-input-bg); color: var(--cs-input-text);
+      font-size: 12px; outline: none;
+      transition: border-color 150ms ease;
+    }
+    .cs-search input:focus { border-color: var(--cs-fold-icon); }
+
+    /* Context Sidebar — tabs */
+    .cs-tabs {
+      display: flex; gap: 0;
+      padding: 8px 16px 0;
+      border-bottom: 1px solid var(--cs-border);
+    }
+    .cs-tab {
+      padding: 6px 14px;
+      border: none; background: transparent;
+      font-size: 12px; font-weight: 500; color: var(--cs-text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .cs-tab:hover { color: var(--cs-text); }
+    .cs-tab.active { color: var(--cs-fold-icon); border-bottom-color: var(--cs-fold-icon); }
+
+    /* Context Sidebar — list */
+    .cs-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+
+    /* List item */
+    .cs-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 150ms ease;
+      font-size: 13px; color: var(--cs-text);
+    }
+    .cs-item:hover { background: var(--cs-hover-bg); }
+    .cs-item.active {
+      background: var(--cs-active-bg);
+      border-left: 3px solid var(--cs-active-indicator);
+      padding-left: 13px;
+    }
+    .cs-item .icon { font-size: 15px; flex-shrink: 0; color: var(--cs-text-muted); }
+    .cs-item .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cs-item .meta { font-size: 11px; color: var(--cs-text-dim); flex-shrink: 0; }
+    .cs-item .badge {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--cs-count-bg); color: var(--cs-count-text);
+      font-size: 10px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Workflow folder */
+    .cs-folder-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 16px;
+      cursor: pointer; color: var(--cs-text);
+      font-size: 13px; font-weight: 500;
+      transition: background 150ms ease;
+    }
+    .cs-folder-header:hover { background: var(--cs-hover-bg); }
+    .cs-folder-header .chevron {
+      font-size: 10px; color: var(--cs-text-dim);
+      transition: transform 200ms ease;
+    }
+    .cs-folder-header .chevron.open { transform: rotate(90deg); }
+    .cs-folder-header .count {
+      font-size: 11px; color: var(--cs-text-dim);
+      margin-left: auto;
+    }
+    .cs-sublist { padding-left: 20px; }
+
+    /* ---------- Main Content Area ---------- */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    /* Header bar */
+    .main-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--mc-border);
+      background: var(--mc-bg);
+      flex-shrink: 0;
+    }
+    .main-header .left h2 {
+      font-size: 17px; font-weight: 600; color: var(--mc-text);
+    }
+    .main-header .left .sub {
+      font-size: 12px; color: var(--mc-text-secondary);
+      margin-top: 1px;
+    }
+    .main-header .right {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Tabs (top-right) */
+    .view-tabs {
+      display: flex; gap: 1px;
+      background: var(--tab-bg);
+      padding: 2px;
+      border-radius: 8px;
+      border: 1px solid var(--tab-border);
+    }
+    .view-tab {
+      padding: 5px 12px;
+      border-radius: 6px; border: none;
+      background: transparent; color: var(--mc-text-secondary);
+      font-size: 12px; font-weight: 500;
+      display: flex; align-items: center; gap: 5px;
+      transition: all 150ms ease;
+    }
+    .view-tab:hover { color: var(--mc-text); }
+    .view-tab.active {
+      background: var(--tab-active-bg); color: var(--tab-active-text);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    /* ---------- Chat Messages ---------- */
+    .msg-stream {
+      flex: 1; overflow-y: auto;
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    .msg-user { display: flex; justify-content: flex-end; }
+    .msg-user .bubble {
+      max-width: 70%;
+      background: var(--user-bubble-bg); color: var(--user-bubble-text);
+      padding: 10px 16px;
+      border-radius: 12px 4px 12px 12px;
+      font-size: 14px; line-height: 1.6;
+    }
+    .msg-user .bubble .time {
+      display: block; font-size: 11px; color: var(--user-bubble-time);
+      margin-top: 5px; text-align: right;
+    }
+
+    .msg-ai { display: flex; gap: 10px; align-items: flex-start; }
+    .msg-ai .avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--ai-avatar-bg); color: var(--ai-avatar-text);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 12px; flex-shrink: 0; margin-top: 2px;
+    }
+    .msg-ai .content { flex: 1; min-width: 0; }
+    .msg-ai .content .name { font-size: 12px; font-weight: 600; color: var(--ai-name-color); margin-bottom: 3px; }
+    .msg-ai .content .text { font-size: 14px; line-height: 1.6; color: var(--mc-text); }
+    .msg-ai .content .text code {
+      background: var(--tab-bg); padding: 1px 5px; border-radius: 3px;
+      font-family: var(--font-mono); font-size: 13px;
+    }
+    .msg-ai .content .time {
+      display: block; font-size: 11px; color: var(--mc-text-dim);
+      margin-top: 5px;
+    }
+
+    /* Tool call card */
+    .tool-card {
+      margin: 6px 0 3px;
+      border: 1px solid var(--tool-card-border);
+      border-radius: 8px;
+      background: var(--tool-card-bg);
+      overflow: hidden;
+    }
+    .tool-card .hdr {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 11px; cursor: pointer; user-select: none;
+    }
+    .tool-card .hdr .t-icon {
+      width: 18px; height: 18px; border-radius: 4px;
+      background: var(--tool-card-icon); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; flex-shrink: 0;
+    }
+    .tool-card .hdr .t-label { flex: 1; font-size: 12px; font-weight: 500; color: var(--mc-text); }
+    .tool-card .hdr .t-toggle { font-size: 10px; color: var(--mc-text-dim); transition: transform 200ms; }
+    .tool-card .hdr .t-toggle.open { transform: rotate(180deg); }
+    .tool-card .body {
+      border-top: 1px solid var(--tool-card-border);
+      padding: 7px 11px; display: none; font-size: 12px;
+    }
+    .tool-card .body.open { display: block; }
+    .tool-card .body .link { color: var(--tool-card-icon); text-decoration: underline; cursor: pointer; }
+
+    .tool-result {
+      margin: 3px 0 6px;
+      border: 1px solid var(--tool-result-border);
+      border-radius: 8px;
+      background: var(--tool-result-bg);
+      padding: 7px 11px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .tool-result .r-icon {
+      width: 18px; height: 18px; border-radius: 4px;
+      background: var(--tool-result-icon); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; flex-shrink: 0;
+    }
+    .tool-result .r-label { font-size: 12px; font-weight: 500; color: var(--mc-text); }
+
+    /* ---------- Input Area ---------- */
+    .input-area {
+      flex-shrink: 0;
+      padding: 10px 24px 16px;
+      border-top: 1px solid var(--mc-border);
+    }
+    .input-box {
+      display: flex; gap: 8px; align-items: flex-end;
+      max-width: 860px; margin: 0 auto;
+    }
+    .input-box textarea {
+      flex: 1; min-height: 44px;
+      padding: 10px 14px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      background: var(--input-bg); color: var(--mc-text);
+      font-family: var(--font-sans); font-size: 14px;
+      line-height: 1.5; resize: none; outline: none;
+      transition: border-color 200ms, box-shadow 200ms;
+    }
+    .input-box textarea:focus {
+      border-color: var(--user-bubble-bg);
+      box-shadow: 0 0 0 3px var(--input-focus-ring);
+    }
+    .input-box .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%; border: none;
+      background: var(--tab-bg); color: var(--mc-text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: all 200ms; flex-shrink: 0;
+    }
+    .input-box .send-btn:hover {
+      background: var(--btn-primary-bg); color: var(--btn-primary-text);
+    }
+    .input-hint {
+      text-align: center; font-size: 11px; color: var(--mc-text-dim);
+      margin-top: 6px;
+    }
+
+    /* ============================================
+       VIEW-SPECIFIC CONTAINERS
+       ============================================ */
+    .view-container { flex: 1; display: none; min-height: 0; }
+    .view-container.active { display: flex; flex-direction: column; }
+
+    /* ---------- Workflow Canvas (simplified) ---------- */
+    .wf-canvas {
+      flex: 1; background: var(--mc-bg);
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .wf-grid-bg {
+      width: 100%; height: 100%;
+      background-image:
+        radial-gradient(circle, var(--mc-border) 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: 0.4;
+      position: absolute; inset: 0;
+    }
+    .wf-nodes {
+      position: relative; z-index: 1;
+      display: flex; gap: 48px; align-items: center;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .wf-node {
+      width: 180px;
+      background: var(--wf-node-bg);
+      border: 1px solid var(--wf-node-border);
+      border-radius: 12px;
+      box-shadow: var(--wf-node-shadow);
+      overflow: hidden;
+    }
+    .wf-node .hdr {
+      padding: 10px 12px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--wf-node-border);
+    }
+    .wf-node .hdr .dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .wf-node .hdr .lbl { font-size: 13px; font-weight: 600; color: var(--mc-text); }
+    .wf-node .body {
+      padding: 8px 12px;
+      font-size: 11px; color: var(--mc-text-secondary);
+    }
+
+    /* ---------- Execution Timeline ---------- */
+    .exec-timeline {
+      position: absolute; bottom: 12px; left: 12px; right: 12px;
+      max-width: 700px; margin: 0 auto;
+      background: var(--et-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--et-border);
+      border-radius: 12px;
+      box-shadow: var(--et-shadow);
+      padding: 14px 16px;
+      z-index: 10;
+    }
+    .et-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .et-header .et-title { font-size: 13px; font-weight: 600; color: var(--mc-text); }
+    .et-header .et-actions { display: flex; gap: 6px; }
+    .et-header .et-actions button {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: none; background: transparent; color: var(--mc-text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; transition: background 150ms;
+    }
+    .et-header .et-actions button:hover { background: var(--btn-ghost-hover); color: var(--mc-text); }
+    .et-nodes { display: flex; flex-direction: column; gap: 4px; }
+    .et-node {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px;
+      border-radius: 6px; font-size: 12px;
+      transition: background 150ms;
+    }
+    .et-node:hover { background: var(--mc-hover-bg); }
+    .et-node .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .et-node .dot.running { background: var(--wf-agent); animation: pulse 1.5s infinite; }
+    .et-node .dot.success { background: #22c55e; }
+    .et-node .dot.error { background: #ef4444; }
+    .et-node .dot.pending { background: var(--mc-text-dim); }
+    .et-node .nname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mc-text); }
+    .et-node .nstatus { font-size: 11px; color: var(--mc-text-secondary); }
+    .et-node .ndur { font-size: 11px; font-family: var(--font-mono); color: var(--mc-text-dim); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* ---------- Agent windows (floating) ---------- */
+    .agent-fw {
+      position: absolute; width: 320px; height: 400px;
+      background: var(--mc-bg);
+      border: 1px solid var(--mc-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      display: flex; flex-direction: column;
+      z-index: 20;
+      overflow: hidden;
+    }
+    .agent-fw .fw-hdr {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--mc-border);
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: move;
+    }
+    .agent-fw .fw-hdr .fw-name { font-size: 13px; font-weight: 600; color: var(--mc-text); }
+    .agent-fw .fw-hdr .fw-actions { display: flex; gap: 4px; }
+    .agent-fw .fw-hdr .fw-actions button {
+      width: 26px; height: 26px; border-radius: 5px;
+      border: none; background: transparent; color: var(--mc-text-dim);
+      font-size: 12px;
+    }
+    .agent-fw .fw-hdr .fw-actions button:hover { background: var(--btn-ghost-hover); }
+    .agent-fw .fw-body { flex: 1; overflow-y: auto; padding: 10px 14px; }
+    .agent-fw .fw-input {
+      padding: 8px 14px; border-top: 1px solid var(--mc-border);
+      display: flex; gap: 6px;
+    }
+    .agent-fw .fw-input input {
+      flex: 1; height: 32px; padding: 0 10px;
+      border: 1px solid var(--input-border); border-radius: 6px;
+      background: var(--input-bg); color: var(--mc-text);
+      font-size: 12px; outline: none;
+    }
+
+    /* ---------- Settings Preview ---------- */
+    .settings-preview {
+      flex: 1; display: flex; overflow: hidden;
+    }
+    .settings-left {
+      width: 200px; border-right: 1px solid var(--mc-border);
+      padding: 12px 0;
+    }
+    .settings-left .s-tab {
+      padding: 8px 16px; font-size: 13px; color: var(--mc-text-secondary);
+      cursor: pointer; transition: background 150ms;
+    }
+    .settings-left .s-tab:hover { background: var(--mc-hover-bg); }
+    .settings-left .s-tab.active { color: var(--mc-text); font-weight: 500; border-left: 3px solid var(--btn-primary-bg); }
+    .settings-right { flex: 1; padding: 20px 24px; overflow-y: auto; }
+    .settings-right h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .provider-card {
+      border: 1px solid var(--mc-border); border-radius: 10px; padding: 14px;
+      margin-bottom: 10px;
+    }
+    .provider-card .p-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .provider-card .p-hdr .p-name { font-weight: 600; font-size: 14px; }
+    .provider-card .p-hdr .p-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--tab-bg); color: var(--mc-text-secondary); }
+    .provider-card .p-models { display: flex; flex-wrap: wrap; gap: 4px; }
+    .provider-card .p-models .m-chip { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--mc-hover-bg); color: var(--mc-text-secondary); border: 1px solid var(--mc-border); }
+
+    /* ============================================
+       UTILITY
+       ============================================ */
+    .theme-toggle {
+      position: fixed; bottom: 12px; right: 12px; z-index: 999;
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--mc-border);
+      background: var(--mc-bg); color: var(--mc-text);
+      font-size: 12px; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-family: var(--font-sans);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ GLOBAL SIDEBAR ============ -->
+  <nav class="global-sidebar">
+    <div class="gs-logo">S</div>
+    <div class="gs-divider"></div>
+
+    <div class="gs-nav">
+      <button class="gs-nav-item active" data-view="chat"      title="聊天">💬</button>
+      <button class="gs-nav-item"        data-view="workflowChat" title="工作流会话">🔀</button>
+      <button class="gs-nav-item"        data-view="workflow"   title="工作流编辑器">⚡</button>
+      <button class="gs-nav-item"        data-view="agents"    title="智能体">👥</button>
+      <button class="gs-nav-item"        data-view="prompts"   title="提示词">🪄</button>
+    </div>
+
+    <div class="gs-bottom">
+      <div class="gs-divider"></div>
+      <button class="gs-nav-item" onclick="toggleTheme()" title="切换主题">🌓</button>
+      <button class="gs-nav-item" title="设置">⚙️</button>
+    </div>
+  </nav>
+
+  <!-- ============ CONTEXT SIDEBAR ============ -->
+  <aside class="context-sidebar" id="contextSidebar">
+    <!-- Rendered by JS per view -->
+  </aside>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main">
+
+    <!-- ============ VIEW: Chat ============ -->
+    <div class="view-container active" id="view-chat">
+      <!-- Header -->
+      <div class="main-header">
+        <div class="left">
+          <h2>工作流编排讨论</h2>
+          <div class="sub">agent: architect · 2026-05-29 3:58 PM</div>
+        </div>
+        <div class="right">
+          <div class="view-tabs">
+            <button class="view-tab active">💬 聊天</button>
+            <button class="view-tab">⌘ Shell</button>
+            <button class="view-tab">📁 文件</button>
+          </div>
+        </div>
+      </div>
+      <!-- Messages -->
+      <div class="msg-stream">
+        <!-- User msg -->
+        <div class="msg-user">
+          <div class="bubble">
+            帮我设计一个狼人杀的工作流架构，需要包含主持人分配角色、玩家发言、投票和夜晚行动。
+            <span class="time">3:58:42 PM</span>
+          </div>
+        </div>
+        <!-- AI msg -->
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="name">Architect</div>
+            <div class="text">
+              好的，我来设计一个完整的狼人杀工作流架构。先分析一下你的需求：
+
+              <br><br>
+              <strong>核心流程：</strong><br>
+              1. 主持人 Agent 动态生成角色分配<br>
+              2. Loop 节点遍历每个玩家进行发言<br>
+              3. 条件路由判断白天/黑夜阶段<br>
+              4. Dynamic Agent 节点为每个角色赋予独立性格
+
+              <br><br>
+              让我先看看现有的狼人杀工作流定义。
+            </div>
+            <span class="time">3:58:45 PM</span>
+          </div>
+        </div>
+        <!-- Tool call -->
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="tool-card">
+              <div class="hdr" onclick="toggleTool(this)">
+                <div class="t-icon">🔧</div>
+                <span class="t-label">Using read_file</span>
+                <span class="t-toggle">▼</span>
+              </div>
+              <div class="body"><span class="link">View input parameters</span></div>
+            </div>
+            <div class="tool-card">
+              <div class="hdr" onclick="toggleTool(this)">
+                <div class="t-icon">🔍</div>
+                <span class="t-label">Using grep_search</span>
+                <span class="t-toggle">▼</span>
+              </div>
+              <div class="body"><span class="link">View input parameters</span></div>
+            </div>
+            <div class="tool-result">
+              <div class="r-icon">✓</div>
+              <span class="r-label">Tool Result — found werewolf-standard workflow</span>
+            </div>
+            <span class="time">3:58:52 PM</span>
+          </div>
+        </div>
+        <!-- AI response -->
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="name">Architect</div>
+            <div class="text">
+              找到了现有的狼人杀工作流。我建议使用 <strong>Dynamic Agent</strong> 节点来动态生成角色性格，配合 Loop 节点实现串行发言。以下是架构图：
+            </div>
+            <span class="time">3:59:05 PM</span>
+          </div>
+        </div>
+        <!-- User msg -->
+        <div class="msg-user">
+          <div class="bubble">
+            很好，再加一个 Merge 节点来收集中午和夜晚的结果，在白天投票前汇总。
+            <span class="time">3:59:30 PM</span>
+          </div>
+        </div>
+        <!-- AI msg with tool -->
+        <div class="msg-ai">
+          <div class="avatar">A</div>
+          <div class="content">
+            <div class="name">Architect</div>
+            <div class="text">好主意！用 Merge（by-key）来合并昼夜结果，然后传给 Router 判断是否触发平票 PK。</div>
+            <div class="tool-card">
+              <div class="hdr" onclick="toggleTool(this)">
+                <div class="t-icon">✏️</div>
+                <span class="t-label">Using edit_workflow</span>
+                <span class="t-toggle">▼</span>
+              </div>
+              <div class="body"><span class="link">View input parameters</span></div>
+            </div>
+            <div class="tool-result">
+              <div class="r-icon">✓</div>
+              <span class="r-label">Workflow updated — Merge node added after Loop</span>
+            </div>
+            <span class="time">3:59:42 PM</span>
+          </div>
+        </div>
+      </div>
+      <!-- Input -->
+      <div class="input-area">
+        <div class="input-box">
+          <textarea rows="1" placeholder="发送消息... (@ 提及 Agent)"></textarea>
+          <button class="send-btn">➤</button>
+        </div>
+        <div class="input-hint">Enter 发送 · Shift+Enter 换行 · @ 引用 Agent</div>
+      </div>
+    </div>
+
+    <!-- ============ VIEW: WorkflowChat ============ -->
+    <div class="view-container" id="view-workflowChat">
+      <!-- Header -->
+      <div class="main-header">
+        <div class="left">
+          <h2>狼人杀标准局 · 第 3 局</h2>
+          <div class="sub">workflow: werewolf-standard · 8 个节点</div>
+        </div>
+        <div class="right">
+          <button style="padding:6px 16px;border-radius:8px;border:1px solid var(--mc-border);background:var(--mc-bg);color:var(--mc-text);font-size:13px;font-weight:500;">▶ 执行工作流</button>
+        </div>
+      </div>
+      <!-- Topology area -->
+      <div style="flex:1;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background-image:radial-gradient(circle,var(--mc-border) 1px,transparent 1px);background-size:24px 24px;opacity:0.3;"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;padding:40px;">
+          <!-- Trigger node -->
+          <div class="wf-node">
+            <div class="hdr"><div class="dot" style="background:var(--wf-trigger);"></div><span class="lbl">Trigger</span></div>
+            <div class="body">Manual Execution</div>
+          </div>
+          <!-- Agent: Host -->
+          <div class="wf-node" style="border-color:var(--wf-agent);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-agent);"></div><span class="lbl">主持人 Agent</span></div>
+            <div class="body">分配角色 · 主持流程</div>
+          </div>
+          <!-- Dynamic Agent -->
+          <div class="wf-node" style="border-color:var(--wf-code);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-code);"></div><span class="lbl">Dynamic Agent</span></div>
+            <div class="body">玩家角色性格生成</div>
+          </div>
+          <!-- Loop -->
+          <div class="wf-node" style="border-color:var(--wf-loop);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-loop);"></div><span class="lbl">Loop x8</span></div>
+            <div class="body">遍历所有玩家发言</div>
+          </div>
+          <!-- Merge -->
+          <div class="wf-node" style="border-color:#f97316;">
+            <div class="hdr"><div class="dot" style="background:#f97316;"></div><span class="lbl">Merge</span></div>
+            <div class="body">按 key 合并昼夜结果</div>
+          </div>
+          <!-- Condition -->
+          <div class="wf-node" style="border-color:var(--wf-condition);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-condition);"></div><span class="lbl">Router</span></div>
+            <div class="body">Day / Night 分支</div>
+          </div>
+        </div>
+
+        <!-- Floating agent window -->
+        <div class="agent-fw" style="top:60px;right:24px;">
+          <div class="fw-hdr">
+            <span class="fw-name">🤖 主持人 Agent</span>
+            <div class="fw-actions">
+              <button title="最小化">─</button>
+              <button title="关闭">✕</button>
+            </div>
+          </div>
+          <div class="fw-body">
+            <div style="margin-bottom:8px;"><span style="font-size:12px;color:var(--mc-text-dim);">3:59 PM</span></div>
+            <div style="margin-bottom:6px;padding:8px 10px;background:var(--mc-hover-bg);border-radius:8px;font-size:13px;">🎭 已分配角色：狼人×2、预言家、女巫、守卫、猎人、村民×2</div>
+            <div style="margin-bottom:8px;"><span style="font-size:12px;color:var(--mc-text-dim);">4:00 PM</span></div>
+            <div style="padding:8px 10px;background:var(--mc-hover-bg);border-radius:8px;font-size:13px;">🌙 夜晚阶段：请狼人选择击杀目标</div>
+          </div>
+          <div class="fw-input">
+            <input placeholder="向主持人发送消息...">
+            <button class="send-btn" style="width:32px;height:32px;font-size:12px;">➤</button>
+          </div>
+        </div>
+
+        <!-- Execution Timeline -->
+        <div class="exec-timeline">
+          <div class="et-header">
+            <span class="et-title">⏱ 执行时间线</span>
+            <div class="et-actions">
+              <button title="导出">📥</button>
+              <button title="关闭">✕</button>
+            </div>
+          </div>
+          <div class="et-nodes">
+            <div class="et-node">
+              <div class="dot success"></div>
+              <span class="nname">Trigger</span>
+              <span class="nstatus">Completed</span>
+              <span class="ndur">12ms</span>
+            </div>
+            <div class="et-node">
+              <div class="dot success"></div>
+              <span class="nname">主持人 Agent</span>
+              <span class="nstatus">Completed</span>
+              <span class="ndur">2.4s</span>
+            </div>
+            <div class="et-node">
+              <div class="dot success"></div>
+              <span class="nname">Dynamic Agent</span>
+              <span class="nstatus">Completed</span>
+              <span class="ndur">3.1s</span>
+            </div>
+            <div class="et-node">
+              <div class="dot running"></div>
+              <span class="nname">Loop (3/8)</span>
+              <span class="nstatus">Running</span>
+              <span class="ndur">12.7s</span>
+            </div>
+            <div class="et-node">
+              <div class="dot pending"></div>
+              <span class="nname">Merge</span>
+              <span class="nstatus">Waiting</span>
+              <span class="ndur">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VIEW: Workflow Canvas ============ -->
+    <div class="view-container" id="view-workflow">
+      <div class="main-header">
+        <div class="left">
+          <h2>狼人杀标准流程</h2>
+          <div class="sub">8 个节点 · 9 条连接 · 上次保存: 5/29 4:00 PM</div>
+        </div>
+        <div class="right">
+          <button style="padding:6px 16px;border-radius:8px;border:1px solid var(--mc-border);background:var(--mc-bg);color:var(--mc-text);font-size:13px;font-weight:500;">📥 导出</button>
+          <button style="padding:6px 16px;border-radius:8px;border:1px solid var(--btn-primary-bg);background:var(--btn-primary-bg);color:var(--btn-primary-text);font-size:13px;font-weight:500;">💾 保存</button>
+        </div>
+      </div>
+      <div class="wf-canvas">
+        <div class="wf-grid-bg"></div>
+        <div class="wf-nodes">
+          <div class="wf-node">
+            <div class="hdr"><div class="dot" style="background:var(--wf-trigger);"></div><span class="lbl">Trigger</span></div>
+            <div class="body">手动触发</div>
+          </div>
+          <div class="wf-node" style="border-color:var(--wf-agent);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-agent);"></div><span class="lbl">主持人</span></div>
+            <div class="body">model: claude-sonnet-4 · temp: 0.7</div>
+          </div>
+          <div class="wf-node" style="border-color:var(--wf-condition);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-condition);"></div><span class="lbl">Router</span></div>
+            <div class="body">payload.phase 分支</div>
+          </div>
+          <div class="wf-node" style="border-color:var(--wf-loop);">
+            <div class="hdr"><div class="dot" style="background:var(--wf-loop);"></div><span class="lbl">Loop</span></div>
+            <div class="body">items: players · break: gameOver</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VIEW: Agents ============ -->
+    <div class="view-container" id="view-agents">
+      <div class="main-header">
+        <div class="left">
+          <h2>智能体管理</h2>
+          <div class="sub">12 个智能体 · 8 个分类</div>
+        </div>
+        <div class="right">
+          <button style="padding:6px 16px;border-radius:8px;background:var(--btn-primary-bg);color:var(--btn-primary-text);font-size:13px;font-weight:500;border:none;">+ 新建智能体</button>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px 24px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#8b5cf6;"></div><span class="lbl">Architect</span></div><div class="body">AI 架构师</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#22c55e;"></div><span class="lbl">主持人</span></div><div class="body">狼人杀主持</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#ef4444;"></div><span class="lbl">暗影狼人</span></div><div class="body">狼人角色</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#3b82f6;"></div><span class="lbl">预言家</span></div><div class="body">查验身份</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#f59e0b;"></div><span class="lbl">女巫</span></div><div class="body">救药/毒药</div></div>
+          <div class="wf-node"><div class="hdr"><div class="dot" style="background:#14b8a6;"></div><span class="lbl">守卫</span></div><div class="body">守护玩家</div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Theme toggle -->
+<button class="theme-toggle" onclick="toggleTheme()">🌓 Light / Dark</button>
+
+<script>
+  // ================================
+  // VIEW SWITCHING
+  // ================================
+  const views = ['chat', 'workflowChat', 'workflow', 'agents', 'prompts'];
+
+  document.querySelectorAll('.gs-nav-item[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+
+      // Update global nav active state
+      document.querySelectorAll('.gs-nav-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Show view container
+      document.querySelectorAll('.view-container').forEach(c => c.classList.remove('active'));
+      const container = document.getElementById('view-' + view);
+      if (container) container.classList.add('active');
+
+      // Update context sidebar
+      renderSidebar(view);
+    });
+  });
+
+  // ================================
+  // CONTEXT SIDEBAR RENDERER
+  // ================================
+  function renderSidebar(view) {
+    const sb = document.getElementById('contextSidebar');
+    switch(view) {
+      case 'chat':
+        sb.innerHTML = `
+          <div class="cs-header">
+            <h3>会话</h3>
+            <button class="cs-add-btn">+</button>
+          </div>
+          <div class="cs-search"><input placeholder="搜索会话..." /></div>
+          <div class="cs-tabs">
+            <button class="cs-tab active">工作流</button>
+            <button class="cs-tab">会话</button>
+          </div>
+          <div class="cs-list">
+            <div class="cs-item active">
+              <span class="icon">💬</span>
+              <span class="title">工作流编排讨论</span>
+              <span class="meta">3m ago</span>
+              <span class="badge">5</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">💬</span>
+              <span class="title">API 端点设计评审</span>
+              <span class="meta">1h ago</span>
+              <span class="badge">3</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">💬</span>
+              <span class="title">Worker 线程内存泄漏调试</span>
+              <span class="meta">3h ago</span>
+              <span class="badge">12</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">💬</span>
+              <span class="title">数据库迁移计划</span>
+              <span class="meta">yesterday</span>
+              <span class="badge">2</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">💬</span>
+              <span class="title">Docker Compose 环境</span>
+              <span class="meta">2d ago</span>
+              <span class="badge">8</span>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'workflowChat':
+        sb.innerHTML = `
+          <div class="cs-header">
+            <h3>工作流会话</h3>
+            <button class="cs-add-btn">+</button>
+          </div>
+          <div class="cs-list">
+            <div class="cs-folder-header" onclick="this.querySelector('.chevron').classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              <span class="chevron open">▶</span>
+              <span style="font-size:15px;">⚡</span>
+              <span>狼人杀标准局</span>
+              <span class="count">3</span>
+            </div>
+            <div class="cs-sublist open">
+              <div class="cs-item active">
+                <span class="icon">💬</span>
+                <span class="title">第 3 局</span>
+                <span class="meta">now</span>
+              </div>
+              <div class="cs-item">
+                <span class="icon">💬</span>
+                <span class="title">第 2 局</span>
+                <span class="meta">1h ago</span>
+              </div>
+              <div class="cs-item">
+                <span class="icon">💬</span>
+                <span class="title">第 1 局</span>
+                <span class="meta">yesterday</span>
+              </div>
+              <div style="padding:4px 28px;">
+                <button style="width:100%;padding:5px;border-radius:6px;border:1px dashed var(--cs-input-border);background:transparent;color:var(--cs-text-muted);font-size:12px;">+ 新建会话</button>
+              </div>
+            </div>
+
+            <div class="cs-folder-header" onclick="this.querySelector('.chevron').classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              <span class="chevron">▶</span>
+              <span style="font-size:15px;">⚡</span>
+              <span>数据处理流水线</span>
+              <span class="count">2</span>
+            </div>
+            <div class="cs-sublist">
+              <div class="cs-item">
+                <span class="icon">💬</span>
+                <span class="title">批处理运行 #42</span>
+                <span class="meta">3h ago</span>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'workflow':
+        sb.innerHTML = `
+          <div class="cs-header">
+            <h3>工作流</h3>
+            <button class="cs-add-btn">+</button>
+          </div>
+          <div class="cs-search"><input placeholder="搜索工作流..." /></div>
+          <div class="cs-list">
+            <div class="cs-item active">
+              <span class="icon">⚡</span>
+              <span class="title">狼人杀标准流程</span>
+              <span class="meta">8 nodes</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">⚡</span>
+              <span class="title">数据处理管线</span>
+              <span class="meta">5 nodes</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">⚡</span>
+              <span class="title">报告生成</span>
+              <span class="meta">12 nodes</span>
+            </div>
+            <div class="cs-item">
+              <span class="icon">⚡</span>
+              <span class="title">默认工作流</span>
+              <span class="meta">3 nodes</span>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'agents':
+        sb.innerHTML = `
+          <div class="cs-header">
+            <h3>智能体</h3>
+            <button class="cs-add-btn">+</button>
+          </div>
+          <div class="cs-search"><input placeholder="搜索智能体..." /></div>
+          <div class="cs-list">
+            <div class="cs-item active">
+              <span class="icon">🤖</span>
+              <span class="title">所有智能体</span>
+              <span class="meta">12</span>
+            </div>
+            <div style="padding:4px 16px;font-size:11px;color:var(--cs-text-dim);text-transform:uppercase;letter-spacing:0.04em;">产品</div>
+            <div class="cs-item"><span class="icon">🤖</span><span class="title">整理助手</span></div>
+            <div class="cs-item"><span class="icon">🤖</span><span class="title">总结助手</span></div>
+            <div style="padding:4px 16px;font-size:11px;color:var(--cs-text-dim);text-transform:uppercase;letter-spacing:0.04em;">工程</div>
+            <div class="cs-item"><span class="icon">🤖</span><span class="title">架构师</span></div>
+            <div class="cs-item"><span class="icon">🤖</span><span class="title">代码审查员</span></div>
+            <div style="padding:4px 16px;font-size:11px;color:var(--cs-text-dim);text-transform:uppercase;letter-spacing:0.04em;">狼人杀</div>
+            <div class="cs-item"><span class="icon">🐺</span><span class="title">主持人</span></div>
+            <div class="cs-item"><span class="icon">🐺</span><span class="title">暗影狼人</span></div>
+            <div class="cs-item"><span class="icon">🐺</span><span class="title">预言家</span></div>
+          </div>
+        `;
+        break;
+
+      case 'prompts':
+        sb.innerHTML = `
+          <div class="cs-header">
+            <h3>提示词</h3>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:var(--cs-text-dim);font-size:13px;">
+            提示词模板库<br>
+            <span style="font-size:11px;margin-top:4px;display:block;">选择模板开始编辑</span>
+          </div>
+        `;
+        break;
+    }
+  }
+
+  // ================================
+  // TOOL CARD TOGGLE
+  // ================================
+  function toggleTool(el) {
+    const body = el.parentElement.nextElementSibling;
+    const arrow = el.querySelector('.t-toggle');
+    if (body) {
+      body.classList.toggle('open');
+      if (arrow) arrow.classList.toggle('open');
+    }
+  }
+
+  // Auto-expand first two tool cards
+  setTimeout(() => {
+    document.querySelectorAll('.tool-card').forEach((card, i) => {
+      if (i < 2) {
+        const hdr = card.querySelector('.hdr');
+        const body = card.querySelector('.body');
+        if (body) body.classList.add('open');
+        const arr = hdr.querySelector('.t-toggle');
+        if (arr) arr.classList.add('open');
+      }
+    });
+  }, 100);
+
+  // ================================
+  // THEME TOGGLE
+  // ================================
+  function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+  }
+</script>
+
+</body>
+</html>
