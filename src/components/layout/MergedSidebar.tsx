@@ -3,7 +3,6 @@ import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
-import { NewSessionDialog } from './sidebar/NewSessionDialog'
 
 type Mode = 'agent' | 'workflow'
 
@@ -47,16 +46,13 @@ export function MergedSidebar() {
   const sessions = useAppStore(s => s.sessions)
   const workflows = useAppStore(s => s.workflows)
   const agents = useAppStore(s => s.agents)
-  const createSession = useAppStore(s => s.createSession)
   const renameSession = useAppStore(s => s.renameSession)
   const deleteSession = useAppStore(s => s.deleteSession)
   const deleteWorkflow = useAppStore(s => s.deleteWorkflow)
-  const activeWorkspaceId = useAppStore(s => s.activeWorkspaceId)
   const activeWorkflowId = useAppStore(s => s.activeWorkflowId)
   const activeSessionId = useAppStore(s => s.activeSessionId)
   const setActiveWorkflow = useAppStore(s => s.setActiveWorkflow)
   const setActiveSession = useAppStore(s => s.setActiveSession)
-  const setActiveAgent = useAppStore(s => s.setActiveAgent)
 
   /* ───── mode ───── */
   const [sidebarMode, setSidebarMode] = useState<Mode>('agent')
@@ -66,7 +62,6 @@ export function MergedSidebar() {
   const [activeNav, setActiveNav] = useState<string>('chat')
 
   /* ───── dialogs & interaction state ───── */
-  const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false)
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null)
   const [menuItemId, setMenuItemId] = useState<string | null>(null)
   const [renameItemId, setRenameItemId] = useState<string | null>(null)
@@ -127,24 +122,15 @@ export function MergedSidebar() {
 
   const rLabel = recentsLabelFor(activeNav)
 
-  /* ───── dialog callbacks ───── */
-  const handleCreateSingleSession = (title: string, workspaceId: string, agentId: string) => {
-    createSession(title, workspaceId, undefined, 'single')
-    setActiveAgent(agentId)
-    setCurrentView('chat')
-  }
-
-  const handleCreateWorkflowSession = (title: string, workspaceId: string, workflowId: string) => {
-    createSession(title, workspaceId, workflowId, 'workflow')
-    setCurrentView('workflowChat')
-  }
-
-  /* ───── nav click — opens new-session dialog for chat/workflowChat ───── */
+  /* ───── nav click — navigates to new-chat / new-workflow views ───── */
   const handleNavClick = (item: NavItem) => {
     setActiveNav(item.id)
-    setCurrentView(item.id)
-    if (item.id === 'chat' || item.id === 'workflowChat') {
-      setNewSessionDialogOpen(true)
+    if (item.id === 'chat') {
+      setCurrentView('new-chat')
+    } else if (item.id === 'workflowChat') {
+      setCurrentView('new-workflow')
+    } else {
+      setCurrentView(item.id)
     }
   }
 
@@ -257,7 +243,7 @@ export function MergedSidebar() {
                 onClick={() => {
                   if (activeNav === 'workflow') {
                     setActiveWorkflow(item.id)
-                    setCurrentView('workflow')
+                    setCurrentView('workflow-editor')
                   } else if (activeNav === 'workflowChat') {
                     setActiveSession(item.id)
                     setCurrentView('workflowChat')
@@ -389,18 +375,7 @@ export function MergedSidebar() {
         </div>
       </div>
 
-      {/* ══════ Dialogs ══════ */}
-      <NewSessionDialog
-        open={newSessionDialogOpen}
-        onOpenChange={setNewSessionDialogOpen}
-        agents={agents}
-        agentCategories={[]}
-        workflows={workflows}
-        activeWorkspaceId={activeWorkspaceId}
-        onCreateSingleSession={handleCreateSingleSession}
-        onCreateWorkflowSession={handleCreateWorkflowSession}
-        t={t}
-      />
+      {/* ══════ Rename & Delete Dialogs ══════ */}
       {renameItemId && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 100,

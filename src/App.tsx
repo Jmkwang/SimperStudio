@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChatInterface } from "@/components/chat/ChatInterface";
+import { NewChatView } from "@/components/chat/NewChatView";
+import { NewWorkflowView } from "@/components/chat/NewWorkflowView";
 import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
+import { WorkflowListView } from "@/components/workflow/WorkflowListView";
 import { AgentsView } from "@/components/agents/AgentsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { ProfileView } from "@/components/profile/ProfileView";
@@ -11,7 +14,7 @@ import { useAppStore } from '@/stores';
 import { Toaster } from "@/components/ui/toaster";
 import { WorkflowNodePanel } from "@/components/layout/WorkflowNodePanel";
 
-type ViewMode = 'chat' | 'workflowChat' | 'workflow' | 'agents' | 'workspaces' | 'settings' | 'profile' | 'prompts';
+type ViewMode = 'chat' | 'workflowChat' | 'new-chat' | 'new-workflow' | 'workflow' | 'workflow-editor' | 'agents' | 'workspaces' | 'settings' | 'profile' | 'prompts';
 
 function App() {
   const fetchInitialData = useAppStore(state => state.fetchInitialData);
@@ -34,7 +37,13 @@ function App() {
         return <ChatInterface />;
       case 'workflowChat':
         return <ChatInterface />;
+      case 'new-chat':
+        return <NewChatView />;
+      case 'new-workflow':
+        return <NewWorkflowView />;
       case 'workflow':
+        return <WorkflowListView />;
+      case 'workflow-editor':
         return <WorkflowCanvas />;
       case 'agents':
         return <AgentsView />;

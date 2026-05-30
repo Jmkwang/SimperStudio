@@ -39,7 +39,7 @@ export async function executeWorkflow(
       undefined,
       globalState,
     );
-  });
+  }, signal);
 
   const startNodeId = options.startNodeId;
   const startNode = startNodeId

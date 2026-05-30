@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -144,16 +144,26 @@ export function AgentsView() {
     }
   }, [activeAgentId, setActiveAgent]);
 
-  const handleSave = () => {
-    if (formData.name && formData.systemPrompt) {
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      document.getElementById('name')?.focus();
+      return;
+    }
+    if (!formData.systemPrompt.trim()) {
+      document.getElementById('systemPrompt')?.focus();
+      return;
+    }
+    try {
       if (editingId) {
         updateAgent(editingId, formData);
       } else {
-        addAgent(formData);
+        await addAgent(formData);
       }
       setIsOpen(false);
       setFormData(defaultAgentState);
       setEditingId(null);
+    } catch (e) {
+      console.error('Failed to save agent:', e);
     }
   };
 
@@ -209,6 +219,7 @@ export function AgentsView() {
     setEditingId(null);
     setFormData(defaultAgentState);
     setAdvancedOpen(false);
+    setIsOpen(true);
   };
 
   const toggleSelection = (id: string) => {
@@ -276,17 +287,15 @@ export function AgentsView() {
             >
               {bulkMode ? t('Exit Bulk') : t('Bulk Edit')}
             </Button>
+            <Button onClick={trackClick(handleOpenNew, 'agent:openCreate')} data-debug-source="AgentsView" data-debug-action="agent:openCreate">
+              <Plus className="mr-2 h-4 w-4" />
+              {t('Create Agent')}
+            </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={trackClick(handleOpenNew, 'agent:openCreate')} data-debug-source="AgentsView" data-debug-action="agent:openCreate">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('Create Agent')}
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{editingId ? t("Edit Agent") : t("Create New Agent")}</DialogTitle>
-              </DialogHeader>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>{editingId ? t("Edit Agent") : t("Create New Agent")}</DialogTitle>
+                </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
                 <div className="grid gap-2">
                   <Label htmlFor="name">{t("Name")}</Label>
@@ -295,6 +304,7 @@ export function AgentsView() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Code Reviewer"
+                    required
                   />
                 </div>
                 <div className="grid gap-2">
@@ -338,6 +348,7 @@ export function AgentsView() {
                     onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
                     placeholder="You are a helpful assistant..."
                     className="h-32"
+                    required
                   />
                 </div>
 

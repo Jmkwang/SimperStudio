@@ -457,11 +457,39 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
             ...options,
             signal: abortController.signal,
             onNodeResult: (nodeId: string, nodeType: string, payload: any, nodeData: any) => {
-              // Fire-and-forget: write agent/dynamic-agent results to the workflow chat session
+              // Fire-and-forget: write agent/dynamic-agent/cli-agent results to the workflow chat session
               if (!workflowSessionId || !executionMessageId) return;
-              if (nodeType !== 'agent' && nodeType !== 'dynamic-agent') return;
+              if (nodeType !== 'agent' && nodeType !== 'dynamic-agent' && nodeType !== 'cli-agent') return;
 
               const state = get();
+
+              // CLI Agent: write stdout result to chat
+              if (nodeType === 'cli-agent') {
+                const outputField = nodeData?.outputField || 'cliOutput';
+                const cliResult = payload[outputField];
+                const exitCode = payload.cliExitCode;
+                const stderr = payload.cliStderr;
+
+                if (cliResult == null && exitCode === 0 && !stderr) return;
+
+                const responseText = typeof cliResult === 'object'
+                  ? JSON.stringify(cliResult, null, 2)
+                  : String(cliResult || '');
+
+                const agentId = `cli-agent-${nodeId}`;
+                const statusLine = `[Exit Code: ${exitCode ?? 'unknown'}]`;
+                const fullText = stderr
+                  ? `${statusLine}\n\n${responseText}\n\n--- stderr ---\n${stderr}`
+                  : `${statusLine}\n\n${responseText}`;
+
+                state.addAgentResponseStream(workflowSessionId, executionMessageId, agentId, fullText, nodeId, {
+                  workflowId,
+                  workflowNodeId: nodeId,
+                });
+                state.completeAgentResponse(workflowSessionId, executionMessageId, agentId, nodeId);
+                return;
+              }
+
               const llmResult = payload.llmResult ?? payload.output;
               if (llmResult == null) return;
 

@@ -385,6 +385,7 @@ export function createExecutionHelpers(
   fetchNode: (nodeId: string) => any,
   globalState?: Record<string, any>,
   executeWorkflow?: (workflowId: string, initialPayload: Record<string, any>) => Promise<any>,
+  signal?: AbortSignal,
 ) {
   return {
     getByPath,
@@ -398,5 +399,6 @@ export function createExecutionHelpers(
     fetchNode,
     getGlobalState: globalState ? (key: string) => globalState[key] : undefined,
     executeWorkflow,
+    signal,
   };
 }

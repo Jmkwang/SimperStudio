@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -22,6 +22,7 @@ export function SettingsGeneralTab() {
   const debugMode = useAppStore(state => state.debugMode);
   const toggleDebugMode = useAppStore(state => state.toggleDebugMode);
   const { t } = useTranslation();
+  const [portValue, setPortValue] = useState(String(settings.remoteAccessPort || 1420));
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${settings.fontSize ?? 100}%`;
@@ -90,9 +91,13 @@ export function SettingsGeneralTab() {
             type="number"
             min={1}
             max={65535}
-            value={settings.remoteAccessPort || 1420}
+            value={portValue}
             disabled={!settings.allowRemoteAccess}
-            onBlur={(e) => updateSettings({ remoteAccessPort: Number(e.target.value) })}
+            onChange={(e) => setPortValue(e.target.value)}
+            onBlur={(e) => {
+              const num = Number(e.target.value);
+              if (num >= 1 && num <= 65535) updateSettings({ remoteAccessPort: num });
+            }}
           />
         </div>
       </div>

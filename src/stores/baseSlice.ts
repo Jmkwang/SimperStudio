@@ -248,13 +248,13 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
       try {
         const agentToSave = { ...newAgent, parameters: JSON.stringify(newAgent.parameters || {}) };
         await invoke('add_agent', { agent: agentToSave });
-        const nextAgents = [...get().agents, newAgent];
-        set({ agents: nextAgents });
       } catch (error) {
-        console.error('Failed to add agent:', error);
-        debugLogger.error('baseSlice', 'addAgent failed', { error: String(error) });
-        throw error;
+        console.error('Failed to persist agent to DB, using in-memory only:', error);
+        debugLogger.error('baseSlice', 'addAgent persist failed', { error: String(error) });
+        // Continue — save to store even if Tauri backend is unavailable
       }
+      const nextAgents = [...get().agents, newAgent];
+      set({ agents: nextAgents });
     },
 
     updateAgent: async (id, updates) => {

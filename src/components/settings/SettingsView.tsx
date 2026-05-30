@@ -1,20 +1,22 @@
 import { useState, useCallback } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
-import { Globe, Key, Palette } from "lucide-react";
+import { Globe, Key, Palette, Terminal } from "lucide-react";
 import { DebugBadge } from "@/components/debug/DebugBadge";
 import { SettingsGeneralTab } from "./SettingsGeneralTab";
 import { SettingsAppearanceTab } from "./SettingsAppearanceTab";
 import { SettingsModelsTab } from "./SettingsModelsTab";
+import { SettingsCliTab } from "./SettingsCliTab";
 
 export function SettingsView() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'models'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'models' | 'cli'>('general');
 
   const tabs = [
     { id: 'general' as const, label: t('General'), icon: Globe },
     { id: 'appearance' as const, label: t('Appearance'), icon: Palette },
     { id: 'models' as const, label: t('Models'), icon: Key },
+    { id: 'cli' as const, label: t('CLI Tools'), icon: Terminal },
   ];
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, tabId: typeof tabs[number]['id']) => {
@@ -70,6 +72,7 @@ export function SettingsView() {
         {activeTab === 'general' && <div role="tabpanel" id="settings-panel-general" aria-labelledby="settings-tab-general"><SettingsGeneralTab /></div>}
         {activeTab === 'appearance' && <div role="tabpanel" id="settings-panel-appearance" aria-labelledby="settings-tab-appearance"><SettingsAppearanceTab /></div>}
         {activeTab === 'models' && <div role="tabpanel" id="settings-panel-models" aria-labelledby="settings-tab-models"><SettingsModelsTab /></div>}
+        {activeTab === 'cli' && <div role="tabpanel" id="settings-panel-cli" aria-labelledby="settings-tab-cli"><SettingsCliTab /></div>}
       </div>
     </div>
   );

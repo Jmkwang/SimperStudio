@@ -10,6 +10,7 @@ import { conditionExecute } from './nodeExecutors/conditionExecutor';
 import { mergeExecute, computeMergePayload } from './nodeExecutors/mergeExecutor';
 import { loopExecute, computeLoopIterations } from './nodeExecutors/loopExecutor';
 import { subWorkflowExecute } from './nodeExecutors/subWorkflowExecutor';
+import { cliAgentExecute } from './nodeExecutors/cliAgentExecutor';
 
 export interface RegisteredExecutor {
   type: string;
@@ -34,6 +35,7 @@ register({ type: 'switch', execute: conditionExecute }); // same as condition
 register({ type: 'merge', execute: mergeExecute });
 register({ type: 'loop', execute: loopExecute });
 register({ type: 'subworkflow', execute: subWorkflowExecute });
+register({ type: 'cli-agent', execute: cliAgentExecute });
 register({ type: 'trigger', execute: async (_n, p) => p });
 
 export function getExecutor(nodeType: string): RegisteredExecutor | undefined {

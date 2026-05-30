@@ -44,7 +44,7 @@ export interface Workspace {
   updatedAt: number;
 }
 
-export type WorkflowNodeType = 'trigger' | 'agent' | 'dynamic-agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow';
+export type WorkflowNodeType = 'trigger' | 'agent' | 'dynamic-agent' | 'condition' | 'code' | 'loop' | 'output' | 'router' | 'http' | 'set' | 'switch' | 'wait' | 'merge' | 'webhook' | 'subworkflow' | 'cli-agent';
 
 export interface WorkflowNodePosition {
   x: number;
@@ -191,6 +191,31 @@ export interface WorkflowWebhookNodeData extends WorkflowNodeDataBase {
   payloadTemplate?: string;
 }
 
+export interface CliToolPreset {
+  id: string;
+  name: string;
+  executable: string;
+  defaultArgs: string[];
+  description: string;
+}
+
+export interface WorkflowCliAgentNodeData extends WorkflowNodeDataBase {
+  mode: 'preset' | 'custom';
+  presetId?: string;
+  executable?: string;
+  args?: string;
+  workingDir?: string;
+  inputMode: 'payload' | 'prompt-template' | 'none';
+  promptTemplate?: string;
+  inputField?: string;
+  outputField?: string;
+  parseJson?: boolean;
+  envVars?: string;
+  requireConfirmation?: boolean;
+  streamToChat?: boolean;
+  captureStderr?: boolean;
+}
+
 export type WorkflowNodeData =
   | WorkflowAgentNodeData
   | WorkflowDynamicAgentNodeData
@@ -206,6 +231,7 @@ export type WorkflowNodeData =
   | WorkflowMergeNodeData
   | WorkflowSubWorkflowNodeData
   | WorkflowWebhookNodeData
+  | WorkflowCliAgentNodeData
   | WorkflowNodeDataBase;
 
 export interface WorkflowNode {
@@ -268,6 +294,13 @@ export interface Settings {
   remoteAccessPort: number;
   fontSize?: number; // percentage, e.g. 100 = default, 115 = 115%
   executionFeedback?: boolean; // screen shake + toast on workflow complete
+  cliTools?: {
+    defaultWorkingDir?: string;
+    allowedExecutables?: string[];
+    presets?: CliToolPreset[];
+    confirmByDefault?: boolean;
+    defaultTimeoutMs?: number;
+  };
   // Legacy fields for backward compatibility
   apiProvider?: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
   openaiKey?: string;

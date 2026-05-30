@@ -1116,3 +1116,66 @@ MergedSidebar 已在 v0.4.4 中实现：
 - 确认 5 个视图（chat/workflowChat/workflow/agents/prompts）在 MergedSidebar 中正确导航
 - settings/profile 不显示侧栏（仅 Gateway）
 - Recents 内容随视图联动
+
+---
+
+## 18. P14：CLI Agent 节点（工作流调用编程智能体）
+
+> 设计文档见 `CLAUDE.md` / `docs/plan-cli-agent.md`（TODO 驱动），完整规划见 `C:\Users\111\.claude\plans\swirling-knitting-adleman.md`
+
+**目标**：在工作流中新增 CLI Agent 节点，通过 Tauri Rust 后端 spawn 子进程调用本地编程智能体（Claude Code / Aider / Cursor 等），支持流式输出、文件变更检测、全集成聊天回写。
+
+### Phase 1：Foundation — Rust 后端 + 类型定义
+
+- [x] **Rust 后端** (`src-tauri/src/cli_agent.rs` + `lib.rs` + `Cargo.toml`)
+  - `CliProcessRegistry` 管理活跃子进程
+  - `spawn_cli_agent` — tokio::process::Command 异步 spawn，逐行 emit cli-output/cli-exit 事件
+  - `kill_cli_agent` — 按 executionId 终止进程
+  - `get_working_dir_snapshot` — 扫描目录文件元信息用于变更检测
+  - Windows: CREATE_NO_WINDOW | App 退出时清理进程
+- [x] **类型定义** (`src/types/models.ts`)
+  - `WorkflowNodeType` 新增 `'cli-agent'`
+  - `WorkflowCliAgentNodeData`（mode/presetId/executable/args/workingDir/inputMode/promptTemplate/outputField/parseJson/envVars/requireConfirmation/streamToChat/captureStderr）
+  - `CliToolPreset` 接口（id/name/executable/defaultArgs/description）
+  - `Settings.cliTools`（defaultWorkingDir/allowedExecutables/presets/confirmByDefault/defaultTimeoutMs）
+  - `WorkflowNodeData` 联合类型添加新成员
+
+### Phase 2：Frontend Executor
+
+- [x] **执行器** (`src/lib/workflow/nodeExecutors/cliAgentExecutor.ts`)
+  - 解析命令（preset/custom + 模板变量替换）
+  - requireConfirmation 时 confirm() 弹窗
+  - 文件快照前后对比 → added/modified/deleted
+  - invoke spawn + listen 流式输出 → 累积 payload
+  - AbortSignal → kill_cli_agent
+- [x] **Engine 信号传递** (`types.ts` / `helpers.ts` / `engine.ts`)
+  - `ExecutionHelpers` 新增 optional `signal?: AbortSignal`
+  - `createExecutionHelpers` 传递 signal
+  - engine 将 `options.signal` 传入 helpers
+- [x] **注册执行器** (`nodeRegistry.ts`)
+
+### Phase 3：Node UI
+
+- [x] **节点组件** (`src/components/workflow/nodes/CliAgentNode.tsx`)
+  - 260px 卡片，Terminal 图标，橙/琥珀色主题
+  - 配置 Dialog：工具选择 / 输入 / 输出 / 环境 / 安全
+- [x] **画布注册** (`WorkflowCanvas.tsx`)
+  - nodeTypes + nodeDefaultDataBuilders + 面板 "CLI" 分类
+
+### Phase 4：Integration
+
+- [x] **聊天回写** (`workflowSlice.ts` onNodeResult 扩展 cli-agent)
+- [x] **国际化** (`useTranslation.ts` ~20 keys)
+
+### Phase 5：Settings
+
+- [x] **CLI 工具设置页** (`SettingsCliTab.tsx` + `SettingsView.tsx` 新标签)
+  - 默认工作目录 / 白名单 / 超时 / 确认 / 预设管理
+
+### Verification
+- [x] `cargo build` + `npm run build` 编译通过
+- [ ] Dev server → 节点面板 "CLI" 分类可见
+- [ ] 画布拖入节点 → 配置 → Test Run 执行
+- [ ] 执行时间线实时输出 + 结果写入聊天
+- [ ] Abort 取消工作流 → 进程终止
+- [ ] 白名单拒绝不在列表中的命令

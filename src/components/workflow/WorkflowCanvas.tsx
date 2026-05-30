@@ -32,6 +32,7 @@ import { MergeNode } from './nodes/MergeNode';
 import { WebhookTriggerNode } from './nodes/WebhookTriggerNode';
 import { SubWorkflowNode } from './nodes/SubWorkflowNode';
 import { DynamicAgentNode } from './nodes/DynamicAgentNode';
+import { CliAgentNode } from './nodes/CliAgentNode';
 import { ExecutionTimeline } from './ExecutionTimeline';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -82,6 +83,7 @@ const GenericNode = ({ data, id }: any) => {
   merge: MergeNode,
   webhook: WebhookTriggerNode,
   subworkflow: SubWorkflowNode,
+  'cli-agent': CliAgentNode,
   action: GenericNode,
   transformation: GenericNode
 };
@@ -111,7 +113,18 @@ const nodeDefaultDataBuilders: Record<string, () => Record<string, any>> = {
   wait: () => ({ waitMode: 'fixed', delayMs: 1000, untilExpression: '' }),
   merge: () => ({ strategy: 'append', mergeKey: 'id' }),
   webhook: () => ({ webhookMethod: 'POST', webhookPath: '/webhook/' + Date.now(), authToken: '' }),
-  subworkflow: () => ({ subWorkflowId: '', inputMapping: '' })
+  subworkflow: () => ({ subWorkflowId: '', inputMapping: '' }),
+  'cli-agent': () => ({
+    mode: 'preset',
+    presetId: 'claude-code',
+    inputMode: 'prompt-template',
+    promptTemplate: '',
+    outputField: 'cliOutput',
+    parseJson: true,
+    captureStderr: true,
+    streamToChat: true,
+    requireConfirmation: true,
+  })
 };
 
 function Flow() {
@@ -265,6 +278,9 @@ function Flow() {
                    </CommandGroup>
                    <CommandGroup heading={t("Integration")}>
                      <CommandItem onSelect={() => addNode('subworkflow', 'Sub-workflow')}>{t("Sub-workflow")}</CommandItem>
+                   </CommandGroup>
+                   <CommandGroup heading={t("CLI")}>
+                     <CommandItem onSelect={() => addNode('cli-agent', 'CLI Agent')}>{t("CLI Agent")}</CommandItem>
                    </CommandGroup>
                    <CommandGroup heading={t("Output")}>
                      <CommandItem onSelect={() => addNode('output', 'Output')}>{t("Output")}</CommandItem>

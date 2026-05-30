@@ -110,7 +110,10 @@
       "Bash(npx.cmd tauri *)",
       "Bash(rustup component *)",
       "Bash(which dlltool.exe 2>/dev/null || find /c/Users -name \"dlltool*\" -type f 2>/dev/null | head -3 || echo \"checking rustup home...\" && ls \"$\\(rustup which rustc | sed 's|/bin/rustc.*||'\\)/bin/\" | grep -i dll 2>/dev/null || echo \"not found yet\")",
-      "Bash(echo '[target.x86_64-pc-windows-gnu]\\\\nlinker = \"gcc.exe\"\\\\n[dlltool]\\\\ndlltool = \"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\111\\\\\\\\\\\\\\\\mingw-extract\\\\\\\\\\\\\\\\mingw64\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\dlltool.exe\"')"
+      "Bash(echo '[target.x86_64-pc-windows-gnu]\\\\nlinker = \"gcc.exe\"\\\\n[dlltool]\\\\ndlltool = \"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\111\\\\\\\\\\\\\\\\mingw-extract\\\\\\\\\\\\\\\\mingw64\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\dlltool.exe\"')",
+      "Bash(rustup target *)",
+      "Bash(cargo build *)",
+      "Bash(cargo check *)"
     ]
   }
 }

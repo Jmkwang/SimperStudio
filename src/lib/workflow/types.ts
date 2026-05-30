@@ -60,6 +60,7 @@ export interface ExecutionHelpers {
   fetchNode: (nodeId: string) => WorkflowNode | undefined;
   getGlobalState?: (key: string) => any;
   executeWorkflow?: (workflowId: string, initialPayload: Record<string, any>) => Promise<any>;
+  signal?: AbortSignal;
 }
 
 export type NodeRouterFn = (
