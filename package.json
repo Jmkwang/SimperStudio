@@ -9,7 +9,11 @@
     "preview": "vite preview",
     "tauri": "PATH=$HOME/.cargo/bin:$PATH tauri",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package": "node build.js",
+    "package:clean": "node build.js --clean",
+    "package:frontend": "node build.js --frontend",
+    "package:backend": "node build.js --backend"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",

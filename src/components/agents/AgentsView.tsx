@@ -402,13 +402,14 @@ export function AgentsView() {
                     <div className="grid gap-2">
                       <Label>{t("Provider")}</Label>
                       <Select
-                        value={formData.providerId}
-                        onValueChange={(value: string) => setFormData({ ...formData, providerId: value, modelId: '' })}
+                        value={formData.providerId || '__none__'}
+                        onValueChange={(value: string) => setFormData({ ...formData, providerId: value === '__none__' ? '' : value, modelId: '' })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={t("Select a provider")} />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="__none__">{t("Select a provider")}</SelectItem>
                           {providers.filter(p => p.isEnabled).map((p) => (
                             <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                           ))}
@@ -419,14 +420,15 @@ export function AgentsView() {
                     <div className="grid gap-2">
                       <Label>{t("Model")}</Label>
                       <Select
-                        value={formData.modelId}
-                        onValueChange={(value: string) => setFormData({ ...formData, modelId: value })}
+                        value={formData.modelId || '__none__'}
+                        onValueChange={(value: string) => setFormData({ ...formData, modelId: value === '__none__' ? '' : value })}
                         disabled={!formData.providerId}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={formData.providerId ? t("Select a model") : t("Select a provider first")} />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="__none__">{t("Select a model")}</SelectItem>
                           {providers
                             .find((p) => p.id === formData.providerId)
                             ?.models.map((m) => (

@@ -4,6 +4,9 @@ import App from "./App";
 import "./globals.css";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 
+// Disable browser context menu in the desktop app
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="simper-studio-theme">

@@ -1,29 +1,33 @@
-# node_modules
+# Dependencies
 node_modules/
+package-lock.json
+
+# Build outputs
 dist/
 dist-ssr/
 *.local
 
-# claude
-.claude/worktrees/
-
-# tauri
+# Tauri
 src-tauri/target/
 src-tauri/Cargo.lock
+src-tauri/bundle/
+src-tauri/gen/
+src-tauri/.cargo/
 
-# database
+# Database & Config (sensitive data)
 src-tauri/simperstudio.db
-
-# config (contains API keys)
 config/
+.env
+.env.local
+.env.*.local
 
-# logs
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# editor
+# Editor & IDE
 .vscode/
 .idea/
 *.suo
@@ -31,5 +35,47 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+*~
+.vscode-workspace
+.vscode/extensions/
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+*.sublime-workspace
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/worktrees/
 .claude/settings.local.json
+.claude/memory/
+.claude/scheduled-tasks/
+
+# Build artifacts & Installers
+*.dmg
+*.exe
+*.msi
+*.AppImage
+*.deb
+src-tauri/target/x86_64-pc-windows-msvc/release/bundle/
+
+# Test & Coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Screenshots and test data (development)
+*.png
+*.jpg
+*.jpeg
+test-*.json
+test-*.js

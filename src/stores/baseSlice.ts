@@ -247,7 +247,14 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         createdAt: Date.now()
       };
       try {
-        const agentToSave = { ...newAgent, parameters: JSON.stringify(newAgent.parameters || {}) };
+        const agentToSave = {
+          ...newAgent,
+          // Ensure required DB fields are never undefined/null
+          modelProvider: newAgent.modelProvider || 'local',
+          modelId: newAgent.modelId || 'default',
+          temperature: newAgent.temperature ?? 0.7,
+          parameters: JSON.stringify(newAgent.parameters || {}),
+        };
         await invoke('add_agent', { agent: agentToSave });
       } catch (error) {
         console.error('Failed to persist agent to DB, using in-memory only:', error);

@@ -237,12 +237,12 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                 <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">{t("Model Fallback Chain")}</h5>
                 <div className="grid gap-2">
                   <Label className="text-xs">{t("Fallback Agent")}</Label>
-                  <Select value={fallbackAgentId} onValueChange={setFallbackAgentId}>
+                  <Select value={fallbackAgentId || '__none__'} onValueChange={(v) => setFallbackAgentId(v === '__none__' ? '' : v)}>
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("None")}</SelectItem>
+                      <SelectItem value="__none__">{t("None")}</SelectItem>
                       {agents.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.name}
@@ -254,9 +254,9 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                 <div className="grid gap-2">
                   <Label className="text-xs">{t("Fallback Provider")}</Label>
                   <Select
-                    value={fallbackProviderId}
+                    value={fallbackProviderId || '__none__'}
                     onValueChange={(v) => {
-                      setFallbackProviderId(v);
+                      setFallbackProviderId(v === '__none__' ? '' : v);
                       setFallbackModelId('');
                     }}
                   >
@@ -264,7 +264,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("None")}</SelectItem>
+                      <SelectItem value="__none__">{t("None")}</SelectItem>
                       {providers.filter(p => p.isEnabled).map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
@@ -276,15 +276,15 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                 <div className="grid gap-2">
                   <Label className="text-xs">{t("Fallback Model")}</Label>
                   <Select
-                    value={fallbackModelId}
-                    onValueChange={setFallbackModelId}
+                    value={fallbackModelId || '__none__'}
+                    onValueChange={(v) => setFallbackModelId(v === '__none__' ? '' : v)}
                     disabled={!fallbackProviderId}
                   >
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder={fallbackProviderId ? 'Select model' : 'Select provider first'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("Default")}</SelectItem>
+                      <SelectItem value="__none__">{t("Default")}</SelectItem>
                       {selectedFallbackProvider?.models.map((m) => (
                         <SelectItem key={m.id} value={m.modelId}>
                           {m.name}

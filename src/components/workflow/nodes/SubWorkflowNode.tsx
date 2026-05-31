@@ -61,9 +61,10 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <Label>{t("Target Workflow")}</Label>
-                <Select value={subWorkflowId} onValueChange={setSubWorkflowId}>
+                <Select value={subWorkflowId || '__none__'} onValueChange={(v) => setSubWorkflowId(v === '__none__' ? '' : v)}>
                   <SelectTrigger><SelectValue placeholder="Select a workflow" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="__none__">Select a workflow</SelectItem>
                     {workflows.filter(w => w.id !== id).map(w => (
                       <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                     ))}

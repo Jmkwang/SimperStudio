@@ -127,12 +127,15 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">Node-level Overrides (local only)</h5>
                 <div className="grid gap-2">
                   <Label className="text-xs">{t("Override Provider")}</Label>
-                  <Select value={overrideProviderId} onValueChange={(v) => { setOverrideProviderId(v); setOverrideModelId(''); }}>
+                  <Select
+                    value={overrideProviderId || '__none__'}
+                    onValueChange={(v) => { setOverrideProviderId(v === '__none__' ? '' : v); setOverrideModelId(''); }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Use agent default" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("Use agent default")}</SelectItem>
+                      <SelectItem value="__none__">{t("Use agent default")}</SelectItem>
                       {providers.filter(p => p.isEnabled).map(p => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
@@ -141,12 +144,16 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 </div>
                 <div className="grid gap-2">
                   <Label className="text-xs">{t("Override Model")}</Label>
-                  <Select value={overrideModelId} onValueChange={setOverrideModelId} disabled={!overrideProviderId}>
+                  <Select
+                    value={overrideModelId || '__none__'}
+                    onValueChange={(v) => setOverrideModelId(v === '__none__' ? '' : v)}
+                    disabled={!overrideProviderId}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder={overrideProviderId ? "Use provider default" : "Select a provider first"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("Use provider default")}</SelectItem>
+                      <SelectItem value="__none__">{t("Use provider default")}</SelectItem>
                       {selectedOverrideProvider?.models.map(m => (
                         <SelectItem key={m.id} value={m.modelId}>{m.name}</SelectItem>
                       ))}
