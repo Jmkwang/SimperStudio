@@ -262,11 +262,15 @@ export function SettingsModelsTab() {
           <div className="flex flex-col gap-1">
             {settings.providers.map(provider => (
               <div key={provider.id} onClick={trackClick(() => setSelectedProviderId(provider.id), 'provider:select')} data-debug-source="SettingsModelsTab" data-debug-action="provider:select" className={cn(
-                "group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors",
+                "group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors relative overflow-hidden",
                 selectedProviderId === provider.id
                   ? "bg-primary/10 border border-primary/20"
                   : "hover:bg-muted/50 border border-transparent"
               )}>
+                {/* Green enabled indicator bar */}
+                {provider.isEnabled && (
+                  <div className="absolute right-0 top-0 bottom-0 w-0.5 rounded-r-lg bg-green-500" />
+                )}
                 <div className={cn("flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold shrink-0 overflow-hidden", provider.avatar ? '' : (PROVIDER_COLORS[provider.type] || 'bg-muted text-muted-foreground'))}>
                   {provider.avatar
                     ? (provider.avatar.startsWith('http') || provider.avatar.startsWith('/'))
@@ -280,12 +284,6 @@ export function SettingsModelsTab() {
                   <div className="text-xs text-muted-foreground truncate">{provider.baseUrl || `(${t('Empty')})`}</div>
                 </div>
                 <div className="flex items-center gap-1">
-                  {settings.activeProviderId === provider.id && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">{t('Current Provider')}</span>
-                  )}
-                  {provider.isEnabled && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-medium">{t('ON')}</span>
-                  )}
                   <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-opacity", selectedProviderId === provider.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
                 </div>
               </div>

@@ -112,6 +112,7 @@ export const dynamicAgentExecute: NodeExecutorFn = async (node, payload, helpers
 
     let result = '';
     for await (const chunk of textStream) {
+      if (helpers.signal?.aborted) break;
       result += chunk;
     }
 

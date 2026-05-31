@@ -21,11 +21,19 @@ interface AgentCardProps {
   providers: any[];
   onToggle: (id: string) => void;
   onEdit: (agent: any) => void;
+  onDelete: (id: string, name: string) => void;
   t: (key: string) => string;
   isNew?: boolean;
 }
 
-function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, t, isNew }: AgentCardProps) {
+function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, onDelete, t, isNew }: AgentCardProps) {
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setCtxMenu({ x: e.clientX, y: e.clientY });
+  };
+
   return (
     <div
       className={cn(
@@ -39,7 +47,31 @@ function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, 
           onEdit(agent);
         }
       }}
+      onContextMenu={handleContextMenu}
     >
+      {ctxMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={e => { e.stopPropagation(); setCtxMenu(null); }} />
+          <div
+            className="fixed z-50 min-w-[140px] rounded-lg border bg-popover p-1 shadow-md"
+            style={{ left: ctxMenu.x, top: ctxMenu.y }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => { setCtxMenu(null); onEdit(agent); }}
+              className="w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
+            >
+              {t('Edit Agent')}
+            </button>
+            <button
+              onClick={() => { setCtxMenu(null); onDelete(agent.id, agent.name); }}
+              className="w-full text-left px-3 py-1.5 text-sm rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              {t('Delete')}
+            </button>
+          </div>
+        </>
+      )}
       {bulkMode && (
         <div
           className="absolute top-2 right-2 z-10"
@@ -101,6 +133,7 @@ export function AgentsView() {
   const setSelectedAgentCategory = useAppStore(state => state.setSelectedAgentCategory);
   const addAgent = useAppStore(state => state.addAgent);
   const updateAgent = useAppStore(state => state.updateAgent);
+  const deleteAgent = useAppStore(state => state.deleteAgent);
   const settings = useAppStore(state => state.settings);
   const providers = settings.providers || [];
   const [isOpen, setIsOpen] = useState(false);
@@ -116,6 +149,7 @@ export function AgentsView() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   const defaultAgentState = {
     name: '',
@@ -143,6 +177,16 @@ export function AgentsView() {
       setActiveAgent(null);
     }
   }, [activeAgentId, setActiveAgent]);
+
+  const handleDeleteRequest = (id: string, name: string) => {
+    setDeleteConfirm({ id, name });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    await deleteAgent(deleteConfirm.id);
+    setDeleteConfirm(null);
+  };
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -489,6 +533,7 @@ export function AgentsView() {
                       providers={providers}
                       onToggle={toggleSelection}
                       onEdit={handleEdit}
+                      onDelete={handleDeleteRequest}
                       t={t}
                       isNew={recentAgentIds.has(agent.id)}
                     />
@@ -536,6 +581,7 @@ export function AgentsView() {
                         providers={providers}
                         onToggle={toggleSelection}
                         onEdit={handleEdit}
+                        onDelete={handleDeleteRequest}
                         t={t}
                       />
                     ))}
@@ -595,6 +641,17 @@ export function AgentsView() {
             >
               {t('Apply')}
             </Button>
+            <div className="h-4 w-px bg-border" />
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={trackClick(() => {
+                Array.from(selectedIds).forEach(id => deleteAgent(id));
+                exitBulkMode();
+              }, 'agent:bulkDelete')}
+            >
+              {t('删除智能体')}
+            </Button>
             <Button
               size="sm"
               variant="ghost"
@@ -605,6 +662,22 @@ export function AgentsView() {
           </div>
         )}
       </div>
+
+      {/* Delete confirm dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-popover rounded-xl border p-6 shadow-lg min-w-[280px]" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold mb-1">{t('Delete')}</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('确定删除')} <span className="font-medium text-foreground">"{deleteConfirm.name}"</span>？
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setDeleteConfirm(null)}>{t('取消')}</Button>
+              <Button variant="destructive" size="sm" onClick={handleDeleteConfirm}>{t('确定')}</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

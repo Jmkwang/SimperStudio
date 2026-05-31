@@ -18,29 +18,30 @@ export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
     return { ...payload, _error: `Agent not found: ${agentId}` };
   }
 
-  // Build prompt from payload context
-  const promptText = typeof payload === 'object'
-    ? JSON.stringify(payload, null, 2)
-    : String(payload);
+  // Build prompt: use node's prompt template if provided, otherwise fall back to serialized payload
+  const rawPrompt = data.prompt
+    ? helpers.replaceTemplateVars(String(data.prompt), payload)
+    : (typeof payload === 'object' ? JSON.stringify(payload, null, 2) : String(payload));
 
-  // Node-level overrides
+  // Node-level overrides — only override system prompt if explicitly set, NOT from data.prompt
   const nodeData = {
     overrideProviderId: data.overrideProviderId,
     overrideModelId: data.overrideModelId,
-    overrideSystemPrompt: data.overrideSystemPrompt || data.prompt || undefined,
+    overrideSystemPrompt: data.overrideSystemPrompt || undefined,
   };
 
   try {
     const config = resolveAgentModelConfig(agent, nodeData, settings);
     const systemPrompt = nodeData.overrideSystemPrompt || agent.systemPrompt;
 
-    const { textStream } = await fetchFromResolvedConfig(config, promptText, systemPrompt, {
+    const { textStream } = await fetchFromResolvedConfig(config, rawPrompt, systemPrompt, {
       maxTokens: agent.maxTokens,
       temperature: agent.temperature,
     });
 
     let result = '';
     for await (const chunk of textStream) {
+      if (helpers.signal?.aborted) break;
       result += chunk;
     }
 

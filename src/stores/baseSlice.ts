@@ -65,6 +65,7 @@ export interface BaseSlice {
 
   addWorkspace: (name: string, description?: string) => void;
   addAgent: (agent: Omit<Agent, 'id' | 'createdAt'>) => Promise<void>;
+  deleteAgent: (id: string) => Promise<void>;
   updateAgent: (id: string, updates: Partial<Agent>) => void;
   batchUpdateAgents: (ids: string[], updates: Partial<Agent>) => void;
   addAgentCategory: (category: Omit<AgentCategory, 'id' | 'createdAt'>) => void;
@@ -255,6 +256,15 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
       }
       const nextAgents = [...get().agents, newAgent];
       set({ agents: nextAgents });
+    },
+
+    deleteAgent: async (id) => {
+      try {
+        await invoke('delete_agent', { id });
+      } catch (error) {
+        console.error('Failed to delete agent from DB:', error);
+      }
+      set((state: any) => ({ agents: state.agents.filter((a: Agent) => a.id !== id) }));
     },
 
     updateAgent: async (id, updates) => {

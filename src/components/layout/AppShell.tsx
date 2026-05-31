@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { MergedSidebar } from "./MergedSidebar"
+import { TitleBar } from "./TitleBar"
 import { DebugBadge } from "@/components/debug/DebugBadge"
 import { DebugOverlay } from "@/components/debug/DebugOverlay"
 import { useAppStore } from '@/stores'
@@ -31,13 +32,16 @@ export function AppShell({
   }, [toggleDebugMode])
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background font-sans text-foreground">
-      {showSidebar && <MergedSidebar />}
-      <div className="relative flex flex-col flex-1 overflow-hidden bg-background">
-        <DebugBadge id="AppShell" position="bottom-right" />
-        <main className="flex-1 overflow-hidden bg-background flex flex-col">
-          {children}
-        </main>
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-background font-sans text-foreground">
+      <TitleBar />
+      <div className="flex flex-1 overflow-hidden">
+        {showSidebar && <MergedSidebar />}
+        <div className="relative flex flex-col flex-1 overflow-hidden bg-background">
+          <DebugBadge id="AppShell" position="bottom-right" />
+          <main className="flex-1 overflow-hidden bg-background flex flex-col">
+            {children}
+          </main>
+        </div>
       </div>
       {debugMode && <DebugOverlay />}
     </div>
