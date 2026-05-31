@@ -277,6 +277,7 @@ export interface ModelProvider {
   id: string;
   name: string;
   type: 'openai' | 'anthropic' | 'gemini' | 'siliconflow' | 'deepseek' | 'custom';
+  avatar?: string; // URL or emoji for provider icon
   apiKey: string;
   baseUrl: string;
   isEnabled: boolean;
@@ -294,6 +295,11 @@ export interface Settings {
   remoteAccessPort: number;
   fontSize?: number; // percentage, e.g. 100 = default, 115 = 115%
   executionFeedback?: boolean; // screen shake + toast on workflow complete
+  autoTitle?: {
+    enabled: boolean;
+    providerId?: string; // null/undefined = use active provider
+    modelId?: string;
+  };
   cliTools?: {
     defaultWorkingDir?: string;
     allowedExecutables?: string[];

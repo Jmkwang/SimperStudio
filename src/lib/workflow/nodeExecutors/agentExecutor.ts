@@ -108,12 +108,12 @@ export const agentExecute: NodeExecutorFn = async (node, payload, helpers) => {
         nodeId: node.id,
         iterationIndex: payload.loop.index,
         iterationItem: payload.loop.currentItem,
-        output: result,
+        llmResult: result,
         timestamp: Date.now(),
       });
     }
 
-    return { ...payload, output: result };
+    return { ...payload, llmResult: result };
 
   } catch (e: any) {
     const detail = e.message || String(e);

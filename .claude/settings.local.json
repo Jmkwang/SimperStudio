@@ -113,7 +113,11 @@
       "Bash(echo '[target.x86_64-pc-windows-gnu]\\\\nlinker = \"gcc.exe\"\\\\n[dlltool]\\\\ndlltool = \"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\111\\\\\\\\\\\\\\\\mingw-extract\\\\\\\\\\\\\\\\mingw64\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\dlltool.exe\"')",
       "Bash(rustup target *)",
       "Bash(cargo build *)",
-      "Bash(cargo check *)"
+      "Bash(cargo check *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Read(//usr/local/**)",
+      "Read(//usr/**)",
+      "Bash(\"D:/Node.js/node.exe\" \"node_modules/vitest/vitest.mjs\" run src/lib/workflow/nodeExecutors/__tests__/dynamicAgentExecutor.test.ts)"
     ]
   }
 }

@@ -143,6 +143,15 @@ export const cliAgentExecute: NodeExecutorFn = async (node, payload, helpers) =>
     return { ...payload, _error: 'CLI Agent: no executable specified' };
   }
 
+  // Whitelist check
+  const allowedExecutables: string[] | undefined = helpers.getGlobalState?.('settings')?.cliTools?.allowedExecutables;
+  if (Array.isArray(allowedExecutables) && allowedExecutables.length > 0) {
+    const execName = executable.split(/[\\/]/).pop() || executable;
+    if (!allowedExecutables.includes(execName) && !allowedExecutables.includes(executable)) {
+      return { ...payload, _error: `CLI Agent: "${execName}" is not in the allowed executables list` };
+    }
+  }
+
   // 2. Resolve working directory
   let workingDir = data.workingDir
     ? helpers.replaceTemplateVars(data.workingDir, payload)

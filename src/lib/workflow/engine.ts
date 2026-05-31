@@ -208,8 +208,12 @@ export async function executeWorkflow(
   // Expose accumulated loop results under the public field name so callers
   // can access all iteration outputs without them being overwritten by
   // the last iteration's llmResult.
-  if (Array.isArray(finalPayload._loopResults) && finalPayload._loopResults.length > 0) {
-    finalPayload.loopResults = finalPayload._loopResults;
+  // Search all node results for _loopResults in case finalPayload lost the
+  // reference through structuredClone (e.g. output node pass-through).
+  const allLoopResults = finalPayload._loopResults
+    ?? Object.values(results).find((r: any) => Array.isArray(r?._loopResults))?._loopResults;
+  if (Array.isArray(allLoopResults) && allLoopResults.length > 0) {
+    finalPayload.loopResults = allLoopResults;
   }
 
   onStateChange?.({ status: 'completed', currentNodeId: null, results, nodeRecords });

@@ -137,20 +137,6 @@ async function handleLoopRouting(
     return { nextFrames: [], skipDefault: true };
   }
 
-  // Before computing next iterations, capture the current llmResult into
-  // the shared _loopResults accumulator so it survives across iterations.
-  // This prevents each iteration's agent result from overwriting the previous one.
-  if (payload.llmResult !== undefined) {
-    if (!Array.isArray(payload._loopResults)) {
-      payload._loopResults = [];
-    }
-    payload._loopResults.push(payload.llmResult);
-  }
-  // Also capture into a per-iteration structured form for downstream consumption
-  if (payload.loopNodeId === node.id && payload._loopResults) {
-    payload._loopResults = payload._loopResults;
-  }
-
   const loopResult = await computeLoopIterations(node, payload, helpers);
   const nextFrames: Array<{ nodeId: string; payload: any }> = [];
 

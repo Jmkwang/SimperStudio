@@ -252,7 +252,12 @@ type ExprNode =
   | { type: 'ternary'; condition: ExprNode; trueBranch: ExprNode; falseBranch: ExprNode };
 
 function resolveIdent(name: string, payload: any): any {
-  const parts = name.split('.');
+  // Strip the conventional "payload." prefix so expressions like
+  // "payload.value > 10" resolve against the payload object directly.
+  const normalizedName = name.startsWith('payload.') ? name.slice('payload.'.length) : name;
+  const parts = normalizedName.split('.');
+  // If the first segment is "payload" itself (bare reference), return the whole object.
+  if (normalizedName === 'payload') return payload;
   let value = payload;
   for (const part of parts) {
     if (value === null || value === undefined) return undefined;

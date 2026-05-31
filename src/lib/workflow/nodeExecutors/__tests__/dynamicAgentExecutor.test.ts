@@ -255,6 +255,7 @@ describe('dynamicAgentExecute', () => {
       expect.anything(),
       'Task: analyze this',
       'Test.',
+      expect.objectContaining({ maxTokens: undefined, temperature: undefined }),
     );
   });
 

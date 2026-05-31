@@ -22,9 +22,10 @@ import { v4 as uuidv4 } from 'uuid';
 const PROVIDER_DEFAULTS: Record<string, { name: string; baseUrl: string; defaultModel: string }> = {
   openai: { name: 'OpenAI', baseUrl: 'https://api.openai.com', defaultModel: 'gpt-4o' },
   anthropic: { name: 'Anthropic', baseUrl: 'https://api.anthropic.com', defaultModel: 'claude-sonnet-4-5' },
-  gemini: { name: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com', defaultModel: 'gemini-2.0-flash' },
+  gemini: { name: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com', defaultModel: 'gemini-2.5-flash-preview-05-20' },
   deepseek: { name: 'DeepSeek', baseUrl: 'https://api.deepseek.com', defaultModel: 'deepseek-chat' },
   siliconflow: { name: 'SiliconFlow', baseUrl: 'https://api.siliconflow.cn', defaultModel: 'deepseek-ai/DeepSeek-V3' },
+  kimi: { name: 'Kimi', baseUrl: 'https://api.moonshot.cn', defaultModel: 'kimi-k2-0711-preview' },
   custom: { name: 'Custom', baseUrl: '', defaultModel: 'gpt-4o' },
 };
 
@@ -34,6 +35,7 @@ const PROVIDER_COLORS: Record<string, string> = {
   gemini: 'bg-sky-500/20 text-sky-600 dark:text-sky-400',
   deepseek: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
   siliconflow: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
+  kimi: 'bg-violet-500/20 text-violet-600 dark:text-violet-400',
   custom: 'bg-primary/20 text-primary',
 };
 
@@ -262,8 +264,13 @@ export function SettingsModelsTab() {
                   ? "bg-primary/10 border border-primary/20"
                   : "hover:bg-muted/50 border border-transparent"
               )}>
-                <div className={cn("flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold shrink-0", PROVIDER_COLORS[provider.type] || 'bg-muted text-muted-foreground')}>
-                  {provider.name.charAt(0).toUpperCase()}
+                <div className={cn("flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold shrink-0 overflow-hidden", provider.avatar ? '' : (PROVIDER_COLORS[provider.type] || 'bg-muted text-muted-foreground'))}>
+                  {provider.avatar
+                    ? (provider.avatar.startsWith('http') || provider.avatar.startsWith('/'))
+                      ? <img src={provider.avatar} alt={provider.name} className="w-full h-full object-cover" />
+                      : <span>{provider.avatar}</span>
+                    : provider.name.charAt(0).toUpperCase()
+                  }
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{provider.name}</div>
@@ -321,6 +328,35 @@ export function SettingsModelsTab() {
               </div>
 
               <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
+                {/* Avatar */}
+                <div className="flex flex-col items-center gap-3 pb-4 border-b">
+                  <div className={cn(
+                    "flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold shrink-0 overflow-hidden",
+                    selectedProvider.avatar ? '' : (PROVIDER_COLORS[selectedProvider.type] || 'bg-muted text-muted-foreground')
+                  )}>
+                    {selectedProvider.avatar
+                      ? (selectedProvider.avatar.startsWith('http') || selectedProvider.avatar.startsWith('/'))
+                        ? <img src={selectedProvider.avatar} alt={selectedProvider.name} className="w-full h-full object-cover" />
+                        : <span>{selectedProvider.avatar}</span>
+                      : selectedProvider.name.charAt(0).toUpperCase()
+                    }
+                  </div>
+                  <div className="flex items-center gap-2 w-full max-w-xs">
+                    <Input
+                      placeholder={t('Avatar URL or emoji (e.g. 🤖 or https://...)')}
+                      value={selectedProvider.avatar || ''}
+                      onChange={(e) => updateProvider(selectedProvider.id, { avatar: e.target.value })}
+                      className="h-8 text-xs"
+                    />
+                    {selectedProvider.avatar && (
+                      <Button variant="ghost" size="sm" className="h-8 px-2 shrink-0 text-muted-foreground"
+                        onClick={() => updateProvider(selectedProvider.id, { avatar: '' })}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Name */}
                 <div className="space-y-2">
                   <Label>{t("Name")}</Label>

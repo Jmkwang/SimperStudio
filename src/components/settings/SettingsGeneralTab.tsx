@@ -28,6 +28,12 @@ export function SettingsGeneralTab() {
     document.documentElement.style.fontSize = `${settings.fontSize ?? 100}%`;
   }, [settings.fontSize]);
 
+  // Auto-title settings helpers
+  const autoTitle = settings.autoTitle ?? { enabled: true };
+  const enabledProviders = (settings.providers ?? []).filter(p => p.isEnabled);
+  const selectedProvider = enabledProviders.find(p => p.id === autoTitle.providerId) ?? enabledProviders[0];
+  const availableModels = selectedProvider?.models ?? [];
+
   return (
     <div className="max-w-xl space-y-6">
       <div>
@@ -130,6 +136,78 @@ export function SettingsGeneralTab() {
             onCheckedChange={(checked: boolean) => updateSettings({ executionFeedback: checked })}
           />
         </div>
+      </div>
+
+      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>{t("Auto-summarize Topic")}</Label>
+            <div className="text-sm text-muted-foreground">
+              {t('Automatically generate a title from the first message in a new session')}
+            </div>
+          </div>
+          <Switch
+            checked={autoTitle.enabled}
+            onCheckedChange={(checked: boolean) =>
+              updateSettings({ autoTitle: { ...autoTitle, enabled: checked } })
+            }
+          />
+        </div>
+
+        {autoTitle.enabled && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('Provider')}</Label>
+              <Select
+                value={autoTitle.providerId ?? '__active__'}
+                onValueChange={val =>
+                  updateSettings({
+                    autoTitle: {
+                      ...autoTitle,
+                      providerId: val === '__active__' ? undefined : val,
+                      modelId: undefined,
+                    },
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder={t('Use active provider')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__active__">{t('Use active provider')}</SelectItem>
+                  {enabledProviders.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('Model')}</Label>
+              <Select
+                value={autoTitle.modelId ?? '__default__'}
+                onValueChange={val =>
+                  updateSettings({
+                    autoTitle: {
+                      ...autoTitle,
+                      modelId: val === '__default__' ? undefined : val,
+                    },
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder={t('Use default model')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__default__">{t('Use default model')}</SelectItem>
+                  {availableModels.map(m => (
+                    <SelectItem key={m.id} value={m.modelId}>{m.name || m.modelId}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

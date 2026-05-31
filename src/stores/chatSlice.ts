@@ -509,6 +509,10 @@ export function createChatSlice(set: any, get: any): ChatSlice {
           activeStreamingSessionIds: state.activeStreamingSessionIds.filter((id: string) => id !== sessionId),
         }));
       }
+
+      // Fire-and-forget auto-title: only on the first user message of a session
+      void autoGenerateTitle(sessionId, prompt, get);
+
       return messageId;
     },
 
@@ -814,4 +818,65 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       return undefined;
     },
   };
+}
+
+// ── Auto-title helper ──
+// Called fire-and-forget after the first user message in a session.
+// Silently skips on any error (disabled, no provider, API failure, etc.).
+async function autoGenerateTitle(sessionId: string, firstUserPrompt: string, get: () => any) {
+  try {
+    const state = get();
+    const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
+    if (!session) return;
+
+    // Only trigger on the very first user message (exactly 1 user message in session)
+    const userMessages = session.messages.filter((m: ChatMessage) => m.role === 'user');
+    if (userMessages.length !== 1) return;
+
+    const settings = state.settings;
+    const autoTitle = settings.autoTitle;
+
+    // Default: enabled unless explicitly disabled
+    if (autoTitle?.enabled === false) return;
+
+    // Resolve provider
+    const providers: any[] = settings.providers ?? [];
+    let provider: any;
+    if (autoTitle?.providerId) {
+      provider = providers.find((p: any) => p.id === autoTitle.providerId && p.isEnabled && p.apiKey);
+    }
+    if (!provider) {
+      // Fallback to active provider
+      provider = providers.find((p: any) => p.id === settings.activeProviderId && p.isEnabled && p.apiKey)
+        ?? providers.find((p: any) => p.isEnabled && p.apiKey);
+    }
+    if (!provider) return;
+
+    // Resolve model
+    let modelId: string | undefined = autoTitle?.modelId;
+    if (!modelId) {
+      const defaultModel = provider.models.find((m: any) => m.isDefault) ?? provider.models[0];
+      modelId = defaultModel?.modelId;
+    }
+    if (!modelId) return;
+
+    // Build a minimal virtual agent for resolveAgentModelConfig
+    const virtualAgent = { id: '__auto-title__', name: 'Auto Title', avatar: '', systemPrompt: '', providerId: provider.id, modelId };
+    const config = resolveAgentModelConfig(virtualAgent as any, {}, settings);
+
+    const titlePrompt = `Summarize the following message into a short topic title (max 20 characters, no punctuation, no quotes, respond with the title only):\n\n${firstUserPrompt.slice(0, 500)}`;
+    const { textStream } = await fetchFromResolvedConfig(config, titlePrompt, undefined, { maxTokens: 30 });
+
+    let title = '';
+    for await (const chunk of textStream) {
+      title += chunk;
+    }
+    title = title.trim().replace(/^["'「『]|["'」』]$/g, '').trim();
+    if (title && title.length > 0 && title.length <= 60) {
+      // Update in-memory state
+      get().renameSession(sessionId, title);
+    }
+  } catch {
+    // Silently ignore all errors — auto-title is best-effort
+  }
 }

@@ -38,7 +38,8 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           models: [
             { id: 'openai-gpt4o', name: 'GPT-4o', modelId: 'gpt-4o', isDefault: true },
             { id: 'openai-gpt4o-mini', name: 'GPT-4o Mini', modelId: 'gpt-4o-mini' },
-            { id: 'openai-gpt4-turbo', name: 'GPT-4 Turbo', modelId: 'gpt-4-turbo' },
+            { id: 'openai-o3', name: 'o3', modelId: 'o3' },
+            { id: 'openai-o4-mini', name: 'o4-mini', modelId: 'o4-mini' },
           ],
         },
         {
@@ -49,8 +50,9 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           baseUrl: 'https://api.anthropic.com/v1',
           isEnabled: false,
           models: [
-            { id: 'anthropic-sonnet', name: 'Claude 3.5 Sonnet', modelId: 'claude-3-5-sonnet-20240620', isDefault: true },
-            { id: 'anthropic-haiku', name: 'Claude 3 Haiku', modelId: 'claude-3-haiku-20240307' },
+            { id: 'anthropic-claude-opus-4', name: 'Claude Opus 4', modelId: 'claude-opus-4-5', isDefault: true },
+            { id: 'anthropic-claude-sonnet-4', name: 'Claude Sonnet 4', modelId: 'claude-sonnet-4-5' },
+            { id: 'anthropic-claude-haiku-4', name: 'Claude Haiku 4', modelId: 'claude-haiku-4-5' },
           ],
         },
         {
@@ -61,8 +63,9 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
           isEnabled: false,
           models: [
-            { id: 'gemini-pro', name: 'Gemini 1.5 Pro', modelId: 'gemini-1.5-pro-latest', isDefault: true },
-            { id: 'gemini-flash', name: 'Gemini 1.5 Flash', modelId: 'gemini-1.5-flash-latest' },
+            { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', modelId: 'gemini-2.5-pro-preview-06-05', isDefault: true },
+            { id: 'gemini-2-5-flash', name: 'Gemini 2.5 Flash', modelId: 'gemini-2.5-flash-preview-05-20' },
+            { id: 'gemini-2-0-flash', name: 'Gemini 2.0 Flash', modelId: 'gemini-2.0-flash' },
           ],
         },
         {
@@ -74,8 +77,8 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           isEnabled: false,
           apiFormat: 'openai-chat',
           models: [
-            { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', modelId: 'deepseek-v4-flash', isDefault: true },
-            { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', modelId: 'deepseek-v4-pro' },
+            { id: 'deepseek-chat', name: 'DeepSeek V3', modelId: 'deepseek-chat', isDefault: true },
+            { id: 'deepseek-reasoner', name: 'DeepSeek R1', modelId: 'deepseek-reasoner' },
           ],
         },
         {
@@ -87,7 +90,24 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           isEnabled: false,
           apiFormat: 'openai-chat',
           models: [
-            { id: 'siliconflow-deepseek-v3-2', name: 'DeepSeek-V3.2', modelId: 'deepseek-ai/DeepSeek-V3.2', isDefault: true },
+            { id: 'sf-deepseek-v3', name: 'DeepSeek-V3', modelId: 'deepseek-ai/DeepSeek-V3', isDefault: true },
+            { id: 'sf-deepseek-r1', name: 'DeepSeek-R1', modelId: 'deepseek-ai/DeepSeek-R1' },
+            { id: 'sf-qwen3-235b', name: 'Qwen3-235B-A22B', modelId: 'Qwen/Qwen3-235B-A22B' },
+          ],
+        },
+        {
+          id: 'kimi-default',
+          name: 'Kimi',
+          type: 'custom',
+          apiKey: '',
+          baseUrl: 'https://api.moonshot.cn',
+          isEnabled: false,
+          apiFormat: 'openai-chat',
+          models: [
+            { id: 'kimi-k2', name: 'Kimi K2', modelId: 'kimi-k2-0711-preview', isDefault: true },
+            { id: 'moonshot-v1-8k', name: 'Moonshot v1 8k', modelId: 'moonshot-v1-8k' },
+            { id: 'moonshot-v1-32k', name: 'Moonshot v1 32k', modelId: 'moonshot-v1-32k' },
+            { id: 'moonshot-v1-128k', name: 'Moonshot v1 128k', modelId: 'moonshot-v1-128k' },
           ],
         },
       ],

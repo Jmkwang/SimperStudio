@@ -5,38 +5,28 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
 
 type Mode = 'agent' | 'workflow'
+type WorkflowViewMode = 'grouped' | 'flat'
 
-/* ==================================================================
-   Nav item config per mode — clicking a nav item:
-   1) calls setCurrentView to switch the main content
-   2) Recents below automatically shows content matching that nav
-   ================================================================== */
-interface NavItem {
-  id: string
-  icon: string
-  labelKey: string
+const WF_VIEW_KEY = 'ss_wf_view_mode'
+
+function loadWfViewMode(): WorkflowViewMode {
+  try { return (localStorage.getItem(WF_VIEW_KEY) as WorkflowViewMode) || 'grouped' } catch { return 'grouped' }
 }
+function saveWfViewMode(m: WorkflowViewMode) {
+  try { localStorage.setItem(WF_VIEW_KEY, m) } catch {}
+}
+
+interface NavItem { id: string; labelKey: string }
 const AGENT_NAV: NavItem[] = [
-  { id: 'chat', icon: '💬', labelKey: '新增会话' },
-  { id: 'agents', icon: '🤖', labelKey: '智能体' },
-  { id: 'prompts', icon: '🪄', labelKey: '提示词' },
+  { id: 'chat', labelKey: '新增会话' },
+  { id: 'agents', labelKey: '智能体' },
+  { id: 'prompts', labelKey: '提示词' },
 ]
 const WORKFLOW_NAV: NavItem[] = [
-  { id: 'workflowChat', icon: '🔀', labelKey: '工作流会话' },
-  { id: 'workflow', icon: '⚡', labelKey: '工作流编辑器' },
-  { id: 'prompts', icon: '🪄', labelKey: '提示词' },
+  { id: 'workflowChat', labelKey: '工作流会话' },
+  { id: 'workflow', labelKey: '工作流编辑器' },
+  { id: 'prompts', labelKey: '提示词' },
 ]
-
-/* ───── helper: view → recents label ───── */
-function recentsLabelFor(navId: string): string {
-  switch (navId) {
-    case 'chat':           return '最近会话'
-    case 'agents':         return '智能体'
-    case 'workflowChat':   return '最近工作流会话'
-    case 'workflow':       return '工作流'
-    default:               return ''
-  }
-}
 
 export function MergedSidebar() {
   const { t } = useTranslation()
@@ -45,30 +35,38 @@ export function MergedSidebar() {
   const setCurrentView = useAppStore(s => s.setCurrentView)
   const sessions = useAppStore(s => s.sessions)
   const workflows = useAppStore(s => s.workflows)
-  const agents = useAppStore(s => s.agents)
   const renameSession = useAppStore(s => s.renameSession)
   const deleteSession = useAppStore(s => s.deleteSession)
-  const deleteWorkflow = useAppStore(s => s.deleteWorkflow)
-  const activeWorkflowId = useAppStore(s => s.activeWorkflowId)
   const activeSessionId = useAppStore(s => s.activeSessionId)
-  const setActiveWorkflow = useAppStore(s => s.setActiveWorkflow)
   const setActiveSession = useAppStore(s => s.setActiveSession)
 
-  /* ───── mode ───── */
   const [sidebarMode, setSidebarMode] = useState<Mode>('agent')
   const navItems = sidebarMode === 'agent' ? AGENT_NAV : WORKFLOW_NAV
 
-  /* ───── active nav (defaults to first item of mode) ───── */
-  const [activeNav, setActiveNav] = useState<string>('chat')
+  // workflow view mode: grouped or flat, persisted
+  const [wfViewMode, setWfViewMode] = useState<WorkflowViewMode>(loadWfViewMode)
+  const toggleWfViewMode = () => {
+    const next: WorkflowViewMode = wfViewMode === 'grouped' ? 'flat' : 'grouped'
+    setWfViewMode(next)
+    saveWfViewMode(next)
+  }
 
-  /* ───── dialogs & interaction state ───── */
+  // grouped: which workflow groups are expanded (default all collapsed — user expands on demand)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
+  const toggleGroup = (wfId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(wfId)) next.delete(wfId); else next.add(wfId)
+      return next
+    })
+  }
+
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null)
   const [menuItemId, setMenuItemId] = useState<string | null>(null)
   const [renameItemId, setRenameItemId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
 
-  /* ───── dark / colours ───── */
   const isDark = useMemo(() => {
     if (theme === 'dark') return true
     if (theme === 'light') return false
@@ -85,65 +83,161 @@ export function MergedSidebar() {
     border: isDark ? '#3a3a3a' : '#b0b0b0',
     pillBg: isDark ? '#262626' : '#ebebeb',
     activeText: isDark ? '#ffffff' : '#111111',
-    activeTextMuted: isDark ? '#ffffff' : '#111111',
     white: '#ffffff',
   }), [isDark])
 
-  /* ───── recents content depends on (mode, activeNav) ───── */
-  const recents = useMemo(() => {
-    // agent mode
-    if (sidebarMode === 'agent') {
-      if (activeNav === 'chat') {
-        return sessions
-          .filter(s => s.mode === 'single' || !s.workflowId)
-          .sort((a, b) => b.updatedAt - a.updatedAt)
-          .slice(0, 10)
-          .map(s => ({ id: s.id, title: s.title, time: formatTimeAgo(s.updatedAt) }))
+  // agent mode: flat list of single sessions
+  const agentRecents = useMemo(() =>
+    sessions
+      .filter(s => s.mode === 'single' || !s.workflowId)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, 20)
+  , [sessions])
+
+  // workflow mode: all workflow sessions
+  const wfSessions = useMemo(() =>
+    sessions
+      .filter(s => s.mode === 'workflow' && s.workflowId)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+  , [sessions])
+
+  // grouped: { wfId, wfName, sessions[] }[], sorted by most-recent session
+  const wfGroups = useMemo(() => {
+    const map = new Map<string, { wfId: string; wfName: string; sessions: typeof wfSessions }>()
+    for (const s of wfSessions) {
+      const wfId = s.workflowId!
+      if (!map.has(wfId)) {
+        const wf = workflows.find(w => w.id === wfId)
+        map.set(wfId, { wfId, wfName: wf?.name || wfId, sessions: [] })
       }
-      if (activeNav === 'agents') {
-        return agents.map(a => ({ id: a.id, title: a.name, time: '' }))
-      }
-      return []
+      map.get(wfId)!.sessions.push(s)
     }
+    return Array.from(map.values())
+  }, [wfSessions, workflows])
 
-    // workflow mode
-    if (activeNav === 'workflowChat') {
-      return sessions
-        .filter(s => s.mode === 'workflow' && s.workflowId)
-        .sort((a, b) => b.updatedAt - a.updatedAt)
-        .slice(0, 10)
-        .map(s => ({ id: s.id, title: s.title, time: formatTimeAgo(s.updatedAt) }))
-    }
-    if (activeNav === 'workflow') {
-      return workflows.map(w => ({ id: w.id, title: w.name, time: formatTimeAgo(w.updatedAt) }))
-    }
-    return []
-  }, [sidebarMode, activeNav, sessions, workflows, agents])
+  const rLabel = sidebarMode === 'agent' ? '最近会话' : '最近工作流会话'
 
-  const rLabel = recentsLabelFor(activeNav)
-
-  /* ───── nav click — navigates to new-chat / new-workflow views ───── */
   const handleNavClick = (item: NavItem) => {
-    setActiveNav(item.id)
-    if (item.id === 'chat') {
-      setCurrentView('new-chat')
-    } else if (item.id === 'workflowChat') {
-      setCurrentView('new-workflow')
-    } else {
-      setCurrentView(item.id)
+    if (item.id === 'chat') setCurrentView('new-chat')
+    else if (item.id === 'workflowChat') setCurrentView('new-workflow')
+    else setCurrentView(item.id)
+  }
+
+  const cycleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
+  const themeIcon = theme === 'dark' ? '🌙' : '☀️'
+
+  // Export a session as JSON
+  const handleExportSession = (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId)
+    if (!session) return
+    const data = {
+      id: session.id,
+      title: session.title,
+      mode: session.mode,
+      workflowId: session.workflowId,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      messages: session.messages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp,
+        meta: m.meta,
+        agentResponses: m.agentResponses?.map(r => ({
+          agentId: r.agentId,
+          nodeId: r.nodeId,
+          content: r.content,
+          status: r.status,
+          tokenUsage: r.tokenUsage,
+          duration: r.duration,
+        })),
+      })),
     }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${session.title.replace(/[/\\?%*:|"<>]/g, '-') || 'session'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setMenuItemId(null)
   }
 
-  /* ───── theme ───── */
-  const cycleTheme = () => {
-    const order: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system']
-    const idx = order.indexOf(theme)
-    setTheme(order[(idx + 1) % order.length])
+  // Shared session row renderer
+  const renderSessionRow = (session: { id: string; title: string; updatedAt: number }, indent = false) => {
+    const isSelected = activeSessionId === session.id
+    const isHovered = hoveredItemId === session.id
+    return (
+      <button
+        key={session.id}
+        onClick={() => {
+          setActiveSession(session.id)
+          setCurrentView(sidebarMode === 'workflow' ? 'workflowChat' : 'chat')
+        }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          height: 30, paddingLeft: indent ? 24 : 12, paddingRight: 12,
+          borderRadius: 6, width: '100%', border: 'none', position: 'relative',
+          background: isSelected ? c.active : 'transparent',
+          color: isSelected ? c.activeText : c.text,
+          fontSize: '0.8125rem', cursor: 'pointer', textAlign: 'left',
+          transition: 'background 150ms ease',
+        }}
+        onMouseEnter={e => { setHoveredItemId(session.id); e.currentTarget.style.background = c.hover }}
+        onMouseLeave={e => { setHoveredItemId(null); e.currentTarget.style.background = isSelected ? c.active : 'transparent' }}
+      >
+        {isSelected && (
+          <span style={{
+            position: 'absolute', left: indent ? 12 : -4, top: '50%', transform: 'translateY(-50%)',
+            width: 3, height: 16, borderRadius: '0 3px 3px 0', background: c.indicator, flexShrink: 0,
+          }} />
+        )}
+        <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? c.indicator : c.textDim, flexShrink: 0 }} />
+        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {session.title}
+        </span>
+        {!isHovered && (
+          <span style={{ fontSize: '0.7rem', color: c.textDim, flexShrink: 0 }}>{formatTimeAgo(session.updatedAt)}</span>
+        )}
+        {isHovered && (
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={e => { e.stopPropagation(); setMenuItemId(menuItemId === session.id ? null : session.id) }}
+              style={{
+                width: 18, height: 18, borderRadius: 4, border: 'none',
+                background: 'transparent', color: c.textMuted, fontSize: '0.75rem',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 0, lineHeight: 1,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = c.text }}
+              onMouseLeave={e => { e.currentTarget.style.color = c.textMuted }}
+              title={t('更多')}
+            >⋮</button>
+            {menuItemId === session.id && (
+              <div style={{
+                position: 'absolute', right: 0, top: '100%', zIndex: 50,
+                background: c.bg, border: `1px solid ${c.border}`,
+                borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                minWidth: 120, padding: 4,
+              }}>
+                {[
+                  { label: t('重命名'), color: c.text, onClick: () => { setRenameItemId(session.id); setRenameValue(session.title); setMenuItemId(null) } },
+                  { label: t('导出'), color: c.text, onClick: () => handleExportSession(session.id) },
+                  { label: t('删除'), color: '#ef4444', onClick: () => { setDeleteItem({ id: session.id, name: session.title }); setMenuItemId(null) } },
+                ].map(item => (
+                  <button key={item.label} onClick={e => { e.stopPropagation(); item.onClick() }}
+                    style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: item.color, fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
+                    onMouseEnter={e => e.currentTarget.style.background = c.hover}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >{item.label}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </button>
+    )
   }
-  const themeIcon = theme === 'dark' ? '🌙' : theme === 'system' ? '💻' : '☀️'
-
-  /* ───── render ───── */
-  const showDelete = activeNav === 'workflow' && sidebarMode === 'workflow'
 
   return (
     <aside className="flex flex-col select-none flex-shrink-0 m-1 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px', border: `1px solid ${c.border}` }}>
@@ -151,70 +245,41 @@ export function MergedSidebar() {
 
       {/* ══════ Mode Switcher ══════ */}
       <div style={{ display: 'flex', background: c.pillBg, borderRadius: 8, height: 36, flexShrink: 0, padding: 3 }}>
-        <button
-          onClick={() => { setSidebarMode('agent'); setActiveNav('chat'); setCurrentView('chat'); }}
-          style={{
-            flex: 1, border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            fontSize: '0.875rem', fontWeight: 500,
-            color: sidebarMode === 'agent' ? c.activeText : c.textMuted,
-            background: sidebarMode === 'agent' ? c.bg : 'transparent',
-            borderRadius: sidebarMode === 'agent' ? '6px' : '0',
-            transition: 'all 150ms ease-out',
-          }}
-          aria-pressed={sidebarMode === 'agent'}
-        >
-          <span>🤖</span> 智能体
-        </button>
-        <button
-          onClick={() => { setSidebarMode('workflow'); setActiveNav('workflowChat'); setCurrentView('workflowChat'); }}
-          style={{
-            flex: 1, border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            fontSize: '0.875rem', fontWeight: 500,
-            color: sidebarMode === 'workflow' ? c.activeText : c.textMuted,
-            background: sidebarMode === 'workflow' ? c.bg : 'transparent',
-            borderRadius: sidebarMode === 'workflow' ? '6px' : '0',
-            transition: 'all 150ms ease-out',
-          }}
-          aria-pressed={sidebarMode === 'workflow'}
-        >
-          <span>⚡</span> 工作流
-        </button>
+        {(['agent', 'workflow'] as const).map(mode => (
+          <button key={mode}
+            onClick={() => { setSidebarMode(mode); setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
+            style={{
+              flex: 1, border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.875rem', fontWeight: 500,
+              color: sidebarMode === mode ? c.activeText : c.textMuted,
+              background: sidebarMode === mode ? c.bg : 'transparent',
+              borderRadius: sidebarMode === mode ? '6px' : '0',
+              transition: 'all 150ms ease-out',
+            }}
+            aria-pressed={sidebarMode === mode}
+          >{mode === 'agent' ? '智能体' : '工作流'}</button>
+        ))}
       </div>
 
       {/* ══════ Nav Items ══════ */}
       <nav style={{ marginTop: 16, flexShrink: 0 }}>
         {navItems.map(item => {
-          const isActive = activeNav === item.id
           return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item)}
+            <button key={item.id} onClick={() => handleNavClick(item)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 height: 36, padding: '0 12px', borderRadius: 6,
                 width: '100%', border: 'none',
-                background: isActive ? c.active : 'transparent',
-                color: isActive ? c.activeText : c.text,
+                background: 'transparent',
+                color: c.text,
                 fontSize: '0.875rem', cursor: 'pointer',
                 position: 'relative', textAlign: 'left',
                 transition: 'background 150ms ease',
               }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = c.hover }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              {isActive && (
-                <span style={{
-                  position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)',
-                  width: 3, height: 18, borderRadius: '0 3px 3px 0',
-                  background: c.indicator,
-                }} />
-              )}
-              <span style={{
-                fontSize: '1rem', width: 20, textAlign: 'center', flexShrink: 0,
-                color: isActive ? c.indicator : c.textMuted,
-              }}>{item.icon}</span>
               <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {t(item.labelKey)}
               </span>
@@ -225,112 +290,76 @@ export function MergedSidebar() {
 
       {/* ══════ Recents ══════ */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', marginTop: 20 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 8, padding: '0 4px', flexShrink: 0,
-        }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', flexShrink: 0 }}>
           <span style={{ fontSize: '0.75rem', color: c.textMuted, fontWeight: 400 }}>{rLabel}</span>
+          {sidebarMode === 'workflow' && (
+            <button
+              onClick={toggleWfViewMode}
+              title={wfViewMode === 'grouped' ? '切换为平铺视图' : '切换为分组视图'}
+              style={{
+                width: 20, height: 20, border: 'none', background: 'transparent',
+                color: c.textMuted, cursor: 'pointer', borderRadius: 4,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.7rem', padding: 0,
+                transition: 'background 150ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = c.hover; e.currentTarget.style.color = c.text }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textMuted }}
+              aria-label={wfViewMode === 'grouped' ? '切换为平铺视图' : '切换为分组视图'}
+            >
+              {wfViewMode === 'grouped' ? '≡' : '⊞'}
+            </button>
+          )}
         </div>
+
+        {/* List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {recents.length > 0 ? recents.map((item) => {
-            const isSelected = showDelete
-              ? activeWorkflowId === item.id
-              : (activeNav === 'workflow' ? activeWorkflowId === item.id : activeSessionId === item.id)
-            const isHovered = hoveredItemId === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  if (activeNav === 'workflow') {
-                    setActiveWorkflow(item.id)
-                    setCurrentView('workflow-editor')
-                  } else if (activeNav === 'workflowChat') {
-                    setActiveSession(item.id)
-                    setCurrentView('workflowChat')
-                  } else {
-                    setActiveSession(item.id)
-                    setCurrentView('chat')
-                  }
-                }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  height: 32, padding: '0 12px', borderRadius: 6,
-                  width: '100%', border: 'none', position: 'relative',
-                  background: isSelected ? c.active : 'transparent',
-                  color: isSelected ? c.activeText : c.text,
-                  fontSize: '0.875rem', cursor: 'pointer', textAlign: 'left',
-                  transition: 'background 150ms ease',
-                }}
-                onMouseEnter={e => { setHoveredItemId(item.id); e.currentTarget.style.background = c.hover; e.currentTarget.style.color = c.text }}
-                onMouseLeave={e => { setHoveredItemId(null); e.currentTarget.style.background = isSelected ? c.active : 'transparent'; e.currentTarget.style.color = isSelected ? c.activeText : c.text }}
-              >
-                <span style={{
-                  width: 5, height: 5, borderRadius: '50%',
-                  background: isSelected ? c.indicator : c.textDim,
-                  flexShrink: 0,
-                }} />
-                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.title}
-                </span>
-                {!isHovered && item.time && (
-                  <span style={{ fontSize: '0.75rem', color: c.textDim, flexShrink: 0 }}>{item.time}</span>
-                )}
-                {isHovered && !showDelete && (
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <button
-                      onClick={e => { e.stopPropagation(); setMenuItemId(menuItemId === item.id ? null : item.id) }}
-                      style={{
-                        width: 18, height: 18, borderRadius: 4, border: 'none',
-                        background: 'transparent', color: c.textMuted, fontSize: '0.75rem',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: 0, lineHeight: 1,
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.color = c.text }}
-                      onMouseLeave={e => { e.currentTarget.style.color = c.textMuted }}
-                      title={t('更多')}
-                    >⋮</button>
-                    {menuItemId === item.id && (
-                      <div style={{
-                        position: 'absolute', right: 0, top: '100%', zIndex: 50,
-                        background: c.bg, border: `1px solid ${c.border}`,
-                        borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                        minWidth: 120, padding: 4,
-                      }}>
-                        <button onClick={e => { e.stopPropagation(); setRenameItemId(item.id); setRenameValue(item.title); setMenuItemId(null) }}
-                          style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: c.text, fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
-                          onMouseEnter={e => e.currentTarget.style.background = c.hover}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >{t('重命名')}</button>
-                        <button onClick={e => { e.stopPropagation(); setDeleteItem({ id: item.id, name: item.title }); setMenuItemId(null) }}
-                          style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: '#ef4444', fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
-                          onMouseEnter={e => e.currentTarget.style.background = c.hover}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >{t('删除')}</button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {showDelete && (
+          {sidebarMode === 'agent' ? (
+            agentRecents.length > 0
+              ? agentRecents.map(s => renderSessionRow(s))
+              : <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>{t('暂无')}</div>
+          ) : wfViewMode === 'flat' ? (
+            wfSessions.length > 0
+              ? wfSessions.map(s => renderSessionRow(s))
+              : <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>{t('暂无')}</div>
+          ) : (
+            // grouped view
+            wfGroups.length > 0 ? wfGroups.map(group => {
+              const isExpanded = expandedGroups.has(group.wfId) // default collapsed
+              return (
+                <div key={group.wfId} style={{ marginBottom: 4 }}>
+                  {/* Group header */}
                   <button
-                    onClick={e => { e.stopPropagation(); deleteWorkflow(item.id) }}
+                    onClick={() => toggleGroup(group.wfId)}
                     style={{
-                      width: 18, height: 18, borderRadius: 4, border: 'none',
-                      background: 'transparent', color: c.textDim, fontSize: '0.75rem',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      opacity: 0, transition: 'opacity 150ms ease',
-                      padding: 0, lineHeight: 1,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      width: '100%', border: 'none', background: 'transparent',
+                      padding: '0 8px', height: 28, borderRadius: 5,
+                      cursor: 'pointer', textAlign: 'left',
+                      transition: 'background 150ms ease',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = '#ef4444' }}
-                    onMouseLeave={e => { e.currentTarget.style.opacity = '0' }}
-                    title={t('删除工作流')}
-                  >✕</button>
-                )}
-              </button>
-            )
-          }) : (
-            <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>
-              {t('暂无')}
-            </div>
+                    onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span style={{
+                      fontSize: '0.6rem', color: c.textMuted, flexShrink: 0,
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 150ms ease', display: 'inline-block',
+                    }}>▶</span>
+                    <span style={{
+                      flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      fontSize: '0.8rem', fontWeight: 500, color: c.textMuted,
+                    }}>{group.wfName}</span>
+                    <span style={{ fontSize: '0.7rem', color: c.textDim, flexShrink: 0 }}>
+                      {group.sessions.length}
+                    </span>
+                  </button>
+                  {/* Sessions under this group */}
+                  {isExpanded && group.sessions.map(s => renderSessionRow(s, true))}
+                </div>
+              )
+            }) : <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>{t('暂无')}</div>
           )}
         </div>
       </div>
@@ -375,28 +404,16 @@ export function MergedSidebar() {
         </div>
       </div>
 
-      {/* ══════ Rename & Delete Dialogs ══════ */}
+      {/* ══════ Rename Dialog ══════ */}
       {renameItemId && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.3)',
-        }} onClick={() => setRenameItemId(null)}>
-          <div style={{
-            background: c.bg, borderRadius: 8, padding: 16, minWidth: 280,
-            border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}
+          onClick={() => setRenameItemId(null)}>
+          <div style={{ background: c.bg, borderRadius: 8, padding: 16, minWidth: 280, border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 12, color: c.text }}>{t('重命名')}</div>
-            <input
-              autoFocus
-              value={renameValue}
-              onChange={e => setRenameValue(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { renameSession(renameItemId, renameValue); setRenameItemId(null); } }}
-              style={{
-                width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${c.border}`,
-                background: c.hover, color: c.text, fontSize: '0.875rem', outline: 'none',
-                boxSizing: 'border-box',
-              }}
+            <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { renameSession(renameItemId, renameValue); setRenameItemId(null) } }}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${c.border}`, background: c.hover, color: c.text, fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
               <button onClick={() => setRenameItemId(null)}
@@ -409,16 +426,13 @@ export function MergedSidebar() {
           </div>
         </div>
       )}
+
+      {/* ══════ Delete Dialog ══════ */}
       {deleteItem && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.3)',
-        }} onClick={() => setDeleteItem(null)}>
-          <div style={{
-            background: c.bg, borderRadius: 8, padding: 16, minWidth: 280,
-            border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}
+          onClick={() => setDeleteItem(null)}>
+          <div style={{ background: c.bg, borderRadius: 8, padding: 16, minWidth: 280, border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 8, color: c.text }}>{t('删除')}</div>
             <div style={{ fontSize: '0.8rem', color: c.textMuted, marginBottom: 12 }}>{t('确定删除')} "{deleteItem.name}"?</div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

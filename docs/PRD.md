@@ -59,12 +59,13 @@
 
 ## 3. Technical Architecture
 
-*   **App Framework:** Tauri (Rust backend, web frontend) for a lightweight footprint and native desktop capabilities.
-*   **Frontend Framework:** React 19+ with Vite for rapid development and HMR.
-*   **State Management:** Zustand 5.
-*   **UI Components:** Radix UI / shadcn/ui or similar headless components styled with Tailwind CSS.
-*   **Workflow Engine (UI):** React Flow (@xyflow/react) for the visual node editor.
-*   **Database:** Local SQLite (via Tauri SQL plugin) for persistent storage.
+*   **App Framework:** Tauri 2 (Rust backend, web frontend) for a lightweight footprint and native desktop capabilities.
+*   **Frontend Framework:** React 19 + TypeScript 5.8 with Vite 7 for rapid development and HMR.
+*   **State Management:** Zustand 5（5 层 slice 架构，see `reference/stores.md`）.
+*   **UI Components:** Radix UI / shadcn/ui styled with Tailwind CSS 3.4.
+*   **Workflow Engine (UI):** React Flow (@xyflow/react v12) for the visual node editor.
+*   **Database:** Local SQLite via `rusqlite` crate (bundled). Application data: `<dirs::data_dir>/SimperStudio/`.
+*   **AI SDK:** Vercel AI SDK v6 + provider adapters (OpenAI / Anthropic / Google).
 
 ---
 
@@ -136,21 +137,21 @@ Below is a conceptual schema for the local SQLite database.
 
 ---
 
-## 5. UI/UX Guidelines for the UI Designer
+## 5. UI/UX Guidelines
 
-*   **Aesthetic:** "Small & Beautiful." Think modern macOS or refined minimalist Windows 11. High whitespace, subtle shadows, crisp typography (Inter or system UI fonts).
+> 完整设计规范见 [`Design.md`](./Design.md)。摘要：
+
+*   **Aesthetic:** "Small & Beautiful." 现代 macOS / Windows 11 极简风格。
 *   **Layout:**
-    *   Left Sidebar: Navigation (Chats, Workflows, Agents, Prompts, Settings).
-    *   Main Content Area: Dynamic based on selection.
-    *   Right Sidebar (Optional/Collapsible): Context, Agent Settings, or Node Properties.
-*   **Context Sidebar Behavior:**
-    *   **Chat view:** Shows workflow list (left) + sessions for selected workflow (right), toggle via top tabs.
-    *   **Workflow view:** Shows workflow list only.
-    *   **Agents view:** Shows agent list.
-    *   **Prompts/Settings/Profile:** No sidebar.
-*   **Theming:** Full Support for System Dark/Light modes with smooth transitions.
-*   **Workflow Editor:** Needs to feel snappy. Nodes should be clearly legible, with distinct colors for different node types (Trigger, Action, LLM). Connections must be easily manageable. MiniMap for canvas overview.
-*   **Interactions:** Hover states, subtle click animations, and keyboard shortcuts for power users.
+    *   **MergedSidebar** (260px fixed)：合并侧栏，含 Mode Switcher Pill / Nav Items / Recents / Gateway
+    *   **Main Content**：按 viewMode 路由（11 种视图，见 `reference/views.md`）
+*   **Sidebar Behavior:**
+    *   Agent 模式：聊天 / 智能体 / 提示词
+    *   Workflow 模式：工作流会话 / 工作流编辑器 / 提示词
+    *   `profile` 视图：不显示侧栏
+*   **Theming:** Light / Dark / System 三态循环；`prefers-color-scheme` 监听；Tailwind CSS 变量驱动。
+*   **Workflow Editor:** React Flow + MiniMap + Controls + Background；13 类节点彩色区分（详见 [Design.md](./Design.md) §2.2）。
+*   **Interactions:** Hover / focus-visible / `prefers-reduced-motion` / 键盘导航全覆盖。
 
 ---
 
