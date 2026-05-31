@@ -67,20 +67,52 @@ A powerful feature that lets you configure agent personas at runtime. Instead of
 
 ## Usage Examples
 
-### Example 1: Multi-Agent Brainstorm Workflow
-Create a workflow that routes a user question to 3 specialized agents (Product Manager, Engineer, Designer), collects their responses, and synthesizes them into a final recommendation.
+### Example 1: Parallel Multi-Agent Analysis (One-to-Many)
+A single user query is analyzed by 3 specialized agents in parallel, then results are merged and synthesized.
 
-**Nodes:** Trigger → Dynamic Agent (PM) → Dynamic Agent (Engineer) → Dynamic Agent (Designer) → Merge → Agent (Synthesizer) → Output
+**Workflow:**
+```
+Trigger (user input)
+  ├─→ Dynamic Agent (Market Analyst) ──┐
+  ├─→ Dynamic Agent (Tech Reviewer)    ├─→ Merge → Agent (Synthesizer) → Output
+  └─→ Dynamic Agent (Risk Assessor)   ──┘
+```
 
-### Example 2: Data Processing Pipeline
-Fetch data from an API, transform it with custom code, analyze it with an LLM, and store the result.
+**Use case:** Product evaluation, investment analysis, or comprehensive research reports.
 
-**Nodes:** Trigger → HTTP (fetch data) → Code (transform) → Agent (analyze) → HTTP (save result) → Output
+### Example 2: Sequential Data Pipeline with Branching
+Fetch data, validate it, then route to different processing paths based on data type.
 
-### Example 3: Scheduled Report Generation
-Run a workflow every morning to collect metrics, generate insights, and send a summary email.
+**Workflow:**
+```
+Trigger (scheduled)
+  → HTTP (fetch data)
+  → Code (validate & categorize)
+  → Switch (route by type)
+      ├─→ Agent (process financial data) → HTTP (save to finance DB)
+      ├─→ Agent (process user data) → HTTP (save to user DB)
+      └─→ Agent (process logs) → HTTP (archive to storage)
+  → Output
+```
 
-**Nodes:** Trigger (scheduled) → HTTP (fetch metrics) → Agent (generate insights) → HTTP (send email) → Output
+**Use case:** ETL pipelines, data ingestion, multi-destination data routing.
+
+### Example 3: Dynamic Agent Team with Loop
+A leader agent dynamically creates and assigns tasks to team members, each processes their task, results are aggregated.
+
+**Workflow:**
+```
+Trigger (project brief)
+  → Agent (Project Manager - creates task list)
+  → Loop (iterate over tasks)
+      → Dynamic Agent (read task config from payload)
+      → Code (process task)
+      → Merge (aggregate results)
+  → Agent (Summarizer - final report)
+  → Output
+```
+
+**Use case:** Project management, team collaboration, dynamic task distribution.
 
 ## Development
 
@@ -115,22 +147,6 @@ npm run test:watch   # Watch mode
 npm run build         # Build frontend
 npm run tauri build   # Package desktop app
 ```
-
-### Configuration
-
-**API Keys & Model Providers:**
-1. Open Settings → Models
-2. Add your provider (OpenAI, Anthropic, Gemini, etc.)
-3. Enter API key and configure models
-4. Set a default model for the provider
-
-**Local Models (Ollama):**
-1. Install [Ollama](https://ollama.ai)
-2. Run `ollama serve`
-3. In Settings → Models, add Custom provider with base URL `http://localhost:11434`
-
-**Custom API Endpoints:**
-Define custom REST endpoints in Settings → Custom APIs to use them as tools in agents or workflow nodes.
 
 ## Project Status
 
