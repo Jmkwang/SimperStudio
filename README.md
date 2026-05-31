@@ -116,22 +116,6 @@ npm run build         # Build frontend
 npm run tauri build   # Package desktop app
 ```
 
-### Configuration
-
-**API Keys & Model Providers:**
-1. Open Settings → Models
-2. Add your provider (OpenAI, Anthropic, Gemini, etc.)
-3. Enter API key and configure models
-4. Set a default model for the provider
-
-**Local Models (Ollama):**
-1. Install [Ollama](https://ollama.ai)
-2. Run `ollama serve`
-3. In Settings → Models, add Custom provider with base URL `http://localhost:11434`
-
-**Custom API Endpoints:**
-Define custom REST endpoints in Settings → Custom APIs to use them as tools in agents or workflow nodes.
-
 ## Project Status
 
 Implemented:
