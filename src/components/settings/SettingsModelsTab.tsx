@@ -13,7 +13,7 @@ import { useDebugTrack } from "@/hooks/useDebugTrack";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Power, ChevronRight, Star, Minus,
-  Play, CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Bot, AlertTriangle, Eye
+  Play, CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Bot, AlertTriangle, Eye, Pencil
 } from "lucide-react";
 import { fetchFromProvider } from "@/lib/api";
 import type { ModelProvider, ProviderModel } from "@/types/models";
@@ -92,6 +92,8 @@ export function SettingsModelsTab() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [expandedError, setExpandedError] = useState<string | null>(null);
+  const [avatarEditOpen, setAvatarEditOpen] = useState(false);
+  const [avatarDraft, setAvatarDraft] = useState('');
 
   const selectedProvider = settings.providers.find(p => p.id === selectedProviderId);
 
@@ -103,6 +105,7 @@ export function SettingsModelsTab() {
 
   useEffect(() => {
     setModelTestStates({});
+    setAvatarEditOpen(false);
   }, [selectedProviderId]);
 
   // Auto-expand model groups when provider changes
@@ -328,33 +331,63 @@ export function SettingsModelsTab() {
               </div>
 
               <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-                {/* Avatar */}
+                {/* Avatar — click to edit */}
                 <div className="flex flex-col items-center gap-3 pb-4 border-b">
-                  <div className={cn(
-                    "flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold shrink-0 overflow-hidden",
-                    selectedProvider.avatar ? '' : (PROVIDER_COLORS[selectedProvider.type] || 'bg-muted text-muted-foreground')
-                  )}>
-                    {selectedProvider.avatar
-                      ? (selectedProvider.avatar.startsWith('http') || selectedProvider.avatar.startsWith('/'))
-                        ? <img src={selectedProvider.avatar} alt={selectedProvider.name} className="w-full h-full object-cover" />
-                        : <span>{selectedProvider.avatar}</span>
-                      : selectedProvider.name.charAt(0).toUpperCase()
-                    }
+                  <div className="relative group cursor-pointer"
+                    onClick={() => {
+                      setAvatarDraft(selectedProvider.avatar || '');
+                      setAvatarEditOpen(v => !v);
+                    }}
+                    title={t('Click to change avatar')}
+                  >
+                    <div className={cn(
+                      "flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold shrink-0 overflow-hidden transition-opacity group-hover:opacity-80",
+                      selectedProvider.avatar ? '' : (PROVIDER_COLORS[selectedProvider.type] || 'bg-muted text-muted-foreground')
+                    )}>
+                      {selectedProvider.avatar
+                        ? (selectedProvider.avatar.startsWith('http') || selectedProvider.avatar.startsWith('/'))
+                          ? <img src={selectedProvider.avatar} alt={selectedProvider.name} className="w-full h-full object-cover" />
+                          : <span>{selectedProvider.avatar}</span>
+                        : selectedProvider.name.charAt(0).toUpperCase()
+                      }
+                    </div>
+                    {/* Pencil badge */}
+                    <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border border-border shadow-sm group-hover:bg-muted transition-colors">
+                      <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 w-full max-w-xs">
-                    <Input
-                      placeholder={t('Avatar URL or emoji (e.g. 🤖 or https://...)')}
-                      value={selectedProvider.avatar || ''}
-                      onChange={(e) => updateProvider(selectedProvider.id, { avatar: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                    {selectedProvider.avatar && (
-                      <Button variant="ghost" size="sm" className="h-8 px-2 shrink-0 text-muted-foreground"
-                        onClick={() => updateProvider(selectedProvider.id, { avatar: '' })}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
+
+                  {/* Inline edit popover */}
+                  {avatarEditOpen && (
+                    <div className="flex items-center gap-2 w-full max-w-xs animate-in fade-in slide-in-from-top-1 duration-150">
+                      <Input
+                        autoFocus
+                        placeholder={t('URL or emoji, e.g. 🤖')}
+                        value={avatarDraft}
+                        onChange={(e) => {
+                          setAvatarDraft(e.target.value);
+                          updateProvider(selectedProvider.id, { avatar: e.target.value.trim() });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === 'Escape') setAvatarEditOpen(false);
+                        }}
+                        onBlur={() => setAvatarEditOpen(false)}
+                        className="h-8 text-xs"
+                      />
+                      {avatarDraft && (
+                        <Button variant="ghost" size="sm" className="h-8 px-2 shrink-0 text-muted-foreground"
+                          onMouseDown={(e) => {
+                            // mousedown fires before blur, prevent blur from closing first
+                            e.preventDefault();
+                            updateProvider(selectedProvider.id, { avatar: '' });
+                            setAvatarDraft('');
+                            setAvatarEditOpen(false);
+                          }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Name */}

@@ -36,10 +36,9 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           isEnabled: false,
           apiFormat: 'openai-responses',
           models: [
-            { id: 'openai-gpt4o', name: 'GPT-4o', modelId: 'gpt-4o', isDefault: true },
-            { id: 'openai-gpt4o-mini', name: 'GPT-4o Mini', modelId: 'gpt-4o-mini' },
-            { id: 'openai-o3', name: 'o3', modelId: 'o3' },
-            { id: 'openai-o4-mini', name: 'o4-mini', modelId: 'o4-mini' },
+            { id: 'openai-gpt53', name: 'GPT-5.3', modelId: 'gpt-5.3', isDefault: true },
+            { id: 'openai-gpt54', name: 'GPT-5.4', modelId: 'gpt-5.4' },
+            { id: 'openai-gpt55', name: 'GPT-5.5', modelId: 'gpt-5.5' },
           ],
         },
         {
@@ -50,9 +49,9 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           baseUrl: 'https://api.anthropic.com/v1',
           isEnabled: false,
           models: [
-            { id: 'anthropic-claude-opus-4', name: 'Claude Opus 4', modelId: 'claude-opus-4-5', isDefault: true },
-            { id: 'anthropic-claude-sonnet-4', name: 'Claude Sonnet 4', modelId: 'claude-sonnet-4-5' },
-            { id: 'anthropic-claude-haiku-4', name: 'Claude Haiku 4', modelId: 'claude-haiku-4-5' },
+            { id: 'anthropic-opus-47', name: 'Claude Opus 4.7', modelId: 'claude-opus-4-7', isDefault: true },
+            { id: 'anthropic-sonnet-46', name: 'Claude Sonnet 4.6', modelId: 'claude-sonnet-4-6' },
+            { id: 'anthropic-haiku-45', name: 'Claude Haiku 4.5', modelId: 'claude-haiku-4-5' },
           ],
         },
         {
@@ -63,9 +62,9 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
           isEnabled: false,
           models: [
-            { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', modelId: 'gemini-2.5-pro-preview-06-05', isDefault: true },
-            { id: 'gemini-2-5-flash', name: 'Gemini 2.5 Flash', modelId: 'gemini-2.5-flash-preview-05-20' },
-            { id: 'gemini-2-0-flash', name: 'Gemini 2.0 Flash', modelId: 'gemini-2.0-flash' },
+            { id: 'gemini-31-pro', name: 'Gemini 3.1 Pro', modelId: 'gemini-3.1-pro', isDefault: true },
+            { id: 'gemini-31-flash', name: 'Gemini 3.1 Flash', modelId: 'gemini-3.1-flash' },
+            { id: 'gemini-35-flash', name: 'Gemini 3.5 Flash', modelId: 'gemini-3.5-flash' },
           ],
         },
         {
@@ -77,8 +76,8 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           isEnabled: false,
           apiFormat: 'openai-chat',
           models: [
-            { id: 'deepseek-chat', name: 'DeepSeek V3', modelId: 'deepseek-chat', isDefault: true },
-            { id: 'deepseek-reasoner', name: 'DeepSeek R1', modelId: 'deepseek-reasoner' },
+            { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', modelId: 'deepseek-v4-flash', isDefault: true },
+            { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', modelId: 'deepseek-v4-pro' },
           ],
         },
         {
@@ -90,9 +89,8 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
           isEnabled: false,
           apiFormat: 'openai-chat',
           models: [
-            { id: 'sf-deepseek-v3', name: 'DeepSeek-V3', modelId: 'deepseek-ai/DeepSeek-V3', isDefault: true },
-            { id: 'sf-deepseek-r1', name: 'DeepSeek-R1', modelId: 'deepseek-ai/DeepSeek-R1' },
-            { id: 'sf-qwen3-235b', name: 'Qwen3-235B-A22B', modelId: 'Qwen/Qwen3-235B-A22B' },
+            { id: 'sf-deepseek-v3-2', name: 'DeepSeek-V3.2', modelId: 'deepseek-ai/DeepSeek-V3.2', isDefault: true },
+            { id: 'sf-deepseek-v4-flash', name: 'DeepSeek-V4-Flash', modelId: 'deepseek-ai/DeepSeek-V4-Flash' },
           ],
         },
         {

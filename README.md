@@ -204,16 +204,32 @@ This project is licensed under the [MIT License](LICENSE) — feel free to use, 
 
 ## Acknowledgments
 
-SimperStudio stands on the shoulders of giants. We're grateful to:
+SimperStudio is built on the foundation of open-source innovation and modern AI capabilities. We're deeply grateful to the projects and tools that made this possible:
 
-- **[CherryStudio](https://github.com/kangfenmao/cherry-studio)** — for inspiring the elegant multi-agent chat experience
-- **[n8n](https://n8n.io/)** — for pioneering the visual workflow automation paradigm that shaped our node-based engine design
+### Design & Inspiration
 
-**Development & Intelligence:**
-- **[Kimi](https://kimi.moonshot.cn/)** — for deep reasoning and code generation during development
-- **[DeepSeek](https://www.deepseek.com/)** — for efficient and capable language understanding throughout the project
+- **[CherryStudio](https://github.com/kangfenmao/cherry-studio)** — Demonstrated that a lightweight, elegant multi-agent chat interface could be both powerful and delightful. Inspired our approach to conversational UX and agent management.
+- **[n8n](https://n8n.io/)** — Pioneered the visual workflow automation paradigm. Their node-based architecture and execution model shaped our workflow engine design philosophy.
 
-This project combines the best ideas from the open-source community with modern AI capabilities to create a tool that's both powerful and delightful to use.
+### AI & Development Intelligence
+
+- **[Claude Code](https://claude.com/claude-code)** — Accelerated development with intelligent code generation, refactoring suggestions, and architectural guidance. Helped us maintain code quality and consistency across the codebase.
+- **[ChatGPT](https://openai.com/chatgpt)** — Provided rapid prototyping assistance, documentation writing, and problem-solving throughout the project lifecycle.
+- **[Codex](https://openai.com/blog/openai-codex/)** — Pioneered AI-assisted code generation and set the foundation for modern code intelligence tools.
+- **[Kimi](https://kimi.moonshot.cn/)** — Delivered deep reasoning for complex algorithm design, particularly in workflow engine optimization and state management architecture.
+- **[DeepSeek](https://www.deepseek.com/)** — Provided efficient language understanding for natural language processing features and multi-language support.
+
+### Technical Foundation
+
+- **[Tauri](https://tauri.app/)** — Enabled us to build a lightweight, secure desktop application with a small footprint and native OS integration.
+- **[React Flow](https://reactflow.dev/)** — Provided the visual canvas foundation for our workflow editor.
+- **[Vercel AI SDK](https://sdk.vercel.ai/)** — Simplified multi-provider LLM integration with a unified interface.
+
+### The Vision
+
+SimperStudio represents a convergence of ideas: the conversational elegance of CherryStudio, the automation power of n8n, and the intelligence of modern AI models. By combining these elements with thoughtful design and open-source principles, we've created a tool that empowers users to build sophisticated AI workflows without complexity.
+
+Whether you're orchestrating multi-agent teams, automating data pipelines, or exploring new AI patterns, SimperStudio is designed to be your collaborative partner in the age of AI.
 
 ## Additional Docs
 
