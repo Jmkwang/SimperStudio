@@ -38,16 +38,24 @@ pub struct Workspace {
 pub struct Agent {
     pub id: String,
     pub name: String,
+    #[serde(default)]
     pub description: Option<String>,
+    #[serde(default)]
     pub avatar: Option<String>,
     pub system_prompt: String,
     pub model_provider: String,
     pub model_id: String,
+    #[serde(default)]
+    pub provider_id: Option<String>,
     pub temperature: f64,
+    #[serde(default)]
     pub max_tokens: Option<i64>,
+    #[serde(default)]
     pub api_key: Option<String>,
+    #[serde(default)]
     pub base_url: Option<String>,
     pub parameters: String,
+    #[serde(default)]
     pub industry: Option<String>,
     pub created_at: i64,
 }
@@ -74,6 +82,7 @@ pub fn init_db() -> Result<Connection> {
             system_prompt TEXT NOT NULL,
             model_provider TEXT NOT NULL,
             model_id TEXT NOT NULL,
+            provider_id TEXT,
             temperature REAL NOT NULL,
             max_tokens INTEGER,
             api_key TEXT,
@@ -131,13 +140,23 @@ pub fn init_db() -> Result<Connection> {
         conn.execute("ALTER TABLE chat_sessions ADD COLUMN workflow_id TEXT", [])?;
     }
 
+    let has_provider_id = conn
+        .prepare("PRAGMA table_info(agents)")?
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(Result::ok)
+        .any(|name| name == "provider_id");
+
+    if !has_provider_id {
+        conn.execute("ALTER TABLE agents ADD COLUMN provider_id TEXT", [])?;
+    }
+
     Ok(conn)
 }
 
 #[tauri::command]
 pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
     let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at FROM agents").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id FROM agents").map_err(|e| e.to_string())?;
     let agent_iter = stmt.query_map([], |row| {
         Ok(Agent {
             id: row.get(0)?,
@@ -154,6 +173,7 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
             parameters: row.get(11)?,
             industry: row.get(12)?,
             created_at: row.get(13)?,
+            provider_id: row.get(14)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -168,8 +188,8 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
 pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
-        (&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.created_at)
+        "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+        (&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.created_at, &agent.provider_id)
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -178,8 +198,8 @@ pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), Strin
 pub fn update_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, api_key = ?9, base_url = ?10, parameters = ?11, industry = ?12 WHERE id = ?13",
-        (&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.id)
+        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, api_key = ?9, base_url = ?10, parameters = ?11, industry = ?12, provider_id = ?13 WHERE id = ?14",
+        (&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.provider_id, &agent.id)
     ).map_err(|e| e.to_string())?;
     Ok(())
 }

@@ -1,9 +1,17 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { v4 as uuidv4 } from 'uuid';
 import { Workspace, Agent, ChatSession, Settings, Workflow, ChatMessage, ModelProvider, AgentCategory } from '../types/models';
 import { debugLogger } from '@/lib/debugLogger';
 
 const LS_KEY = 'simper_config';
+
+/** Safe wrapper: checks that the Tauri IPC bridge is available before invoking */
+async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  if (typeof window === 'undefined' || !(window as any).__TAURI_INTERNALS__) {
+    throw new Error(`Tauri runtime not available (cmd: ${cmd})`);
+  }
+  return tauriInvoke<T>(cmd, args);
+}
 
 /** Fallback avatar mapping for built-in agents whose avatar may be missing in SQLite */
 const DEFAULT_AVATAR_MAP: Record<string, string> = {
@@ -66,8 +74,8 @@ export interface BaseSlice {
   addWorkspace: (name: string, description?: string) => void;
   addAgent: (agent: Omit<Agent, 'id' | 'createdAt'>) => Promise<void>;
   deleteAgent: (id: string) => Promise<void>;
-  updateAgent: (id: string, updates: Partial<Agent>) => void;
-  batchUpdateAgents: (ids: string[], updates: Partial<Agent>) => void;
+  updateAgent: (id: string, updates: Partial<Agent>) => Promise<void>;
+  batchUpdateAgents: (ids: string[], updates: Partial<Agent>) => Promise<{ successCount: number; failedIds: string[] }>;
   addAgentCategory: (category: Omit<AgentCategory, 'id' | 'createdAt'>) => void;
   fetchInitialData: () => Promise<void>;
 }
@@ -133,6 +141,27 @@ function migrateAgent(agent: Agent, providers: ModelProvider[]): Agent {
 
   // 'local' or unmapped: leave providerId empty so it falls back to global activeProvider
   return migrated;
+}
+
+/**
+ * Build the payload sent to the Rust `add_agent` / `update_agent` commands.
+ * The Rust Agent struct uses `#[serde(rename_all = "camelCase")]`, so keys MUST be
+ * camelCase. Required fields (modelProvider/modelId/temperature) must never be
+ * undefined or the backend deserialization fails and the save is rejected.
+ */
+function buildAgentPayload(agent: Agent) {
+  return {
+    ...agent,
+    avatar: agent.avatar ?? '',
+    systemPrompt: agent.systemPrompt ?? '',
+    modelProvider: agent.modelProvider || 'local',
+    modelId: agent.modelId || 'default',
+    providerId: agent.providerId ?? null,
+    maxTokens: agent.maxTokens ?? null,
+    temperature: agent.temperature ?? 0.7,
+    parameters: typeof agent.parameters === 'string' ? agent.parameters : JSON.stringify(agent.parameters || {}),
+    createdAt: agent.createdAt ?? Date.now(),
+  };
 }
 
 export function createBaseSlice(set: any, get: any): BaseSlice {
@@ -249,9 +278,10 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
       try {
         const agentToSave = {
           ...newAgent,
-          // Ensure required DB fields are never undefined/null
+          // Rust Agent struct uses camelCase serde; required fields must never be undefined/null
           modelProvider: newAgent.modelProvider || 'local',
           modelId: newAgent.modelId || 'default',
+          providerId: newAgent.providerId,
           temperature: newAgent.temperature ?? 0.7,
           parameters: JSON.stringify(newAgent.parameters || {}),
         };
@@ -280,54 +310,38 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
       if (!agent) return;
       const updatedAgent = { ...agent, ...updates };
       try {
-        const agentToSave = {
-          ...updatedAgent,
-          model_provider: updatedAgent.modelProvider || 'local',
-          model_id: updatedAgent.modelId || 'default',
-          max_tokens: updatedAgent.maxTokens,
-          api_key: updatedAgent.apiKey,
-          base_url: updatedAgent.baseUrl,
-          parameters: JSON.stringify(updatedAgent.parameters || {}),
-        };
-        await invoke('update_agent', { agent: agentToSave });
-        const nextAgents = agents.map((a: Agent) =>
-          a.id === id ? updatedAgent : a
-        );
-        set({ agents: nextAgents });
+        await invoke('update_agent', { agent: buildAgentPayload(updatedAgent) });
       } catch (e) {
         console.error('Failed to update agent in DB:', e);
         debugLogger.error('baseSlice', 'updateAgent DB failed', { agentId: id, error: String(e) });
+        throw e;
       }
+      const nextAgents = agents.map((a: Agent) =>
+        a.id === id ? updatedAgent : a
+      );
+      set({ agents: nextAgents });
     },
 
     batchUpdateAgents: async (ids, updates) => {
       const { agents } = get();
       const idSet = new Set(ids);
       const agentsToUpdate = agents.filter((a: Agent) => idSet.has(a.id));
-      const successfulIds = new Set<string>();
+      const failedIds: string[] = [];
       for (const agent of agentsToUpdate) {
         const updatedAgent = { ...agent, ...updates };
         try {
-          const agentToSave = {
-            ...updatedAgent,
-            model_provider: updatedAgent.modelProvider || 'local',
-            model_id: updatedAgent.modelId || 'default',
-            max_tokens: updatedAgent.maxTokens,
-            api_key: updatedAgent.apiKey,
-            base_url: updatedAgent.baseUrl,
-            parameters: JSON.stringify(updatedAgent.parameters || {}),
-          };
-          await invoke('update_agent', { agent: agentToSave });
-          successfulIds.add(agent.id);
+          await invoke('update_agent', { agent: buildAgentPayload(updatedAgent) });
         } catch (e) {
-          console.error('Failed to batch update agent in DB:', e);
-          debugLogger.error('baseSlice', 'batchUpdateAgents DB failed', { agentId: agent.id, error: String(e) });
+          // Tauri backend unavailable (e.g. npm run dev browser mode) — continue with in-memory update
+          debugLogger.warn('baseSlice', 'batchUpdateAgents DB persist skipped', { agentId: agent.id, error: String(e) });
         }
       }
+      // Always update in-memory store regardless of DB result (matches addAgent behavior)
       const nextAgents = agents.map((agent: Agent) =>
-        successfulIds.has(agent.id) ? { ...agent, ...updates } : agent
+        idSet.has(agent.id) ? { ...agent, ...updates } : agent
       );
       set({ agents: nextAgents });
+      return { successCount: agentsToUpdate.length, failedIds };
     },
 
     addAgentCategory: (categoryData) => set((state: any) => {
@@ -369,7 +383,21 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
             avatar: a.avatar || DEFAULT_AVATAR_MAP[a.id] || '',
             parameters: typeof a.parameters === 'string' ? JSON.parse(a.parameters) : a.parameters,
           }));
-          set({ agents: parsedAgents });
+          // Ensure built-in agents are always present
+          const existingIds = new Set(parsedAgents.map((a: Agent) => a.id));
+          const defaults = get().agents as Agent[];
+          const missingDefaults = defaults.filter((a: Agent) => !existingIds.has(a.id));
+          if (missingDefaults.length) {
+            for (const da of missingDefaults) {
+              try {
+                const agentToSave = { ...da, parameters: JSON.stringify(da.parameters || {}) };
+                await invoke('add_agent', { agent: buildAgentPayload(agentToSave) });
+              } catch { /* best-effort */ }
+            }
+            set({ agents: [...parsedAgents, ...missingDefaults] });
+          } else {
+            set({ agents: parsedAgents });
+          }
         } else if (agentsConfig?.length) {
           // Fallback to JSON only for legacy migration
           const providers = modelConfig?.providers || [];

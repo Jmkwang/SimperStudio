@@ -9,28 +9,28 @@ export function TitleBar() {
     import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
       const win = getCurrentWindow();
       winRef.current = win;
-      win.isMaximized().then(setIsMaximized).catch(() => {});
+      win.isMaximized().then(setIsMaximized).catch(e => console.error('[TitleBar] isMaximized failed', e));
       let unlisten: (() => void) | undefined;
       win.onResized(() => {
-        win.isMaximized().then(setIsMaximized).catch(() => {});
-      }).then(fn => { unlisten = fn; }).catch(() => {});
+        win.isMaximized().then(setIsMaximized).catch(e => console.error('[TitleBar] isMaximized failed', e));
+      }).then(fn => { unlisten = fn; }).catch(e => console.error('[TitleBar] onResized failed', e));
       return () => { unlisten?.(); };
-    }).catch(() => {});
+    }).catch(e => console.error('[TitleBar] failed to load window API', e));
   }, []);
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   const handleMinimize = (e: React.MouseEvent) => {
     stop(e);
-    winRef.current?.minimize().catch(() => {});
+    winRef.current?.minimize().catch((err: unknown) => console.error('[TitleBar] minimize failed', err));
   };
   const handleMaximize = (e: React.MouseEvent) => {
     stop(e);
-    winRef.current?.toggleMaximize().catch(() => {});
+    winRef.current?.toggleMaximize().catch((err: unknown) => console.error('[TitleBar] toggleMaximize failed', err));
   };
   const handleClose = (e: React.MouseEvent) => {
     stop(e);
-    winRef.current?.close().catch(() => {});
+    winRef.current?.close().catch((err: unknown) => console.error('[TitleBar] close failed', err));
   };
 
   return (

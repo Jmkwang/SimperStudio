@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bot, Plus, X, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
@@ -199,7 +200,7 @@ export function AgentsView() {
     }
     try {
       if (editingId) {
-        updateAgent(editingId, formData);
+        await updateAgent(editingId, formData);
       } else {
         await addAgent(formData);
       }
@@ -208,6 +209,7 @@ export function AgentsView() {
       setEditingId(null);
     } catch (e) {
       console.error('Failed to save agent:', e);
+      toast.error(t('保存失败'), { description: String(e) });
     }
   };
 
@@ -284,12 +286,19 @@ export function AgentsView() {
     setBulkModelId('');
   };
 
-  const handleBulkApply = () => {
+  const handleBulkApply = async () => {
     if (selectedIds.size === 0 || !bulkProviderId) return;
-    batchUpdateAgents(Array.from(selectedIds), {
+    const { successCount, failedIds } = await batchUpdateAgents(Array.from(selectedIds), {
       providerId: bulkProviderId,
       modelId: bulkModelId === '__default__' ? undefined : bulkModelId,
     });
+    if (failedIds.length > 0) {
+      toast.error(t('部分智能体保存失败'), {
+        description: `${t('成功')} ${successCount}，${t('失败')} ${failedIds.length}`,
+      });
+      return;
+    }
+    toast.success(`${successCount} ${t('个智能体已更新')}`);
     exitBulkMode();
   };
 
@@ -303,6 +312,25 @@ export function AgentsView() {
       } else {
         categoryIds.forEach((id: string) => next.add(id));
       }
+      return next;
+    });
+  };
+
+  // Agents currently visible (respects the active category filter)
+  const visibleAgents = selectedAgentCategory
+    ? agents.filter(a => (a.category || a.industry || 'General') === selectedAgentCategory)
+    : agents;
+  const allVisibleSelected = visibleAgents.length > 0 && visibleAgents.every(a => selectedIds.has(a.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => {
+      if (allVisibleSelected) {
+        const next = new Set(prev);
+        visibleAgents.forEach(a => next.delete(a.id));
+        return next;
+      }
+      const next = new Set(prev);
+      visibleAgents.forEach(a => next.add(a.id));
       return next;
     });
   };
@@ -331,6 +359,16 @@ export function AgentsView() {
             >
               {bulkMode ? t('Exit Bulk') : t('Bulk Edit')}
             </Button>
+            {bulkMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                disabled={visibleAgents.length === 0}
+              >
+                {allVisibleSelected ? t('取消全选') : t('全选')}
+              </Button>
+            )}
             <Button onClick={trackClick(handleOpenNew, 'agent:openCreate')} data-debug-source="AgentsView" data-debug-action="agent:openCreate">
               <Plus className="mr-2 h-4 w-4" />
               {t('Create Agent')}
@@ -653,13 +691,6 @@ export function AgentsView() {
               }, 'agent:bulkDelete')}
             >
               {t('删除智能体')}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={trackClick(exitBulkMode, 'agent:exitBulk')}
-            >
-              {t('Done')}
             </Button>
           </div>
         )}

@@ -73,15 +73,15 @@ export function MergedSidebar() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   }, [theme])
   const c = useMemo(() => ({
-    bg: isDark ? '#111111' : '#f8f8f8',
+    bg: isDark ? '#303133' : '#f8f8f8',
     text: isDark ? '#d4d4d8' : '#1f2937',
     textMuted: isDark ? '#71717a' : '#6b7280',
     textDim: isDark ? '#525252' : '#9ca3af',
-    hover: isDark ? '#262626' : '#e5e5e5',
-    active: isDark ? '#262626' : '#e0e0e0',
+    hover: isDark ? '#3a3b3d' : '#e5e5e5',
+    active: isDark ? '#3a3b3d' : '#e0e0e0',
     indicator: isDark ? '#60a5fa' : '#3b82f6',
-    border: isDark ? '#3a3a3a' : '#b0b0b0',
-    pillBg: isDark ? '#262626' : '#ebebeb',
+    border: isDark ? '#4a4b4d' : '#b0b0b0',
+    pillBg: isDark ? '#3a3b3d' : '#ebebeb',
     activeText: isDark ? '#ffffff' : '#111111',
     white: '#ffffff',
   }), [isDark])
@@ -446,6 +446,7 @@ export function MergedSidebar() {
           </div>
         </div>
       )}
+
     </aside>
   )
 }

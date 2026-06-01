@@ -120,7 +120,17 @@
       "Bash(\"D:/Node.js/node.exe\" \"node_modules/vitest/vitest.mjs\" run src/lib/workflow/nodeExecutors/__tests__/dynamicAgentExecutor.test.ts)",
       "Bash(npx tauri *)",
       "Bash(git check-ignore *)",
-      "Bash(cat > *)"
+      "Bash(cat > *)",
+      "Bash(sh -s -- -y)",
+      "Bash(ls \"/c/Program Files/Microsoft Visual Studio/2022/\"*/VC/Tools/MSVC/*/bin/Hostx64/x64/link.exe 2>/dev/null; ls \"/c/Program Files \\(x86\\)/Microsoft Visual Studio/2022/\"*/VC/Tools/MSVC/*/bin/Hostx64/x64/link.exe 2>/dev/null)",
+      "Bash(rustup show *)",
+      "Read(//c/Program Files/**)",
+      "Bash(find \"/d\" -maxdepth 4 -name \"link.exe\" -path \"*/MSVC/*\")",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft Visual Studio/Installer/vswhere.exe\" -latest -property installationPath)",
+      "Bash(where cl.exe)",
+      "Bash(where rc.exe)",
+      "Bash(npm ls *)",
+      "Bash(npm cache *)"
     ]
   }
 }

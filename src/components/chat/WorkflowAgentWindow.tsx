@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { WorkflowConversationWindow, WorkflowNode } from '@/types/models';
 import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
@@ -6,16 +6,40 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Minus, Send, Square, X, Layers } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChatMessageBubble } from './ChatMessageBubble';
 
 const DEFAULT_WIDTH = 420;
 const DEFAULT_HEIGHT = 480;
 
 export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConversationWindow }) {
   const [input, setInput] = useState('');
-  const pos = windowData.position;
+  const [pos, setPos] = useState(windowData.position);
   const size = windowData.size || { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
   const { t } = useTranslation();
+  const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
+
+  // Sync position from store when windowData changes (e.g. on open)
+  useEffect(() => { setPos(windowData.position); }, [windowData.position.x, windowData.position.y]);
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    // Only drag on the title bar, not on buttons
+    if ((e.target as HTMLElement).closest('button')) return;
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startPosX: pos.x, startPosY: pos.y };
+    const handleMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      setPos({
+        x: dragRef.current.startPosX + (ev.clientX - dragRef.current.startX),
+        y: dragRef.current.startPosY + (ev.clientY - dragRef.current.startY),
+      });
+    };
+    const handleUp = () => {
+      dragRef.current = null;
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }, [pos]);
 
   const sessions = useAppStore(state => state.sessions);
   const agents = useAppStore(state => state.agents);
@@ -27,7 +51,6 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
   const cancelSessionStream = useAppStore(state => state.cancelSessionStream);
   const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
   const isStreaming = activeStreamingSessionIds.includes(windowData.sessionId);
-  const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
 
   const agent = agents.find(item => item.id === windowData.agentId);
   const session = sessions.find(item => item.id === windowData.sessionId);
@@ -53,28 +76,27 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
   const displayName = dynamicMeta?.name || agent?.name || windowData.agentId;
   const displayAvatar = dynamicMeta?.avatar || agent?.avatar;
 
-  const messages = useMemo(() => {
+  // Only show this node's agent responses (not the entire session)
+  const nodeResponses = useMemo(() => {
     if (!session) return [];
-    const msgs: typeof session.messages = [];
+    const results: { text: string; timestamp: number; status: string; agentId: string; errorSummary?: string; errorDetail?: string }[] = [];
     for (const message of session.messages) {
-      if (message.role === 'user') {
-        if (!message.meta?.targetAgentId && !message.meta?.workflowNodeId) {
-          msgs.push(message);
-        } else if (message.meta?.workflowNodeId === windowData.nodeId || message.meta?.targetAgentId === windowData.agentId) {
-          msgs.push(message);
-        }
-      }
-      if (message.role === 'assistant' && message.agentResponses) {
-        const hasResponse = message.agentResponses.some(
-          response => response.agentId === windowData.agentId &&
-          (response.nodeId === undefined || response.nodeId === windowData.nodeId)
-        );
-        if (hasResponse) {
-          msgs.push(message);
+      if (message.role !== 'assistant' || !message.agentResponses) continue;
+      for (const resp of message.agentResponses) {
+        if (resp.agentId === windowData.agentId &&
+            (resp.nodeId === undefined || resp.nodeId === windowData.nodeId)) {
+          results.push({
+            text: resp.content.text,
+            timestamp: message.timestamp,
+            status: resp.status,
+            agentId: resp.agentId,
+            errorSummary: resp.errorSummary,
+            errorDetail: resp.errorDetail,
+          });
         }
       }
     }
-    return msgs;
+    return results;
   }, [session, windowData.nodeId, windowData.agentId]);
 
   const handleSend = async () => {
@@ -95,8 +117,11 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
       }}
       onMouseDown={() => focusWorkflowAgentWindow(windowData.id)}
     >
-      {/* Title bar */}
-      <div className="flex items-center justify-between border-b px-3 py-2 shrink-0">
+      {/* Title bar - draggable */}
+      <div
+        className="flex items-center justify-between border-b px-3 py-2 shrink-0 cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={handleDragStart}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <Avatar className="h-6 w-6 rounded-md shrink-0">
             <AvatarImage src={displayAvatar} />
@@ -135,31 +160,24 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
 
       {!windowData.minimized && (
         <>
-          {/* Messages area */}
+          {/* Messages area - only this node's responses */}
           <div className="flex-1 overflow-auto p-3 space-y-3">
-            {messages.length === 0 && (
+            {nodeResponses.length === 0 && (
               <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground text-center">
                 {t('No messages for this node yet.')}
               </div>
             )}
 
-            {messages.map(message => (
-              <ChatMessageBubble
-                key={message.id}
-                message={message}
-                agent={agent ? { name: agent.name, avatar: agent.avatar } : undefined}
-                agentId={windowData.agentId}
-                nodeId={windowData.nodeId}
-                emptyText={t('Copied attachment')}
-                onRetry={message.role === 'assistant' ? (agentId: string, messageId: string) => {
-                  const allMessages = session?.messages || [];
-                  const msgIndex = allMessages.findIndex(m => m.id === message.id);
-                  const lastUserMsg = msgIndex >= 0
-                    ? [...allMessages.slice(0, msgIndex)].reverse().find(m => m.role === 'user')
-                    : undefined;
-                  if (lastUserMsg) retryAgentResponse(windowData.sessionId, messageId, agentId, lastUserMsg.content.text, windowData.nodeId);
-                } : undefined}
-              />
+            {nodeResponses.map((resp, idx) => (
+              <div key={idx} className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                {resp.status === 'error' ? (
+                  <div className="text-destructive text-sm">
+                    <span>{resp.errorSummary || t('模型调用失败')}</span>
+                  </div>
+                ) : (
+                  <div>{resp.text}</div>
+                )}
+              </div>
             ))}
           </div>
 

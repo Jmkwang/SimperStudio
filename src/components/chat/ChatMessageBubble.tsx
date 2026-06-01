@@ -3,6 +3,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { AlertTriangle, ChevronDown, Copy, Check, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, memo } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface AgentInfo {
   id?: string;
@@ -120,7 +122,9 @@ const AssistantBubble = memo(function AssistantBubble({
               )}
             </div>
           ) : (
-            <div>{response.content.text}</div>
+            <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+              <Markdown remarkPlugins={[remarkGfm]}>{response.content.text}</Markdown>
+            </div>
           )}
         </div>
         <div className="flex items-start justify-between gap-2 mt-0.5 ml-1">

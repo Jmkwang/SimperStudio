@@ -6,9 +6,20 @@
 
 ---
 
-## v0.4.4（开发中，未发布）
+## v0.5.4
 
-> 当前 `package.json` / `tauri.conf.json` / `Cargo.toml` 标记为 **0.4.3**。下面记录的是 0.4.3 之后已合入但尚未打 tag 的工作。
+### Bug 修复
+- **batchUpdateAgents DB 失败**：Rust `Agent` 结构体的 `Option` 字段（`description`/`avatar`/`max_tokens`/`api_key`/`base_url`/`industry`）缺少 `#[serde(default)]`，当前端不发送这些可选字段时 serde 反序列化失败（`db.rs`）
+- **batchUpdateAgents 浏览器模式失败**：`npm run dev` 纯浏览器模式下无 Tauri 运行时，`invoke` 必定失败；原逻辑失败后跳过 store 更新导致 UI 显示失败。改为始终更新内存 store（与 `addAgent` 行为一致），DB 持久化失败仅记 warn（`baseSlice.ts`）
+- **parameters 二次序列化**：`buildAgentPayload` 中 `JSON.stringify` 可能对已经是字符串的 `parameters` 进行二次编码，增加类型检查（`baseSlice.ts`）
+- **助手消息丢失**：助手回复保存到 DB 时 `content.text` 为空（实际文本在 `agentResponses` 中），重新加载后消息显示空白。改为持久化前将 `agentResponses` 文本合并写入 `content.text`（`chatSlice.ts`）
+- **默认智能体消失**：`fetchInitialData` 用 SQLite 结果覆盖 store 默认 agent，但 SQLite 中从未写入内置 agent。改为加载后自动补种缺失的内置 agent（`baseSlice.ts`）
+
+### 功能
+- **工作流改名**：工作流编辑器左上角显示工作流名称，点击可直接编辑重命名（`WorkflowCanvas.tsx`）
+- **Markdown 渲染**：智能体回复支持 Markdown 格式（标题、加粗、代码块、列表、表格、链接等），使用 `react-markdown` + `remark-gfm` + Tailwind Typography（`ChatMessageBubble.tsx`）
+- **深色模式底色**：深色模式背景色从纯黑 `#111111` 调整为灰色 `#303133`（`globals.css`、`MergedSidebar.tsx`）
+- **拓扑模式 Agent 小窗**：支持拖动移动；内容改为只显示该节点的 Agent 回复，不再显示整个会话（`WorkflowAgentWindow.tsx`）
 
 ### 侧栏与导航
 - **MergedSidebar 合并侧栏**：将旧 GlobalSidebar(64px) + ContextSidebar(可调) 合并为统一 260px 深色侧栏（`MergedSidebar.tsx`）

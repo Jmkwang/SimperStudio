@@ -44,7 +44,7 @@
 
   .dark {
     /* Dark Mode - Material Design Standard */
-    --background: 0 0% 7%;
+    --background: 220 3% 20%;
     --foreground: 0 0% 92%;
 
     --card: 0 0% 11%;
@@ -89,6 +89,23 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Chat markdown rendering */
+  .prose pre {
+    @apply bg-muted/50 border border-border/30 rounded-lg text-sm;
+  }
+  .prose code:not(pre code) {
+    @apply bg-muted/50 px-1 py-0.5 rounded text-sm;
+  }
+  .prose table {
+    @apply text-sm;
+  }
+  .prose th, .prose td {
+    @apply border border-border/30 px-2 py-1;
+  }
+  .prose blockquote {
+    @apply border-l-primary/50;
   }
 
   ::-webkit-scrollbar {

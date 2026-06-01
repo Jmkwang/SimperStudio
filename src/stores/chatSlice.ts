@@ -422,7 +422,10 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       // Persist new messages to DB best-effort; streaming chunks are memory-only
       if (newAssistantMsg && isNewMessage) {
         const msg: ChatMessage = newAssistantMsg;
-        const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
+        // Populate content.text from agentResponses so it survives DB round-trip
+        const mergedText = (msg.agentResponses || []).map(r => r.content.text).filter(Boolean).join('\n\n');
+        const contentToSave = { ...msg.content, text: mergedText || msg.content.text };
+        const msgToSave = { ...msg, content: JSON.stringify(contentToSave) };
         void invoke('add_chat_message', { message: msgToSave }).catch(() => {
           console.warn('Failed to persist assistant message to DB');
           debugLogger.warn('chatSlice', 'persist assistant message failed', { sessionId });

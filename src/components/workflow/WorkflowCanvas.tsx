@@ -127,6 +127,48 @@ const nodeDefaultDataBuilders: Record<string, () => Record<string, any>> = {
   })
 };
 
+function WorkflowNameEditor({ workflow }: { workflow: { id: string; name: string } }) {
+  const renameWorkflow = useAppStore(s => s.renameWorkflow);
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(workflow.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setValue(workflow.name); }, [workflow.name, workflow.id]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  const commit = () => {
+    const trimmed = value.trim();
+    if (trimmed && trimmed !== workflow.name) {
+      renameWorkflow(workflow.id, trimmed);
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setValue(workflow.name); setEditing(false); } }}
+        className="text-sm font-semibold bg-transparent border border-primary rounded px-2 py-0.5 outline-none min-w-[120px] max-w-[260px]"
+        style={{ color: 'inherit' }}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setEditing(true)}
+      className="text-sm font-semibold cursor-pointer hover:underline truncate max-w-[260px]"
+      title={workflow.name}
+    >
+      {workflow.name}
+    </span>
+  );
+}
+
 function Flow() {
   const activeWorkflow = useAppStore(state => state.getActiveWorkflow());
   const saveWorkflow = useAppStore(state => state.saveWorkflow);
@@ -244,6 +286,11 @@ function Flow() {
           nodeColor={isDark ? 'hsl(220 8% 52%)' : 'hsl(240 5% 42%)'}
           maskStrokeColor={isDark ? 'hsl(220 8% 52%)' : 'hsl(240 8% 85%)'}
         />
+        <Panel position="top-left" className="flex items-center gap-2">
+          {activeWorkflow && (
+            <WorkflowNameEditor workflow={activeWorkflow} />
+          )}
+        </Panel>
         <Panel position="top-right" className="flex gap-2 items-start">
            <Popover>
              <PopoverTrigger asChild>
