@@ -67,13 +67,17 @@ export function MergedSidebar() {
   const [renameValue, setRenameValue] = useState('')
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
 
+  // Settings menu
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const setSettingsActiveTab = useAppStore(s => s.setSettingsActiveTab)
+
   const isDark = useMemo(() => {
     if (theme === 'dark') return true
     if (theme === 'light') return false
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   }, [theme])
   const c = useMemo(() => ({
-    bg: isDark ? '#303133' : '#f8f8f8',
+    bg: isDark ? '#262626' : '#f8f8f8',
     text: isDark ? '#d4d4d8' : '#1f2937',
     textMuted: isDark ? '#71717a' : '#6b7280',
     textDim: isDark ? '#525252' : '#9ca3af',
@@ -240,7 +244,7 @@ export function MergedSidebar() {
   }
 
   return (
-    <aside className="flex flex-col select-none flex-shrink-0 m-1 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px', border: `1px solid ${c.border}` }}>
+    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px', border: `1px solid ${c.border}`, margin: '4px 4px 4px 8px' }}>
       <DebugBadge id="MergedSidebar" position="top-left" />
 
       {/* ══════ Mode Switcher ══════ */}
@@ -391,16 +395,49 @@ export function MergedSidebar() {
             onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >{themeIcon}</button>
-          <button onClick={() => setCurrentView('settings')}
-            style={{
-              width: 32, height: 32, borderRadius: 6, border: 'none',
-              background: 'transparent', color: c.textMuted, fontSize: '1rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 150ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-          >⚙️</button>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setSettingsOpen(v => !v)}
+              style={{
+                width: 32, height: 32, borderRadius: 6, border: 'none',
+                background: settingsOpen ? c.hover : 'transparent', color: c.textMuted, fontSize: '1rem',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 150ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
+              onMouseLeave={e => { e.currentTarget.style.background = settingsOpen ? c.hover : 'transparent' }}
+            >⚙️</button>
+            {settingsOpen && (
+              <>
+                <div onClick={() => setSettingsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
+                <div style={{
+                  position: 'absolute', bottom: '100%', right: 0, zIndex: 95,
+                  marginBottom: 6, minWidth: 160,
+                  background: c.bg, border: `1px solid ${c.border}`,
+                  borderRadius: 8, padding: 4,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                }}>
+                  {[
+                    { id: 'general' as const, label: t('General') },
+                    { id: 'appearance' as const, label: t('Appearance') },
+                    { id: 'models' as const, label: t('Models') },
+                    { id: 'cli' as const, label: t('CLI Tools') },
+                  ].map(tab => (
+                    <button key={tab.id}
+                      onClick={() => { setSettingsActiveTab(tab.id); setCurrentView('settings'); setSettingsOpen(false) }}
+                      style={{
+                        display: 'block', width: '100%', border: 'none', background: 'transparent',
+                        color: c.text, fontSize: '0.8125rem', padding: '7px 12px', borderRadius: 5,
+                        cursor: 'pointer', textAlign: 'left',
+                        transition: 'background 150ms ease',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                    >{tab.label}</button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

@@ -16,7 +16,7 @@ export function SettingsAppearanceTab() {
   };
 
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium">{t("Appearance Settings")}</h3>
         <p className="text-sm text-muted-foreground mt-1">{t("Customize the look and feel.")}</p>

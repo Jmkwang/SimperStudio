@@ -43,8 +43,8 @@
   }
 
   .dark {
-    /* Dark Mode - Material Design Standard */
-    --background: 220 3% 20%;
+    /* Dark Mode */
+    --background: 40 2% 12%;
     --foreground: 0 0% 92%;
 
     --card: 0 0% 11%;

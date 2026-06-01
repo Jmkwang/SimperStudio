@@ -13,6 +13,7 @@ export interface UISlice {
   debugMode: boolean;
   contextSidebarTab: 'workflows' | 'sessions';
   selectedChatWorkflowId: string | null;
+  settingsActiveTab: 'general' | 'appearance' | 'models' | 'cli';
 
   // Sidebar item order (array of IDs in display order)
   workflowOrder: string[];
@@ -30,6 +31,7 @@ export interface UISlice {
   setContextSidebarTab: (tab: 'workflows' | 'sessions') => void;
   setSelectedChatWorkflowId: (id: string | null) => void;
   setCurrentView: (view: string) => void;
+  setSettingsActiveTab: (tab: 'general' | 'appearance' | 'models' | 'cli') => void;
   toggleWorkflowChatMode: (enabled: boolean) => void;
   previewWorkflowTopology: (workflowId: string) => void;
   setWorkflowOrder: (order: string[]) => void;
@@ -66,6 +68,7 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
     debugMode: false,
     contextSidebarTab: 'workflows',
     selectedChatWorkflowId: null,
+    settingsActiveTab: 'general',
     workflowOrder: [],
     agentCategoryOrder: [],
     sessionOrder: [],
@@ -94,6 +97,7 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
       }
       set({ currentView: view });
     },
+    setSettingsActiveTab: (tab) => set({ settingsActiveTab: tab }),
     toggleWorkflowChatMode: (enabled) => set({ workflowChatMode: enabled }),
     previewWorkflowTopology: (workflowId) => set({ selectedChatWorkflowId: workflowId, activeSessionId: null }),
     setWorkflowOrder: (order) => set((state: any) => {

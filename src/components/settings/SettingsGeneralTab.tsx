@@ -35,7 +35,7 @@ export function SettingsGeneralTab() {
   const availableModels = selectedProvider?.models ?? [];
 
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium">{t("General Settings")}</h3>
         <p className="text-sm text-muted-foreground mt-1">{t("Manage your application preferences.")}</p>

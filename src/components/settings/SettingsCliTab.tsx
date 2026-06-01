@@ -92,7 +92,7 @@ export function SettingsCliTab() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold">{t('CLI Tools')}</h3>
         <p className="text-sm text-muted-foreground mt-1">
