@@ -433,7 +433,11 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           const sessions = await invoke<ChatSession[]>('get_chat_sessions', { workspaceId: defaultWorkspaceId });
           for (let i = 0; i < sessions.length; i++) {
             const messages = await invoke<ChatMessage[]>('get_chat_messages', { sessionId: sessions[i].id });
-            sessions[i].messages = messages.map((m: any) => ({ ...m, content: JSON.parse(m.content as unknown as string) }));
+            sessions[i].messages = messages.map((m: any) => ({
+              ...m,
+              content: JSON.parse(m.content as unknown as string),
+              agentResponses: m.agentResponses ? JSON.parse(m.agentResponses as unknown as string) : undefined,
+            }));
           }
           const dbSessions = sessions.map(normalizeSession);
           set({ sessions: dbSessions });

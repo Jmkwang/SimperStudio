@@ -43,7 +43,7 @@ export function TitleBar() {
         data-tauri-drag-region
         className="flex items-center gap-2 text-sm font-medium text-foreground/80 pointer-events-none"
       >
-        <div className="h-4 w-4 rounded bg-primary flex items-center justify-center text-[9px] font-bold text-primary-foreground">S</div>
+        <div className="h-4 w-4 rounded bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground leading-none">S</div>
         SimperStudio
       </div>
 

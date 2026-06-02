@@ -553,7 +553,7 @@ export function SettingsModelsTab() {
                                         <span className="truncate">{modelTestStates[model.id]?.error}</span>
                                       </div>
                                       {expandedError === model.id && (
-                                        <div className="bg-destructive/10 border border-destructive/20 rounded p-2 text-destructive/90 font-mono text-[11px] whitespace-pre-wrap">
+                                        <div className="bg-destructive/10 border border-destructive/20 rounded p-2 text-destructive/90 font-mono text-xs whitespace-pre-wrap">
                                           {modelTestStates[model.id]?.detail || modelTestStates[model.id]?.error}
                                         </div>
                                       )}

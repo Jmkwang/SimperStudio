@@ -425,7 +425,11 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         // Populate content.text from agentResponses so it survives DB round-trip
         const mergedText = (msg.agentResponses || []).map(r => r.content.text).filter(Boolean).join('\n\n');
         const contentToSave = { ...msg.content, text: mergedText || msg.content.text };
-        const msgToSave = { ...msg, content: JSON.stringify(contentToSave) };
+        const msgToSave = {
+          ...msg,
+          content: JSON.stringify(contentToSave),
+          agentResponses: msg.agentResponses ? JSON.stringify(msg.agentResponses) : undefined,
+        };
         void invoke('add_chat_message', { message: msgToSave }).catch(() => {
           console.warn('Failed to persist assistant message to DB');
           debugLogger.warn('chatSlice', 'persist assistant message failed', { sessionId });
@@ -472,7 +476,11 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
       const msg = session?.messages.find((m: ChatMessage) => m.id === messageId);
       if (msg) {
-        const msgToSave = { ...msg, content: JSON.stringify(msg.content) };
+        const msgToSave = {
+          ...msg,
+          content: JSON.stringify(msg.content),
+          agentResponses: msg.agentResponses ? JSON.stringify(msg.agentResponses) : undefined,
+        };
         void invoke('update_chat_message', { message: msgToSave }).catch(() => {});
       }
     },

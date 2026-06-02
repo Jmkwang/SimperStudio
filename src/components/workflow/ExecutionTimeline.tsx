@@ -279,7 +279,7 @@ export function ExecutionTimeline() {
                         <AlertCircle className="h-3 w-3 text-destructive" />
                         <span className="text-xs font-medium text-destructive">{t('执行出错')}</span>
                       </div>
-                      <p className="text-xs text-red-600 dark:text-red-400">{record.error}</p>
+                      <p className="text-xs text-destructive">{record.error}</p>
                       <Button
                         variant="outline"
                         size="sm"

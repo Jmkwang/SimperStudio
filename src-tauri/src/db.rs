@@ -150,6 +150,16 @@ pub fn init_db() -> Result<Connection> {
         conn.execute("ALTER TABLE agents ADD COLUMN provider_id TEXT", [])?;
     }
 
+    let has_agent_responses = conn
+        .prepare("PRAGMA table_info(chat_messages)")?
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(Result::ok)
+        .any(|name| name == "agent_responses");
+
+    if !has_agent_responses {
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN agent_responses TEXT", [])?;
+    }
+
     Ok(conn)
 }
 
@@ -327,12 +337,14 @@ pub struct ChatMessage {
     pub role: String,
     pub content: String,
     pub timestamp: i64,
+    #[serde(default)]
+    pub agent_responses: Option<String>,
 }
 
 #[tauri::command]
 pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Result<Vec<ChatMessage>, String> {
     let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, session_id, role, content, timestamp FROM chat_messages WHERE session_id = ?1 ORDER BY timestamp ASC").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT id, session_id, role, content, timestamp, agent_responses FROM chat_messages WHERE session_id = ?1 ORDER BY timestamp ASC").map_err(|e| e.to_string())?;
     let iter = stmt.query_map([&session_id], |row| {
         Ok(ChatMessage {
             id: row.get(0)?,
@@ -340,6 +352,7 @@ pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Re
             role: row.get(2)?,
             content: row.get(3)?,
             timestamp: row.get(4)?,
+            agent_responses: row.get(5)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -354,8 +367,8 @@ pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Re
 pub fn add_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "INSERT INTO chat_messages (id, session_id, role, content, timestamp) VALUES (?1, ?2, ?3, ?4, ?5)",
-        (&message.id, &message.session_id, &message.role, &message.content, &message.timestamp)
+        "INSERT INTO chat_messages (id, session_id, role, content, timestamp, agent_responses) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        (&message.id, &message.session_id, &message.role, &message.content, &message.timestamp, &message.agent_responses)
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -364,8 +377,8 @@ pub fn add_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> R
 pub fn update_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "UPDATE chat_messages SET content = ?1 WHERE id = ?2",
-        (&message.content, &message.id)
+        "UPDATE chat_messages SET content = ?1, agent_responses = ?2 WHERE id = ?3",
+        (&message.content, &message.agent_responses, &message.id)
     ).map_err(|e| e.to_string())?;
     Ok(())
 }

@@ -10,7 +10,7 @@ export function SettingsAppearanceTab() {
   const { setTheme } = useTheme();
   const { t } = useTranslation();
 
-  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
     updateSettings({ theme: newTheme });
     setTheme(newTheme);
   };
@@ -36,11 +36,6 @@ export function SettingsAppearanceTab() {
               size="sm"
               onClick={() => handleThemeChange('dark')}
             >{t("Dark")}</Button>
-            <Button
-              variant={settings.theme === 'system' ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleThemeChange('system')}
-            >{t("System")}</Button>
           </div>
         </div>
       </div>

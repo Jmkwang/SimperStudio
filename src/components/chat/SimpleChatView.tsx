@@ -8,6 +8,8 @@ import { ChatMessageBubble } from "./ChatMessageBubble";
 import { DebugBadge } from "@/components/debug/DebugBadge";
 import { useDebugTrack } from "@/hooks/useDebugTrack";
 
+type LayoutMode = 'A' | 'B';
+
 function resolveAgentDisplayModel(agent: { providerId?: string; modelId?: string } | undefined, providers: ModelProvider[], activeProviderId: string | null, defaultLabel = 'Default'): { providerName: string; modelName: string } | null {
   if (!agent) return null;
   const providerId = agent.providerId || activeProviderId;
@@ -37,6 +39,9 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const [_selectedAgentId, _setSelectedAgentId] = useState<string>(agents[0]?.id || '');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    try { return (localStorage.getItem('ss_chat_layout') as LayoutMode) || 'A'; } catch { return 'A'; }
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { trackClick } = useDebugTrack('SimpleChatView');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -52,6 +57,11 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     resolveAgentDisplayModel(activeAgent, settings?.providers || [], settings?.activeProviderId || null, t('Default')),
     [activeAgent, settings]
   );
+
+  const handleLayoutChange = useCallback((mode: LayoutMode) => {
+    setLayoutMode(mode);
+    try { localStorage.setItem('ss_chat_layout', mode); } catch {}
+  }, []);
 
   const totalTokens = session.messages.reduce((sum, msg) => {
     return sum + (msg.agentResponses?.reduce((s, r) => s + (r.tokenUsage?.totalTokens || 0), 0) || 0);
@@ -169,12 +179,14 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                 agent={activeAgent ? { id: activeAgent.id, name: activeAgent.name, avatar: activeAgent.avatar } : undefined}
                 agents={agents.map(a => ({ id: a.id, name: a.name, avatar: a.avatar }))}
                 onRetry={handleRetry}
+                layoutMode={layoutMode}
+                onLayoutChange={handleLayoutChange}
               />
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t p-4 shrink-0">
+          <div className="p-4 shrink-0">
             <div className="flex flex-col gap-2 max-w-4xl mx-auto">
               {!activeAgentModelInfo && activeAgent && (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-700 dark:text-yellow-400">
@@ -185,7 +197,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                 </div>
               )}
               <div className="flex flex-col gap-1">
-                <div className="relative border rounded-lg">
+                <div className="relative rounded-2xl border bg-card shadow-sm">
                   {attachments.length > 0 && (
                     <div className="absolute bottom-full left-0 right-0 flex flex-wrap gap-1.5 p-2 pb-0 max-w-full">
                       {attachments.map((file, i) => (
@@ -209,10 +221,10 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                     }}
                     placeholder={activeAgent ? `${t("Send message")}...` : t("Select an agent")}
                     disabled={!activeAgent}
-                    className="min-h-[80px] text-sm border-0 focus-visible:ring-0 resize-none pb-10"
+                    className="min-h-[80px] text-sm border-0 focus-visible:ring-0 resize-none pb-12"
                   />
                   {/* Bottom bar inside input */}
-                  <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
+                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileSelect} />
                       <button
@@ -227,7 +239,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                         <div className="relative">
                           <button
                             onClick={() => setModelPickerOpen(!modelPickerOpen)}
-                            className="text-[10px] text-muted-foreground/40 hover:text-foreground/60 leading-none transition-colors"
+                            className="text-xs text-muted-foreground/40 hover:text-foreground/60 leading-none transition-colors"
                             aria-label={t('Switch model')}
                           >
                             {activeAgentModelInfo.providerName}/{activeAgentModelInfo.modelName}
@@ -238,7 +250,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                               <div className="absolute bottom-full left-0 mb-1 z-50 min-w-[180px] rounded-lg border bg-popover p-1 shadow-md">
                                 {settings.providers?.filter((p: any) => p.isEnabled).map((provider: any) => (
                                   <div key={provider.id}>
-                                    <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">{provider.name}</div>
+                                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground/60 uppercase tracking-wider">{provider.name}</div>
                                     {(provider.models || []).map((model: any) => {
                                       const isActive = (provider.id === settings.activeProviderId) &&
                                         (model.modelId === (activeAgentModelInfo?.modelName || ''));
@@ -275,7 +287,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                       <button
                         onClick={trackClick(handleSend, 'chat:send')}
                         disabled={!input.trim() || !activeAgent}
-                        className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors disabled:opacity-30"
+                        className="h-7 w-7 flex items-center justify-center rounded text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:text-muted-foreground"
                         aria-label={t("Send")}
                       >
                         <Send className="h-3.5 w-3.5" />
@@ -285,7 +297,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                 </div>
                 {/* Model label below input, right-aligned */}
                 {!activeAgentModelInfo && activeAgent && (
-                  <div className="text-[10px] text-muted-foreground/40 text-right pr-1">
+                  <div className="text-xs text-muted-foreground/40 text-right pr-1">
                     {t("未配置")}
                   </div>
                 )}

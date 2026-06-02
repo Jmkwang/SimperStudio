@@ -32,7 +32,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
 
   
   return (
-    <div className="w-[200px] rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div className="w-[240px] rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle
         type="target"
         position={Position.Left}
@@ -55,7 +55,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Output")}</DialogTitle>
             </DialogHeader>

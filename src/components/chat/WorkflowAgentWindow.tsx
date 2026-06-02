@@ -169,14 +169,31 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
             )}
 
             {nodeResponses.map((resp, idx) => (
-              <div key={idx} className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                {resp.status === 'error' ? (
-                  <div className="text-destructive text-sm">
-                    <span>{resp.errorSummary || t('模型调用失败')}</span>
+              <div key={idx} className="flex gap-3">
+                {/* Left column: avatar spanning 2 lines */}
+                <div className="shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
+                    {displayName?.slice(0, 2)?.toUpperCase() || 'AI'}
                   </div>
-                ) : (
-                  <div>{resp.text}</div>
-                )}
+                </div>
+                {/* Right column */}
+                <div className="flex flex-col items-start min-w-0 flex-1">
+                  <span className="text-sm font-semibold text-foreground mb-0.5 truncate max-w-full">
+                    {displayName || 'Agent'}
+                  </span>
+                  <span className="text-xs text-muted-foreground mb-1 truncate max-w-full">
+                    {windowData.nodeId}
+                  </span>
+                  {resp.status === 'error' ? (
+                    <div className="text-destructive text-sm">
+                      <span>{resp.errorSummary || t('模型调用失败')}</span>
+                    </div>
+                  ) : (
+                    <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 w-full">
+                      {resp.text}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

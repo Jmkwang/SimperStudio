@@ -135,12 +135,12 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>{t('Configure CLI Agent')}</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className="grid gap-4 py-4">
               {/* Base config */}
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
 
@@ -290,9 +290,9 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
                 <Switch checked={requireConfirmation} onCheckedChange={setRequireConfirmation} />
               </div>
 
-              <Button onClick={handleSave} className="w-full">
-                {t('Save')}
-              </Button>
+              <div className="flex justify-end">
+                <Button onClick={handleSave}>{t('Save')}</Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

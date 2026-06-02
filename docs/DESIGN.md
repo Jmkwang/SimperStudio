@@ -49,7 +49,7 @@
 }
 ```
 
-> **已知遗留**：Light 主色为紫（258°），Dark 主色为青（187°），色相差距大。统一为同色相不同明度是 P1 待办（[TODO_active.md](../TODO_active.md)）。
+> Light/Dark 均使用紫色相（258°），通过不同明度/饱和度区分。已统一。
 
 ### 2.2 节点配色（工作流画布）
 
@@ -75,7 +75,7 @@
 | Body | 14px Regular | `text-sm` |
 | Caption / Meta | 12px Medium | `text-xs font-medium` |
 
-> 历史代码中存在 `text-[9-11px]` 等非标字号，正在归并到 6 级阶梯（12/14/16/18/24/32）。
+> 已消除 `text-[9-11px]` 等非标字号，统一使用 `text-xs`（12px）等标准阶梯。
 
 ### 2.4 间距与圆角
 
@@ -177,18 +177,23 @@
 
 ### 5.1 消息气泡
 
-- **用户气泡**：右对齐，`bg-primary` 或 `bg-muted` 实色
-- **Agent 气泡**：左对齐，无明显边框，`bg-muted/30` 背景
-- **多 Agent 并发**：垂直堆叠在同一消息块内，各自带 Avatar + Name 头部
-- **Agent 头部格式**：`{Name}  {Provider}/{Model}` —— Provider/Model 暗化处理
-- **底部元信息**：时间（右对齐）、Token（`↑prompt ↓completion`）、耗时
+- **用户气泡**：右对齐，`bg-primary` 实色，`rounded-2xl rounded-tr-md`
+  - 长文本（>300字符或>6行）自动折叠，底部渐变遮罩，点击展开/收起
+  - hover 时显示复制按钮和布局切换按钮
+- **Agent 气泡**：左对齐，带头像 + 名称 + 模型信息
+  - **头像**：`h-10 w-10` 圆形，支持 URL/emoji/首字母 fallback
+  - **布局**：头像占两行高度，右侧第一行 Agent 名称（`text-sm font-semibold text-foreground`），第二行模型信息（`text-xs text-muted-foreground`），第三行正文
+  - **多 Agent 并发**：支持两种布局模式（A=卡片堆叠，B=垂直列表），hover 用户消息时切换
+- **底部元信息**：时间（右对齐）、Token（`↑prompt ↓completion`）、耗时、复制/重试按钮
 - **元信息颜色**：`text-muted-foreground/70`（≥4:1 对比度）
 
 ### 5.2 输入区
 
-- 集成式 textarea（无边框 `border-0`），底部栏内嵌：左下附件 + 模型切换器，右下发送按钮
+- 圆角气泡样式（`rounded-2xl border bg-card shadow-sm`），无上方分隔线
+- Textarea 无边框（`border-0`），底部留白给操作栏
+- 左下：附件按钮 + 模型切换器
+- 右下：圆形发送按钮（`rounded-full bg-primary`），流式中变红色停止按钮
 - Shift+Enter 换行，Enter 发送
-- 流式中发送按钮变红色停止按钮
 - 附件以 chips 显示（`max-w-[160px] truncate`）
 - 模型切换器点击弹出 provider/model 选择器（实时切换 `activeProvider`）
 
@@ -250,10 +255,7 @@
 
 ## 10. 待办（设计相关）
 
-详见 [TODO_active.md](./TODO_active.md) 的 P11 / P13 章节：
-- 字号阶梯归并（消除 `text-[9-11px]`）
-- 4pt 间距网格统一
-- Light/Dark 主色色相对齐
+详见 [TODO_active.md](./TODO_active.md)：
 - Logo 品牌设计
 - 多模型对比卡片操作栏
 - 中小屏（<768px）抽屉式侧栏

@@ -197,6 +197,11 @@ const translations: Translations = {
     'tokens': 'tokens',
     'Alive': 'Alive',
     'Dead': 'Dead',
+    'Expand': 'Expand',
+    'Collapse': 'Collapse',
+    'Stacked layout': 'Stacked layout',
+    'List layout': 'List layout',
+    'Side by side layout': 'Side by side layout',
 
     // Sidebar & Chat (missing en equivalents for zh-only keys)
     'Agent Chat': 'Agent Chat',
@@ -586,6 +591,11 @@ const translations: Translations = {
     'tokens': 'tokens',
     'Alive': '存活',
     'Dead': '死亡',
+    'Expand': '展开',
+    'Collapse': '收起',
+    'Stacked layout': '卡片堆叠',
+    'List layout': '垂直列表',
+    'Side by side layout': '左右并排',
 
     // Sidebar & Chat
     'Agent Chat': '智能体对话',

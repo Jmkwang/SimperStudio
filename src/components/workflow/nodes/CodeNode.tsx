@@ -31,7 +31,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[220px] rounded-xl border border-blue-200 dark:border-blue-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="w-[240px] rounded-xl border border-blue-200 dark:border-blue-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle
         type="target"
         position={Position.Left}
@@ -61,7 +61,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               
-              <div className="grid gap-2 mt-2">
+              <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label>{t("JavaScript Code")}</Label>
                 </div>

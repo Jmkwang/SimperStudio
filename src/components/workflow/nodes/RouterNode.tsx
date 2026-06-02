@@ -84,18 +84,18 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Router")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               
-              <div className="grid gap-2 mt-2">
+              <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label>Routes (JavaScript Conditions)</Label>
+                  <Label>{t("Routes (JavaScript Conditions)")}</Label>
                   <Button variant="outline" size="sm" onClick={addRoute} className="h-7 px-2 text-xs">
-                    <Plus className="h-3 w-3 mr-1" /> Add Route
+                    <Plus className="h-3 w-3 mr-1" /> {t("Add Route")}
                   </Button>
                 </div>
                 
@@ -112,7 +112,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                         onClick={() => removeRoute(idx)}
                         disabled={routes.length <= 1}
                         aria-label="Remove route"

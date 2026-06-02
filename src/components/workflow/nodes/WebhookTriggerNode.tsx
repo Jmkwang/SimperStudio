@@ -49,7 +49,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Webhook Trigger")}</DialogTitle>
             </DialogHeader>

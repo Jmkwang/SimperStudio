@@ -31,7 +31,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[220px] rounded-xl border border-pink-200 dark:border-pink-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="w-[240px] rounded-xl border border-pink-200 dark:border-pink-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle type="target" position={Position.Left} id="input-1" style={{ top: '35%' }} className="w-3 h-3 border-2 border-pink-500 bg-background" />
       <Handle type="target" position={Position.Left} id="input-2" style={{ top: '65%' }} className="w-3 h-3 border-2 border-pink-500 bg-background" />
       <div className="flex items-center justify-between border-b p-3 bg-pink-50/50 dark:bg-pink-950/20 rounded-t-xl">
@@ -50,7 +50,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Merge")}</DialogTitle>
             </DialogHeader>

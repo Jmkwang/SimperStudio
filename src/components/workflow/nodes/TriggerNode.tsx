@@ -30,7 +30,7 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[200px] rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div className="w-[240px] rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <div className="flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-500">
@@ -47,7 +47,7 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Trigger")}</DialogTitle>
             </DialogHeader>

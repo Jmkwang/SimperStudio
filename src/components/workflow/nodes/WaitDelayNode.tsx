@@ -35,7 +35,7 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[220px] rounded-xl border border-violet-200 dark:border-violet-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="w-[240px] rounded-xl border border-violet-200 dark:border-violet-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-violet-500 bg-background" />
       <div className="flex items-center justify-between border-b p-3 bg-violet-50/50 dark:bg-violet-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
@@ -53,9 +53,9 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Configure Wait / Delay</DialogTitle>
+              <DialogTitle>{t("Configure Wait / Delay")}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />

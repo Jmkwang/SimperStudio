@@ -8,7 +8,24 @@
 
 ## v0.5.4
 
+### 设计系统统一（P1）
+- **消除硬编码颜色**：UI 组件 `lunar-*` → `primary`（`button.tsx`/`input.tsx`/`select.tsx`/`slider.tsx`/`textarea.tsx`/`switch.tsx`）；节点删除按钮 `text-red-500` → `text-destructive`（`DynamicAgentNode.tsx`/`IfSwitchNode.tsx`/`SetTransformNode.tsx`/`RouterNode.tsx`）；用户气泡 `bg-[#2563eb]` → `bg-primary`（`ChatMessageBubble.tsx`）；DebugOverlay 错误色 → `destructive`
+- **统一字号阶梯**：消除 `text-[9px]`/`text-[10px]`/`text-[11px]`，统一为 `text-xs`（12px），共 15 处（`DebugOverlay.tsx`/`SimpleChatView.tsx`/`SettingsModelsTab.tsx`/`TitleBar.tsx`）
+- **主题色一致性**：Light/Dark 均使用 258° 紫色相，已统一；更新 `DESIGN.md` 文档
+- **统一保存模式**：侧栏 `cycleTheme` 同步 `updateSettings`（`MergedSidebar.tsx`）；设置页移除 system 选项（`SettingsAppearanceTab.tsx`）
+
+### 节点配置交互对齐（P1）
+- **Dialog 宽度统一**：15 个节点编辑器统一为 `sm:max-w-[500px]`
+- **容器模式统一**：CliAgentNode 从 `space-y-4` 改为 `grid gap-4 py-4`
+- **Save 按钮统一**：CliAgentNode 从全宽按钮改为 `flex justify-end` 右对齐
+- **卡片宽度统一**：OutputNode/TriggerNode 200px→240px，CodeNode/MergeNode/WaitDelayNode 220px→240px，DynamicAgentNode 280px→240px
+- **hover 动画补齐**：OutputNode/TriggerNode 添加 `transition-all hover:shadow-md`
+- **标题国际化**：4 个节点 Dialog 标题包裹 `t()`（`SubWorkflowNode.tsx`/`WaitDelayNode.tsx`/`IfSwitchNode.tsx`/`SetTransformNode.tsx`）
+- **间距统一**：CodeNode/RouterNode 移除多余 `mt-2`
+
 ### Bug 修复
+- **Agent 消息持久化**：`agentResponses` 数组未存储到数据库，刷新后丢失。新增 `agent_responses` 列，保存/加载时序列化/反序列化（`db.rs`/`chatSlice.ts`/`baseSlice.ts`）
+- **MergedSidebar 嵌套 button**：会话行 `<button>` 内嵌套菜单 `<button>` 导致 HTML 验证错误，改为外层使用 `<div role="button">`（`MergedSidebar.tsx`）
 - **batchUpdateAgents DB 失败**：Rust `Agent` 结构体的 `Option` 字段（`description`/`avatar`/`max_tokens`/`api_key`/`base_url`/`industry`）缺少 `#[serde(default)]`，当前端不发送这些可选字段时 serde 反序列化失败（`db.rs`）
 - **batchUpdateAgents 浏览器模式失败**：`npm run dev` 纯浏览器模式下无 Tauri 运行时，`invoke` 必定失败；原逻辑失败后跳过 store 更新导致 UI 显示失败。改为始终更新内存 store（与 `addAgent` 行为一致），DB 持久化失败仅记 warn（`baseSlice.ts`）
 - **parameters 二次序列化**：`buildAgentPayload` 中 `JSON.stringify` 可能对已经是字符串的 `parameters` 进行二次编码，增加类型检查（`baseSlice.ts`）
@@ -20,6 +37,16 @@
 - **Markdown 渲染**：智能体回复支持 Markdown 格式（标题、加粗、代码块、列表、表格、链接等），使用 `react-markdown` + `remark-gfm` + Tailwind Typography（`ChatMessageBubble.tsx`）
 - **深色模式底色**：深色模式背景色从纯黑 `#111111` 调整为灰色 `#303133`（`globals.css`、`MergedSidebar.tsx`）
 - **拓扑模式 Agent 小窗**：支持拖动移动；内容改为只显示该节点的 Agent 回复，不再显示整个会话（`WorkflowAgentWindow.tsx`）
+- **聊天界面改进**：
+  - **输入框重设计**：去掉上方分隔线，改为圆角气泡样式（`rounded-2xl`），发送按钮移至右下角圆形按钮（`SimpleChatView.tsx`/`WorkflowChatView.tsx`）
+  - **用户消息折叠**：长文本（>300字符或>6行）自动折叠，点击展开/收起（`ChatMessageBubble.tsx`）
+  - **用户消息复制**：hover 时显示复制按钮，点击复制全文（`ChatMessageBubble.tsx`）
+  - **智能体头像**：助手消息左侧显示智能体头像（`h-10 w-10`），支持 URL/emoji/首字母 fallback（`ChatMessageBubble.tsx`）
+  - **消息布局优化**：头像占两行高度，右侧第一行 Agent 名称（白色加粗），第二行模型信息（灰色），第三行正文（`ChatMessageBubble.tsx`/`WorkflowAgentWindow.tsx`）
+  - **布局切换**：用户消息 hover 时显示布局切换按钮（A=卡片堆叠/B=垂直列表），偏好持久化到 localStorage（`ChatMessageBubble.tsx`/`uiSlice.ts`）
+  - **WorkflowChatView 布局切换**：传递 `onLayoutChange` 给 `ChatMessageBubble`，支持布局切换（`WorkflowChatView.tsx`）
+  - **WorkflowAgentWindow 布局同步**：小窗消息使用与主聊天一致的头像+名称+模型布局（`WorkflowAgentWindow.tsx`）
+  - **深色模式边框**：降低卡片边框亮度，从 `border-border/50` 改为 `border-border/30`（`ChatMessageBubble.tsx`）
 
 ### 侧栏与导航
 - **MergedSidebar 合并侧栏**：将旧 GlobalSidebar(64px) + ContextSidebar(可调) 合并为统一 260px 深色侧栏（`MergedSidebar.tsx`）

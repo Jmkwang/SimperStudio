@@ -11,7 +11,7 @@
 | 了解项目是什么、怎么跑、关键架构 | `docs/Development.md` |
 | 看产品定位与里程碑 | `docs/PRD.md` |
 | 看已实现的全部功能 | `docs/Features.md` |
-| 看 UI/UX 与设计系统 | `docs/Design.md` |
+| 看 UI/UX 与设计系统 | `docs/DESIGN.md` |
 | 看当前还没做的事 | `docs/TODO_active.md` |
 | 看历史变更 | `docs/CHANGELOG.md` |
 | 查节点 / store / 命令 / 视图清单 | `docs/reference/` |
@@ -36,7 +36,7 @@
 | 视图路由 / viewMode | `docs/reference/views.md` |
 | 工作流引擎执行流程 | `docs/reference/workflow-engine.md` |
 | 聊天系统数据流 | `docs/reference/chat-system.md` |
-| 设计令牌（颜色/字号/间距） | `docs/Design.md` |
+| 设计令牌（颜色/字号/间距） | `docs/DESIGN.md` |
 
 其他文档若提到这些信息，**只能用一句话引用 + 链接**，不复述细节。
 
@@ -79,7 +79,7 @@
 4. 修改后**始终**同步对应 reference + CHANGELOG
 
 涉及 UI 改动时：
-- 必读 `docs/Design.md` 的设计令牌与组件规范
+- 必读 `docs/DESIGN.md` 的设计令牌与组件规范
 - 不引入 Token 之外的硬编码颜色 / 字号
 - 检查无障碍：focus-visible / aria-label / 对比度 / 最小点击区
 

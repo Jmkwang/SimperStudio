@@ -27,7 +27,8 @@
 
 ### 2.1 单 Agent 聊天（SimpleChatView）
 - Agent 选择器（DropdownMenu，支持多 Agent 切换）
-- 集成式输入框（无边框 textarea，底部内嵌附件 + 模型切换器 + 发送按钮）
+- 圆角气泡输入框（`rounded-2xl`），无上方分隔线
+- 左下附件按钮 + 模型切换器，右下圆形发送按钮
 - 流式消息发送，发送按钮在流式中变红色停止按钮
 - Token 实时计数（↑prompt ↓completion）
 - 拓扑视图切换（AgentTopologyView）
@@ -60,7 +61,9 @@
 
 ### 2.6 消息气泡（ChatMessageBubble）
 - 用户/助手区分样式
-- Agent 头部：Name + Provider/Model（暗化）
+- **用户消息**：长文本自动折叠（>300字符或>6行），底部渐变遮罩，点击展开/收起；hover 时显示复制按钮
+- **助手消息**：带头像（`h-10 w-10` 圆形）+ Agent 名称（白色加粗）+ 模型信息（灰色）+ 正文
+- **布局切换**：hover 用户消息时显示切换按钮（A=卡片堆叠/B=垂直列表），偏好持久化
 - Markdown/HTML 内容渲染
 - 流式打字光标（支持 `motion-reduce`）
 - 底部元信息：时间右对齐、Token、耗时（颜色 `/70`，对比度达标）

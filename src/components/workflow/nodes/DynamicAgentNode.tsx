@@ -84,7 +84,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
   const isValid = configSource === 'payload' ? !!configPath : !!systemPromptTemplate;
 
   return (
-    <div className="w-[280px] rounded-xl border-2 border-purple-200 dark:border-purple-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="w-[240px] rounded-xl border border-purple-200 dark:border-purple-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
       <Handle
         type="target"
         position={Position.Left}
@@ -112,7 +112,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[480px] rounded-xl">
+          <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Dynamic Agent")}</DialogTitle>
             </DialogHeader>
@@ -317,7 +317,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
             </div>
             <div className="flex justify-end gap-2">
               {!isValid && (
-                <p className="text-xs text-red-500 mr-auto">
+                <p className="text-xs text-destructive mr-auto">
                   {configSource === 'payload' ? 'Config path is required' : 'System prompt template is required'}
                 </p>
               )}

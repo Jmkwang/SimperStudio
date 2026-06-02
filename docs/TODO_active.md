@@ -2,7 +2,7 @@
 
 > 已完成项见 [CHANGELOG.md](./CHANGELOG.md)。本文档**只**列尚未完成或部分完成的工作。
 
-最后整理：v0.4.4
+最后整理：v0.5.4
 
 ---
 
@@ -21,19 +21,19 @@
 ## 🟡 P1 — 设计系统统一
 
 ### 颜色与字号
-- [ ] **消除硬编码颜色**：GlobalSidebar logo `lunar-*`、WorkflowCanvas MiniMap hex、GenericNode 红色系、SettingsModelsTab 多种颜色 → 全部用语义 Token
-- [ ] **统一字号阶梯**：消除 `text-[9px]` / `text-[10px]` / `text-[11px]`，归并到 12/14/16/18/24/32 共 6 级
-- [ ] **统一 4pt 间距网格**：`p-4` / `p-6` / `p-8` 混用 → 4/8/12/16/24/32
-- [ ] **主题色一致性**：Light 紫色（258°）vs Dark 青色（187°）色相差距过大，建议同色相不同明度
+- [ ] **消除硬编码颜色**（部分完成）：`lunar-*` → `primary`、`red-*` → `destructive`、用户气泡 hex → `primary` 已替换；MergedSidebar / WorkflowTopologyPreview 的 hex 保留（inline style 需要实际值）
+- [x] **统一字号阶梯**：`text-[9-11px]` → `text-xs`（12px），15 处已修正
+- [x] **统一 4pt 间距网格**：已合规，无非标间距
+- [x] **主题色一致性**：Light/Dark 均使用 258° 紫色相，已统一；DESIGN.md 已更新
 
 ### 保存模式
-- [ ] **统一保存模式**：主题切换自动保存 vs 设置页手动保存的不一致 → 选一种统一
+- [x] **统一保存模式**：侧栏 `cycleTheme` 现同步 `updateSettings`；设置页移除 system 选项
 
 ---
 
 ## 🟡 P1 — 节点配置交互
 
-- [ ] **节点配置交互完全对齐**：14 个节点编辑器虽已接入 `NodeBaseConfigSection`，但部分节点的专属字段排版仍不一致
+- [x] **节点配置交互完全对齐**：15 个节点编辑器已统一 Dialog 宽度（500px）、容器模式（`grid gap-4 py-4`）、Save 按钮位置（`flex justify-end`）、卡片宽度（240px）、hover 动画；修复 4 个未翻译标题
 
 ---
 

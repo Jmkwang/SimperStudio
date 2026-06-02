@@ -39,6 +39,7 @@ export function MergedSidebar() {
   const deleteSession = useAppStore(s => s.deleteSession)
   const activeSessionId = useAppStore(s => s.activeSessionId)
   const setActiveSession = useAppStore(s => s.setActiveSession)
+  const updateSettings = useAppStore(s => s.updateSettings)
 
   const [sidebarMode, setSidebarMode] = useState<Mode>('agent')
   const navItems = sidebarMode === 'agent' ? AGENT_NAV : WORKFLOW_NAV
@@ -127,7 +128,11 @@ export function MergedSidebar() {
     else setCurrentView(item.id)
   }
 
-  const cycleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
+  const cycleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    updateSettings({ theme: next })
+  }
   const themeIcon = theme === 'dark' ? '🌙' : '☀️'
 
   // Export a session as JSON
@@ -172,11 +177,20 @@ export function MergedSidebar() {
     const isSelected = activeSessionId === session.id
     const isHovered = hoveredItemId === session.id
     return (
-      <button
+      <div
         key={session.id}
+        role="button"
+        tabIndex={0}
         onClick={() => {
           setActiveSession(session.id)
           setCurrentView(sidebarMode === 'workflow' ? 'workflowChat' : 'chat')
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setActiveSession(session.id)
+            setCurrentView(sidebarMode === 'workflow' ? 'workflowChat' : 'chat')
+          }
         }}
         style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -239,12 +253,12 @@ export function MergedSidebar() {
             )}
           </div>
         )}
-      </button>
+      </div>
     )
   }
 
   return (
-    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px', border: `1px solid ${c.border}`, margin: '4px 4px 4px 8px' }}>
+    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px 8px', border: `1px solid ${c.border}`, margin: '4px 4px 8px 8px' }}>
       <DebugBadge id="MergedSidebar" position="top-left" />
 
       {/* ══════ Mode Switcher ══════ */}

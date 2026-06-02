@@ -58,7 +58,7 @@ function HoverHighlight({ info }: { info: HoverInfo }) {
     >
       <div className="absolute inset-0 border-2 border-dashed border-orange-400/70 rounded-md" />
       <div
-        className="absolute -top-7 left-0 whitespace-nowrap bg-orange-500/90 text-white text-[10px] font-mono px-1.5 py-0.5 rounded shadow-sm"
+        className="absolute -top-7 left-0 whitespace-nowrap bg-orange-500/90 text-white text-xs font-mono px-1.5 py-0.5 rounded shadow-sm"
       >
         {source} → {action}
       </div>
@@ -95,10 +95,10 @@ function LevelBadge({ level }: { level: string }) {
   const colors: Record<string, string> = {
     info: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
     warn: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-    error: 'bg-red-500/15 text-red-600 dark:text-red-400',
+    error: 'bg-destructive/15 text-destructive',
   }
   return (
-    <span className={cn('text-[9px] font-mono px-1 rounded', colors[level] ?? colors.info)}>
+    <span className={cn('text-xs font-mono px-1 rounded', colors[level] ?? colors.info)}>
       {level.toUpperCase()}
     </span>
   )
@@ -244,7 +244,7 @@ export function DebugOverlay() {
           <div className="flex items-center gap-2">
             <Bug className="w-3.5 h-3.5 text-orange-500" />
             <span className="text-xs font-semibold">Debug Console</span>
-            <span className="text-[10px] text-muted-foreground font-mono">({filtered.length})</span>
+            <span className="text-xs text-muted-foreground font-mono">({filtered.length})</span>
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -266,7 +266,7 @@ export function DebugOverlay() {
             <button
               onClick={handleExportText}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors
-                text-[10px] font-mono px-1.5"
+                text-xs font-mono px-1.5"
               title="Export Text"
               aria-label="Export debug logs as text"
             >
@@ -300,7 +300,7 @@ export function DebugOverlay() {
               key={tab.key}
               onClick={() => setActiveFilter(tab.key)}
               className={cn(
-                'text-[10px] px-2 py-0.5 rounded-full font-mono transition-colors',
+                'text-xs px-2 py-0.5 rounded-full font-mono transition-colors',
                 activeFilter === tab.key
                   ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
                   : 'text-muted-foreground hover:bg-muted',
@@ -319,7 +319,7 @@ export function DebugOverlay() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="filter..."
-              className="bg-transparent text-[10px] font-mono w-28 outline-none placeholder:text-muted-foreground/50"
+              className="bg-transparent text-xs font-mono w-28 outline-none placeholder:text-muted-foreground/50"
               aria-label="Filter debug logs"
             />
           </div>
@@ -330,9 +330,9 @@ export function DebugOverlay() {
                 <span
                   key={t}
                   className={cn(
-                    'text-[9px] font-mono px-1 rounded',
+                    'text-xs font-mono px-1 rounded',
                     t === 'error'
-                      ? 'bg-red-500/10 text-red-500'
+                      ? 'bg-destructive/10 text-destructive'
                       : 'bg-muted text-muted-foreground',
                   )}
                 >
@@ -355,8 +355,8 @@ export function DebugOverlay() {
                 key={entry.id}
                 onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
                 className={cn(
-                  'relative flex items-center gap-2 px-3 py-1 text-[11px] font-mono border-b border-border/20 cursor-pointer hover:bg-muted/30 transition-colors',
-                  entry.level === 'error' && 'bg-red-500/5',
+                  'relative flex items-center gap-2 px-3 py-1 text-xs font-mono border-b border-border/20 cursor-pointer hover:bg-muted/30 transition-colors',
+                  entry.level === 'error' && 'bg-destructive/5',
                   entry.level === 'warn' && 'bg-amber-500/5',
                 )}
               >
@@ -371,7 +371,7 @@ export function DebugOverlay() {
                   className={cn(
                     'w-20 shrink-0',
                     entry.type === 'error'
-                      ? 'text-red-500'
+                      ? 'text-destructive'
                       : entry.type === 'api_call'
                         ? 'text-blue-500'
                         : 'text-muted-foreground',
@@ -393,7 +393,7 @@ export function DebugOverlay() {
                 {/* Expanded detail */}
                 {expanded === entry.id && entry.data !== undefined && (
                   <div className="absolute left-0 right-0 top-full bg-card border border-border rounded-b shadow-lg p-2 z-10 max-h-40 overflow-auto">
-                    <pre className="text-[10px] font-mono whitespace-pre-wrap break-all text-muted-foreground">
+                    <pre className="text-xs font-mono whitespace-pre-wrap break-all text-muted-foreground">
                       {typeof entry.data === 'string'
                         ? entry.data
                         : JSON.stringify(entry.data, null, 2)}

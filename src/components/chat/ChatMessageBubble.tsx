@@ -1,6 +1,6 @@
 import { ChatMessage, AgentResponse } from "@/types/models";
 import { useTranslation } from "@/hooks/useTranslation";
-import { AlertTriangle, ChevronDown, Copy, Check, RefreshCw } from "lucide-react";
+import { AlertTriangle, ChevronDown, Copy, Check, RefreshCw, LayoutList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, memo } from "react";
 import Markdown from "react-markdown";
@@ -22,15 +22,50 @@ interface ChatMessageBubbleProps {
   onCopy?: () => void;
   onRetry?: (agentId: string, messageId: string) => void;
   layoutMode?: 'A' | 'B';
+  onLayoutChange?: (mode: 'A' | 'B') => void;
 }
 
-function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: string }) {
+function UserBubble({ message, emptyText, showLayoutSwitch, layoutMode, onLayoutChange }: {
+  message: ChatMessage;
+  emptyText?: string;
+  showLayoutSwitch?: boolean;
+  layoutMode?: 'A' | 'B';
+  onLayoutChange?: (mode: 'A' | 'B') => void;
+}) {
+  const { t } = useTranslation();
   const attachments = message.content?.attachments;
+  const text = message.content.text || emptyText || "";
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const isLong = text.length > 300 || text.split('\n').length > 6;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex justify-end gap-2 group">
       <div className="max-w-[80%] flex flex-col items-end">
-        <div className="rounded-2xl rounded-tr-md bg-[#2563eb] dark:bg-[#3b82f6] px-3 py-2 text-sm text-white whitespace-pre-wrap break-words">
-          {message.content.text || emptyText || ""}
+        <div className="relative">
+          <div className={cn(
+            "rounded-2xl rounded-tr-md bg-primary px-3 py-2 text-sm text-primary-foreground whitespace-pre-wrap break-words",
+            isLong && !expanded && "max-h-[180px] overflow-hidden"
+          )}>
+            {text}
+            {isLong && !expanded && (
+              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-primary to-transparent rounded-b-2xl" />
+            )}
+          </div>
+          {isLong && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="absolute bottom-1 right-1 text-xs text-primary-foreground/70 hover:text-primary-foreground bg-primary/80 hover:bg-primary/90 px-2 py-0.5 rounded transition-colors"
+            >
+              {expanded ? t("Collapse") : t("Expand")}
+            </button>
+          )}
         </div>
         {attachments && attachments.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
@@ -42,9 +77,46 @@ function UserBubble({ message, emptyText }: { message: ChatMessage; emptyText?: 
             ))}
           </div>
         )}
-        <span className="text-xs text-white/70 dark:text-white/60 mt-0.5 mr-1">
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </span>
+        <div className="flex items-center gap-1 mt-0.5 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Layout switch buttons */}
+          <div className="flex items-center gap-0.5 border-r border-white/20 pr-1 mr-1">
+            <button
+              onClick={() => onLayoutChange?.('A')}
+              className={cn(
+                "h-5 w-5 flex items-center justify-center rounded transition-colors cursor-pointer",
+                layoutMode === 'A' ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
+              )}
+              title={t("Stacked layout")}
+            >
+              <LayoutList className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => onLayoutChange?.('B')}
+              className={cn(
+                "h-5 w-5 flex items-center justify-center rounded transition-colors cursor-pointer",
+                layoutMode === 'B' ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
+              )}
+              title={t("List layout")}
+            >
+              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="2" y="2" width="12" height="3" rx="1" />
+                <rect x="2" y="7" width="12" height="3" rx="1" />
+                <rect x="2" y="12" width="12" height="3" rx="1" />
+              </svg>
+            </button>
+          </div>
+          <button
+            onClick={handleCopy}
+            className="h-5 w-5 flex items-center justify-center rounded hover:bg-white/10 text-white/70 hover:text-white transition-all relative cursor-pointer"
+            aria-label={t("Copy")}
+          >
+            <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
+            <Check className={`h-3 w-3 absolute text-green-300 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
+          </button>
+          <span className="text-xs text-white/70 dark:text-white/60">
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -83,23 +155,41 @@ const AssistantBubble = memo(function AssistantBubble({
 
   return (
     <div className={cn(
-      "flex justify-start gap-2 group",
+      "flex justify-start gap-3 group",
       layout === 'multi' && "flex-1"
     )}>
+      {/* Left column: avatar spanning 2 lines */}
+      <div className="shrink-0">
+        {agent?.avatar ? (
+          <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex items-center justify-center text-sm">
+            {agent.avatar.startsWith('http') || agent.avatar.startsWith('/') ? (
+              <img src={agent.avatar} alt={agent.name} className="h-full w-full object-cover" />
+            ) : (
+              <span>{agent.avatar}</span>
+            )}
+          </div>
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
+            {agent?.name?.slice(0, 2)?.toUpperCase() || 'AI'}
+          </div>
+        )}
+      </div>
+      {/* Right column */}
       <div className={cn(
-        "flex flex-col items-start",
+        "flex flex-col items-start min-w-0",
         layout === 'single' ? "max-w-[80%]" : "w-full"
       )}>
-        {agent?.name && (
-          <span className="text-xs font-medium text-muted-foreground/40 mb-0.5 ml-1">
-            {agent.name}
-            {(response.providerName || response.modelName) && (
-              <span className="text-xs text-muted-foreground/40 ml-1.5">
-                {response.providerName}/{response.modelName || response.modelId}
-              </span>
-            )}
+        {/* Row 1: Agent name */}
+        <span className="text-sm font-semibold text-foreground mb-0.5 truncate max-w-full">
+          {agent?.name || 'Agent'}
+        </span>
+        {/* Row 2: Model info */}
+        {(response.providerName || response.modelName) && (
+          <span className="text-xs text-muted-foreground mb-1 truncate max-w-full">
+            {response.providerName}/{response.modelName || response.modelId}
           </span>
         )}
+        {/* Row 3: Content */}
         <div className={cn(
           "w-full",
           isError && "border border-destructive/30 bg-destructive/5 rounded-lg px-3 py-1.5"
@@ -127,7 +217,8 @@ const AssistantBubble = memo(function AssistantBubble({
             </div>
           )}
         </div>
-        <div className="flex items-start justify-between gap-2 mt-0.5 ml-1">
+        {/* Row 4: Actions */}
+        <div className="flex items-start justify-between gap-2 mt-1 w-full">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             {(response.tokenUsage || response.duration) && (
               <span className="text-xs text-muted-foreground/70 shrink-0">
@@ -186,6 +277,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({
   onCopy,
   onRetry,
   layoutMode = 'A',
+  onLayoutChange,
 }: ChatMessageBubbleProps) {
   const resolveAgent = (response: AgentResponse): AgentInfo | undefined => {
     // 1. Dynamic agent meta carries the runtime-generated name/personality
@@ -213,7 +305,15 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({
   };
 
   if (message.role === "user") {
-    return <UserBubble message={message} emptyText={emptyText} />;
+    return (
+      <UserBubble
+        message={message}
+        emptyText={emptyText}
+        showLayoutSwitch={!!onLayoutChange}
+        layoutMode={layoutMode}
+        onLayoutChange={onLayoutChange}
+      />
+    );
   }
 
   if (message.role === "assistant") {
@@ -226,6 +326,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({
     const filtered = agentResponsesFiltered(responses, agentId, nodeId);
     const isMulti = filtered.length > 1;
 
+    // Layout B: vertical list (each agent in its own row)
     if (isMulti && layoutMode === 'B') {
       return (
         <div className="flex flex-col gap-2">
@@ -244,13 +345,14 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({
       );
     }
 
+    // Layout A: default stacked cards
     if (isMulti) {
       return (
         <div className="flex gap-3">
           {filtered.map((response, idx) => (
             <div
               key={`${message.id}-${idx}`}
-              className="flex-1 rounded-xl border border-border/50 bg-card/50 p-3"
+              className="flex-1 rounded-xl border border-border/30 bg-card/50 p-3"
             >
               <AssistantBubble
                 response={response}

@@ -38,6 +38,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const chatLayoutMode = useAppStore(state => state.chatLayoutMode);
+  const setChatLayoutMode = useAppStore(state => state.setChatLayoutMode);
   const executeWorkflow = useAppStore(state => state.executeWorkflow);
   const cancelWorkflowExecution = useAppStore(state => state.cancelWorkflowExecution);
   const workflowExecution = useAppStore(state => state.workflowExecution);
@@ -289,6 +290,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
                 message={message}
                 agents={linkedAgents.map(a => ({ id: a.id, name: a.name, avatar: a.avatar }))}
                 layoutMode={chatLayoutMode}
+                onLayoutChange={setChatLayoutMode}
                 onRetry={(agentId, messageId) => {
                   const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user');
                   if (lastUserMsg) {
@@ -298,8 +300,8 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
               />
             ))}
           </div>
-          <div className="border-t p-4 shrink-0">
-            <div className="flex gap-2 max-w-4xl mx-auto relative">
+          <div className="p-4 shrink-0">
+            <div className="max-w-4xl mx-auto relative">
               {attachments.length > 0 && (
                 <div className="absolute bottom-full left-0 right-0 flex flex-wrap gap-1.5 p-2 pb-0 max-w-full">
                   {attachments.map((file, i) => (
@@ -312,54 +314,54 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
                   ))}
                 </div>
               )}
-              <Textarea
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey && !isStreaming) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder={`${t("Send message to all agents")}...`}
-                className="min-h-[64px] text-sm"
-              />
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                multiple
-                onChange={handleFileSelect}
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="self-end h-11 w-11 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label={t('Attach file')}
-                disabled={isStreaming}
-              >
-                <Paperclip className="h-4 w-4" />
-              </button>
-              {isStreaming ? (
-                <Button
-                  onClick={trackClick(handleStop, 'workflow:stop')}
-                  variant="destructive"
-                  className="self-end h-11 w-11"
-                  aria-label={t('Stop')}
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={trackClick(handleSend, 'workflow:send')}
-                  disabled={!input.trim()}
-                  className="self-end h-11 w-11"
-                  aria-label={t("Send")}
-                  data-debug-source="WorkflowChatView"
-                  data-debug-action="workflow:send"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              )}
+              <div className="relative rounded-2xl border bg-card shadow-sm">
+                <Textarea
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey && !isStreaming) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={`${t("Send message to all agents")}...`}
+                  className="min-h-[80px] text-sm border-0 focus-visible:ring-0 resize-none pb-12"
+                />
+                {/* Bottom bar inside input */}
+                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileSelect} />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors"
+                      aria-label={t('Attach file')}
+                      disabled={isStreaming}
+                    >
+                      <Paperclip className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  {isStreaming ? (
+                    <button
+                      onClick={trackClick(handleStop, 'workflow:stop')}
+                      className="h-7 w-7 flex items-center justify-center rounded text-destructive hover:bg-destructive/10 transition-colors"
+                      aria-label={t('Stop')}
+                    >
+                      <Square className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={trackClick(handleSend, 'workflow:send')}
+                      disabled={!input.trim()}
+                      className="h-7 w-7 flex items-center justify-center rounded text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:text-muted-foreground"
+                      aria-label={t("Send")}
+                      data-debug-source="WorkflowChatView"
+                      data-debug-action="workflow:send"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
