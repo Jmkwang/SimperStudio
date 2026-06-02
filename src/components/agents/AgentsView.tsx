@@ -408,19 +408,20 @@ export function AgentsView() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="industry">{t("Industry")}</Label>
-                  <Input
-                    id="industry"
-                    list="industry-suggestions"
-                    value={formData.industry}
-                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                    placeholder={t("Select Industry")}
-                  />
-                  <datalist id="industry-suggestions">
-                    {existingCategories.map((cat) => (
-                      <option key={cat} value={cat} />
-                    ))}
-                  </datalist>
+                  <Label>{t("Industry")}</Label>
+                  <Select
+                    value={formData.industry || 'General'}
+                    onValueChange={(val) => setFormData({ ...formData, industry: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("Select Industry")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="systemPrompt">{t("System Prompt")}</Label>

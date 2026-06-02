@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useDebugTrack } from "@/hooks/useDebugTrack";
 import { toast } from "sonner";
 import {
-  Plus, Trash2, Power, ChevronRight, Star, Minus,
+  Plus, Trash2, Power, Star, Minus,
   Play, CheckCircle, XCircle, Loader2, RefreshCw, ChevronDown, Bot, AlertTriangle, Eye, Pencil
 } from "lucide-react";
 import { fetchFromProvider } from "@/lib/api";
@@ -267,10 +267,20 @@ export function SettingsModelsTab() {
                   ? "bg-primary/10 border border-primary/20"
                   : "hover:bg-muted/50 border border-transparent"
               )}>
-                {/* Green enabled indicator bar */}
-                {provider.isEnabled && (
-                  <div className="absolute right-0 top-0 bottom-0 w-0.5 rounded-r-lg bg-green-500" />
-                )}
+                {/* Green enabled indicator dot - clickable to toggle */}
+                <button
+                  className={cn(
+                    "absolute right-3 top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full transition-colors shrink-0",
+                    provider.isEnabled
+                      ? "bg-green-500 hover:bg-green-600"
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                  title={provider.isEnabled ? t("Enabled") : t("Disabled")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateProvider(provider.id, { isEnabled: !provider.isEnabled });
+                  }}
+                />
                 <div className={cn("flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold shrink-0 overflow-hidden", provider.avatar ? '' : (PROVIDER_COLORS[provider.type] || 'bg-muted text-muted-foreground'))}>
                   {provider.avatar
                     ? (provider.avatar.startsWith('http') || provider.avatar.startsWith('/'))
@@ -282,9 +292,6 @@ export function SettingsModelsTab() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{provider.name}</div>
                   <div className="text-xs text-muted-foreground truncate">{provider.baseUrl || `(${t('Empty')})`}</div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-opacity", selectedProviderId === provider.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
                 </div>
               </div>
             ))}
@@ -301,19 +308,6 @@ export function SettingsModelsTab() {
                   <h3 className="text-lg font-medium">{selectedProvider.name}</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn("h-8 px-2", settings.activeProviderId === selectedProvider.id ? "text-primary" : "text-muted-foreground")}
-                    disabled={settings.activeProviderId === selectedProvider.id}
-                    onClick={trackClick(() => {
-                      const setActiveProvider = useAppStore.getState().setActiveProvider;
-                      setActiveProvider(selectedProvider.id);
-                    }, 'provider:setActive')}
-                  >
-                    <Star className="h-4 w-4 mr-1" />
-                    {settings.activeProviderId === selectedProvider.id ? t('Current Provider') : t('Set as Current')}
-                  </Button>
                   <Button variant="ghost" size="sm" className={cn("h-8 px-2", selectedProvider.isEnabled ? "text-green-600 dark:text-green-400" : "text-muted-foreground")}
                     onClick={trackClick(() => updateProvider(selectedProvider.id, { isEnabled: !selectedProvider.isEnabled }), 'provider:toggleEnabled')}>
                     <Power className="h-4 w-4 mr-1" />

@@ -50,6 +50,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import type { Workflow } from '@/types/models';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
@@ -248,20 +250,26 @@ function Flow() {
     }
   }, 'workflow:save');
 
-  const handleExport = trackClick(() => {
+  const handleExport = trackClick(async () => {
     const exportData = {
       nodes: nodes.map(n => ({ id: n.id, type: n.type, position: n.position, data: { ...n.data, deleteNode: undefined } })),
       edges,
     };
     const json = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeWorkflow?.name || 'workflow'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(t('Workflow exported'));
+    const defaultName = `${activeWorkflow?.name || 'workflow'}.json`;
+    try {
+      const filePath = await save({
+        defaultPath: defaultName,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (filePath) {
+        await writeTextFile(filePath, json);
+        toast.success(t('Workflow exported'));
+      }
+    } catch (err) {
+      console.error('Export failed:', err);
+      toast.error(t('Export failed'));
+    }
   }, 'workflow:export');
 
   return (

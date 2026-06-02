@@ -383,6 +383,7 @@ export interface AgentResponse {
 
   content: {
     text: string;
+    thinking?: string;
     token?: number;
   };
   tokenUsage?: TokenUsage;

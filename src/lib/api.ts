@@ -20,6 +20,7 @@ function apiBase(provider: ModelProvider): string {
 export interface FetchOptions {
   maxTokens?: number;
   temperature?: number;
+  thinkingLevel?: 'default' | 'off';
 }
 
 export async function fetchFromResolvedConfig(
@@ -117,13 +118,15 @@ export async function fetchFromProvider(provider: ModelProvider, modelId: string
         throw new Error(`Unsupported provider type: ${provider.type}`);
     }
 
+    const shouldThink = options?.thinkingLevel !== 'off';
     const result = streamText({
         model,
         system: systemPrompt,
         prompt,
         ...(options?.maxTokens ? { maxTokens: options.maxTokens } : {}),
         ...(options?.temperature ? { temperature: options.temperature } : {}),
-    });
+        ...(shouldThink ? { experimental_thinking: { enabled: true } } : {}),
+    } as any);
 
     const duration = performance.now() - startTime;
     debugLogger.log('api_response', 'api', `← ${provider.type}/${modelId}`, { durationMs: Math.round(duration) }, 'info', duration);

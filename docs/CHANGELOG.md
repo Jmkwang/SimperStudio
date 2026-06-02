@@ -101,6 +101,35 @@
 - 设计令牌、Button/Textarea/Dialog/DropdownMenu/Avatar/Tooltip/Select 7 个核心组件规范
 - 无障碍规范（对比度、最小点击区、aria-label、prefers-reduced-motion）
 
+### 设置页 UI 优化
+- **去除重复标题**：General/Appearance 标签页移除与 SettingsView header 重复的副标题（`SettingsGeneralTab.tsx`/`SettingsAppearanceTab.tsx`）
+- **模型服务商列表**：去掉右侧 `>` 箭头；绿线改为绿色圆点，支持点击切换 `isEnabled`；去掉星标和"当前服务商"按钮（`SettingsModelsTab.tsx`）
+- **智能体分类下拉**：`<datalist>` 改为 Radix UI `<Select>`，修复 Tauri WebView2 下拉失效（`AgentsView.tsx`）
+
+### 边框与视觉
+- **MergedSidebar 边框**：浅色 `#EAEAE9` / 深色 `#333333`，2px 宽度，外侧 box-shadow 减淡（`MergedSidebar.tsx`）
+- **Agent 浮窗边框**：AgentChatWindow / WorkflowAgentWindow 边框颜色同步 MergedSidebar（`AgentChatWindow.tsx`/`WorkflowAgentWindow.tsx`）
+- **用户气泡操作栏**：修复浅色模式下复制/布局切换按钮不可见（`text-white` → `text-muted-foreground`，因按钮在气泡外部页面背景上）（`ChatMessageBubble.tsx`）
+
+### 工作流导出
+- **原生保存对话框**：安装 `@tauri-apps/plugin-dialog` + `@tauri-apps/plugin-fs`，导出弹出系统"另存为"对话框，用户选择保存路径（`WorkflowCanvas.tsx`/`lib.rs`/`Cargo.toml`）
+
+### 思考过程（Thinking）
+- **类型扩展**：`AgentResponse.content` 新增 `thinking?: string` 字段（`models.ts`）
+- **API 启用**：`streamText` 传入 `experimental_thinking: { enabled: true }`，支持 Claude 等模型的 extended thinking（`api.ts`）
+- **流式处理**：`runAgentResponse` 并发消费 `textStream` + `reasoningTextStream`，新增 `addAgentThinkingStream` action（`chatSlice.ts`）
+- **UI 渲染**：`ThinkingBlock` 组件，默认折叠显示一行预览，点击展开滚动查看完整思考过程，流式时 Brain 图标脉冲动画（`ChatMessageBubble.tsx`）
+- **思维程度控制**：输入框工具栏 Brain 图标，弹出选择器（默认自动/关闭），通过 `thinkingLevel` 参数传递到 API（`SimpleChatView.tsx`/`WorkflowChatView.tsx`/`chatSlice.ts`/`api.ts`）
+
+### 日志监测系统
+- **持久化**：`debugLogger` 新增 localStorage 存储（200 条上限），启动自动加载，2s 防抖写入（`debugLogger.ts`）
+- **流式监控**：`StreamMonitor` 类跟踪活跃流状态、chunk 计数、字符数、15s 卡顿检测（`debugLogger.ts`）
+- **新事件类型**：`stream_start`/`stream_chunk`/`stream_end`/`stream_stall`/`stream_error`/`performance`（`debugLogger.ts`）
+- **chatSlice 集成**：`runAgentResponse` 集成 `streamStart`/`streamChunk`/`streamEnd`/`streamError`（`chatSlice.ts`）
+- **DebugOverlay 增强**：新增 Streams/Perf 筛选标签，聚合流式事件计数（`DebugOverlay.tsx`）
+- **Rust 侧日志**：`tauri-plugin-log` 输出到 `%APPDATA%/SimperStudio/logs/`，5MB 轮转（`lib.rs`/`Cargo.toml`）
+- **CLI 进程监控**：spawn/成功/失败/超时全部记录日志（`cli_agent.rs`）
+
 ---
 
 ## v0.4.3（2026-05-29）

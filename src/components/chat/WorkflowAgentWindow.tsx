@@ -4,6 +4,7 @@ import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useTheme } from '@/components/theme/ThemeProvider';
 import { Minus, Send, Square, X, Layers } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -11,6 +12,9 @@ const DEFAULT_WIDTH = 420;
 const DEFAULT_HEIGHT = 480;
 
 export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConversationWindow }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const softBorder = isDark ? '#333333' : '#EAEAE9';
   const [input, setInput] = useState('');
   const [pos, setPos] = useState(windowData.position);
   const size = windowData.size || { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
@@ -109,6 +113,7 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
     <div
       className="absolute rounded-xl border bg-background shadow-xl flex flex-col overflow-hidden"
       style={{
+        borderColor: softBorder,
         left: pos.x,
         top: pos.y,
         zIndex: windowData.zIndex,

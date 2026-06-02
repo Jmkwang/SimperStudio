@@ -36,11 +36,6 @@ export function SettingsGeneralTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">{t("General Settings")}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{t("Manage your application preferences.")}</p>
-      </div>
-
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="space-y-2">
           <Label>{t("Language")}</Label>

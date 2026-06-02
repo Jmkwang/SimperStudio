@@ -130,7 +130,8 @@
       "Bash(where cl.exe)",
       "Bash(where rc.exe)",
       "Bash(npm ls *)",
-      "Bash(npm cache *)"
+      "Bash(npm cache *)",
+      "Bash(cargo add *)"
     ]
   }
 }

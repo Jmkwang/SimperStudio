@@ -121,8 +121,10 @@ const FILTER_TABS: { key: DebugEventType | 'all'; label: string }[] = [
   { key: 'click', label: 'Clicks' },
   { key: 'state_change', label: 'State' },
   { key: 'api_call', label: 'API' },
+  { key: 'stream_start', label: 'Streams' },
   { key: 'error', label: 'Errors' },
   { key: 'navigation', label: 'Nav' },
+  { key: 'performance', label: 'Perf' },
 ]
 
 const MAX_DISPLAYED = 200
@@ -180,14 +182,25 @@ export function DebugOverlay() {
 
   // Filtered entries
   const filtered = useMemo(() => {
+    if (activeFilter === 'stream_start') {
+      // Show all stream-related events
+      const streamTypes = ['stream_start', 'stream_chunk', 'stream_end', 'stream_stall', 'stream_error']
+      return entries.filter(e => streamTypes.includes(e.type) && (!searchText || `${e.source} ${e.action} ${JSON.stringify(e.data ?? '')}`.toLowerCase().includes(searchText.toLowerCase())))
+    }
     const filters: DebugFilters = {}
     if (activeFilter !== 'all') filters.type = activeFilter
     if (searchText) filters.search = searchText
     return debugLogger.getEntries(filters)
   }, [entries, activeFilter, searchText])
 
-  // Stats from full log (not filtered)
-  const stats = useMemo(() => debugLogger.getStats(), [entries])
+  // Stats from full log (not filtered), with stream aggregation
+  const stats = useMemo(() => {
+    const s = debugLogger.getStats()
+    // Aggregate stream events for the "Streams" tab
+    const streamTypes = ['stream_start', 'stream_chunk', 'stream_end', 'stream_stall', 'stream_error']
+    s.stream_start = streamTypes.reduce((sum, t) => sum + (s[t] || 0), 0)
+    return s
+  }, [entries])
 
   const handleExportJSON = useCallback(() => {
     const blob = new Blob([debugLogger.exportJSON()], { type: 'application/json' })

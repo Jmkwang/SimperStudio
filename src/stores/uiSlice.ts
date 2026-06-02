@@ -57,7 +57,7 @@ export function createUISlice(set: any, get: any, writeConfig?: any): UISlice {
   const savedView = typeof window !== 'undefined' ? localStorage.getItem('ss_currentView') : null;
 
   return {
-    currentView: savedView || 'chat',
+    currentView: savedView || 'workflowChat',
     activeWorkspaceId: 'default-workspace',
     activeSessionId: null,
     activeWorkflowId: null,

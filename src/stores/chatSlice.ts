@@ -77,15 +77,17 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
 }
 
 async function runAgentResponse({
-  sessionId, messageId, agent, prompt, nodeId, nodeData, signal,
-  addAgentResponseStream, completeAgentResponse, getSettings,
+  sessionId, messageId, agent, prompt, nodeId, nodeData, signal, thinkingLevel,
+  addAgentResponseStream, addAgentThinkingStream, completeAgentResponse, getSettings,
 }: {
   sessionId: string; messageId: string; agent: Agent; prompt: string; nodeId?: string;
   nodeData?: Pick<WorkflowAgentNodeData, 'overrideProviderId' | 'overrideModelId' | 'overrideSystemPrompt'>;
   signal?: AbortSignal;
-  addAgentResponseStream: any; completeAgentResponse: any; getSettings: () => any;
+  thinkingLevel?: 'default' | 'off';
+  addAgentResponseStream: any; addAgentThinkingStream: any; completeAgentResponse: any; getSettings: () => any;
 }) {
   addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId);
+  let streamKey: string | undefined;
   try {
     const settings: ResolveSettings = getSettings();
 
@@ -99,27 +101,53 @@ async function runAgentResponse({
     const result = await fetchFromResolvedConfig(config, prompt, systemPrompt, {
       maxTokens: agent.maxTokens,
       temperature: agent.temperature,
+      thinkingLevel,
     });
 
-    // 4. Stream chunks + backfill model info on first chunk, with abort support
-    let firstChunk = true;
-    for await (const textPart of result.textStream) {
-      // Check for cancellation — stop consuming on abort
-      if (signal?.aborted) break;
-      if (firstChunk && textPart) {
-        addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId, {
-          providerId: config.provider.id,
-          providerName: config.providerName,
-          modelId: config.model.modelId,
-          modelName: config.modelName,
-        });
-        firstChunk = false;
-      } else {
-        addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId);
-      }
-    }
+    // 4. Start stream monitoring
+    streamKey = debugLogger.streamStart(sessionId, agent.id, config.model.modelId);
 
-    // 5. Extract token usage after stream completes
+    // 5. Stream thinking + text chunks concurrently
+    let firstChunk = true;
+    const consumeText = async () => {
+      for await (const textPart of result.textStream) {
+        if (signal?.aborted) break;
+        if (textPart && streamKey) {
+          debugLogger.streamChunk(streamKey, textPart.length, false);
+        }
+        if (firstChunk && textPart) {
+          addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId, {
+            providerId: config.provider.id,
+            providerName: config.providerName,
+            modelId: config.model.modelId,
+            modelName: config.modelName,
+          });
+          firstChunk = false;
+        } else {
+          addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId);
+        }
+      }
+    };
+    const consumeThinking = async () => {
+      try {
+        // @ts-ignore - reasoningTextStream may not exist on all providers
+        if (result.reasoningTextStream) {
+          // @ts-ignore
+          for await (const thinkingPart of result.reasoningTextStream) {
+            if (signal?.aborted) break;
+            if (thinkingPart && streamKey) {
+              debugLogger.streamChunk(streamKey, thinkingPart.length, true);
+              addAgentThinkingStream(sessionId, messageId, agent.id, thinkingPart, nodeId);
+            }
+          }
+        }
+      } catch {
+        // Some providers don't support thinking — ignore silently
+      }
+    };
+    await Promise.all([consumeText(), consumeThinking()]);
+
+    // 6. Extract token usage after stream completes
     let tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
     try {
       const usage = await result.usage;
@@ -132,6 +160,9 @@ async function runAgentResponse({
       };
     } catch { /* some providers may not support usage */ }
 
+    // 7. Log stream completion
+    debugLogger.streamEnd(streamKey, tokenUsage);
+
     completeAgentResponse(sessionId, messageId, agent.id, nodeId, {
       providerId: config.provider.id,
       providerName: config.providerName,
@@ -142,6 +173,10 @@ async function runAgentResponse({
   } catch (e: any) {
     const summary = shortError(e.message || String(e));
     const detail = e.message || String(e);
+    // Log stream error
+    if (streamKey) {
+      debugLogger.streamError(streamKey, new Error(detail));
+    }
     addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId, {
       status: 'error',
       errorSummary: summary,
@@ -194,14 +229,15 @@ export interface ChatSlice {
 
   addUserMessage: (sessionId: string, text: string, attachments?: MessageAttachment[], meta?: MessageMeta) => void;
   addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string, nodeId?: string, meta?: MessageMeta) => void;
+  addAgentThinkingStream: (sessionId: string, messageId: string, agentId: string, thinkingChunk: string, nodeId?: string) => void;
   completeAgentResponse: (sessionId: string, messageId: string, agentId: string, nodeId?: string, meta?: MessageMeta) => void;
   cancelSessionStream: (sessionId: string) => void;
-  sendMessageToAgents: (sessionId: string, prompt: string, agents: Agent[], options?: { attachments?: MessageAttachment[]; nodeId?: string; nodeData?: any; meta?: MessageMeta; addUserMessage?: boolean }) => Promise<string | undefined>;
+  sendMessageToAgents: (sessionId: string, prompt: string, agents: Agent[], options?: { attachments?: MessageAttachment[]; nodeId?: string; nodeData?: any; meta?: MessageMeta; addUserMessage?: boolean; thinkingLevel?: 'default' | 'off' }) => Promise<string | undefined>;
   sendToWorkflowAgent: (sessionId: string, nodeId: string, prompt: string, options?: { addUserMessage?: boolean; triggeredBy?: MessageMeta['triggeredBy']; forwardFromMessageId?: string }) => Promise<string | undefined>;
   forwardAgentReplyToNext: (sessionId: string, fromNodeId: string, messageId: string, agentId: string, triggeredBy?: MessageMeta['triggeredBy']) => Promise<void>;
   rerunAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<string | undefined>;
   rerunAndForwardAgentReply: (sessionId: string, nodeId: string, prompt: string) => Promise<void>;
-  sendToAgent: (sessionId: string, agentId: string, prompt: string, options?: { addUserMessage?: boolean; attachments?: MessageAttachment[] }) => Promise<string | undefined>;
+  sendToAgent: (sessionId: string, agentId: string, prompt: string, options?: { addUserMessage?: boolean; attachments?: MessageAttachment[]; thinkingLevel?: 'default' | 'off' }) => Promise<string | undefined>;
   retryAgentResponse: (sessionId: string, messageId: string, agentId: string, prompt: string, nodeId?: string) => Promise<void>;
 
   linkWorkflowToSession: (sessionId: string, workflowId: string) => void;
@@ -437,6 +473,31 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       }
     },
 
+    addAgentThinkingStream: (sessionId, messageId, agentId, thinkingChunk, nodeId) => {
+      set((state: any) => {
+        const sessions = state.sessions.map((s: ChatSession) => {
+          if (s.id === sessionId) {
+            const messages = [...s.messages];
+            const msgIndex = messages.findIndex(m => m.id === messageId);
+            if (msgIndex !== -1) {
+              const msg = { ...messages[msgIndex] };
+              msg.agentResponses = [...(msg.agentResponses || [])];
+              const agentRespIndex = msg.agentResponses.findIndex((ar: any) => ar.agentId === agentId && ar.nodeId === nodeId);
+              if (agentRespIndex !== -1) {
+                const resp = { ...msg.agentResponses[agentRespIndex] };
+                resp.content = { ...resp.content, thinking: (resp.content.thinking || '') + thinkingChunk };
+                msg.agentResponses[agentRespIndex] = resp;
+              }
+              messages[msgIndex] = msg;
+            }
+            return { ...s, messages, updatedAt: Date.now() };
+          }
+          return s;
+        });
+        return { sessions };
+      });
+    },
+
     completeAgentResponse: (sessionId, messageId, agentId, nodeId, meta) => {
       set((state: any) => ({
         sessions: state.sessions.map((s: ChatSession) => {
@@ -510,7 +571,9 @@ export function createChatSlice(set: any, get: any): ChatSlice {
           sessionId, messageId, agent, prompt: promptWithAttachments, nodeId: options.nodeId,
           nodeData: options.nodeData,
           signal: controller.signal,
+          thinkingLevel: options.thinkingLevel,
           addAgentResponseStream: get().addAgentResponseStream,
+          addAgentThinkingStream: get().addAgentThinkingStream,
           completeAgentResponse: get().completeAgentResponse,
           getSettings: () => get().settings,
         })));
@@ -688,7 +751,9 @@ export function createChatSlice(set: any, get: any): ChatSlice {
         await runAgentResponse({
           sessionId, messageId, agent, prompt: promptWithAttachments, nodeData: undefined,
           signal: controller.signal,
+          thinkingLevel: options.thinkingLevel,
           addAgentResponseStream: get().addAgentResponseStream,
+          addAgentThinkingStream: get().addAgentThinkingStream,
           completeAgentResponse: get().completeAgentResponse,
           getSettings: () => get().settings,
         });
@@ -726,6 +791,7 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       await runAgentResponse({
         sessionId, messageId, agent, prompt, nodeId,
         addAgentResponseStream: get().addAgentResponseStream,
+        addAgentThinkingStream: get().addAgentThinkingStream,
         completeAgentResponse: get().completeAgentResponse,
         getSettings: () => get().settings,
       });

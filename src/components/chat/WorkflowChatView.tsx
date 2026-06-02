@@ -23,9 +23,10 @@ import { ChatRouterNode } from './ChatRouterNode';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Bot, Send, PlayCircle, Square, Loader2, AlertCircle, CheckCircle2, MessageSquare, GitBranch, Paperclip, X } from 'lucide-react';
+import { Bot, Send, PlayCircle, Square, Loader2, AlertCircle, CheckCircle2, MessageSquare, GitBranch, Paperclip, X, Brain } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
+import { cn } from '@/lib/utils';
 
 export function WorkflowChatView({ session }: { session: ChatSession }) {
   const workflows = useAppStore(state => state.workflows);
@@ -50,6 +51,8 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const [multiAgentMode, setMultiAgentMode] = useState(true);
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [thinkingLevel, setThinkingLevel] = useState<'default' | 'off'>('default');
+  const [thinkingPickerOpen, setThinkingPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const workflow = session.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
@@ -153,7 +156,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
       size: f.size,
       kind: (f.type.startsWith('image/') ? 'image' : 'file') as 'image' | 'file',
     })) : undefined;
-    await sendMessageToAgents(session.id, text, linkedAgents, { attachments: attachmentList });
+    await sendMessageToAgents(session.id, text, linkedAgents, { attachments: attachmentList, thinkingLevel });
   };
 
   const isStreaming = activeStreamingSessionIds.includes(session.id);
@@ -339,6 +342,50 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
                     >
                       <Paperclip className="h-3.5 w-3.5" />
                     </button>
+                    {/* Thinking level control */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setThinkingPickerOpen(!thinkingPickerOpen)}
+                        className={cn(
+                          "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                          thinkingLevel === 'default'
+                            ? "text-primary/60 hover:text-primary hover:bg-primary/10"
+                            : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
+                        )}
+                        aria-label={t('Thinking level')}
+                        disabled={isStreaming}
+                      >
+                        <Brain className="h-3.5 w-3.5" />
+                      </button>
+                      {thinkingPickerOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setThinkingPickerOpen(false)} />
+                          <div className="absolute bottom-full left-0 mb-1 z-50 min-w-[160px] rounded-lg border bg-popover p-1 shadow-md">
+                            {[
+                              { value: 'default' as const, label: t('Default (Auto)'), desc: t('Model decides') },
+                              { value: 'off' as const, label: t('Off'), desc: t('No thinking') },
+                            ].map(option => (
+                              <button
+                                key={option.value}
+                                onClick={() => { setThinkingLevel(option.value); setThinkingPickerOpen(false); }}
+                                className={cn(
+                                  "w-full text-left px-3 py-1.5 text-xs rounded-md flex items-center gap-2",
+                                  thinkingLevel === option.value
+                                    ? 'bg-primary/10 text-primary font-medium'
+                                    : 'text-foreground/80 hover:bg-muted'
+                                )}
+                              >
+                                <span className={cn("w-1.5 h-1.5 rounded-full", thinkingLevel === option.value ? 'bg-primary' : 'bg-transparent')} />
+                                <div>
+                                  <div>{option.label}</div>
+                                  <div className="text-muted-foreground/60 text-[10px]">{option.desc}</div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {isStreaming ? (
                     <button

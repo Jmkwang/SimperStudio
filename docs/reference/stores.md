@@ -46,12 +46,14 @@ stores/
 
 **Actions**（节选）：
 - 会话：`createSession`、`openWorkflowSession`、`renameSession`、`deleteSession`
-- 消息：`addAgentResponseStream`、`completeAgentResponse`、`retryAgentResponse`
-- 转发：`sendMessageToAgents`、`sendToWorkflowAgent`、`forwardAgentReplyToNext`、`rerunAgentReply`
+- 消息：`addAgentResponseStream`、`addAgentThinkingStream`、`completeAgentResponse`、`retryAgentResponse`
+- 转发：`sendMessageToAgents`（支持 `thinkingLevel` 参数）、`sendToWorkflowAgent`、`forwardAgentReplyToNext`、`rerunAgentReply`、`sendToAgent`（支持 `thinkingLevel` 参数）
 - 流式取消：`cancelSessionStream(sessionId)` — 取消该 session 的所有进行中请求
 - 浮窗：`openWorkflowAgentWindow`、`focusWorkflowAgentWindow`、`closeWorkflowAgentWindow`、`setWorkflowSidebarCollapsed`
 
 **特殊点**：`AbortController` 不可序列化，用模块级 `Map<sessionId, AbortController>` 维护，不进入 store state。
+
+**流式监控**：`runAgentResponse` 集成 `debugLogger.streamStart/streamChunk/streamEnd/streamError`，跟踪 chunk 计数、字符数、卡顿检测（15s 无新 chunk 触发 `stream_stall`）。
 
 ---
 

@@ -17,11 +17,6 @@ export function SettingsAppearanceTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">{t("Appearance Settings")}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{t("Customize the look and feel.")}</p>
-      </div>
-
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="space-y-2">
           <Label>{t("Theme Preference")}</Label>

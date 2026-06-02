@@ -162,5 +162,44 @@ CREATE INDEX idx_workflows_workspace ON workflows(workspace_id);
 
 `run()` 注册 `RunEvent::Exit`：
 - `CliProcessRegistry::kill_all_processes()` 强制终止所有活跃 CLI 子进程，防止僵尸进程
+- 日志记录关闭事件
 
 数据库连接随 `DbState` 在应用销毁时自动释放（Mutex 析构）。
+
+---
+
+## 6. 日志系统
+
+### Tauri 侧日志（`tauri-plugin-log`）
+
+| 配置项 | 值 |
+|---|---|
+| 日志级别 | `Info` |
+| 输出目标 | `%APPDATA%/SimperStudio/logs/app.log` |
+| 文件大小限制 | 5MB |
+| 轮转策略 | `KeepAll`（保留所有历史文件） |
+
+**日志内容**：
+- 应用启动/关闭事件
+- 数据库初始化状态
+- CLI 子进程生命周期（spawn/成功/失败/超时）
+
+### 前端日志（`debugLogger`）
+
+**存储**：内存环形缓冲区（500 条）+ localStorage 持久化（200 条）
+
+**事件类型**：
+| 类型 | 说明 |
+|---|---|
+| `click` | 用户点击事件 |
+| `state_change` | Zustand 状态变化 |
+| `api_call` / `api_response` | API 调用请求/响应 |
+| `stream_start` / `stream_chunk` / `stream_end` | 流式响应生命周期 |
+| `stream_stall` | 流式响应卡顿（15s 无新 chunk） |
+| `stream_error` | 流式响应错误 |
+| `error` | 错误事件 |
+| `navigation` | 视图导航 |
+| `workflow_exec` | 工作流执行 |
+| `performance` | 性能指标 |
+
+**StreamMonitor**：跟踪活跃流状态（chunk 计数、字符数、卡顿检测），流结束时输出统计（耗时/chunk 数/chars/sec）。

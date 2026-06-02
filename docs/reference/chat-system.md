@@ -31,13 +31,20 @@ interface ChatMessage {
 interface AgentResponse {
   agentId: string
   nodeId?: string                // 工作流场景标识来源节点
-  content: { text: string }
+  providerId?: string            // 实际使用的 provider
+  providerName?: string
+  modelId?: string               // 实际使用的模型
+  modelName?: string
+  content: {
+    text: string
+    thinking?: string            // 思考过程内容（Claude 等模型的 extended thinking）
+  }
+  tokenUsage?: { promptTokens: number; completionTokens: number; totalTokens: number }
   status: 'streaming' | 'complete' | 'error'
-  errorMessage?: string
-  promptTokens?: number
-  completionTokens?: number
-  durationMs?: number
-  timestamp: number
+  errorSummary?: string          // 错误摘要
+  errorDetail?: string           // 错误详情
+  timestamp?: number             // 流式开始时间
+  duration?: number              // 流式耗时（ms）
 }
 ```
 
@@ -74,19 +81,29 @@ components/chat/
 
 ```
 SimpleChatView.handleSend()
-  └── chatSlice.sendMessageToAgents(sessionId, agentIds, prompt, attachments)
+  └── chatSlice.sendMessageToAgents(sessionId, agentIds, prompt, { attachments, thinkingLevel })
        ├── createUserMessage → 写库 + 内存
        ├── 为每个 agent 调用 runAgentResponse:
-       │    ├── createStreamMessage（agentResponses[].status='streaming'）
+       │    ├── createStreamMessage（agentResponses[].status='streaming', thinking=''）
        │    ├── resolveAgentModelConfig → providerId / modelId 三级回退
-       │    ├── fetchFromResolvedConfig → AI SDK streamText
-       │    ├── for await chunk → addAgentResponseStream(messageId, chunk)
-       │    │     └── 仅改内存（流式不落库，避免高频写）
+       │    ├── fetchFromResolvedConfig → AI SDK streamText({ experimental_thinking })
+       │    ├── debugLogger.streamStart() → 开始流式监控
+       │    ├── 并发消费 textStream + reasoningTextStream:
+       │    │    ├── for await textChunk → addAgentResponseStream(messageId, chunk)
+       │    │    │    └── 仅改内存（流式不落库，避免高频写）
+       │    │    └── for await thinkingChunk → addAgentThinkingStream(messageId, chunk)
+       │    │         └── 写入 response.content.thinking
+       │    ├── debugLogger.streamChunk() → 每 50 chunk 记录进度
+       │    ├── debugLogger.streamEnd() → 流完成，输出统计（耗时/chunk数/chars/sec）
        │    └── completeAgentResponse → status='complete' + update_chat_message 终态落库
        └── activeStreamingSessionIds 维护 → UI 切换发送↔停止按钮
 ```
 
 **取消机制**：模块级 `Map<sessionId, AbortController>` 维护活跃流。`cancelSessionStream(sessionId)` → `controller.abort()`，AI SDK 自动响应。
+
+**卡顿检测**：`StreamMonitor` 15 秒无新 chunk 触发 `stream_stall` 警告日志。
+
+**思维程度**：`thinkingLevel: 'default' | 'off'`，`'default'` 启用 `experimental_thinking`，`'off'` 不传该参数。
 
 ---
 

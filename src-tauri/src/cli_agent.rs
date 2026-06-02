@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+use log::{info, warn, error};
 
 // ---------------------------------------------------------------------------
 // State: execution IDs of active CLI processes (for kill lookup via PID)
@@ -88,6 +89,7 @@ pub async fn spawn_cli_agent(
 ) -> Result<(), String> {
     let start = Instant::now();
     let exec_id = request.execution_id.clone();
+    info!("[CLI] Spawning agent: {} (exec_id: {})", request.executable, exec_id);
 
     // Build command (no shell — direct exec)
     let mut cmd = Command::new(&request.executable);
@@ -210,15 +212,22 @@ pub async fn spawn_cli_agent(
     // Emit exit event
     match exit_result {
         Ok(exit_code) => {
+            let success = exit_code.map_or(false, |c| c == 0);
+            if success {
+                info!("[CLI] Agent {} completed successfully in {}ms", exec_id, duration_ms);
+            } else {
+                warn!("[CLI] Agent {} exited with code {:?} in {}ms", exec_id, exit_code, duration_ms);
+            }
             let _ = app.emit("cli-exit", CliExitEvent {
                 execution_id: exec_id,
                 exit_code,
-                success: exit_code.map_or(false, |c| c == 0),
+                success,
                 duration_ms,
                 error: None,
             });
         }
         Err(err) => {
+            error!("[CLI] Agent {} failed after {}ms: {}", exec_id, duration_ms, err);
             let _ = app.emit("cli-exit", CliExitEvent {
                 execution_id: exec_id,
                 exit_code: None,

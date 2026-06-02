@@ -35,7 +35,7 @@ export function createStreamMessage(
       {
         agentId,
         nodeId,
-        content: { text: '' },
+        content: { text: '', thinking: '' },
         status: 'streaming',
         timestamp: Date.now(),
       },
@@ -52,7 +52,7 @@ export function createAgentResponse(
   return {
     agentId,
     nodeId,
-    content: { text },
+    content: { text, thinking: '' },
     status,
     timestamp: Date.now(),
   };

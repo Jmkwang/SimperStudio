@@ -1,8 +1,8 @@
 import { ChatMessage, AgentResponse } from "@/types/models";
 import { useTranslation } from "@/hooks/useTranslation";
-import { AlertTriangle, ChevronDown, Copy, Check, RefreshCw, LayoutList } from "lucide-react";
+import { AlertTriangle, ChevronDown, Copy, Check, RefreshCw, LayoutList, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, memo } from "react";
+import { useState, useRef, memo } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -79,12 +79,12 @@ function UserBubble({ message, emptyText, showLayoutSwitch, layoutMode, onLayout
         )}
         <div className="flex items-center gap-1 mt-0.5 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {/* Layout switch buttons */}
-          <div className="flex items-center gap-0.5 border-r border-white/20 pr-1 mr-1">
+          <div className="flex items-center gap-0.5 border-r border-muted-foreground/20 pr-1 mr-1">
             <button
               onClick={() => onLayoutChange?.('A')}
               className={cn(
                 "h-5 w-5 flex items-center justify-center rounded transition-colors cursor-pointer",
-                layoutMode === 'A' ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
+                layoutMode === 'A' ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
               )}
               title={t("Stacked layout")}
             >
@@ -94,7 +94,7 @@ function UserBubble({ message, emptyText, showLayoutSwitch, layoutMode, onLayout
               onClick={() => onLayoutChange?.('B')}
               className={cn(
                 "h-5 w-5 flex items-center justify-center rounded transition-colors cursor-pointer",
-                layoutMode === 'B' ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
+                layoutMode === 'B' ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
               )}
               title={t("List layout")}
             >
@@ -107,17 +107,51 @@ function UserBubble({ message, emptyText, showLayoutSwitch, layoutMode, onLayout
           </div>
           <button
             onClick={handleCopy}
-            className="h-5 w-5 flex items-center justify-center rounded hover:bg-white/10 text-white/70 hover:text-white transition-all relative cursor-pointer"
+            className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-all relative cursor-pointer"
             aria-label={t("Copy")}
           >
             <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
-            <Check className={`h-3 w-3 absolute text-green-300 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
+            <Check className={`h-3 w-3 absolute text-green-600 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
           </button>
-          <span className="text-xs text-white/70 dark:text-white/60">
+          <span className="text-xs text-muted-foreground">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ThinkingBlock({ thinking, isStreaming }: { thinking: string; isStreaming: boolean }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  if (!thinking) return null;
+
+  return (
+    <div className="mb-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors cursor-pointer"
+      >
+        <Brain className={cn("h-3 w-3", isStreaming && "animate-pulse")} />
+        <span>{t("Thinking...")}</span>
+        <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
+      </button>
+      {expanded && (
+        <div
+          ref={scrollRef}
+          className="mt-1 max-h-48 overflow-y-auto rounded-md bg-muted/30 border border-muted/50 px-3 py-2 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap"
+        >
+          {thinking}
+        </div>
+      )}
+      {!expanded && (
+        <div className="mt-0.5 text-xs text-muted-foreground/50 truncate max-w-full">
+          {thinking.split('\n')[0].slice(0, 100)}
+        </div>
+      )}
     </div>
   );
 }
@@ -189,7 +223,11 @@ const AssistantBubble = memo(function AssistantBubble({
             {response.providerName}/{response.modelName || response.modelId}
           </span>
         )}
-        {/* Row 3: Content */}
+        {/* Row 3: Thinking */}
+        {response.content.thinking && (
+          <ThinkingBlock thinking={response.content.thinking} isStreaming={isStreaming} />
+        )}
+        {/* Row 4: Content */}
         <div className={cn(
           "w-full",
           isError && "border border-destructive/30 bg-destructive/5 rounded-lg px-3 py-1.5"
@@ -259,6 +297,7 @@ const AssistantBubble = memo(function AssistantBubble({
   );
 }, (prev, next) => {
   return prev.response.content.text === next.response.content.text &&
+    prev.response.content.thinking === next.response.content.thinking &&
     prev.response.status === next.response.status &&
     prev.response.agentId === next.response.agentId &&
     prev.response.nodeId === next.response.nodeId &&

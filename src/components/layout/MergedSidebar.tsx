@@ -19,11 +19,12 @@ function saveWfViewMode(m: WorkflowViewMode) {
 interface NavItem { id: string; labelKey: string }
 const AGENT_NAV: NavItem[] = [
   { id: 'chat', labelKey: '新增会话' },
-  { id: 'agents', labelKey: '智能体' },
+  { id: 'agents', labelKey: '智能体管理' },
   { id: 'prompts', labelKey: '提示词' },
 ]
 const WORKFLOW_NAV: NavItem[] = [
   { id: 'workflowChat', labelKey: '工作流会话' },
+  { id: 'agents', labelKey: '智能体管理' },
   { id: 'workflow', labelKey: '工作流编辑器' },
   { id: 'prompts', labelKey: '提示词' },
 ]
@@ -41,7 +42,7 @@ export function MergedSidebar() {
   const setActiveSession = useAppStore(s => s.setActiveSession)
   const updateSettings = useAppStore(s => s.updateSettings)
 
-  const [sidebarMode, setSidebarMode] = useState<Mode>('agent')
+  const [sidebarMode, setSidebarMode] = useState<Mode>('workflow')
   const navItems = sidebarMode === 'agent' ? AGENT_NAV : WORKFLOW_NAV
 
   // workflow view mode: grouped or flat, persisted
@@ -85,7 +86,7 @@ export function MergedSidebar() {
     hover: isDark ? '#3a3b3d' : '#e5e5e5',
     active: isDark ? '#3a3b3d' : '#e0e0e0',
     indicator: isDark ? '#60a5fa' : '#3b82f6',
-    border: isDark ? '#4a4b4d' : '#b0b0b0',
+    border: isDark ? '#333333' : '#EAEAE9',
     pillBg: isDark ? '#3a3b3d' : '#ebebeb',
     activeText: isDark ? '#ffffff' : '#111111',
     white: '#ffffff',
@@ -258,7 +259,7 @@ export function MergedSidebar() {
   }
 
   return (
-    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px 8px', border: `1px solid ${c.border}`, margin: '4px 4px 8px 8px' }}>
+    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px 8px', border: `2px solid ${c.border}`, margin: '4px 4px 8px 8px', boxShadow: `0 0 0 1px ${isDark ? 'rgba(51,51,51,0.35)' : 'rgba(234,234,233,0.5)'}` }}>
       <DebugBadge id="MergedSidebar" position="top-left" />
 
       {/* ══════ Mode Switcher ══════ */}
@@ -276,7 +277,7 @@ export function MergedSidebar() {
               transition: 'all 150ms ease-out',
             }}
             aria-pressed={sidebarMode === mode}
-          >{mode === 'agent' ? '智能体' : '工作流'}</button>
+          >{mode === 'agent' ? '会话' : '工作流'}</button>
         ))}
       </div>
 

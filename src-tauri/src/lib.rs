@@ -12,6 +12,7 @@ use db::{
 use tauri::Manager;
 use cli_agent::{CliProcessRegistry, spawn_cli_agent, kill_cli_agent, get_working_dir_snapshot, kill_all_processes};
 use std::sync::Mutex;
+use log::{info, error};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -21,7 +22,17 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let db_conn = init_db().expect("Failed to initialize database");
+    info!("SimperStudio starting up...");
+    let db_conn = match init_db() {
+        Ok(conn) => {
+            info!("Database initialized successfully");
+            conn
+        }
+        Err(e) => {
+            error!("Failed to initialize database: {}", e);
+            panic!("Failed to initialize database: {}", e);
+        }
+    };
 
     tauri::Builder::default()
         .manage(DbState {
@@ -29,6 +40,19 @@ pub fn run() {
         })
         .manage(CliProcessRegistry::new())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_log::Builder::new()
+            .level(log::LevelFilter::Info)
+            .target(tauri_plugin_log::Target::new(
+                tauri_plugin_log::TargetKind::Folder {
+                    path: dirs::data_dir().unwrap_or_default().join("SimperStudio").join("logs"),
+                    file_name: Some("app".into()),
+                },
+            ))
+            .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
+            .max_file_size(5_000_000) // 5MB per file
+            .build())
         .invoke_handler(tauri::generate_handler![
             greet,
             get_agents, add_agent, update_agent, delete_agent,
@@ -42,9 +66,17 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
-            if let tauri::RunEvent::Exit = event {
-                let registry = app_handle.state::<CliProcessRegistry>();
-                kill_all_processes(&registry);
+            match event {
+                tauri::RunEvent::Exit => {
+                    info!("SimperStudio shutting down...");
+                    let registry = app_handle.state::<CliProcessRegistry>();
+                    kill_all_processes(&registry);
+                    info!("All CLI processes terminated");
+                }
+                tauri::RunEvent::Ready => {
+                    info!("SimperStudio ready");
+                }
+                _ => {}
             }
         });
 }
