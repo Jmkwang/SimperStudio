@@ -93,6 +93,11 @@ const translations: Translations = {
     'Apply': 'Apply',
     'Done': 'Done',
     'agents': 'agents',
+    '智能体创建成功': 'Agent created successfully',
+    '最近会话': 'Recent Sessions',
+    '最近工作流会话': 'Recent Workflow Sessions',
+    '切换为平铺视图': 'Switch to flat view',
+    '切换为分组视图': 'Switch to grouped view',
 
     // Workflows
     '+ Add Node...': '+ Add Node...',
@@ -379,6 +384,25 @@ const translations: Translations = {
     'Environment Variables': 'Environment Variables',
     'Supports {{variable}} template syntax': 'Supports {{variable}} template syntax',
     'Defaults to app working directory': 'Defaults to app working directory',
+
+    // Onboarding
+    '欢迎来到 SimperStudio': 'Welcome to SimperStudio',
+    '您的 AI 驱动工作流工作室': 'Your AI-powered workflow studio',
+    '创建智能体': 'Create an Agent',
+    '配置您的第一个 AI 助手': 'Set up your first AI assistant',
+    '开始对话': 'Start Chatting',
+    '与智能体开始对话或设计工作流': 'Chat with an agent or design a workflow',
+    '开始使用': 'Get Started',
+    '下一步': 'Next',
+    '返回': 'Back',
+
+    // Workflow Notifications
+    '工作流通知': 'Workflow Notifications',
+    '工作流完成时显示通知': 'Show notification when workflow completes',
+    'Webhook URL': 'Webhook URL',
+    '工作流执行完成': 'Workflow completed!',
+    '工作流执行失败': 'Workflow execution failed',
+    'Screen shake and notification when workflow completes': 'Screen shake and notification when workflow completes',
   },
   zh: {
     // Layout & Navigation
@@ -482,6 +506,11 @@ const translations: Translations = {
     'Apply': '应用',
     'Done': '完成',
     'agents': '个智能体',
+    '智能体创建成功': '智能体创建成功',
+    '最近会话': '最近会话',
+    '最近工作流会话': '最近工作流会话',
+    '切换为平铺视图': '切换为平铺视图',
+    '切换为分组视图': '切换为分组视图',
 
     // Workflows
     '+ Add Node...': '+ 添加节点...',
@@ -741,6 +770,25 @@ const translations: Translations = {
     'Environment Variables': '环境变量',
     'Supports {{variable}} template syntax': '支持 {{variable}} 模板语法',
     'Defaults to app working directory': '默认使用应用工作目录',
+
+    // Onboarding
+    '欢迎来到 SimperStudio': '欢迎来到 SimperStudio',
+    '您的 AI 驱动工作流工作室': '您的 AI 驱动工作流工作室',
+    '创建智能体': '创建智能体',
+    '配置您的第一个 AI 助手': '配置您的第一个 AI 助手',
+    '开始对话': '开始对话',
+    '与智能体开始对话或设计工作流': '与智能体开始对话或设计工作流',
+    '开始使用': '开始使用',
+    '下一步': '下一步',
+    '返回': '返回',
+
+    // Workflow Notifications
+    '工作流通知': '工作流通知',
+    '工作流完成时显示通知': '工作流完成时显示通知',
+    'Webhook URL': 'Webhook URL',
+    '工作流执行完成': '工作流执行完成',
+    '工作流执行失败': '工作流执行失败',
+    'Screen shake and notification when workflow completes': '工作流完成时屏幕震动并显示通知',
   }
 };
 

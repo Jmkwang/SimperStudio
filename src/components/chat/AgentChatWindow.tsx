@@ -15,7 +15,7 @@ const DEFAULT_HEIGHT = 480;
 export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowData }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const softBorder = isDark ? '#333333' : '#EAEAE9';
+  const softBorder = 'hsl(var(--border))';
   const [input, setInput] = useState('');
   const sendToAgent = useAppStore(state => state.sendToAgent);
   const cancelSessionStream = useAppStore(state => state.cancelSessionStream);

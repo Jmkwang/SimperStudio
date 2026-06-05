@@ -143,13 +143,19 @@ export const cliAgentExecute: NodeExecutorFn = async (node, payload, helpers) =>
     return { ...payload, _error: 'CLI Agent: no executable specified' };
   }
 
-  // Whitelist check
+  // Path traversal check: reject if executable contains '..'
+  if (executable.includes('..')) {
+    return { ...payload, _error: 'CLI Agent: path traversal ("..") is not allowed in executable path' };
+  }
+
+  // Whitelist check — empty or missing whitelist defaults to DENY ALL
   const allowedExecutables: string[] | undefined = helpers.getGlobalState?.('settings')?.cliTools?.allowedExecutables;
-  if (Array.isArray(allowedExecutables) && allowedExecutables.length > 0) {
-    const execName = executable.split(/[\\/]/).pop() || executable;
-    if (!allowedExecutables.includes(execName) && !allowedExecutables.includes(executable)) {
-      return { ...payload, _error: `CLI Agent: "${execName}" is not in the allowed executables list` };
-    }
+  if (!Array.isArray(allowedExecutables) || allowedExecutables.length === 0) {
+    return { ...payload, _error: 'CLI Agent: no allowed executables configured. Please add executables to the whitelist in Settings > CLI Tools.' };
+  }
+  const execName = executable.split(/[\\/]/).pop() || executable;
+  if (!allowedExecutables.includes(execName) && !allowedExecutables.includes(executable)) {
+    return { ...payload, _error: `CLI Agent: "${execName}" is not in the allowed executables list` };
   }
 
   // 2. Resolve working directory

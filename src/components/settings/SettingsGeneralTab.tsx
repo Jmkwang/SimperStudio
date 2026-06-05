@@ -136,6 +136,34 @@ export function SettingsGeneralTab() {
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
+            <Label>{t("工作流通知")}</Label>
+            <div className="text-sm text-muted-foreground">
+              {t('工作流完成时显示通知')}
+            </div>
+          </div>
+          <Switch
+            checked={settings.workflowNotifications ?? false}
+            onCheckedChange={(checked: boolean) => updateSettings({ workflowNotifications: checked })}
+          />
+        </div>
+
+        {settings.workflowNotifications && (
+          <div className="space-y-2 pt-2 border-t">
+            <Label htmlFor="webhook-url">{t('Webhook URL')}</Label>
+            <Input
+              id="webhook-url"
+              type="url"
+              placeholder="https://example.com/webhook"
+              value={settings.webhookUrl ?? ''}
+              onChange={(e) => updateSettings({ webhookUrl: e.target.value || undefined })}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
             <Label>{t("Auto-summarize Topic")}</Label>
             <div className="text-sm text-muted-foreground">
               {t('Automatically generate a title from the first message in a new session')}

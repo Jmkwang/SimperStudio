@@ -72,13 +72,13 @@ export function AgentTopologyView({ sessionId }: { sessionId: string }) {
           className="bg-background"
           colorMode={colorMode}
         >
-          <Background variant={BackgroundVariant.Dots} gap={24} size={1} className={isDark ? 'opacity-30' : 'opacity-40'} color={isDark ? '#4b5563' : undefined} />
+          <Background variant={BackgroundVariant.Dots} gap={24} size={1} className={isDark ? 'opacity-30' : 'opacity-40'} color="hsl(var(--muted-foreground) / 0.3)" />
           <Controls className="bg-card border shadow-sm rounded-lg [&>button]:border-border [&>button]:bg-card [&>button:hover]:bg-muted" />
           <MiniMap
-            bgColor={isDark ? '#111827' : '#ffffff'}
-            maskColor={isDark ? 'rgba(17, 24, 39, 0.65)' : 'rgba(240, 240, 240, 0.65)'}
-            nodeColor={isDark ? '#374151' : '#e5e7eb'}
-            maskStrokeColor={isDark ? '#374151' : '#d1d5db'}
+            bgColor="hsl(var(--card))"
+            maskColor="hsl(var(--background) / 0.65)"
+            nodeColor="hsl(var(--muted))"
+            maskStrokeColor="hsl(var(--muted-foreground) / 0.25)"
           />
         </ReactFlow>
       </div>

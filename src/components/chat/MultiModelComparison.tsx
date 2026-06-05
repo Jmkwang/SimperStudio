@@ -66,7 +66,7 @@ function ComparisonCard({
   };
 
   return (
-    <Card className={`relative ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+    <Card className={`relative group ${isSelected ? 'ring-2 ring-primary' : ''}`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ function ComparisonCard({
         </div>
 
         {/* Quick Action Bar */}
-        <div className="flex flex-wrap gap-1 pt-2 border-t">
+        <div className="flex flex-wrap gap-1 pt-2 border-t opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="sm"

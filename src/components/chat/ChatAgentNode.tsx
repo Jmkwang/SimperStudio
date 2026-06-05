@@ -11,7 +11,7 @@ export function ChatAgentNode({ data }: { data: any }) {
 
   return (
     <div
-      className="w-[260px] rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md cursor-pointer"
+      className="w-[240px] rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md cursor-pointer"
       onClick={data.onClick}
     >
       <Handle

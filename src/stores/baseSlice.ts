@@ -154,12 +154,12 @@ function buildAgentPayload(agent: Agent) {
     ...agent,
     avatar: agent.avatar ?? '',
     systemPrompt: agent.systemPrompt ?? '',
-    modelProvider: agent.modelProvider || 'local',
-    modelId: agent.modelId || 'default',
+    modelProvider: agent.modelProvider ?? 'local',
+    modelId: agent.modelId ?? 'default',
     providerId: agent.providerId ?? null,
     maxTokens: agent.maxTokens ?? null,
     temperature: agent.temperature ?? 0.7,
-    parameters: typeof agent.parameters === 'string' ? agent.parameters : JSON.stringify(agent.parameters || {}),
+    parameters: typeof agent.parameters === 'string' ? agent.parameters : JSON.stringify(agent.parameters ?? {}),
     createdAt: agent.createdAt ?? Date.now(),
   };
 }
@@ -279,11 +279,11 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         const agentToSave = {
           ...newAgent,
           // Rust Agent struct uses camelCase serde; required fields must never be undefined/null
-          modelProvider: newAgent.modelProvider || 'local',
-          modelId: newAgent.modelId || 'default',
+          modelProvider: newAgent.modelProvider ?? 'local',
+          modelId: newAgent.modelId ?? 'default',
           providerId: newAgent.providerId,
           temperature: newAgent.temperature ?? 0.7,
-          parameters: JSON.stringify(newAgent.parameters || {}),
+          parameters: JSON.stringify(newAgent.parameters ?? {}),
         };
         await invoke('add_agent', { agent: agentToSave });
       } catch (error) {
@@ -390,7 +390,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           if (missingDefaults.length) {
             for (const da of missingDefaults) {
               try {
-                const agentToSave = { ...da, parameters: JSON.stringify(da.parameters || {}) };
+                const agentToSave = { ...da, parameters: JSON.stringify(da.parameters ?? {}) };
                 await invoke('add_agent', { agent: buildAgentPayload(agentToSave) });
               } catch { /* best-effort */ }
             }
@@ -406,7 +406,7 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           // Migrate legacy JSON agents to SQLite
           for (const agent of migratedAgents) {
             try {
-              const agentToSave = { ...agent, parameters: JSON.stringify(agent.parameters || {}) };
+              const agentToSave = { ...agent, parameters: JSON.stringify(agent.parameters ?? {}) };
               await invoke('add_agent', { agent: agentToSave });
             } catch { /* may already exist in SQLite */ }
           }
@@ -431,9 +431,12 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           set((state: any) => ({ ...state, activeWorkspaceId: defaultWorkspaceId }));
 
           const sessions = await invoke<ChatSession[]>('get_chat_sessions', { workspaceId: defaultWorkspaceId });
+          // Load all session messages in parallel instead of N sequential IPC calls
+          const allMessages = await Promise.all(
+            sessions.map(s => invoke<ChatMessage[]>('get_chat_messages', { sessionId: s.id }).catch(() => []))
+          );
           for (let i = 0; i < sessions.length; i++) {
-            const messages = await invoke<ChatMessage[]>('get_chat_messages', { sessionId: sessions[i].id });
-            sessions[i].messages = messages.map((m: any) => ({
+            sessions[i].messages = (allMessages[i] || []).map((m: any) => ({
               ...m,
               content: JSON.parse(m.content as unknown as string),
               agentResponses: m.agentResponses ? JSON.parse(m.agentResponses as unknown as string) : undefined,
@@ -454,7 +457,13 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
             }));
             set({ workflows: migratedConfig });
           } else if (workflows.length) {
-            const parsedWorkflows = workflows.map((w: any) => ({ ...w, nodesData: JSON.parse(w.nodesData as unknown as string), edgesData: JSON.parse(w.edgesData as unknown as string) }));
+            const parsedWorkflows = workflows.map((w: any) => {
+              let nodesData: any = [];
+              let edgesData: any = [];
+              try { nodesData = JSON.parse(w.nodesData as unknown as string); } catch { /* corrupted nodesData, keep default */ }
+              try { edgesData = JSON.parse(w.edgesData as unknown as string); } catch { /* corrupted edgesData, keep default */ }
+              return { ...w, nodesData, edgesData };
+            });
             set({ workflows: parsedWorkflows });
           }
         }

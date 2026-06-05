@@ -4,6 +4,13 @@ import { NodeExecutorFn } from '../types';
 /** Create an inline Web Worker for isolated JS execution */
 function createCodeWorker(): Worker {
   const workerCode = `
+    // Sandbox: disable dangerous APIs
+    self.importScripts = function() { throw new Error('importScripts is disabled'); };
+    self.fetch = function() { return Promise.reject(new Error('fetch is disabled')); };
+    self.XMLHttpRequest = function() { throw new Error('XMLHttpRequest is disabled'); };
+    self.WebSocket = function() { throw new Error('WebSocket is disabled'); };
+    self.EventSource = function() { throw new Error('EventSource is disabled'); };
+
     self.onmessage = async function(e) {
       const { code, payload, id } = e.data;
       try {

@@ -61,6 +61,9 @@ export async function executeWorkflow(
 
   const nodeRecords: Record<string, any> = {};
 
+  // Lightweight node types that execute instantly — skip the 400ms throttle
+  const LIGHTWEIGHT_NODE_TYPES = new Set(['trigger', 'code', 'condition', 'output', 'set', 'router']);
+
   while (queue.length > 0) {
     if (signal?.aborted) {
       onStateChange?.({ status: 'idle', currentNodeId: null });
@@ -114,7 +117,9 @@ export async function executeWorkflow(
     const backoffType = retryPolicy.backoff || 'fixed';
     const baseDelay = Number(retryPolicy.delayMs) || 1000;
 
-    await sleep(400); // throttle
+    if (!LIGHTWEIGHT_NODE_TYPES.has(node?.type || '')) {
+      await sleep(400); // throttle
+    }
 
     // Output node is a pass-through
     if (node?.type === 'output') {

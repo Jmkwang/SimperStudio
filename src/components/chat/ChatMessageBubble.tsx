@@ -133,7 +133,7 @@ function ThinkingBlock({ thinking, isStreaming }: { thinking: string; isStreamin
     <div className="mb-2">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-muted-foreground transition-colors cursor-pointer"
       >
         <Brain className={cn("h-3 w-3", isStreaming && "animate-pulse")} />
         <span>{t("Thinking...")}</span>
@@ -142,13 +142,13 @@ function ThinkingBlock({ thinking, isStreaming }: { thinking: string; isStreamin
       {expanded && (
         <div
           ref={scrollRef}
-          className="mt-1 max-h-48 overflow-y-auto rounded-md bg-muted/30 border border-muted/50 px-3 py-2 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap"
+          className="mt-1 max-h-48 overflow-y-auto rounded-md bg-muted/30 px-3 py-2 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap"
         >
           {thinking}
         </div>
       )}
       {!expanded && (
-        <div className="mt-0.5 text-xs text-muted-foreground/50 truncate max-w-full">
+        <div className="mt-0.5 text-xs text-muted-foreground/80 truncate max-w-full">
           {thinking.split('\n')[0].slice(0, 100)}
         </div>
       )}
@@ -259,7 +259,7 @@ const AssistantBubble = memo(function AssistantBubble({
         <div className="flex items-start justify-between gap-2 mt-1 w-full">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             {(response.tokenUsage || response.duration) && (
-              <span className="text-xs text-muted-foreground/70 shrink-0">
+              <span className="text-xs text-muted-foreground shrink-0">
                 ({[
                   response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : '',
                   response.duration ? `${(response.duration / 1000).toFixed(1)}s` : '',
@@ -270,7 +270,7 @@ const AssistantBubble = memo(function AssistantBubble({
               <div className="flex items-center gap-0.5">
                 <button
                   onClick={handleCopy}
-                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors relative"
+                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors relative"
                   aria-label={t("Copy")}
                 >
                   <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
@@ -279,7 +279,7 @@ const AssistantBubble = memo(function AssistantBubble({
                 {onRetry && (
                   <button
                     onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
-                    className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground transition-colors"
+                    className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={t("Retry")}
                   >
                     <RefreshCw className="h-3 w-3" />
@@ -288,7 +288,7 @@ const AssistantBubble = memo(function AssistantBubble({
               </div>
             )}
           </div>
-          <span className="text-xs text-muted-foreground/50 shrink-0">
+          <span className="text-xs text-muted-foreground/80 shrink-0">
             {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>

@@ -1,5 +1,12 @@
+/**
+ * An AI agent persona with LLM configuration.
+ * Agents can be used in chat sessions and as workflow node targets.
+ * Fields like `modelProvider`, `apiKey`, and `baseUrl` are deprecated
+ * and only kept for legacy data migration — use `providerId` / `modelId` instead.
+ */
 export interface Agent {
   id: string;
+  /** Display name shown in the UI. */
   name: string;
   description?: string;
   role?: string;
@@ -234,10 +241,18 @@ export type WorkflowNodeData =
   | WorkflowCliAgentNodeData
   | WorkflowNodeDataBase;
 
+/**
+ * A single node in a workflow graph.
+ * Each node has a type that maps to an executor in the node registry,
+ * a canvas position, and type-specific configuration in `data`.
+ */
 export interface WorkflowNode {
   id: string;
+  /** Node type — determines which executor handles this node. */
   type: WorkflowNodeType;
+  /** (x, y) position on the React Flow canvas. */
   position: WorkflowNodePosition;
+  /** Type-specific configuration (agent prompt, code, condition routes, etc.). */
   data: WorkflowNodeData;
 }
 
@@ -253,13 +268,23 @@ export interface WorkflowEdge {
   data?: Record<string, unknown>;
 }
 
+/**
+ * A visual automation pipeline composed of nodes and edges.
+ * Persisted as JSON; executed by the workflow engine in `src/lib/workflow/engine.ts`.
+ */
 export interface Workflow {
   id: string;
+  /** The workspace this workflow belongs to. */
   workspaceId: string;
+  /** Display name shown in the sidebar and canvas header. */
   name: string;
+  /** All nodes in the workflow graph. */
   nodesData: WorkflowNode[];
+  /** All edges (connections) between nodes. */
   edgesData: WorkflowEdge[];
+  /** `active` workflows can be triggered; `inactive` ones are draft/disabled. */
   status: 'active' | 'inactive';
+  /** Optional default payload used when running the workflow manually from the UI. */
   testPayload?: Record<string, any>;
   createdAt: number;
   updatedAt: number;
@@ -295,6 +320,8 @@ export interface Settings {
   remoteAccessPort: number;
   fontSize?: number; // percentage, e.g. 100 = default, 115 = 115%
   executionFeedback?: boolean; // screen shake + toast on workflow complete
+  workflowNotifications?: boolean; // browser Notification on workflow complete
+  webhookUrl?: string; // optional webhook URL for workflow completion
   autoTitle?: {
     enabled: boolean;
     providerId?: string; // null/undefined = use active provider
@@ -333,12 +360,23 @@ export interface MessageAttachment {
   dataUrl?: string;
 }
 
+/**
+ * Optional metadata attached to a {@link ChatMessage}.
+ * Tracks workflow context, agent routing, streaming status,
+ * and dynamic agent configuration.
+ */
 export interface MessageMeta {
+  /** Workflow that produced this message (if any). */
   workflowId?: string;
+  /** The specific workflow node that produced this message. */
   workflowNodeId?: string;
+  /** Agent that generated the response. */
   sourceAgentId?: string;
+  /** Agent that should receive a forwarded message. */
   targetAgentId?: string;
+  /** ID of the original message when forwarding. */
   forwardFromMessageId?: string;
+  /** How this message was initiated. */
   triggeredBy?: 'user' | 'auto' | 'manual' | 'reload';
 
   // Response metadata (used during streaming to backfill AgentResponse fields)
@@ -405,26 +443,49 @@ export interface MultiModelComparison {
   selectedResponseId?: string;
 }
 
+/**
+ * A single message in a chat session.
+ * Supports user, assistant, and system roles.
+ * Assistant messages may carry multiple `agentResponses` for streaming
+ * and `multiModelComparison` for side-by-side model outputs.
+ */
 export interface ChatMessage {
   id: string;
+  /** The owning chat session. */
   sessionId: string;
+  /** Message sender role. */
   role: 'user' | 'assistant' | 'system';
+  /** Message body — `text` is the primary content; `attachments` hold inline images/files. */
   content: {
     text: string;
     attachments?: MessageAttachment[];
   };
+  /** Unix epoch milliseconds when the message was created. */
   timestamp: number;
+  /** Optional metadata: workflow context, model info, streaming status, dynamic agent info. */
   meta?: MessageMeta;
+  /** Per-agent LLM responses (used in multi-agent or workflow chat). */
   agentResponses?: AgentResponse[];
+  /** Side-by-side model comparison data. */
   multiModelComparison?: MultiModelComparison;
 }
 
+/**
+ * A conversation thread containing one or more messages.
+ * In `single` mode the user chats with one agent; in `workflow` mode
+ * the session is tied to a running workflow and its agent nodes.
+ */
 export interface ChatSession {
   id: string;
+  /** The workspace this session belongs to. */
   workspaceId: string;
+  /** Display title (auto-generated or user-set). */
   title: string;
+  /** `single` = direct agent chat; `workflow` = tied to a workflow execution. */
   mode?: 'single' | 'workflow';
+  /** Ordered list of messages in this session. */
   messages: ChatMessage[];
+  /** Reference to a Workflow when `mode === 'workflow'`. */
   workflowId?: string;
   createdAt: number;
   updatedAt: number;

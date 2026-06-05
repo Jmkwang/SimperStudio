@@ -5,7 +5,7 @@ import { FileOutput } from 'lucide-react';
 export function ChatOutputNode({ data }: { data: any }) {
   const { t } = useTranslation();
   return (
-    <div className="w-[200px] rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div className="w-[240px] rounded-xl border bg-card text-card-foreground shadow-sm">
       <Handle
         type="target"
         position={Position.Left}

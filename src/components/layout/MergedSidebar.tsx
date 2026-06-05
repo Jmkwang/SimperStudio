@@ -3,6 +3,8 @@ import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
+import { SimperLogo } from './SimperLogo'
+import { Moon, Settings, Sun, Zap } from 'lucide-react'
 
 type Mode = 'agent' | 'workflow'
 type WorkflowViewMode = 'grouped' | 'flat'
@@ -41,8 +43,11 @@ export function MergedSidebar() {
   const activeSessionId = useAppStore(s => s.activeSessionId)
   const setActiveSession = useAppStore(s => s.setActiveSession)
   const updateSettings = useAppStore(s => s.updateSettings)
+  const agents = useAppStore(s => s.agents)
 
-  const [sidebarMode, setSidebarMode] = useState<Mode>('workflow')
+  const [sidebarMode, setSidebarMode] = useState<Mode>(() => {
+    try { return (localStorage.getItem('ss_sidebar_mode') as Mode) || 'workflow' } catch { return 'workflow' }
+  })
   const navItems = sidebarMode === 'agent' ? AGENT_NAV : WORKFLOW_NAV
 
   // workflow view mode: grouped or flat, persisted
@@ -73,24 +78,19 @@ export function MergedSidebar() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const setSettingsActiveTab = useAppStore(s => s.setSettingsActiveTab)
 
-  const isDark = useMemo(() => {
-    if (theme === 'dark') return true
-    if (theme === 'light') return false
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  }, [theme])
   const c = useMemo(() => ({
-    bg: isDark ? '#262626' : '#f8f8f8',
-    text: isDark ? '#d4d4d8' : '#1f2937',
-    textMuted: isDark ? '#71717a' : '#6b7280',
-    textDim: isDark ? '#525252' : '#9ca3af',
-    hover: isDark ? '#3a3b3d' : '#e5e5e5',
-    active: isDark ? '#3a3b3d' : '#e0e0e0',
-    indicator: isDark ? '#60a5fa' : '#3b82f6',
-    border: isDark ? '#333333' : '#EAEAE9',
-    pillBg: isDark ? '#3a3b3d' : '#ebebeb',
-    activeText: isDark ? '#ffffff' : '#111111',
-    white: '#ffffff',
-  }), [isDark])
+    bg: 'hsl(var(--background))',
+    text: 'hsl(var(--foreground))',
+    textMuted: 'hsl(var(--muted-foreground))',
+    textDim: 'hsl(var(--muted-foreground) / 0.55)',
+    hover: 'hsl(var(--hover))',
+    active: 'hsl(var(--muted))',
+    indicator: 'hsl(var(--primary))',
+    border: 'hsl(var(--border))',
+    pillBg: 'hsl(var(--secondary))',
+    activeText: 'hsl(var(--foreground))',
+    white: 'hsl(var(--primary-foreground))',
+  }), [])
 
   // agent mode: flat list of single sessions
   const agentRecents = useMemo(() =>
@@ -121,7 +121,7 @@ export function MergedSidebar() {
     return Array.from(map.values())
   }, [wfSessions, workflows])
 
-  const rLabel = sidebarMode === 'agent' ? '最近会话' : '最近工作流会话'
+  const rLabel = sidebarMode === 'agent' ? t('最近会话') : t('最近工作流会话')
 
   const handleNavClick = (item: NavItem) => {
     if (item.id === 'chat') setCurrentView('new-chat')
@@ -134,7 +134,7 @@ export function MergedSidebar() {
     setTheme(next)
     updateSettings({ theme: next })
   }
-  const themeIcon = theme === 'dark' ? '🌙' : '☀️'
+  const ThemeIcon = theme === 'dark' ? Moon : Sun
 
   // Export a session as JSON
   const handleExportSession = (sessionId: string) => {
@@ -173,8 +173,23 @@ export function MergedSidebar() {
     setMenuItemId(null)
   }
 
+  // Helper: get first agent's avatar for a session
+  const getSessionAvatar = (session: { messages?: { role: string; agentResponses?: { agentId?: string }[] }[] }) => {
+    for (const msg of session.messages ?? []) {
+      if (msg.agentResponses?.length) {
+        const agentId = msg.agentResponses[0].agentId
+        if (agentId) {
+          const agent = agents.find(a => a.id === agentId)
+          if (agent?.avatar) return agent.avatar
+        }
+        break
+      }
+    }
+    return null
+  }
+
   // Shared session row renderer
-  const renderSessionRow = (session: { id: string; title: string; updatedAt: number }, indent = false) => {
+  const renderSessionRow = (session: { id: string; title: string; updatedAt: number; messages?: { role: string; agentResponses?: { agentId?: string }[] }[] }, indent = false) => {
     const isSelected = activeSessionId === session.id
     const isHovered = hoveredItemId === session.id
     return (
@@ -211,7 +226,17 @@ export function MergedSidebar() {
             width: 3, height: 16, borderRadius: '0 3px 3px 0', background: c.indicator, flexShrink: 0,
           }} />
         )}
-        <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? c.indicator : c.textDim, flexShrink: 0 }} />
+        {sidebarMode === 'agent' && (
+          (() => {
+            const avatar = getSessionAvatar(session)
+            return avatar
+              ? <img src={avatar} alt="" style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0, objectFit: 'cover' }} />
+              : <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? c.indicator : c.textDim, flexShrink: 0 }} />
+          })()
+        )}
+        {sidebarMode === 'workflow' && (
+          <Zap size={14} style={{ flexShrink: 0, color: c.textDim }} />
+        )}
         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {session.title}
         </span>
@@ -242,7 +267,7 @@ export function MergedSidebar() {
                 {[
                   { label: t('重命名'), color: c.text, onClick: () => { setRenameItemId(session.id); setRenameValue(session.title); setMenuItemId(null) } },
                   { label: t('导出'), color: c.text, onClick: () => handleExportSession(session.id) },
-                  { label: t('删除'), color: '#ef4444', onClick: () => { setDeleteItem({ id: session.id, name: session.title }); setMenuItemId(null) } },
+                  { label: t('删除'), color: 'hsl(var(--destructive))', onClick: () => { setDeleteItem({ id: session.id, name: session.title }); setMenuItemId(null) } },
                 ].map(item => (
                   <button key={item.label} onClick={e => { e.stopPropagation(); item.onClick() }}
                     style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: item.color, fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
@@ -259,14 +284,14 @@ export function MergedSidebar() {
   }
 
   return (
-    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px 8px', border: `2px solid ${c.border}`, margin: '4px 4px 8px 8px', boxShadow: `0 0 0 1px ${isDark ? 'rgba(51,51,51,0.35)' : 'rgba(234,234,233,0.5)'}` }}>
+    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px 8px', border: `2px solid ${c.border}`, margin: '4px 4px 8px 8px', boxShadow: '0 0 0 1px hsl(var(--border) / 0.4)' }}>
       <DebugBadge id="MergedSidebar" position="top-left" />
 
       {/* ══════ Mode Switcher ══════ */}
       <div style={{ display: 'flex', background: c.pillBg, borderRadius: 8, height: 36, flexShrink: 0, padding: 3 }}>
         {(['agent', 'workflow'] as const).map(mode => (
           <button key={mode}
-            onClick={() => { setSidebarMode(mode); setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
+            onClick={() => { setSidebarMode(mode); try { localStorage.setItem('ss_sidebar_mode', mode) } catch {}; setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
             style={{
               flex: 1, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -277,7 +302,7 @@ export function MergedSidebar() {
               transition: 'all 150ms ease-out',
             }}
             aria-pressed={sidebarMode === mode}
-          >{mode === 'agent' ? '会话' : '工作流'}</button>
+          >{mode === 'agent' ? t('会话') : t('Workflows')}</button>
         ))}
       </div>
 
@@ -315,7 +340,7 @@ export function MergedSidebar() {
           {sidebarMode === 'workflow' && (
             <button
               onClick={toggleWfViewMode}
-              title={wfViewMode === 'grouped' ? '切换为平铺视图' : '切换为分组视图'}
+              title={wfViewMode === 'grouped' ? t('切换为平铺视图') : t('切换为分组视图')}
               style={{
                 width: 20, height: 20, border: 'none', background: 'transparent',
                 color: c.textMuted, cursor: 'pointer', borderRadius: 4,
@@ -325,7 +350,7 @@ export function MergedSidebar() {
               }}
               onMouseEnter={e => { e.currentTarget.style.background = c.hover; e.currentTarget.style.color = c.text }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textMuted }}
-              aria-label={wfViewMode === 'grouped' ? '切换为平铺视图' : '切换为分组视图'}
+              aria-label={wfViewMode === 'grouped' ? t('切换为平铺视图') : t('切换为分组视图')}
             >
               {wfViewMode === 'grouped' ? '≡' : '⊞'}
             </button>
@@ -334,6 +359,22 @@ export function MergedSidebar() {
 
         {/* List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
+          {/* New session button */}
+          <button
+            onClick={() => setCurrentView(sidebarMode === 'agent' ? 'new-chat' : 'new-workflow')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+              width: '100%', height: 30, marginBottom: 4,
+              border: `1px dashed ${c.border}`, borderRadius: 6,
+              background: 'transparent', color: c.textMuted,
+              fontSize: '0.8125rem', cursor: 'pointer',
+              transition: 'background 150ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+          >
+            + {t('新增会话')}
+          </button>
           {sidebarMode === 'agent' ? (
             agentRecents.length > 0
               ? agentRecents.map(s => renderSessionRow(s))
@@ -391,12 +432,7 @@ export function MergedSidebar() {
         height: 44,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 18, height: 18, borderRadius: 4,
-            background: c.indicator, color: c.white,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.625rem', fontWeight: 700,
-          }}>S</div>
+          <SimperLogo size={18} />
           <span style={{ fontSize: '0.875rem', fontWeight: 500, color: c.text }}>SimperStudio</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -409,7 +445,7 @@ export function MergedSidebar() {
             }}
             onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-          >{themeIcon}</button>
+          ><ThemeIcon size={18} /></button>
           <div style={{ position: 'relative' }}>
             <button onClick={() => setSettingsOpen(v => !v)}
               style={{
@@ -420,7 +456,7 @@ export function MergedSidebar() {
               }}
               onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
               onMouseLeave={e => { e.currentTarget.style.background = settingsOpen ? c.hover : 'transparent' }}
-            >⚙️</button>
+            ><Settings size={18} /></button>
             {settingsOpen && (
               <>
                 <div onClick={() => setSettingsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
@@ -492,7 +528,7 @@ export function MergedSidebar() {
                 style={{ padding: '6px 16px', borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: '0.8rem' }}
               >{t('取消')}</button>
               <button onClick={() => { deleteSession(deleteItem.id); setDeleteItem(null) }}
-                style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: '0.8rem' }}
+                style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))', cursor: 'pointer', fontSize: '0.8rem' }}
               >{t('确定')}</button>
             </div>
           </div>
@@ -506,11 +542,11 @@ export function MergedSidebar() {
 function formatTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'now'
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return '1m'
+  if (mins < 60) return `${mins}m`
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return `${hours}h`
   const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
+  if (days < 7) return `${days}d`
   return new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }

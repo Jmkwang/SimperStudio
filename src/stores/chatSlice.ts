@@ -1,4 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
+import type { StoreApi } from 'zustand';
+
+// Full application state as seen by this slice (ChatSlice + cross-slice properties via get())
+type FullState = ChatSlice & Record<string, any>;
 import { invoke } from '@tauri-apps/api/core';
 import {
   ChatSession, ChatMessage, Agent, Workflow, WorkflowNode,
@@ -34,6 +38,13 @@ function clearSessionStream(sessionId: string, controller: AbortController) {
     sessionAbortControllers.delete(sessionId);
   }
 }
+
+// ── Streaming Chunk Throttle Buffer ──
+// Buffer text chunks and flush into Zustand state every 50ms to avoid
+// triggering a global re-render on every streaming token.
+const streamChunkBuffer = new Map<string, { sessionId: string; messageId: string; agentId: string; nodeId?: string; chunks: string[] }>();
+let streamFlushTimer: ReturnType<typeof setTimeout> | null = null;
+const STREAM_FLUSH_MS = 50;
 
 export type WorkflowChatUIState = {
   sidebarCollapsedBySession: Record<string, boolean>;
@@ -225,7 +236,7 @@ export interface ChatSlice {
   createWorkflowBackedSession: (title: string, workspaceId: string) => Promise<void>;
   openWorkflowSession: (workflowId: string) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
-  renameSession: (id: string, title: string) => void;
+  renameSession: (id: string, title: string) => Promise<void>;
 
   addUserMessage: (sessionId: string, text: string, attachments?: MessageAttachment[], meta?: MessageMeta) => void;
   addAgentResponseStream: (sessionId: string, messageId: string, agentId: string, textChunk: string, nodeId?: string, meta?: MessageMeta) => void;
@@ -255,7 +266,46 @@ export interface ChatSlice {
   toggleAgentChatWindowMinimized: (windowId: string) => void;
 }
 
-export function createChatSlice(set: any, get: any): ChatSlice {
+export function createChatSlice(set: StoreApi<FullState>['setState'], get: StoreApi<FullState>['getState']): ChatSlice {
+  // Flush buffered streaming chunks into Zustand state in a single batch
+  const flushStreamChunks = () => {
+    streamFlushTimer = null;
+    if (streamChunkBuffer.size === 0) return;
+    const pending = new Map(streamChunkBuffer);
+    streamChunkBuffer.clear();
+
+    const affectedSessionIds = new Set<string>();
+    for (const entry of pending.values()) {
+      affectedSessionIds.add(entry.sessionId);
+    }
+
+    set((state: any) => ({
+      sessions: state.sessions.map((s: ChatSession) => {
+        if (!affectedSessionIds.has(s.id)) return s;
+        let sessionChanged = false;
+        const messages = s.messages.map((m: ChatMessage) => {
+          if (!m.agentResponses) return m;
+          let msgChanged = false;
+          const agentResponses = m.agentResponses.map((ar: any) => {
+            const key = [s.id, m.id, ar.agentId, ar.nodeId || ''].join(':');
+            const entry = pending.get(key);
+            if (entry && entry.chunks.length > 0) {
+              msgChanged = true;
+              return { ...ar, content: { ...ar.content, text: ar.content.text + entry.chunks.join('') } };
+            }
+            return ar;
+          });
+          if (msgChanged) {
+            sessionChanged = true;
+            return { ...m, agentResponses, updatedAt: Date.now() };
+          }
+          return m;
+        });
+        return sessionChanged ? { ...s, messages, updatedAt: Date.now() } : s;
+      })
+    }));
+  };
+
   return {
     sessions: MOCK_SESSIONS,
     activeStreamingSessionIds: [],
@@ -350,13 +400,13 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       });
     },
 
-    renameSession: (id, title) => {
+    renameSession: async (id, title) => {
       set((state: any) => ({
         sessions: state.sessions.map((s: ChatSession) =>
           s.id === id ? { ...s, title, updatedAt: Date.now() } : s
         ),
       }));
-      try { invoke('update_chat_session', { id, title }); } catch { /* best-effort */ }
+      try { await invoke('update_chat_session', { id, title }); } catch { /* best-effort */ }
     },
 
     addUserMessage: async (sessionId, text, attachments = [], meta) => {
@@ -383,93 +433,108 @@ export function createChatSlice(set: any, get: any): ChatSlice {
       const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
       const isNewMessage = session ? session.messages.findIndex((m: ChatMessage) => m.id === messageId) === -1 : false;
 
-      let newAssistantMsg: ChatMessage | null = null;
-      set((state: any) => {
-        const sessions = state.sessions.map((s: ChatSession) => {
-          if (s.id === sessionId) {
-            const messages = [...s.messages];
-            const assistantMsgIndex = messages.findIndex(m => m.id === messageId);
-            if (assistantMsgIndex === -1) {
-              newAssistantMsg = createStreamMessage(sessionId, agentId, nodeId, meta, messageId);
-              newAssistantMsg.agentResponses![0].content.text = textChunk;
-              // Backfill model info / error state from meta on first creation
-              if (meta?.providerId) {
-                newAssistantMsg.agentResponses![0].providerId = meta.providerId;
-                newAssistantMsg.agentResponses![0].providerName = meta.providerName;
-                newAssistantMsg.agentResponses![0].modelId = meta.modelId;
-                newAssistantMsg.agentResponses![0].modelName = meta.modelName;
-              }
-              if (meta?.status === 'error') {
-                newAssistantMsg.agentResponses![0].status = 'error';
-                newAssistantMsg.agentResponses![0].errorSummary = meta.errorSummary;
-                newAssistantMsg.agentResponses![0].errorDetail = meta.errorDetail;
-              }
-              messages.push(newAssistantMsg);
-            } else {
-              const msg = { ...messages[assistantMsgIndex] };
-              msg.agentResponses = [...(msg.agentResponses || [])];
-              const agentRespIndex = msg.agentResponses.findIndex((ar: any) => ar.agentId === agentId && ar.nodeId === nodeId);
-              if (agentRespIndex === -1) {
-                const newResp = createAgentResponse(agentId, textChunk, nodeId, meta?.status === 'error' ? 'error' : 'streaming');
-                if (meta?._dynamicAgentMeta) {
-                  newResp._dynamicAgentMeta = meta._dynamicAgentMeta;
-                }
+      // Immediately process: new message creation, or chunks with metadata (first real chunk, errors)
+      if (isNewMessage || meta) {
+        let newAssistantMsg: ChatMessage | null = null;
+        set((state: any) => {
+          const sessions = state.sessions.map((s: ChatSession) => {
+            if (s.id === sessionId) {
+              const messages = [...s.messages];
+              const assistantMsgIndex = messages.findIndex(m => m.id === messageId);
+              if (assistantMsgIndex === -1) {
+                newAssistantMsg = createStreamMessage(sessionId, agentId, nodeId, meta, messageId);
+                newAssistantMsg.agentResponses![0].content.text = textChunk;
+                // Backfill model info / error state from meta on first creation
                 if (meta?.providerId) {
-                  newResp.providerId = meta.providerId;
-                  newResp.providerName = meta.providerName;
-                  newResp.modelId = meta.modelId;
-                  newResp.modelName = meta.modelName;
+                  newAssistantMsg.agentResponses![0].providerId = meta.providerId;
+                  newAssistantMsg.agentResponses![0].providerName = meta.providerName;
+                  newAssistantMsg.agentResponses![0].modelId = meta.modelId;
+                  newAssistantMsg.agentResponses![0].modelName = meta.modelName;
                 }
                 if (meta?.status === 'error') {
-                  newResp.errorSummary = meta.errorSummary;
-                  newResp.errorDetail = meta.errorDetail;
+                  newAssistantMsg.agentResponses![0].status = 'error';
+                  newAssistantMsg.agentResponses![0].errorSummary = meta.errorSummary;
+                  newAssistantMsg.agentResponses![0].errorDetail = meta.errorDetail;
                 }
-                msg.agentResponses.push(newResp);
+                messages.push(newAssistantMsg);
               } else {
-                const resp = { ...msg.agentResponses[agentRespIndex] };
-                resp.content = { text: resp.content.text + textChunk };
-                if (meta?._dynamicAgentMeta && !resp._dynamicAgentMeta) {
-                  resp._dynamicAgentMeta = meta._dynamicAgentMeta;
+                const msg = { ...messages[assistantMsgIndex] };
+                msg.agentResponses = [...(msg.agentResponses || [])];
+                const agentRespIndex = msg.agentResponses.findIndex((ar: any) => ar.agentId === agentId && ar.nodeId === nodeId);
+                if (agentRespIndex === -1) {
+                  const newResp = createAgentResponse(agentId, textChunk, nodeId, meta?.status === 'error' ? 'error' : 'streaming');
+                  if (meta?._dynamicAgentMeta) {
+                    newResp._dynamicAgentMeta = meta._dynamicAgentMeta;
+                  }
+                  if (meta?.providerId) {
+                    newResp.providerId = meta.providerId;
+                    newResp.providerName = meta.providerName;
+                    newResp.modelId = meta.modelId;
+                    newResp.modelName = meta.modelName;
+                  }
+                  if (meta?.status === 'error') {
+                    newResp.errorSummary = meta.errorSummary;
+                    newResp.errorDetail = meta.errorDetail;
+                  }
+                  msg.agentResponses.push(newResp);
+                } else {
+                  const resp = { ...msg.agentResponses[agentRespIndex] };
+                  resp.content = { text: resp.content.text + textChunk };
+                  if (meta?._dynamicAgentMeta && !resp._dynamicAgentMeta) {
+                    resp._dynamicAgentMeta = meta._dynamicAgentMeta;
+                  }
+                  // Backfill model info if present in meta
+                  if (meta?.providerId) {
+                    resp.providerId = meta.providerId;
+                    resp.providerName = meta.providerName;
+                    resp.modelId = meta.modelId;
+                    resp.modelName = meta.modelName;
+                  }
+                  if (meta?.status === 'error') {
+                    resp.status = 'error';
+                    resp.errorSummary = meta.errorSummary;
+                    resp.errorDetail = meta.errorDetail;
+                  }
+                  msg.agentResponses[agentRespIndex] = resp;
                 }
-                // Backfill model info if present in meta
-                if (meta?.providerId) {
-                  resp.providerId = meta.providerId;
-                  resp.providerName = meta.providerName;
-                  resp.modelId = meta.modelId;
-                  resp.modelName = meta.modelName;
-                }
-                if (meta?.status === 'error') {
-                  resp.status = 'error';
-                  resp.errorSummary = meta.errorSummary;
-                  resp.errorDetail = meta.errorDetail;
-                }
-                msg.agentResponses[agentRespIndex] = resp;
+                messages[assistantMsgIndex] = msg;
+                newAssistantMsg = messages[assistantMsgIndex];
               }
-              messages[assistantMsgIndex] = msg;
-              newAssistantMsg = messages[assistantMsgIndex];
+              return { ...s, messages, updatedAt: Date.now() };
             }
-            return { ...s, messages, updatedAt: Date.now() };
-          }
-          return s;
+            return s;
+          });
+          return { sessions };
         });
-        return { sessions };
-      });
 
-      // Persist new messages to DB best-effort; streaming chunks are memory-only
-      if (newAssistantMsg && isNewMessage) {
-        const msg: ChatMessage = newAssistantMsg;
-        // Populate content.text from agentResponses so it survives DB round-trip
-        const mergedText = (msg.agentResponses || []).map(r => r.content.text).filter(Boolean).join('\n\n');
-        const contentToSave = { ...msg.content, text: mergedText || msg.content.text };
-        const msgToSave = {
-          ...msg,
-          content: JSON.stringify(contentToSave),
-          agentResponses: msg.agentResponses ? JSON.stringify(msg.agentResponses) : undefined,
-        };
-        void invoke('add_chat_message', { message: msgToSave }).catch(() => {
-          console.warn('Failed to persist assistant message to DB');
-          debugLogger.warn('chatSlice', 'persist assistant message failed', { sessionId });
-        });
+        // Persist new messages to DB best-effort; streaming chunks are memory-only
+        if (newAssistantMsg && isNewMessage) {
+          const msg: ChatMessage = newAssistantMsg;
+          // Populate content.text from agentResponses so it survives DB round-trip
+          const mergedText = (msg.agentResponses || []).map(r => r.content.text).filter(Boolean).join('\n\n');
+          const contentToSave = { ...msg.content, text: mergedText || msg.content.text };
+          const msgToSave = {
+            ...msg,
+            content: JSON.stringify(contentToSave),
+            agentResponses: msg.agentResponses ? JSON.stringify(msg.agentResponses) : undefined,
+          };
+          void invoke('add_chat_message', { message: msgToSave }).catch(() => {
+            console.warn('Failed to persist assistant message to DB');
+            debugLogger.warn('chatSlice', 'persist assistant message failed', { sessionId });
+          });
+        }
+      } else if (textChunk) {
+        // Throttle: buffer non-empty text chunks and flush every 50ms
+        const bufferKey = [sessionId, messageId, agentId, nodeId || ''].join(':');
+        const existing = streamChunkBuffer.get(bufferKey);
+        if (existing) {
+          existing.chunks.push(textChunk);
+        } else {
+          streamChunkBuffer.set(bufferKey, { sessionId, messageId, agentId, nodeId, chunks: [textChunk] });
+        }
+        if (!streamFlushTimer) {
+          streamFlushTimer = setTimeout(flushStreamChunks, STREAM_FLUSH_MS);
+        }
       }
     },
 
@@ -499,6 +564,10 @@ export function createChatSlice(set: any, get: any): ChatSlice {
     },
 
     completeAgentResponse: (sessionId, messageId, agentId, nodeId, meta) => {
+      // Flush any pending streaming chunks before finalizing
+      if (streamFlushTimer) { clearTimeout(streamFlushTimer); streamFlushTimer = null; }
+      flushStreamChunks();
+
       set((state: any) => ({
         sessions: state.sessions.map((s: ChatSession) => {
           if (s.id === sessionId) {
@@ -815,6 +884,10 @@ export function createChatSlice(set: any, get: any): ChatSlice {
 
     cancelSessionStream: (sessionId) => {
       abortSessionStream(sessionId);
+      // Clean up buffered chunks for this session
+      for (const key of streamChunkBuffer.keys()) {
+        if (key.startsWith(sessionId + ':')) streamChunkBuffer.delete(key);
+      }
       set((state: any) => ({
         activeStreamingSessionIds: state.activeStreamingSessionIds.filter((id: string) => id !== sessionId),
       }));

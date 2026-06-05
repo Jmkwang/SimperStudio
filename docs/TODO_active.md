@@ -2,7 +2,7 @@
 
 > 已完成项见 [CHANGELOG.md](./CHANGELOG.md)。本文档**只**列尚未完成或部分完成的工作。
 
-最后整理：v0.5.4
+最后整理：v0.5.5
 
 ---
 
@@ -21,7 +21,7 @@
 ## 🟡 P1 — 设计系统统一
 
 ### 颜色与字号
-- [ ] **消除硬编码颜色**（部分完成）：`lunar-*` → `primary`、`red-*` → `destructive`、用户气泡 hex → `primary` 已替换；MergedSidebar / WorkflowTopologyPreview 的 hex 保留（inline style 需要实际值）
+- [x] **消除硬编码颜色**（部分完成）：`lunar-*` → `primary`、`red-*` → `destructive`、用户气泡 hex → `primary` 已替换；MergedSidebar / WorkflowTopologyPreview 的 hex 保留（inline style 需要实际值）
 - [x] **统一字号阶梯**：`text-[9-11px]` → `text-xs`（12px），15 处已修正
 - [x] **统一 4pt 间距网格**：已合规，无非标间距
 - [x] **主题色一致性**：Light/Dark 均使用 258° 紫色相，已统一；DESIGN.md 已更新
@@ -39,47 +39,47 @@
 
 ## 🟢 P2 — 视觉叙事与品牌
 
-- [ ] **Logo 品牌设计**：当前 "S" 字母占位 → 设计有辨识度的 Logo（工作流节点连线抽象图形）
-- [ ] **首次启动 Onboarding**：3 步快速引导
+- [x] **Logo 品牌设计**：当前 "S" 字母占位 → 设计有辨识度的 Logo（工作流节点连线抽象图形）
+- [x] **首次启动 Onboarding**：3 步快速引导
 - [ ] **狼人杀 Demo 高亮**：在空状态或引导中标注
 
 ### 微交互
-- [ ] **Agent 创建成功**：Toast → Avatar 轻微动画反馈
+- [x] **Agent 创建成功**：Toast → Avatar 轻微动画反馈
 - [ ] **狼人杀游戏状态**：角色头像旁的存活/死亡徽章
 
 ---
 
 ## 🟢 P2 — 多模型对比
 
-- [ ] **MultiModelComparison 卡片操作栏**：底部一排功能图标（复制/刷新/引用/点赞/收藏/删除/更多）—— 可复用 `MessageHoverActions`
-- [ ] **AgentResultCard 状态图标和时间**：每个卡片顶部重复模型名称、状态图标（如绿色星星）、时间和 Token 信息
+- [x] **MultiModelComparison 卡片操作栏**：底部一排功能图标（复制/刷新/引用/点赞/收藏/删除/更多）—— 可复用 `MessageHoverActions`
+- [x] **AgentResultCard 状态图标和时间**：每个卡片顶部重复模型名称、状态图标（如绿色星星）、时间和 Token 信息
 
 ---
 
 ## 🟢 P2 — 列表与导航 UI
 
-- [ ] **会话列表顶部固定 "+ 新增会话" 按钮**：作为第一条
-- [ ] **列表项采用「头像/图标 + 助手名称」形式**：进一步美化 `ContextItem`
-- [ ] **列表项三点菜单**（编辑/删除/更多）
+- [x] **会话列表顶部固定 "+ 新增会话" 按钮**：作为第一条
+- [x] **列表项采用「头像/图标 + 助手名称」形式**：进一步美化 `ContextItem`
+- [x] **列表项三点菜单**（编辑/删除/更多）
 
 ---
 
 ## 🟢 P2 — AI 回复气泡
 
-- [ ] **AI 回复去除左边框线**：当前用 `bg-muted/30`，但有用户反馈左侧有视觉痕迹
+- [x] **AI 回复去除左边框线**：当前用 `bg-muted/30`，但有用户反馈左侧有视觉痕迹
 
 ---
 
 ## 🟢 P3 — 可观测性增强
 
-- [ ] **告警钩子**：本地通知 / Webhook 扩展（之前规划但未做）
-- [ ] **中小屏适配**：< 768px 抽屉式侧栏
+- [x] **告警钩子**：本地通知 / Webhook 扩展（之前规划但未做）
+- [x] **中小屏适配**：< 768px 抽屉式侧栏
 
 ---
 
 ## 🟢 P3 — 国际化补完
 
-- [ ] **硬编码字符串修复**：
+- [x] **硬编码字符串修复**：
   - SettingsGeneralTab 中文字符串绕过 `t()` 系统
   - "Test Run" / "Running..." / "Create Agent" / "Execution Timeline" / "Export" 未翻译
   - ContextSidebar default case 中文字符串未走 `t()`
@@ -93,8 +93,8 @@
 - [ ] **Settings 旧版字段清理**：13 个旧字段仍被 `api.ts` fallback 路径使用，移除 fallback 后再删
 
 ### 文案
-- [ ] 测试全部模型对话框 `{t('models in total,')}` 文案不自然
-- [ ] 新建服务商默认模型硬编码 `gpt-4o`：对 Anthropic/Gemini/DeepSeek 服务商需手动删除再添加
+- [x] 测试全部模型对话框 `{t('models in total,')}` 文案不自然
+- [x] 新建服务商默认模型硬编码 `gpt-4o`：对 Anthropic/Gemini/DeepSeek 服务商需手动删除再添加
 
 ---
 
@@ -110,9 +110,9 @@
 
 ## 🟢 P4 — 设计审计 P1 残留
 
-- [ ] WorkflowCanvas 节点尺寸/间距标准化
-- [ ] GenericNode `red-500/red-700/red-950` 替换为 `text-destructive` 系列
-- [ ] ExecutionTimeline 颜色 token 化
+- [x] WorkflowCanvas 节点尺寸/间距标准化
+- [x] GenericNode `red-500/red-700/red-950` 替换为 `text-destructive` 系列
+- [x] ExecutionTimeline 颜色 token 化
 
 ---
 

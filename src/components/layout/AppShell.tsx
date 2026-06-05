@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { MergedSidebar } from "./MergedSidebar"
 import { TitleBar } from "./TitleBar"
 import { DebugBadge } from "@/components/debug/DebugBadge"
@@ -18,6 +18,12 @@ export function AppShell({
   const showSidebar = !VIEWS_WITHOUT_SIDEBAR.has(currentView)
   const debugMode = useAppStore(state => state.debugMode)
   const toggleDebugMode = useAppStore(state => state.toggleDebugMode)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
+  // Close mobile sidebar when view changes
+  useEffect(() => {
+    setMobileSidebarOpen(false)
+  }, [currentView])
 
   // Keyboard shortcut: Ctrl+Shift+D to toggle debug mode
   useEffect(() => {
@@ -33,9 +39,27 @@ export function AppShell({
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-background font-sans text-foreground">
-      <TitleBar />
-      <div className="flex flex-1 overflow-hidden">
-        {showSidebar && <MergedSidebar />}
+      <TitleBar onToggleSidebar={() => setMobileSidebarOpen(prev => !prev)} />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile backdrop overlay */}
+        {showSidebar && mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        {/* Sidebar: hidden on mobile by default, shown as overlay when open */}
+        {showSidebar && (
+          <div
+            className={`
+              hidden md:flex
+              ${mobileSidebarOpen ? '!flex fixed inset-y-0 left-0 z-50 top-9' : ''}
+            `}
+          >
+            <MergedSidebar />
+          </div>
+        )}
         <div className="relative flex flex-col flex-1 overflow-hidden bg-background">
           <DebugBadge id="AppShell" position="bottom-right" />
           <main className="flex-1 overflow-hidden bg-background flex flex-col">

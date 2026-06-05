@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Minus, Square, X, Maximize2 } from 'lucide-react';
+import { Minus, Square, X, Maximize2, Menu } from 'lucide-react';
+import { SimperLogo } from './SimperLogo';
 
-export function TitleBar() {
+export function TitleBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const [isMaximized, setIsMaximized] = useState(false);
   const winRef = useRef<any>(null);
 
@@ -38,13 +39,25 @@ export function TitleBar() {
       data-tauri-drag-region
       className="flex items-center justify-between h-9 px-4 shrink-0 select-none bg-background"
     >
-      {/* App name — part of drag region */}
-      <div
-        data-tauri-drag-region
-        className="flex items-center gap-2 text-sm font-medium text-foreground/80 pointer-events-none"
-      >
-        <div className="h-4 w-4 rounded bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground leading-none">S</div>
-        SimperStudio
+      <div data-tauri-drag-region className="flex items-center gap-1">
+        {/* Hamburger button — visible only on mobile */}
+        {onToggleSidebar && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSidebar(); }}
+            className="md:hidden h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="切换侧边栏"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        )}
+        {/* App name — part of drag region */}
+        <div
+          data-tauri-drag-region
+          className="flex items-center gap-2 text-sm font-medium text-foreground/80 pointer-events-none"
+        >
+          <SimperLogo size={16} />
+          SimperStudio
+        </div>
       </div>
 
       {/* Window controls — must NOT be part of drag region */}

@@ -6,7 +6,7 @@ SimperStudio is a local-first desktop app that combines multi-agent chat and vis
 
 - Multi-agent chat with `@` mentions and streaming responses
 - Visual workflow builder powered by React Flow
-- 15 implemented node types: `trigger`, `agent`, `condition`, `code`, `loop`, `output`, `router`, `http`, `set`, `switch`, `wait`, `merge`, `webhook`, `subworkflow`, `dynamic-agent`
+- 16 implemented node types: `trigger`, `agent`, `condition`, `code`, `loop`, `output`, `router`, `http`, `set`, `switch`, `wait`, `merge`, `webhook`, `subworkflow`, `dynamic-agent`, `cli-agent`
 - Workflow execution timeline with live status, result payload preview, and rerun support
 - Light/Dark theme support
 - Tauri desktop shell (Rust backend + React frontend)
@@ -30,6 +30,7 @@ SimperStudio is a local-first desktop app that combines multi-agent chat and vis
 | `webhook` | Exposes an HTTP endpoint for external systems to trigger the workflow. |
 | `subworkflow` | Invokes another workflow with parameter passing and result return. |
 | `dynamic-agent` | Runtime-configurable agent persona read from payload or templates. |
+| `cli-agent` | Runs an external CLI tool with configurable executable, arguments, and I/O mode. |
 
 ## Tech Stack
 
@@ -155,7 +156,7 @@ Implemented:
 - Core app layout and navigation
 - Multi-agent chat UI and streaming pipeline (single + workflow dual mode)
 - Workflow canvas editing and persistence (React Flow + MiniMap)
-- 15 node types with execution engine v2 (BFS queue + registry architecture)
+- 16 node types with execution engine v2 (BFS queue + registry architecture)
 - Dynamic Agent node with runtime-configurable persona
 - Loop node UI + runtime semantics (iteration, breakCondition, result aggregation)
 - Retry in-place regeneration for agent responses

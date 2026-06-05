@@ -35,7 +35,7 @@ const genericNodeConfig: Record<string, { color: string; bg: string; label: stri
 function ChatGenericNode({ data, type }: { data: any; type: string }) {
   const c = genericNodeConfig[type] || { color: '#64748b', bg: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400', label: type };
   return (
-    <div className="w-[220px] rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div className="w-[240px] rounded-xl border bg-card text-card-foreground shadow-sm">
       <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 bg-background" style={{ borderColor: c.color }} />
       <div className="flex items-center gap-3 border-b p-3">
         <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${c.bg}`}>
@@ -66,7 +66,6 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
     : theme === 'system'
       ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : 'light';
-  const isDark = colorMode === 'dark';
 
   const nodeTypes = useMemo(() => ({
     trigger: ChatTriggerNode,
@@ -136,10 +135,10 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
         fitViewOptions={{ padding: 0.2 }}
         colorMode={colorMode}
       >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color={isDark ? '#334155' : '#e2e8f0'} />
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="hsl(var(--muted-foreground) / 0.3)" />
         <Controls showInteractive={false} className="bg-card border shadow-sm rounded-lg [&>button]:border-border [&>button]:bg-card [&>button:hover]:bg-muted" />
         <MiniMap
-          style={{ backgroundColor: isDark ? '#1e293b' : '#f8fafc' }}
+          style={{ backgroundColor: 'hsl(var(--card))' }}
           nodeColor={(n) => {
             const colors: Record<string, string> = {
               trigger: '#10b981', agent: '#3b82f6', code: '#8b5cf6',
@@ -150,7 +149,7 @@ export function WorkflowTopologyPreview({ workflow }: { workflow: Workflow }) {
             };
             return colors[n.type as string] || '#64748b';
           }}
-          maskColor={isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'}
+          maskColor="hsl(var(--background) / 0.6)"
           className="!rounded-lg !border !shadow-sm"
         />
       </ReactFlow>

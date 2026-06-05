@@ -6,6 +6,49 @@
 
 ---
 
+## v0.5.5
+
+### 设计系统统一（P1 收尾）
+- **消除硬编码颜色完成**：`lunar-*` → `primary`、`red-*` → `destructive`、用户气泡 hex → `primary` 全量替换完成；MergedSidebar / WorkflowTopologyPreview inline style hex 保留（运行时需要实际值）
+
+### 视觉叙事与品牌（P2）
+- **Logo 品牌设计**：从 "S" 字母占位升级为有辨识度的品牌 Logo（`src/assets/`）
+- **首次启动 Onboarding**：3 步快速引导流程，新用户首次进入时展示核心功能（`src/components/onboarding/`）
+- **Agent 创建成功 Toast**：创建 Agent 后展示带品牌感的成功提示（`src/components/ui/toast`）
+
+### 微交互（P2）
+- **Agent 创建成功微交互**：Toast 替换为 Avatar 轻微动画反馈，增强操作确认感
+
+### 多模型对比（P2）
+- **MultiModelComparison 卡片操作栏**：底部一排功能图标（复制/刷新/引用/点赞/收藏/删除/更多），复用 `MessageHoverActions`（`MultiModelComparison.tsx`）
+- **AgentResultCard 状态图标和时间**：每个卡片顶部显示模型名称、状态图标（绿色星星）、时间和 Token 信息（`AgentResultCard.tsx`）
+
+### 列表与导航（P2）
+- **会话列表顶部固定 "+ 新增会话" 按钮**：作为列表第一条固定显示（`MergedSidebar.tsx`）
+- **列表项头像/图标 + 助手名称**：`ContextItem` 美化，展示助手头像与名称（`MergedSidebar.tsx`）
+- **列表项三点菜单**：编辑/删除/更多操作菜单（`MergedSidebar.tsx`）
+
+### AI 回复气泡（P2）
+- **AI 回复去除左边框线**：移除 `bg-muted/30` 左侧视觉痕迹，回复区域更干净（`ChatMessageBubble.tsx`）
+
+### 可观测性增强（P3）
+- **告警钩子**：本地通知 / Webhook 扩展（`src/services/alerts.ts`）
+- **中小屏适配**：< 768px 抽屉式侧栏（`MergedSidebar.tsx`）
+
+### 国际化补完（P3）
+- **硬编码字符串修复**：SettingsGeneralTab 中文字符串改为 `t()` 调用；"Test Run" / "Running..." / "Create Agent" / "Execution Timeline" / "Export" 等未翻译 key 全部接入 i18n；ContextSidebar default case 中文字符串走 `t()`（多文件）
+
+### 代码质量遗留（P3）
+- **文案修复**：测试全部模型对话框 `{t('models in total,')}` 改为自然文案（`SettingsModelsTab.tsx`）
+- **新建服务商默认模型硬编码修复**：新建服务商时根据服务商类型设置合理的默认模型，不再硬编码 `gpt-4o`（`modelSlice.ts`）
+
+### 设计审计 P1 残留（P4）
+- **WorkflowCanvas 节点尺寸标准化**：节点尺寸/间距统一规范（`WorkflowCanvas.tsx`）
+- **GenericNode red-* 替换**：`red-500/red-700/red-950` 替换为 `text-destructive` 系列（`GenericNode.tsx`）
+- **ExecutionTimeline 颜色 token 化**：硬编码颜色替换为 design token（`ExecutionTimeline.tsx`）
+
+---
+
 ## v0.5.4
 
 ### 设计系统统一（P1）

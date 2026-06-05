@@ -203,6 +203,7 @@ export function AgentsView() {
         await updateAgent(editingId, formData);
       } else {
         await addAgent(formData);
+        toast.success(t('智能体创建成功'));
       }
       setIsOpen(false);
       setFormData(defaultAgentState);

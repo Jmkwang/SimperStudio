@@ -386,6 +386,37 @@ export function replaceTemplateVars(template: string, payload: any): string {
   });
 }
 
+/**
+ * Escape a string value for safe embedding in a JSON string literal context.
+ * Backslash-escapes backslashes, double-quotes, and control characters.
+ */
+function escapeForJson(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
+    .replace(/[\x00-\x1f]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+
+/**
+ * Like replaceTemplateVars but escapes interpolated values for embedding
+ * inside a JSON string literal (e.g. inside double-quoted JSON fields).
+ * Use this when the template result will be parsed as JSON.
+ */
+export function replaceTemplateVarsSafe(template: string, payload: any): string {
+  if (!template) return '';
+  return template.replace(/\{\{(.*?)\}\}/g, (match, path) => {
+    const value = getByPath(payload, path.trim());
+    if (value === undefined) return match;
+    if (typeof value === 'object') {
+      try { return JSON.stringify(value); } catch { return String(value); }
+    }
+    return escapeForJson(String(value));
+  });
+}
+
 export function createExecutionHelpers(
   fetchNode: (nodeId: string) => any,
   globalState?: Record<string, any>,
@@ -401,6 +432,7 @@ export function createExecutionHelpers(
     sleep,
     validateSchema,
     replaceTemplateVars,
+    replaceTemplateVarsSafe,
     fetchNode,
     getGlobalState: globalState ? (key: string) => globalState[key] : undefined,
     executeWorkflow,

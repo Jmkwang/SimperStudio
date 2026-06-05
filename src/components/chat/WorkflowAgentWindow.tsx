@@ -14,7 +14,7 @@ const DEFAULT_HEIGHT = 480;
 export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConversationWindow }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const softBorder = isDark ? '#333333' : '#EAEAE9';
+  const softBorder = 'hsl(var(--border))';
   const [input, setInput] = useState('');
   const [pos, setPos] = useState(windowData.position);
   const size = windowData.size || { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };

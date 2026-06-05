@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { ChatSession, WorkflowNode, WorkflowNodeData, Agent } from '@/types/models';
 import { useAppStore } from '@/stores';
 import {
@@ -53,7 +53,34 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [thinkingLevel, setThinkingLevel] = useState<'default' | 'off'>('default');
   const [thinkingPickerOpen, setThinkingPickerOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(100);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef(true);
+
+  const visibleMessages = session.messages.slice(-visibleCount);
+
+  // Detect user manual scroll — stop auto-scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+      autoScrollRef.current = atBottom;
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (!autoScrollRef.current) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [session.messages.length]);
 
   const workflow = session.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
 
@@ -149,6 +176,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
     const files = [...attachments];
     setInput("");
     setAttachments([]);
+    autoScrollRef.current = true;
     const attachmentList = files.length > 0 ? files.map(f => ({
       id: f.name + Date.now(),
       name: f.name,
@@ -160,6 +188,13 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   };
 
   const isStreaming = activeStreamingSessionIds.includes(session.id);
+
+  const handleRetry = useCallback((agentId: string, messageId: string) => {
+    const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user');
+    if (lastUserMsg) {
+      retryAgentResponse(session.id, messageId, agentId, lastUserMsg.content.text);
+    }
+  }, [session.messages, session.id, retryAgentResponse]);
 
   const handleStop = () => {
     cancelSessionStream(session.id);
@@ -279,7 +314,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
 
       {multiAgentMode ? (
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-auto p-6 space-y-4">
+          <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
             {session.messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                 <div className="text-4xl opacity-30">💬</div>
@@ -287,21 +322,27 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
                 <p className="text-xs text-muted-foreground">{t("消息将同时发送给所有Agent")}</p>
               </div>
             )}
-            {session.messages.map(message => (
+            {visibleCount < session.messages.length && (
+              <div className="flex justify-center py-2">
+                <button
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 100, session.messages.length))}
+                  className="text-xs text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
+                >
+                  {t("Load more")} ({session.messages.length - visibleCount} {t("remaining")})
+                </button>
+              </div>
+            )}
+            {visibleMessages.map(message => (
               <ChatMessageBubble
                 key={message.id}
                 message={message}
                 agents={linkedAgents.map(a => ({ id: a.id, name: a.name, avatar: a.avatar }))}
                 layoutMode={chatLayoutMode}
                 onLayoutChange={setChatLayoutMode}
-                onRetry={(agentId, messageId) => {
-                  const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user');
-                  if (lastUserMsg) {
-                    retryAgentResponse(session.id, messageId, agentId, lastUserMsg.content.text);
-                  }
-                }}
+                onRetry={handleRetry}
               />
             ))}
+            <div ref={messagesEndRef} />
           </div>
           <div className="p-4 shrink-0">
             <div className="max-w-4xl mx-auto relative">
@@ -424,13 +465,13 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
               fitView
               colorMode={colorMode}
             >
-              <Background variant={BackgroundVariant.Dots} gap={24} size={1} className={isDark ? 'opacity-30' : 'opacity-40'} color={isDark ? '#4b5563' : undefined} />
+              <Background variant={BackgroundVariant.Dots} gap={24} size={1} className={isDark ? 'opacity-30' : 'opacity-40'} color="hsl(var(--muted-foreground) / 0.3)" />
               <Controls className="bg-card border shadow-sm rounded-lg [&>button]:border-border [&>button]:bg-card [&>button:hover]:bg-muted" />
               <MiniMap
-                bgColor={isDark ? '#111827' : '#ffffff'}
-                maskColor={isDark ? 'rgba(17, 24, 39, 0.65)' : 'rgba(240, 240, 240, 0.65)'}
-                nodeColor={isDark ? '#374151' : '#e5e7eb'}
-                maskStrokeColor={isDark ? '#374151' : '#d1d5db'}
+                bgColor="hsl(var(--card))"
+                maskColor="hsl(var(--background) / 0.65)"
+                nodeColor="hsl(var(--muted))"
+                maskStrokeColor="hsl(var(--muted-foreground) / 0.25)"
               />
             </ReactFlow>
           </div>

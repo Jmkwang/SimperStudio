@@ -222,7 +222,7 @@ export function WorkflowChatSidebar({
                           />
                         ))
                       ) : (
-                        <div className="px-3 py-2 text-xs text-muted-foreground/70">
+                        <div className="px-3 py-2 text-xs text-muted-foreground">
                           {t('暂无会话')}
                         </div>
                       )}

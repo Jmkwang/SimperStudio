@@ -332,7 +332,7 @@ export function DebugOverlay() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="filter..."
-              className="bg-transparent text-xs font-mono w-28 outline-none placeholder:text-muted-foreground/50"
+              className="bg-transparent text-xs font-mono w-28 outline-none placeholder:text-muted-foreground/80"
               aria-label="Filter debug logs"
             />
           </div>
@@ -373,10 +373,10 @@ export function DebugOverlay() {
                   entry.level === 'warn' && 'bg-amber-500/5',
                 )}
               >
-                <span className="text-muted-foreground/50 w-5 text-right shrink-0">
+                <span className="text-muted-foreground/80 w-5 text-right shrink-0">
                   {entry.id}
                 </span>
-                <span className="text-muted-foreground/70 w-20 shrink-0">
+                <span className="text-muted-foreground w-20 shrink-0">
                   {formatTime(entry.timestamp)}
                 </span>
                 <TypeIcon type={entry.type} />
@@ -397,7 +397,7 @@ export function DebugOverlay() {
                   {truncate(entry.action, 80)}
                 </span>
                 {entry.duration !== undefined && (
-                  <span className="text-muted-foreground/50 shrink-0">
+                  <span className="text-muted-foreground/80 shrink-0">
                     {Math.round(entry.duration)}ms
                   </span>
                 )}

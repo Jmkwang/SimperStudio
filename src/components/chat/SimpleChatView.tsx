@@ -41,6 +41,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [thinkingLevel, setThinkingLevel] = useState<'default' | 'off'>('default');
+  const [visibleCount, setVisibleCount] = useState(100);
   const [thinkingPickerOpen, setThinkingPickerOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
     try { return (localStorage.getItem('ss_chat_layout') as LayoutMode) || 'A'; } catch { return 'A'; }
@@ -66,17 +67,19 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     try { localStorage.setItem('ss_chat_layout', mode); } catch {}
   }, []);
 
-  const totalTokens = session.messages.reduce((sum, msg) => {
-    return sum + (msg.agentResponses?.reduce((s, r) => s + (r.tokenUsage?.totalTokens || 0), 0) || 0);
-  }, 0);
+  const { totalTokens, promptTokens, completionTokens } = useMemo(() => {
+    let total = 0, prompt = 0, completion = 0;
+    for (const msg of session.messages) {
+      for (const r of msg.agentResponses ?? []) {
+        total += r.tokenUsage?.totalTokens ?? 0;
+        prompt += r.tokenUsage?.promptTokens ?? 0;
+        completion += r.tokenUsage?.completionTokens ?? 0;
+      }
+    }
+    return { totalTokens: total, promptTokens: prompt, completionTokens: completion };
+  }, [session.messages]);
 
-  const promptTokens = session.messages.reduce((sum, msg) => {
-    return sum + (msg.agentResponses?.reduce((s, r) => s + (r.tokenUsage?.promptTokens || 0), 0) || 0);
-  }, 0);
-
-  const completionTokens = session.messages.reduce((sum, msg) => {
-    return sum + (msg.agentResponses?.reduce((s, r) => s + (r.tokenUsage?.completionTokens || 0), 0) || 0);
-  }, 0);
+  const visibleMessages = session.messages.slice(-visibleCount);
 
   // Detect user manual scroll — stop auto-scroll
   useEffect(() => {
@@ -97,7 +100,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   useEffect(() => {
     if (!autoScrollRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [session.messages.length, session.messages]);
+  }, [session.messages.length]);
 
   // Re-enable auto-scroll when user sends a message
   const handleSend = async () => {
@@ -151,7 +154,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
           <div className="text-sm">
             <span className="font-medium">{session.title}</span>
           </div>
-          <div className="text-xs text-muted-foreground/50">
+          <div className="text-xs text-muted-foreground/80">
             {new Date(session.updatedAt).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
@@ -168,14 +171,24 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
       )}
 
       {/* Main chat area */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4" role="log" aria-live="polite">
         {session.messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                 <div className="text-4xl opacity-30 select-none">💬</div>
                 <p className="text-sm">{t("Start a conversation")}</p>
               </div>
             )}
-            {session.messages.map(message => (
+            {visibleCount < session.messages.length && (
+              <div className="flex justify-center py-2">
+                <button
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 100, session.messages.length))}
+                  className="text-xs text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
+                >
+                  {t("Load more")} ({session.messages.length - visibleCount} {t("remaining")})
+                </button>
+              </div>
+            )}
+            {visibleMessages.map(message => (
               <ChatMessageBubble
                 key={message.id}
                 message={message}
@@ -286,7 +299,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                         <div className="relative">
                           <button
                             onClick={() => setModelPickerOpen(!modelPickerOpen)}
-                            className="text-xs text-muted-foreground/40 hover:text-foreground/60 leading-none transition-colors"
+                            className="text-xs text-muted-foreground/70 hover:text-foreground/60 leading-none transition-colors"
                             aria-label={t('Switch model')}
                           >
                             {activeAgentModelInfo.providerName}/{activeAgentModelInfo.modelName}
@@ -344,7 +357,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                 </div>
                 {/* Model label below input, right-aligned */}
                 {!activeAgentModelInfo && activeAgent && (
-                  <div className="text-xs text-muted-foreground/40 text-right pr-1">
+                  <div className="text-xs text-muted-foreground/70 text-right pr-1">
                     {t("未配置")}
                   </div>
                 )}

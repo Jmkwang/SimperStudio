@@ -528,6 +528,34 @@ export function createWorkflowSlice(set: any, get: any): WorkflowSlice {
           triggerScreenShake();
         }
 
+        // Browser Notification on workflow completion
+        if (currentSettings?.workflowNotifications && result.status === 'completed') {
+          try {
+            if (typeof Notification !== 'undefined') {
+              if (Notification.permission === 'granted') {
+                new Notification('SimperStudio', { body: '工作流执行完成' });
+              } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                  if (permission === 'granted') {
+                    new Notification('SimperStudio', { body: '工作流执行完成' });
+                  }
+                });
+              }
+            }
+          } catch (_) { /* Notification API unavailable */ }
+        }
+
+        // Webhook call on workflow completion
+        if (currentSettings?.webhookUrl && result.status === 'completed') {
+          try {
+            fetch(currentSettings.webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ event: 'workflow.completed', workflowId, timestamp: Date.now() }),
+            }).catch(() => {});
+          } catch (_) { /* fetch unavailable */ }
+        }
+
         return result.finalPayload;
       } catch (e: any) {
         const msg = e.name === 'AbortError' ? 'Workflow timed out after 5 minutes' : (e.message || String(e));

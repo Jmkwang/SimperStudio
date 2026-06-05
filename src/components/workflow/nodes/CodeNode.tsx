@@ -71,7 +71,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
                 <textarea 
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   spellCheck="false"
                 />
                 <div className="bg-muted p-2 rounded-md text-xs font-mono text-muted-foreground mt-1">

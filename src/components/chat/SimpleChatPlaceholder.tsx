@@ -2,6 +2,7 @@ import { useAppStore } from '@/stores';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Bot, MessageSquare, ArrowRight, Sparkles } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
+import { OnboardingGuide } from '@/components/chat/OnboardingGuide';
 
 export function SimpleChatPlaceholder() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function SimpleChatPlaceholder() {
 
   return (
     <div className="relative flex-1 flex flex-col h-full">
+      <OnboardingGuide />
       <DebugBadge id="SimpleChatPlaceholder" position="bottom-left" />
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="flex flex-col items-center max-w-lg w-full gap-8">

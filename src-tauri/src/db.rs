@@ -57,12 +57,25 @@ pub struct Agent {
     pub parameters: String,
     #[serde(default)]
     pub industry: Option<String>,
+    #[serde(default = "default_agent_role")]
+    pub role: String,
+    #[serde(default = "default_agent_type")]
+    pub r#type: String,
+    #[serde(default = "default_true")]
+    pub is_active: bool,
+    #[serde(default)]
+    pub category: String,
     pub created_at: i64,
 }
+
+fn default_agent_role() -> String { "assistant".to_string() }
+fn default_agent_type() -> String { "custom".to_string() }
+fn default_true() -> bool { true }
 
 pub fn init_db() -> Result<Connection> {
     ensure_app_dir();
     let conn = Connection::open(db_path())?;
+    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
 
     conn.execute_batch(
         "
@@ -89,6 +102,10 @@ pub fn init_db() -> Result<Connection> {
             base_url TEXT,
             parameters TEXT NOT NULL,
             industry TEXT,
+            role TEXT DEFAULT 'assistant',
+            type TEXT DEFAULT 'custom',
+            isActive INTEGER DEFAULT 1,
+            category TEXT DEFAULT '',
             created_at INTEGER NOT NULL
         );
 
@@ -108,6 +125,7 @@ pub fn init_db() -> Result<Connection> {
             role TEXT NOT NULL,
             content TEXT NOT NULL,
             timestamp INTEGER NOT NULL,
+            meta TEXT,
             FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
         );
 
@@ -150,6 +168,23 @@ pub fn init_db() -> Result<Connection> {
         conn.execute("ALTER TABLE agents ADD COLUMN provider_id TEXT", [])?;
     }
 
+    // Migrate agent fields: role, type, isActive, category
+    for (col, default) in [
+        ("role", "TEXT DEFAULT 'assistant'"),
+        ("type", "TEXT DEFAULT 'custom'"),
+        ("isActive", "INTEGER DEFAULT 1"),
+        ("category", "TEXT DEFAULT ''"),
+    ] {
+        let has_col = conn
+            .prepare("PRAGMA table_info(agents)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(Result::ok)
+            .any(|name| name == col);
+        if !has_col {
+            conn.execute(&format!("ALTER TABLE agents ADD COLUMN {} {}", col, default), [])?;
+        }
+    }
+
     let has_agent_responses = conn
         .prepare("PRAGMA table_info(chat_messages)")?
         .query_map([], |row| row.get::<_, String>(1))?
@@ -160,13 +195,23 @@ pub fn init_db() -> Result<Connection> {
         conn.execute("ALTER TABLE chat_messages ADD COLUMN agent_responses TEXT", [])?;
     }
 
+    let has_meta = conn
+        .prepare("PRAGMA table_info(chat_messages)")?
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(Result::ok)
+        .any(|name| name == "meta");
+
+    if !has_meta {
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN meta TEXT", [])?;
+    }
+
     Ok(conn)
 }
 
 #[tauri::command]
 pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
     let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id FROM agents").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id, role, type, isActive, category FROM agents").map_err(|e| e.to_string())?;
     let agent_iter = stmt.query_map([], |row| {
         Ok(Agent {
             id: row.get(0)?,
@@ -184,6 +229,10 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
             industry: row.get(12)?,
             created_at: row.get(13)?,
             provider_id: row.get(14)?,
+            role: row.get(15)?,
+            r#type: row.get(16)?,
+            is_active: row.get::<_, i32>(17).map(|v| v != 0)?,
+            category: row.get(18)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -198,8 +247,8 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
 pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
-        (&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.created_at, &agent.provider_id)
+        "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id, role, type, isActive, category) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)",
+        rusqlite::params![&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.created_at, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category]
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -208,8 +257,8 @@ pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), Strin
 pub fn update_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, api_key = ?9, base_url = ?10, parameters = ?11, industry = ?12, provider_id = ?13 WHERE id = ?14",
-        (&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.provider_id, &agent.id)
+        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, api_key = ?9, base_url = ?10, parameters = ?11, industry = ?12, provider_id = ?13, role = ?14, type = ?15, isActive = ?16, category = ?17 WHERE id = ?18",
+        rusqlite::params![&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category, &agent.id]
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -339,12 +388,14 @@ pub struct ChatMessage {
     pub timestamp: i64,
     #[serde(default)]
     pub agent_responses: Option<String>,
+    #[serde(default)]
+    pub meta: Option<String>,
 }
 
 #[tauri::command]
 pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Result<Vec<ChatMessage>, String> {
     let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, session_id, role, content, timestamp, agent_responses FROM chat_messages WHERE session_id = ?1 ORDER BY timestamp ASC").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT id, session_id, role, content, timestamp, agent_responses, meta FROM chat_messages WHERE session_id = ?1 ORDER BY timestamp ASC").map_err(|e| e.to_string())?;
     let iter = stmt.query_map([&session_id], |row| {
         Ok(ChatMessage {
             id: row.get(0)?,
@@ -353,6 +404,7 @@ pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Re
             content: row.get(3)?,
             timestamp: row.get(4)?,
             agent_responses: row.get(5)?,
+            meta: row.get(6)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -367,8 +419,8 @@ pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Re
 pub fn add_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "INSERT INTO chat_messages (id, session_id, role, content, timestamp, agent_responses) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        (&message.id, &message.session_id, &message.role, &message.content, &message.timestamp, &message.agent_responses)
+        "INSERT INTO chat_messages (id, session_id, role, content, timestamp, agent_responses, meta) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        (&message.id, &message.session_id, &message.role, &message.content, &message.timestamp, &message.agent_responses, &message.meta)
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -377,8 +429,8 @@ pub fn add_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> R
 pub fn update_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "UPDATE chat_messages SET content = ?1, agent_responses = ?2 WHERE id = ?3",
-        (&message.content, &message.agent_responses, &message.id)
+        "UPDATE chat_messages SET content = ?1, agent_responses = ?2, meta = ?3 WHERE id = ?4",
+        (&message.content, &message.agent_responses, &message.meta, &message.id)
     ).map_err(|e| e.to_string())?;
     Ok(())
 }

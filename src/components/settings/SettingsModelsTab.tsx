@@ -26,7 +26,7 @@ const PROVIDER_DEFAULTS: Record<string, { name: string; baseUrl: string; default
   deepseek: { name: 'DeepSeek', baseUrl: 'https://api.deepseek.com', defaultModel: 'deepseek-chat' },
   siliconflow: { name: 'SiliconFlow', baseUrl: 'https://api.siliconflow.cn', defaultModel: 'deepseek-ai/DeepSeek-V3' },
   kimi: { name: 'Kimi', baseUrl: 'https://api.moonshot.cn', defaultModel: 'kimi-k2-0711-preview' },
-  custom: { name: 'Custom', baseUrl: '', defaultModel: 'gpt-4o' },
+  custom: { name: 'Custom', baseUrl: '', defaultModel: '' },
 };
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -129,7 +129,7 @@ export function SettingsModelsTab() {
       baseUrl: defaults.baseUrl,
       isEnabled: false,
       apiFormat: 'openai-chat',
-      models: [{ id: uuidv4(), name: 'Default Model', modelId: defaults.defaultModel, isDefault: true }],
+      models: defaults.defaultModel ? [{ id: uuidv4(), name: 'Default Model', modelId: defaults.defaultModel, isDefault: true }] : [],
     };
     addProvider(newProvider);
     setSelectedProviderId(newProvider.id);

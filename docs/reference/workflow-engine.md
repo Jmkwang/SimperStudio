@@ -20,21 +20,30 @@ lib/workflow/
 ## 2. 主入口签名
 
 ```ts
-executeWorkflow(
+export async function executeWorkflow(
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
   initialPayload: Record<string, any>,
-  settings: ResolveSettings,
-  options?: {
-    startNodeId?: string;          // 断点续跑
-    concurrency?: number;          // 默认串行
-    signal?: AbortSignal;          // 取消执行
-    onStateChange?: (state) => void;  // 实时回调（UI 更新时间线）
-    onNodeResult?: (record) => void;  // 节点完成回调（写回聊天）
-    workflows?: Workflow[];        // sub-workflow 解析需要
-    executionId?: string;          // 幂等键基础
-  }
-): Promise<{ results, nodeRecords, status }>
+  options: ExecutionOptions = {},
+  onStateChange?: (state: Partial<WorkflowExecutionState>) => void,
+  globalState?: Record<string, any>,
+): Promise<{
+  finalPayload: Record<string, any>;
+  results: Record<string, any>;
+  status: WorkflowExecutionState['status'];
+}>
+```
+
+其中 `ExecutionOptions` 定义于 `types.ts`：
+
+```ts
+interface ExecutionOptions {
+  startNodeId?: string;          // 断点续跑
+  concurrency?: number;          // 默认串行
+  signal?: AbortSignal;          // 取消执行
+  /** Called after each node completes successfully (fire-and-forget). */
+  onNodeResult?: (nodeId: string, nodeType: string, payload: any, nodeData: any) => void;
+}
 ```
 
 ---
@@ -59,7 +68,7 @@ executeWorkflow(
       - 其他 → 默认按 outgoing edges 复制 payload
    h. 入队下一批 frames
 3. 队列空 → status = 'completed'
-4. AbortSignal 触发 → status = 'aborted'，立即清理
+4. AbortSignal 触发 → status = 'idle'，立即返回
 ```
 
 ---
@@ -79,18 +88,19 @@ executor 接收的工具集（`createExecutionHelpers` 构造）：
 
 ```ts
 interface ExecutionHelpers {
-  withTimeout<T>(promise, ms, label?): Promise<T>
-  evaluateExpression(expr: string, payload, timeoutMs?): Promise<any>   // AST 解释器，无 new Function
-  evaluateExpressionSync(expr: string, payload): any                    // 同步版本（路由判断）
-  validateSchema(value, schema): { ok, errors? }
-  getByPath(obj, path: string): unknown                                 // "payload.foo.bar" → 值
-  setByPath(obj, path, value): void
-  replaceTemplateVars(template: string, payload): string                // {{path.to.value}} 替换
+  withTimeout<T>(promise: Promise<T>, ms: number, error: string): Promise<T>
+  evaluateExpression(expression: string, payload: any, timeoutMs: number): Promise<boolean>   // AST 解释器，无 new Function
+  evaluateExpressionSync(expression: string, payload: any): any                    // 同步版本（路由判断）
+  validateSchema(data: any, schemaStr: string | undefined, label: string): string | null
+  getByPath(obj: any, path: string): any                                           // "payload.foo.bar" → 值
+  setByPath(obj: any, path: string, value: any): void
+  replaceTemplateVars(template: string, payload: any): string                      // {{path.to.value}} 替换
   sleep(ms: number): Promise<void>
-  signal?: AbortSignal                                                  // 透传给 executor
+  fetchNode(nodeId: string): WorkflowNode | undefined
+  getGlobalState?: (key: string) => any
+  signal?: AbortSignal                                                             // 透传给 executor
   // sub-workflow 用
-  executeWorkflow?(workflowId, payload, options): Promise<any>
-  workflows?: Workflow[]
+  executeWorkflow?(workflowId: string, initialPayload: Record<string, any>): Promise<any>
 }
 ```
 

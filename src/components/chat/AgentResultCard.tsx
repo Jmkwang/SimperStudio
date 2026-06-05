@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Agent, ChatMessage } from '@/types/models';
-import { Send, Bot } from 'lucide-react';
+import { Send, Bot, Star, Clock } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface AgentResultCardProps {
@@ -47,9 +47,23 @@ export function AgentResultCard({ agent, messages, onSendMessage }: AgentResultC
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h3 className="font-semibold text-foreground">{agent.name}</h3>
+          <h3 className="font-semibold text-foreground flex items-center gap-1.5">
+            {agent.name}
+            <Star className="h-3.5 w-3.5 fill-green-500 text-green-500" />
+          </h3>
           <p className="text-xs text-muted-foreground">{agent.systemPrompt.slice(0, 50)}...</p>
         </div>
+        {(() => {
+          const totalTokens = getAgentMessages().reduce((sum, msg) => {
+            const agentTokens = msg.agentResponses
+              ?.filter(ar => ar.agentId === agent.id && ar.tokenUsage?.totalTokens)
+              .reduce((s, ar) => s + (ar.tokenUsage?.totalTokens ?? 0), 0) ?? 0;
+            return sum + agentTokens;
+          }, 0);
+          return totalTokens > 0 ? (
+            <span className="text-xs text-muted-foreground tabular-nums">{totalTokens.toLocaleString()} tokens</span>
+          ) : null;
+        })()}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -66,6 +80,12 @@ export function AgentResultCard({ agent, messages, onSendMessage }: AgentResultC
               <div key={idx} className="flex justify-start">
                 <div className="bg-muted px-4 py-2 rounded-2xl rounded-bl-md max-w-[80%]">
                   <p className="text-sm text-foreground whitespace-pre-wrap">{ar.content.text}</p>
+                  {ar.timestamp && (
+                    <div className="flex items-center gap-1 mt-1.5 text-[10px] text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {new Date(ar.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
