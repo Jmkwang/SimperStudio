@@ -1,0 +1,106 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - img
+            - text: SimperStudio
+        - generic:
+          - button:
+            - img
+          - button:
+            - img
+          - button:
+            - img
+      - generic:
+        - generic:
+          - complementary:
+            - generic:
+              - button [pressed]: 会话
+              - button: 工作流
+            - navigation:
+              - button:
+                - generic: 新增会话
+              - button:
+                - generic: 智能体管理
+              - button:
+                - generic: 提示词
+            - generic:
+              - generic:
+                - generic: 最近会话
+              - generic:
+                - generic: 暂无
+            - generic:
+              - generic:
+                - img
+                - generic: SimperStudio
+              - generic:
+                - button:
+                  - img
+                - generic:
+                  - button:
+                    - img
+        - generic:
+          - main:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - img
+                            - generic:
+                              - img
+                          - generic:
+                            - heading [level=2]: 智能对话
+                            - paragraph: 与 AI 智能体一对一交流，获取精准回答和创意灵感。
+                          - generic:
+                            - paragraph: 快速开始
+                            - generic:
+                              - button:
+                                - generic:
+                                  - img
+                                - generic:
+                                  - generic: 整理助手
+                                  - generic: AI 智能体
+                                - img
+                              - button:
+                                - generic:
+                                  - img
+                                - generic:
+                                  - generic: 总结助手
+                                  - generic: AI 智能体
+                                - img
+                              - button:
+                                - generic:
+                                  - img
+                                - generic:
+                                  - generic: System Architect
+                                  - generic: AI 智能体
+                                - img
+                              - button:
+                                - generic:
+                                  - img
+                                - generic:
+                                  - generic: Code Reviewer
+                                  - generic: AI 智能体
+                                - img
+                          - paragraph: 或从左侧面板选择已有会话继续对话
+            - region "Notifications alt+T"
+  - dialog "欢迎来到 SimperStudio" [ref=e146]:
+    - generic [ref=e147]:
+      - generic [ref=e148]:
+        - button "Step 1" [active] [ref=e149] [cursor=pointer]
+        - button "Step 2" [ref=e150] [cursor=pointer]
+        - button "Step 3" [ref=e151] [cursor=pointer]
+      - img [ref=e153]
+      - heading "欢迎来到 SimperStudio" [level=2] [ref=e156]
+      - paragraph [ref=e157]: 您的 AI 驱动工作流工作室
+    - button "下一步" [ref=e159] [cursor=pointer]
+    - button "Close" [ref=e160] [cursor=pointer]:
+      - img [ref=e161]
+      - generic [ref=e164]: Close

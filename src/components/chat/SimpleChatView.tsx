@@ -149,7 +149,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     <div className="flex flex-col h-full relative">
       <DebugBadge id="SimpleChatView" position="bottom-left" />
       {/* Breadcrumb Bar — simple title + timestamp */}
-      <div className="border-b px-6 py-2 shrink-0">
+      <div className="px-6 py-2 shrink-0">
         <div className="flex items-center justify-between">
           <div className="text-sm">
             <span className="font-medium">{session.title}</span>

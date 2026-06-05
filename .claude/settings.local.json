@@ -131,7 +131,9 @@
       "Bash(where rc.exe)",
       "Bash(npm ls *)",
       "Bash(npm cache *)",
-      "Bash(cargo add *)"
+      "Bash(cargo add *)",
+      "Bash(npx -y serve prototype -p 3333)",
+      "Bash(npx serve *)"
     ]
   }
 }

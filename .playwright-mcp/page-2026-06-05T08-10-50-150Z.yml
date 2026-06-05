@@ -1,0 +1,82 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - text: SimperStudio
+    - generic [ref=e8]:
+      - button "最小化" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - button "最大化" [ref=e11] [cursor=pointer]:
+        - img [ref=e12]
+      - button "关闭" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - button "会话" [ref=e20] [cursor=pointer]
+        - button "工作流" [ref=e21] [cursor=pointer]
+      - navigation [ref=e22]:
+        - button "新增会话" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+          - text: 新增会话
+        - button "智能体管理" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - text: 智能体管理
+        - button "提示词" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+          - text: 提示词
+      - generic [ref=e36]:
+        - generic [ref=e38]: 最近会话
+        - generic [ref=e39]:
+          - button "关于 React 状态管理的讨论 3分钟前" [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]: 关于 React 状态管理的讨论
+            - generic [ref=e42]: 3分钟前
+          - button "帮我写一个 Tailwind 主题配置 1小时前" [ref=e43] [cursor=pointer]:
+            - generic [ref=e44]: 帮我写一个 Tailwind 主题配置
+            - generic [ref=e45]: 1小时前
+          - button "Tauri 插件开发指南 昨天" [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: Tauri 插件开发指南
+            - generic [ref=e48]: 昨天
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - img [ref=e52]
+          - generic [ref=e55]: SimperStudio
+        - generic [ref=e56]:
+          - button "切换主题" [ref=e57] [cursor=pointer]:
+            - img [ref=e58]
+          - button "设置" [ref=e60] [cursor=pointer]:
+            - img [ref=e61]
+    - main [ref=e64]:
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - img [ref=e68]
+          - img [ref=e71]
+        - generic [ref=e73]: 智能对话
+        - generic [ref=e74]: 与 AI 智能体一对一交流，获取精准回答和创意灵感。
+        - generic [ref=e75]: 快速开始
+        - generic [ref=e76]:
+          - button "整理助手 AI 智能体" [ref=e77] [cursor=pointer]:
+            - img [ref=e79]
+            - generic [ref=e82]:
+              - generic [ref=e83]: 整理助手
+              - generic [ref=e84]: AI 智能体
+            - img [ref=e86]
+          - button "总结助手 AI 智能体" [ref=e88] [cursor=pointer]:
+            - img [ref=e90]
+            - generic [ref=e93]:
+              - generic [ref=e94]: 总结助手
+              - generic [ref=e95]: AI 智能体
+            - img [ref=e97]
+          - button "System Architect AI 智能体" [ref=e99] [cursor=pointer]:
+            - img [ref=e101]
+            - generic [ref=e104]:
+              - generic [ref=e105]: System Architect
+              - generic [ref=e106]: AI 智能体
+            - img [ref=e108]
+          - button "Code Reviewer AI 智能体" [ref=e110] [cursor=pointer]:
+            - img [ref=e112]
+            - generic [ref=e115]:
+              - generic [ref=e116]: Code Reviewer
+              - generic [ref=e117]: AI 智能体
+            - img [ref=e119]
+        - generic [ref=e121]: 或从左侧面板选择已有会话继续对话

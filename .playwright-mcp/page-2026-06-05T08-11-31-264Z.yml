@@ -1,0 +1,94 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - text: SimperStudio
+    - generic [ref=e8]:
+      - button "最小化" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - button "最大化" [ref=e11] [cursor=pointer]:
+        - img [ref=e12]
+      - button "关闭" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - button "会话" [ref=e20] [cursor=pointer]
+        - button "工作流" [active] [ref=e21] [cursor=pointer]
+      - navigation [ref=e186]:
+        - button "工作流会话" [ref=e187] [cursor=pointer]:
+          - img [ref=e188]
+          - text: 工作流会话
+        - button "智能体管理" [ref=e190] [cursor=pointer]:
+          - img [ref=e191]
+          - text: 智能体管理
+        - button "工作流编辑器" [ref=e196] [cursor=pointer]:
+          - img [ref=e197]
+          - text: 工作流编辑器
+        - button "提示词" [ref=e199] [cursor=pointer]:
+          - img [ref=e200]
+          - text: 提示词
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]: 最近工作流会话
+          - button "≡" [ref=e203] [cursor=pointer]
+        - generic [ref=e204]:
+          - button "▶ My First Workflow 1" [ref=e205] [cursor=pointer]:
+            - generic [ref=e206]: ▶
+            - generic [ref=e207]: My First Workflow
+            - generic [ref=e208]: "1"
+          - button "▶ Data Processing Pipeline 1" [ref=e209] [cursor=pointer]:
+            - generic [ref=e210]: ▶
+            - generic [ref=e211]: Data Processing Pipeline
+            - generic [ref=e212]: "1"
+          - button "▶ Weekly Report Generator 1" [ref=e213] [cursor=pointer]:
+            - generic [ref=e214]: ▶
+            - generic [ref=e215]: Weekly Report Generator
+            - generic [ref=e216]: "1"
+          - button "▶ 狼人杀·标准局 1" [ref=e217] [cursor=pointer]:
+            - generic [ref=e218]: ▶
+            - generic [ref=e219]: 狼人杀·标准局
+            - generic [ref=e220]: "1"
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - img [ref=e52]
+          - generic [ref=e55]: SimperStudio
+        - generic [ref=e56]:
+          - button "切换主题" [ref=e57] [cursor=pointer]:
+            - img [ref=e58]
+          - button "设置" [ref=e60] [cursor=pointer]:
+            - img [ref=e61]
+    - main [ref=e64]:
+      - generic [ref=e221]:
+        - generic [ref=e222]:
+          - img [ref=e224]
+          - img [ref=e230]
+        - generic [ref=e232]: 工作流对话
+        - generic [ref=e233]: 创建工作流会话，与多个 Agent 协同对话，执行自动化工作流。
+        - generic [ref=e234]: 快速开始
+        - generic [ref=e235]:
+          - button "My First Workflow 5 节点" [ref=e236] [cursor=pointer]:
+            - img [ref=e238]
+            - generic [ref=e243]:
+              - generic [ref=e244]: My First Workflow
+              - generic [ref=e245]: 5 节点
+            - img [ref=e247]
+          - button "Data Processing Pipeline 3 节点" [ref=e249] [cursor=pointer]:
+            - img [ref=e251]
+            - generic [ref=e256]:
+              - generic [ref=e257]: Data Processing Pipeline
+              - generic [ref=e258]: 3 节点
+            - img [ref=e260]
+          - button "Weekly Report Generator 3 节点" [ref=e262] [cursor=pointer]:
+            - img [ref=e264]
+            - generic [ref=e269]:
+              - generic [ref=e270]: Weekly Report Generator
+              - generic [ref=e271]: 3 节点
+            - img [ref=e273]
+          - button "狼人杀·标准局 29 节点" [ref=e275] [cursor=pointer]:
+            - img [ref=e277]
+            - generic [ref=e282]:
+              - generic [ref=e283]: 狼人杀·标准局
+              - generic [ref=e284]: 29 节点
+            - img [ref=e286]
+        - generic [ref=e288]: 或从左侧面板选择已有工作流开始对话

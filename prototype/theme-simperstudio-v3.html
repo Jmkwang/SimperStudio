@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimperStudio — UI Prototype v3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS (exact from globals.css)
+       ============================================ */
+    :root {
+      /* Light mode */
+      --background: hsl(40, 20%, 98%);
+      --foreground: hsl(240, 10%, 10%);
+      --card: hsl(0, 0%, 100%);
+      --card-foreground: hsl(240, 10%, 10%);
+      --popover: hsl(0, 0%, 100%);
+      --popover-foreground: hsl(240, 10%, 10%);
+      --primary: hsl(258, 85%, 68%);
+      --primary-foreground: hsl(0, 0%, 100%);
+      --secondary: hsl(240, 6%, 93%);
+      --secondary-foreground: hsl(240, 10%, 10%);
+      --muted: hsl(40, 15%, 95%);
+      --muted-foreground: hsl(240, 5%, 42%);
+      --accent: hsl(258, 65%, 72%);
+      --accent-foreground: hsl(0, 0%, 100%);
+      --destructive: hsl(0, 72%, 55%);
+      --destructive-foreground: hsl(0, 0%, 100%);
+      --border: hsl(240, 8%, 85%);
+      --input: hsl(240, 8%, 87%);
+      --ring: hsl(258, 85%, 68%);
+      --radius: 12px;
+      --glow: hsl(258, 60%, 65%);
+      --surface: hsl(40, 15%, 99%);
+      --surface-elevated: hsl(0, 0%, 100%);
+      --hover: hsl(240, 10%, 12%, 0.05);
+
+      --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="dark"] {
+      --background: hsl(40, 2%, 12%);
+      --foreground: hsl(0, 0%, 92%);
+      --card: hsl(0, 0%, 11%);
+      --card-foreground: hsl(0, 0%, 92%);
+      --popover: hsl(0, 0%, 11%);
+      --popover-foreground: hsl(0, 0%, 92%);
+      --primary: hsl(258, 75%, 72%);
+      --primary-foreground: hsl(0, 0%, 6%);
+      --secondary: hsl(0, 0%, 16%);
+      --secondary-foreground: hsl(0, 0%, 92%);
+      --muted: hsl(0, 0%, 16%);
+      --muted-foreground: hsl(0, 0%, 62%);
+      --accent: hsl(258, 65%, 68%);
+      --accent-foreground: hsl(0, 0%, 100%);
+      --destructive: hsl(0, 72%, 55%);
+      --destructive-foreground: hsl(0, 0%, 100%);
+      --border: hsl(0, 0%, 100%, 0.12);
+      --input: hsl(0, 0%, 100%, 0.15);
+      --ring: hsl(258, 75%, 72%);
+      --radius: 12px;
+      --glow: hsl(258, 75%, 72%);
+      --surface: hsl(40, 2%, 14%);
+      --surface-elevated: hsl(0, 0%, 16%);
+      --hover: hsl(0, 0%, 100%, 0.1);
+    }
+
+    /* ============================================
+       RESET & BASE
+       ============================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { cursor: pointer; font-family: var(--font-sans); border: none; background: none; color: inherit; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: hsl(0, 0%, 50%, 0.2); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: hsl(0, 0%, 50%, 0.35); }
+    :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+    /* ============================================
+       APP SHELL
+       ============================================ */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      -webkit-app-region: drag;
+      background: var(--background);
+      flex-shrink: 0;
+    }
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--foreground);
+      opacity: 0.8;
+    }
+    .titlebar-brand svg { width: 16px; height: 16px; }
+    .titlebar-controls {
+      display: flex;
+      gap: 2px;
+      -webkit-app-region: no-drag;
+    }
+    .titlebar-btn {
+      width: 32px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      color: var(--muted-foreground);
+      transition: all 150ms ease;
+    }
+    .titlebar-btn:hover { background: var(--hover); color: var(--foreground); }
+    .titlebar-btn svg { width: 14px; height: 14px; }
+
+    /* Body area below titlebar */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ============================================
+       SIDEBAR
+       ============================================ */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--background);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px 8px;
+      margin: 4px 0 8px 8px;
+      border-radius: 17.6px;
+      border: 2px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Mode Switcher Pill */
+    .mode-switcher {
+      display: flex;
+      background: var(--secondary);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+      height: 36px;
+    }
+    .mode-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 6px;
+      padding: 0 12px;
+      font-size: 15.4px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      background: transparent;
+      transition: all 150ms ease-out;
+    }
+    .mode-btn.active {
+      background: var(--background);
+      color: var(--foreground);
+    }
+    .mode-btn:not(.active):hover { color: var(--foreground); }
+
+    /* Nav Items */
+    .nav {
+      margin-top: 16px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 6px;
+      font-size: 15.4px;
+      color: var(--foreground);
+      transition: background 150ms ease;
+      text-align: left;
+    }
+    .nav-item:hover { background: var(--hover); }
+
+    /* Recents Section */
+    .recents {
+      margin-top: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .recents-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      margin-bottom: 8px;
+    }
+    .recents-label {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      font-weight: 400;
+    }
+    .recents-toggle {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--muted-foreground);
+      transition: all 150ms ease;
+    }
+    .recents-toggle:hover { background: var(--hover); color: var(--foreground); }
+
+    .recents-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .recents-empty {
+      padding: 0 4px;
+      font-size: 13px;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+    }
+
+    /* Workflow group row */
+    .wf-group {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--muted-foreground);
+      transition: background 150ms ease;
+      text-align: left;
+      cursor: pointer;
+    }
+    .wf-group:hover { background: var(--hover); }
+    .wf-group-arrow {
+      font-size: 9.6px;
+      transition: transform 150ms ease;
+    }
+    .wf-group-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+      font-size: 13.6px;
+    }
+    .wf-group-count {
+      font-size: 11.2px;
+      opacity: 0.5;
+    }
+
+    /* Gateway (Bottom Bar) */
+    .gateway {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .gateway-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gateway-logo svg { width: 18px; height: 18px; }
+    .gateway-name {
+      font-size: 15.4px;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+    .gateway-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .gateway-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      color: var(--muted-foreground);
+      transition: all 150ms ease;
+    }
+    .gateway-btn:hover { background: var(--hover); color: var(--foreground); }
+    .gateway-btn svg { width: 16px; height: 16px; }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--background);
+    }
+
+    /* Placeholder */
+    .placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 32px;
+    }
+    .placeholder-icon-wrap {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+    }
+    .placeholder-icon-main {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      background: var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .placeholder-icon-main svg { width: 32px; height: 32px; color: var(--muted-foreground); }
+    .placeholder-icon-badge {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: hsl(42, 70%, 50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--background);
+    }
+    .placeholder-icon-badge svg { width: 12px; height: 12px; color: white; }
+    .placeholder-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .placeholder-desc {
+      font-size: 14px;
+      color: var(--muted-foreground);
+      text-align: center;
+      max-width: 360px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .placeholder-section-label {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      font-weight: 500;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .placeholder-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 560px;
+      margin-bottom: 20px;
+    }
+    .placeholder-card {
+      display: flex;
+      align-items: center;
+      gap: 13.2px;
+      padding: 11px;
+      border-radius: 12px;
+      background: rgba(28, 28, 28, 0.5);
+      border: 0.67px solid var(--border);
+      transition: all 150ms ease;
+      text-align: left;
+    }
+    [data-theme="light"] .placeholder-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    .placeholder-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+    .placeholder-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .placeholder-card-icon svg { width: 18px; height: 18px; color: var(--muted-foreground); }
+    .placeholder-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .placeholder-card-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .placeholder-card-meta {
+      font-size: 12px;
+      color: var(--muted-foreground);
+    }
+    .placeholder-card-chevron {
+      color: var(--muted-foreground);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+    .placeholder-card-chevron svg { width: 14px; height: 14px; }
+    .placeholder-footer {
+      font-size: 13px;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+      text-align: center;
+    }
+
+    /* ============================================
+       CHAT VIEW
+       ============================================ */
+    .chat-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-messages-inner {
+      max-width: 768px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Message */
+    .msg {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .msg.user { flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .msg-avatar.user { background: var(--primary); color: var(--primary-foreground); }
+    .msg-avatar.ai { background: var(--foreground); color: var(--background); }
+    .msg-body {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 80%;
+    }
+    .msg.user .msg-body { align-items: flex-end; }
+    .msg-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+    .msg.user .msg-name { color: var(--primary); }
+    .msg-content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--foreground);
+    }
+    .msg.user .msg-content {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      padding: 10px 14px;
+      border-radius: 12px 12px 2px 12px;
+    }
+    .msg.ai .msg-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 12px 12px 12px 2px;
+    }
+    .msg-time {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+    }
+
+    /* Code block in message */
+    .msg-code {
+      margin-top: 8px;
+      background: hsl(0, 0%, 8%);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--foreground);
+      overflow-x: auto;
+      white-space: pre;
+    }
+    [data-theme="light"] .msg-code {
+      background: var(--muted);
+    }
+
+    /* Chat Input */
+    .chat-input-area {
+      padding: 0 24px 20px;
+      flex-shrink: 0;
+    }
+    .chat-input-wrapper {
+      max-width: 768px;
+      margin: 0 auto;
+    }
+    .chat-input-box {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .chat-input-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px hsl(258, 85%, 68%, 0.1);
+    }
+    .chat-input {
+      flex: 1;
+      border: none;
+      background: none;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--foreground);
+      resize: none;
+      outline: none;
+      min-height: 20px;
+      max-height: 120px;
+      line-height: 1.5;
+    }
+    .chat-input::placeholder { color: var(--muted-foreground); }
+    .chat-send-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      flex-shrink: 0;
+      transition: opacity 150ms ease;
+    }
+    .chat-send-btn:hover { opacity: 0.9; }
+    .chat-send-btn svg { width: 16px; height: 16px; }
+    .chat-input-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 6px;
+      opacity: 0.5;
+    }
+
+    /* ============================================
+       WORKFLOW CHAT VIEW
+       ============================================ */
+    .wf-chat-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .wf-chat-header {
+      padding: 0 24px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .wf-chat-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: hsla(258, 60%, 50%, 0.15);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .wf-chat-tag svg { width: 12px; height: 12px; }
+    .wf-agent-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .wf-agent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted-foreground);
+      background: var(--card);
+    }
+    .wf-agent-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: hsl(140, 60%, 45%);
+    }
+
+    /* Workflow node step indicator */
+    .wf-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .wf-step-line {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .wf-step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .wf-step-dot.done { background: hsl(140, 60%, 45%); }
+    .wf-step-dot.pending { background: var(--muted-foreground); opacity: 0.3; }
+    .wf-step-connector {
+      width: 2px;
+      flex: 1;
+      min-height: 20px;
+      background: var(--border);
+    }
+    .wf-step-body {
+      flex: 1;
+      padding-bottom: 16px;
+    }
+    .wf-step-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      margin-bottom: 4px;
+    }
+    .wf-step-label .wf-step-name {
+      color: var(--foreground);
+      font-weight: 600;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Titlebar -->
+    <div class="titlebar">
+      <div class="titlebar-brand">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="2" width="20" height="20" rx="6" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 12h8M12 8v8" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        SimperStudio
+      </div>
+      <div class="titlebar-controls">
+        <button class="titlebar-btn" title="最小化">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+        </button>
+        <button class="titlebar-btn" title="最大化">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </button>
+        <button class="titlebar-btn" title="关闭">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <!-- ===== SIDEBAR ===== -->
+      <aside class="sidebar">
+        <!-- Mode Switcher -->
+        <div class="mode-switcher">
+          <button class="mode-btn active" id="mode-agent" onclick="switchMode('agent')">会话</button>
+          <button class="mode-btn" id="mode-workflow" onclick="switchMode('workflow')">工作流</button>
+        </div>
+
+        <!-- Agent Nav -->
+        <nav class="nav" id="nav-agent">
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            新增会话
+          </button>
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            智能体管理
+          </button>
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            提示词
+          </button>
+        </nav>
+
+        <!-- Workflow Nav -->
+        <nav class="nav" id="nav-workflow" style="display:none">
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            工作流会话
+          </button>
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            智能体管理
+          </button>
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            工作流编辑器
+          </button>
+          <button class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            提示词
+          </button>
+        </nav>
+
+        <!-- Recents -->
+        <div class="recents">
+          <div class="recents-header">
+            <span class="recents-label" id="recents-label">最近会话</span>
+            <button class="recents-toggle" id="recents-toggle" style="display:none" title="切换为平铺视图">≡</button>
+          </div>
+          <!-- Agent sessions -->
+          <div class="recents-list" id="sessions-agent">
+            <button class="wf-group" onclick="showView('chat')" style="cursor:pointer">
+              <span class="wf-group-name" style="font-weight:400;font-size:13px">关于 React 状态管理的讨论</span>
+              <span class="wf-group-count">3分钟前</span>
+            </button>
+            <button class="wf-group" style="cursor:pointer">
+              <span class="wf-group-name" style="font-weight:400;font-size:13px">帮我写一个 Tailwind 主题配置</span>
+              <span class="wf-group-count">1小时前</span>
+            </button>
+            <button class="wf-group" style="cursor:pointer">
+              <span class="wf-group-name" style="font-weight:400;font-size:13px">Tauri 插件开发指南</span>
+              <span class="wf-group-count">昨天</span>
+            </button>
+          </div>
+          <!-- Workflow sessions -->
+          <div class="recents-list" id="sessions-workflow" style="display:none">
+            <button class="wf-group" onclick="showView('wf-chat')" style="cursor:pointer">
+              <span class="wf-group-arrow">▶</span>
+              <span class="wf-group-name">My First Workflow</span>
+              <span class="wf-group-count">1</span>
+            </button>
+            <button class="wf-group" style="cursor:pointer">
+              <span class="wf-group-arrow">▶</span>
+              <span class="wf-group-name">Data Processing Pipeline</span>
+              <span class="wf-group-count">1</span>
+            </button>
+            <button class="wf-group" style="cursor:pointer">
+              <span class="wf-group-arrow">▶</span>
+              <span class="wf-group-name">Weekly Report Generator</span>
+              <span class="wf-group-count">1</span>
+            </button>
+            <button class="wf-group" style="cursor:pointer">
+              <span class="wf-group-arrow">▶</span>
+              <span class="wf-group-name">狼人杀·标准局</span>
+              <span class="wf-group-count">1</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Gateway -->
+        <div class="gateway">
+          <div class="gateway-brand">
+            <span class="gateway-logo">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="2" width="20" height="20" rx="6" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 12h8M12 8v8" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="gateway-name">SimperStudio</span>
+          </div>
+          <div class="gateway-actions">
+            <button class="gateway-btn" id="theme-btn" onclick="cycleTheme()" title="切换主题">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </button>
+            <button class="gateway-btn" title="设置">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===== MAIN CONTENT ===== -->
+      <main class="main">
+        <!-- Agent Placeholder -->
+        <div class="placeholder" id="view-agent">
+          <div class="placeholder-icon-wrap">
+            <div class="placeholder-icon-main">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="placeholder-icon-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+            </div>
+          </div>
+          <div class="placeholder-title">智能对话</div>
+          <div class="placeholder-desc">与 AI 智能体一对一交流，获取精准回答和创意灵感。</div>
+          <div class="placeholder-section-label">快速开始</div>
+          <div class="placeholder-cards">
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">整理助手</div>
+                <div class="placeholder-card-meta">AI 智能体</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">总结助手</div>
+                <div class="placeholder-card-meta">AI 智能体</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">System Architect</div>
+                <div class="placeholder-card-meta">AI 智能体</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">Code Reviewer</div>
+                <div class="placeholder-card-meta">AI 智能体</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+          </div>
+          <div class="placeholder-footer">或从左侧面板选择已有会话继续对话</div>
+        </div>
+
+        <!-- Workflow Placeholder -->
+        <div class="placeholder" id="view-workflow" style="display:none">
+          <div class="placeholder-icon-wrap">
+            <div class="placeholder-icon-main" style="background: hsl(258, 30%, 25%);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+            </div>
+            <div class="placeholder-icon-badge" style="background: hsl(160, 60%, 40%);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+          </div>
+          <div class="placeholder-title">工作流对话</div>
+          <div class="placeholder-desc">创建工作流会话，与多个 Agent 协同对话，执行自动化工作流。</div>
+          <div class="placeholder-section-label">快速开始</div>
+          <div class="placeholder-cards">
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">My First Workflow</div>
+                <div class="placeholder-card-meta">5 节点</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">Data Processing Pipeline</div>
+                <div class="placeholder-card-meta">3 节点</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">Weekly Report Generator</div>
+                <div class="placeholder-card-meta">3 节点</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+            <button class="placeholder-card">
+              <div class="placeholder-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+              </div>
+              <div class="placeholder-card-info">
+                <div class="placeholder-card-name">狼人杀·标准局</div>
+                <div class="placeholder-card-meta">29 节点</div>
+              </div>
+              <div class="placeholder-card-chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+            </button>
+          </div>
+          <div class="placeholder-footer">或从左侧面板选择已有工作流开始对话</div>
+        </div>
+
+        <!-- ===== AGENT CHAT SESSION ===== -->
+        <div class="chat-view" id="view-chat" style="display:none">
+          <div class="chat-messages">
+            <div class="chat-messages-inner">
+              <div class="msg user">
+                <div class="msg-avatar user">你</div>
+                <div class="msg-body">
+                  <span class="msg-name">你</span>
+                  <div class="msg-content">帮我分析一下 Zustand 和 Jotai 这两个状态管理库的优缺点，哪个更适合用在 Tauri 桌面应用中？</div>
+                  <span class="msg-time">14:32</span>
+                </div>
+              </div>
+              <div class="msg ai">
+                <div class="msg-avatar ai">AI</div>
+                <div class="msg-body">
+                  <span class="msg-name">Simper Agent</span>
+                  <div class="msg-content">
+                    <p>好的，以下是两者的对比分析：</p>
+                    <p style="margin-top:8px"><strong>Zustand</strong></p>
+                    <ul style="padding-left:20px;margin:4px 0">
+                      <li>✅ API 简洁，学习曲线低</li>
+                      <li>✅ 支持 persist 中间件，可直接对接 Tauri 的文件系统</li>
+                      <li>✅ 适合中等复杂度的全局状态</li>
+                      <li>⚠️ 大量派生状态时 boilerplate 较多</li>
+                    </ul>
+                    <p style="margin-top:8px"><strong>Jotai</strong></p>
+                    <ul style="padding-left:20px;margin:4px 0">
+                      <li>✅ 原子化设计，按需订阅，性能好</li>
+                      <li>✅ 天然支持 Suspense</li>
+                      <li>✅ 适合复杂派生状态图</li>
+                      <li>⚠️ 调试工具不如 Zustand 完善</li>
+                    </ul>
+                    <p style="margin-top:10px">对于 Tauri 桌面应用，推荐 <strong>Zustand</strong>。桌面应用需要持久化状态（窗口位置、用户偏好），Zustand 的 persist 中间件开箱即用，配合 Tauri 的 store 插件效果很好：</p>
+                    <div class="msg-code">import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+const useStore = create(
+  persist(
+    (set) => ({
+      theme: 'dark',
+      sidebarCollapsed: false,
+      setTheme: (t) => set({ theme: t }),
+    }),
+    { name: 'simper-settings' }
+  )
+)</div>
+                  </div>
+                  <span class="msg-time">14:32</span>
+                </div>
+              </div>
+              <div class="msg user">
+                <div class="msg-avatar user">你</div>
+                <div class="msg-body">
+                  <span class="msg-name">你</span>
+                  <div class="msg-content">那如果我要做实时同步呢？多窗口之间状态怎么共享？</div>
+                  <span class="msg-time">14:33</span>
+                </div>
+              </div>
+              <div class="msg ai">
+                <div class="msg-avatar ai">AI</div>
+                <div class="msg-body">
+                  <span class="msg-name">Simper Agent</span>
+                  <div class="msg-content">
+                    <p>好问题。Tauri 多窗口场景下有几种方案：</p>
+                    <p style="margin-top:8px"><strong>1. Tauri Event System</strong>（推荐）</p>
+                    <p>通过 <code style="background:var(--muted);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:12.5px">emit</code> / <code style="background:var(--muted);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:12.5px">listen</code> 在窗口间广播状态变更：</p>
+                    <div class="msg-code">import { emit, listen } from '@tauri-apps/api/event'
+
+// 窗口 A：发送变更
+await emit('state-changed', { key: 'theme', value: 'light' })
+
+// 窗口 B：监听变更
+await listen('state-changed', (event) => {
+  useStore.getState().setTheme(event.payload.value)
+})</div>
+                    <p style="margin-top:8px"><strong>2. 共享 SQLite</strong> — 适合持久化数据，读写同一数据库文件即可。</p>
+                    <p style="margin-top:8px"><strong>3. Tauri Store 插件</strong> — 适合轻量配置，但需要注意文件锁。</p>
+                  </div>
+                  <span class="msg-time">14:33</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+              <div class="chat-input-box">
+                <textarea class="chat-input" rows="1" placeholder="输入消息…"></textarea>
+                <button class="chat-send-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                </button>
+              </div>
+              <div class="chat-input-hint">Enter 发送 · Shift+Enter 换行</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== WORKFLOW CHAT SESSION ===== -->
+        <div class="wf-chat-view" id="view-wf-chat" style="display:none">
+          <div class="wf-chat-header">
+            <span class="wf-chat-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+              My First Workflow
+            </span>
+            <div class="wf-agent-list">
+              <span class="wf-agent-chip"><span class="wf-agent-dot"></span>整理助手</span>
+              <span class="wf-agent-chip"><span class="wf-agent-dot"></span>总结助手</span>
+              <span class="wf-agent-chip"><span class="wf-agent-dot"></span>Code Reviewer</span>
+            </div>
+          </div>
+          <div class="chat-messages">
+            <div class="chat-messages-inner">
+              <!-- Workflow step: Trigger -->
+              <div class="wf-step">
+                <div class="wf-step-line">
+                  <div class="wf-step-dot done"></div>
+                  <div class="wf-step-connector"></div>
+                </div>
+                <div class="wf-step-body">
+                  <div class="wf-step-label"><span class="wf-step-name">触发器</span> · 已完成</div>
+                  <div class="msg ai" style="margin-top:4px">
+                    <div class="msg-avatar ai" style="width:24px;height:24px;font-size:10px">T</div>
+                    <div class="msg-body">
+                      <div class="msg-content" style="font-size:13px">工作流已启动。输入：<span style="background:var(--muted);padding:1px 6px;border-radius:3px;font-family:var(--font-mono);font-size:12px">"帮我整理本周的工作笔记并生成周报"</span></div>
+                      <span class="msg-time">10:00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Workflow step: Agent 1 -->
+              <div class="wf-step">
+                <div class="wf-step-line">
+                  <div class="wf-step-dot done"></div>
+                  <div class="wf-step-connector"></div>
+                </div>
+                <div class="wf-step-body">
+                  <div class="wf-step-label"><span class="wf-step-name">整理助手</span> · 已完成</div>
+                  <div class="msg ai" style="margin-top:4px">
+                    <div class="msg-avatar ai" style="width:24px;height:24px;font-size:10px;background:hsl(258,60%,50%)">整</div>
+                    <div class="msg-body">
+                      <div class="msg-content" style="font-size:13px">已整理出 5 条关键事项：<br>1. 完成了 Tauri 多窗口状态同步方案设计<br>2. 修复了侧边栏会话列表的内存泄漏<br>3. 部署了 v0.5.4 到测试环境<br>…</div>
+                      <span class="msg-time">10:01</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Workflow step: Agent 2 -->
+              <div class="wf-step">
+                <div class="wf-step-line">
+                  <div class="wf-step-dot done"></div>
+                  <div class="wf-step-connector"></div>
+                </div>
+                <div class="wf-step-body">
+                  <div class="wf-step-label"><span class="wf-step-name">总结助手</span> · 已完成</div>
+                  <div class="msg ai" style="margin-top:4px">
+                    <div class="msg-avatar ai" style="width:24px;height:24px;font-size:10px;background:hsl(180,50%,40%)">总</div>
+                    <div class="msg-body">
+                      <div class="msg-content" style="font-size:13px">
+                        <p><strong>本周工作总结</strong></p>
+                        <p style="margin-top:6px">本周主要完成了 SimperStudio v0.5.4 的开发和发布，重点包括：</p>
+                        <ul style="padding-left:18px;margin:6px 0">
+                          <li>工作流引擎优化 — 节点执行性能提升 40%</li>
+                          <li>侧边栏重构 — 合并 Agent/Workflow 视图为统一入口</li>
+                          <li>多窗口状态同步 — 基于 Tauri Event System 实现</li>
+                        </ul>
+                        <p style="margin-top:6px">下周计划：完成 Prompt 管理模块的 CRUD 功能。</p>
+                      </div>
+                      <span class="msg-time">10:02</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Workflow step: Output -->
+              <div class="wf-step">
+                <div class="wf-step-line">
+                  <div class="wf-step-dot"></div>
+                </div>
+                <div class="wf-step-body">
+                  <div class="wf-step-label"><span class="wf-step-name">输出</span> · 等待中</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+              <div class="chat-input-box">
+                <textarea class="chat-input" rows="1" placeholder="输入消息或指令…"></textarea>
+                <button class="chat-send-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                </button>
+              </div>
+              <div class="chat-input-hint">Enter 发送 · 工作流会自动执行下一步</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function switchMode(mode) {
+      document.getElementById('mode-agent').classList.toggle('active', mode === 'agent');
+      document.getElementById('mode-workflow').classList.toggle('active', mode === 'workflow');
+      document.getElementById('nav-agent').style.display = mode === 'agent' ? '' : 'none';
+      document.getElementById('nav-workflow').style.display = mode === 'workflow' ? '' : 'none';
+      document.getElementById('sessions-agent').style.display = mode === 'agent' ? '' : 'none';
+      document.getElementById('sessions-workflow').style.display = mode === 'workflow' ? '' : 'none';
+      document.getElementById('recents-label').textContent = mode === 'agent' ? '最近会话' : '最近工作流会话';
+      document.getElementById('recents-toggle').style.display = mode === 'workflow' ? '' : 'none';
+      // Switch to placeholder for current mode
+      showView(mode === 'agent' ? 'agent' : 'workflow');
+    }
+
+    function showView(view) {
+      ['view-agent', 'view-workflow', 'view-chat', 'view-wf-chat'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+      document.getElementById('view-' + view).style.display = '';
+    }
+
+    function cycleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      const btn = document.getElementById('theme-btn');
+      btn.innerHTML = next === 'dark'
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+    }
+  </script>
+</body>
+</html>

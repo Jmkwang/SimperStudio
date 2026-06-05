@@ -1,0 +1,112 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - text: SimperStudio
+    - generic [ref=e8]:
+      - button "最小化" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - button "最大化" [ref=e11] [cursor=pointer]:
+        - img [ref=e12]
+      - button "关闭" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - button "会话" [ref=e20] [cursor=pointer]
+        - button "工作流" [ref=e21] [cursor=pointer]
+      - navigation [ref=e186]:
+        - button "工作流会话" [ref=e187] [cursor=pointer]:
+          - img [ref=e188]
+          - text: 工作流会话
+        - button "智能体管理" [ref=e190] [cursor=pointer]:
+          - img [ref=e191]
+          - text: 智能体管理
+        - button "工作流编辑器" [ref=e196] [cursor=pointer]:
+          - img [ref=e197]
+          - text: 工作流编辑器
+        - button "提示词" [ref=e199] [cursor=pointer]:
+          - img [ref=e200]
+          - text: 提示词
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]: 最近工作流会话
+          - button "≡" [ref=e203] [cursor=pointer]
+        - generic [ref=e204]:
+          - button "▶ My First Workflow 1" [active] [ref=e205] [cursor=pointer]:
+            - generic [ref=e206]: ▶
+            - generic [ref=e207]: My First Workflow
+            - generic [ref=e208]: "1"
+          - button "▶ Data Processing Pipeline 1" [ref=e209] [cursor=pointer]:
+            - generic [ref=e210]: ▶
+            - generic [ref=e211]: Data Processing Pipeline
+            - generic [ref=e212]: "1"
+          - button "▶ Weekly Report Generator 1" [ref=e213] [cursor=pointer]:
+            - generic [ref=e214]: ▶
+            - generic [ref=e215]: Weekly Report Generator
+            - generic [ref=e216]: "1"
+          - button "▶ 狼人杀·标准局 1" [ref=e217] [cursor=pointer]:
+            - generic [ref=e218]: ▶
+            - generic [ref=e219]: 狼人杀·标准局
+            - generic [ref=e220]: "1"
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - img [ref=e52]
+          - generic [ref=e55]: SimperStudio
+        - generic [ref=e56]:
+          - button "切换主题" [ref=e57] [cursor=pointer]:
+            - img [ref=e58]
+          - button "设置" [ref=e60] [cursor=pointer]:
+            - img [ref=e61]
+    - main [ref=e64]:
+      - generic [ref=e289]:
+        - generic [ref=e290]:
+          - generic [ref=e291]:
+            - img [ref=e292]
+            - text: My First Workflow
+          - generic [ref=e297]:
+            - generic [ref=e298]: 整理助手
+            - generic [ref=e300]: 总结助手
+            - generic [ref=e302]: Code Reviewer
+        - generic [ref=e305]:
+          - generic [ref=e310]:
+            - generic [ref=e311]: 触发器 · 已完成
+            - generic [ref=e312]:
+              - generic [ref=e313]: T
+              - generic [ref=e314]:
+                - generic [ref=e315]: 工作流已启动。输入："帮我整理本周的工作笔记并生成周报"
+                - generic [ref=e316]: 10:00
+          - generic [ref=e321]:
+            - generic [ref=e322]: 整理助手 · 已完成
+            - generic [ref=e323]:
+              - generic [ref=e324]: 整
+              - generic [ref=e325]:
+                - generic [ref=e326]:
+                  - text: 已整理出 5 条关键事项：
+                  - text: 1. 完成了 Tauri 多窗口状态同步方案设计
+                  - text: 2. 修复了侧边栏会话列表的内存泄漏
+                  - text: 3. 部署了 v0.5.4 到测试环境
+                  - text: …
+                - generic [ref=e327]: 10:01
+          - generic [ref=e332]:
+            - generic [ref=e333]: 总结助手 · 已完成
+            - generic [ref=e334]:
+              - generic [ref=e335]: 总
+              - generic [ref=e336]:
+                - generic [ref=e337]:
+                  - paragraph [ref=e338]:
+                    - strong [ref=e339]: 本周工作总结
+                  - paragraph [ref=e340]: 本周主要完成了 SimperStudio v0.5.4 的开发和发布，重点包括：
+                  - list [ref=e341]:
+                    - listitem [ref=e342]: 工作流引擎优化 — 节点执行性能提升 40%
+                    - listitem [ref=e343]: 侧边栏重构 — 合并 Agent/Workflow 视图为统一入口
+                    - listitem [ref=e344]: 多窗口状态同步 — 基于 Tauri Event System 实现
+                  - paragraph [ref=e345]: 下周计划：完成 Prompt 管理模块的 CRUD 功能。
+                - generic [ref=e346]: 10:02
+          - generic [ref=e351]: 输出 · 等待中
+        - generic [ref=e353]:
+          - generic [ref=e354]:
+            - textbox "输入消息或指令…" [ref=e355]
+            - button [ref=e356] [cursor=pointer]:
+              - img [ref=e357]
+          - generic [ref=e359]: Enter 发送 · 工作流会自动执行下一步

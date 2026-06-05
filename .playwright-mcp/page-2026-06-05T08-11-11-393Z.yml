@@ -1,0 +1,118 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - text: SimperStudio
+    - generic [ref=e8]:
+      - button "最小化" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - button "最大化" [ref=e11] [cursor=pointer]:
+        - img [ref=e12]
+      - button "关闭" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - button "会话" [ref=e20] [cursor=pointer]
+        - button "工作流" [ref=e21] [cursor=pointer]
+      - navigation [ref=e22]:
+        - button "新增会话" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+          - text: 新增会话
+        - button "智能体管理" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+          - text: 智能体管理
+        - button "提示词" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+          - text: 提示词
+      - generic [ref=e36]:
+        - generic [ref=e38]: 最近会话
+        - generic [ref=e39]:
+          - button "关于 React 状态管理的讨论 3分钟前" [active] [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]: 关于 React 状态管理的讨论
+            - generic [ref=e42]: 3分钟前
+          - button "帮我写一个 Tailwind 主题配置 1小时前" [ref=e43] [cursor=pointer]:
+            - generic [ref=e44]: 帮我写一个 Tailwind 主题配置
+            - generic [ref=e45]: 1小时前
+          - button "Tauri 插件开发指南 昨天" [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: Tauri 插件开发指南
+            - generic [ref=e48]: 昨天
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - img [ref=e52]
+          - generic [ref=e55]: SimperStudio
+        - generic [ref=e56]:
+          - button "切换主题" [ref=e57] [cursor=pointer]:
+            - img [ref=e58]
+          - button "设置" [ref=e60] [cursor=pointer]:
+            - img [ref=e61]
+    - main [ref=e64]:
+      - generic [ref=e122]:
+        - generic [ref=e124]:
+          - generic [ref=e125]:
+            - generic [ref=e126]: 你
+            - generic [ref=e127]:
+              - generic [ref=e128]: 你
+              - generic [ref=e129]: 帮我分析一下 Zustand 和 Jotai 这两个状态管理库的优缺点，哪个更适合用在 Tauri 桌面应用中？
+              - generic [ref=e130]: 14:32
+          - generic [ref=e131]:
+            - generic [ref=e132]: AI
+            - generic [ref=e133]:
+              - generic [ref=e134]: Simper Agent
+              - generic [ref=e135]:
+                - paragraph [ref=e136]: 好的，以下是两者的对比分析：
+                - paragraph [ref=e137]:
+                  - strong [ref=e138]: Zustand
+                - list [ref=e139]:
+                  - listitem [ref=e140]: ✅ API 简洁，学习曲线低
+                  - listitem [ref=e141]: ✅ 支持 persist 中间件，可直接对接 Tauri 的文件系统
+                  - listitem [ref=e142]: ✅ 适合中等复杂度的全局状态
+                  - listitem [ref=e143]: ⚠️ 大量派生状态时 boilerplate 较多
+                - paragraph [ref=e144]:
+                  - strong [ref=e145]: Jotai
+                - list [ref=e146]:
+                  - listitem [ref=e147]: ✅ 原子化设计，按需订阅，性能好
+                  - listitem [ref=e148]: ✅ 天然支持 Suspense
+                  - listitem [ref=e149]: ✅ 适合复杂派生状态图
+                  - listitem [ref=e150]: ⚠️ 调试工具不如 Zustand 完善
+                - paragraph [ref=e151]:
+                  - text: 对于 Tauri 桌面应用，推荐
+                  - strong [ref=e152]: Zustand
+                  - text: 。桌面应用需要持久化状态（窗口位置、用户偏好），Zustand 的 persist 中间件开箱即用，配合 Tauri 的 store 插件效果很好：
+                - generic [ref=e153]: "import { create } from 'zustand' import { persist } from 'zustand/middleware' const useStore = create( persist( (set) => ({ theme: 'dark', sidebarCollapsed: false, setTheme: (t) => set({ theme: t }), }), { name: 'simper-settings' } ) )"
+              - generic [ref=e154]: 14:32
+          - generic [ref=e155]:
+            - generic [ref=e156]: 你
+            - generic [ref=e157]:
+              - generic [ref=e158]: 你
+              - generic [ref=e159]: 那如果我要做实时同步呢？多窗口之间状态怎么共享？
+              - generic [ref=e160]: 14:33
+          - generic [ref=e161]:
+            - generic [ref=e162]: AI
+            - generic [ref=e163]:
+              - generic [ref=e164]: Simper Agent
+              - generic [ref=e165]:
+                - paragraph [ref=e166]: 好问题。Tauri 多窗口场景下有几种方案：
+                - paragraph [ref=e167]:
+                  - strong [ref=e168]: 1. Tauri Event System
+                  - text: （推荐）
+                - paragraph [ref=e169]:
+                  - text: 通过
+                  - code [ref=e170]: emit
+                  - text: /
+                  - code [ref=e171]: listen
+                  - text: 在窗口间广播状态变更：
+                - generic [ref=e172]: "import { emit, listen } from '@tauri-apps/api/event' // 窗口 A：发送变更 await emit('state-changed', { key: 'theme', value: 'light' }) // 窗口 B：监听变更 await listen('state-changed', (event) => { useStore.getState().setTheme(event.payload.value) })"
+                - paragraph [ref=e173]:
+                  - strong [ref=e174]: 2. 共享 SQLite
+                  - text: — 适合持久化数据，读写同一数据库文件即可。
+                - paragraph [ref=e175]:
+                  - strong [ref=e176]: 3. Tauri Store 插件
+                  - text: — 适合轻量配置，但需要注意文件锁。
+              - generic [ref=e177]: 14:33
+        - generic [ref=e179]:
+          - generic [ref=e180]:
+            - textbox "输入消息…" [ref=e181]
+            - button [ref=e182] [cursor=pointer]:
+              - img [ref=e183]
+          - generic [ref=e185]: Enter 发送 · Shift+Enter 换行

@@ -1,0 +1,9 @@
+[     465ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:1420/node_modules/.vite/deps/react-dom_client.js?v=37f3a87c:20102
+[     651ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:493
+[     651ms] [LOG] Running in browser mode without Tauri backend - using default data @ http://localhost:1420/src/stores/baseSlice.ts:493
+[     683ms] [ERROR] [TitleBar] failed to load window API TypeError: Cannot read properties of undefined (reading 'metadata')
+    at getCurrentWindow (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_window.js?v=37f3a87c:328:48)
+    at http://localhost:1420/src/components/layout/TitleBar.tsx:27:19 @ http://localhost:1420/src/components/layout/TitleBar.tsx:38
+[     684ms] [ERROR] [TitleBar] failed to load window API TypeError: Cannot read properties of undefined (reading 'metadata')
+    at getCurrentWindow (http://localhost:1420/node_modules/.vite/deps/@tauri-apps_api_window.js?v=37f3a87c:328:48)
+    at http://localhost:1420/src/components/layout/TitleBar.tsx:27:19 @ http://localhost:1420/src/components/layout/TitleBar.tsx:38

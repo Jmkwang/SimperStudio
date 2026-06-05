@@ -1,0 +1,74 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic:
+        - img "SimperStudio"
+        - text: SimperStudio
+    - generic [ref=e6]:
+      - button "最小化" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+      - button "最大化" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - button "关闭" [ref=e15] [cursor=pointer]:
+        - img [ref=e16]
+  - generic [ref=e19]:
+    - complementary [ref=e21]:
+      - generic [ref=e22]:
+        - button "会话" [pressed] [ref=e23] [cursor=pointer]
+        - button "工作流" [ref=e24] [cursor=pointer]
+      - navigation [ref=e25]:
+        - button "新增会话" [ref=e165] [cursor=pointer]:
+          - generic [ref=e166]: 新增会话
+        - button "智能体管理" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]: 智能体管理
+        - button "提示词" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: 提示词
+      - generic [ref=e34]:
+        - generic [ref=e36]: 最近会话
+        - generic [ref=e167]: 暂无
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - img "SimperStudio" [ref=e61]
+          - generic [ref=e66]: SimperStudio
+        - generic [ref=e67]:
+          - button [ref=e68] [cursor=pointer]:
+            - img [ref=e69]
+          - button [ref=e72] [cursor=pointer]:
+            - img [ref=e73]
+    - main [ref=e77]:
+      - generic [ref=e170]:
+        - generic [ref=e171]:
+          - img [ref=e173]
+          - img [ref=e176]
+        - generic [ref=e179]:
+          - heading "智能对话" [level=2] [ref=e180]
+          - paragraph [ref=e181]: 与 AI 智能体一对一交流，获取精准回答和创意灵感。
+        - generic [ref=e182]:
+          - paragraph [ref=e183]: 快速开始
+          - generic [ref=e184]:
+            - button "整理助手 AI 智能体" [ref=e185] [cursor=pointer]:
+              - img [ref=e187]
+              - generic [ref=e190]:
+                - generic [ref=e191]: 整理助手
+                - generic [ref=e192]: AI 智能体
+              - img [ref=e193]
+            - button "总结助手 AI 智能体" [ref=e195] [cursor=pointer]:
+              - img [ref=e197]
+              - generic [ref=e200]:
+                - generic [ref=e201]: 总结助手
+                - generic [ref=e202]: AI 智能体
+              - img [ref=e203]
+            - button "System Architect AI 智能体" [ref=e205] [cursor=pointer]:
+              - img [ref=e207]
+              - generic [ref=e210]:
+                - generic [ref=e211]: System Architect
+                - generic [ref=e212]: AI 智能体
+              - img [ref=e213]
+            - button "Code Reviewer AI 智能体" [ref=e215] [cursor=pointer]:
+              - img [ref=e217]
+              - generic [ref=e220]:
+                - generic [ref=e221]: Code Reviewer
+                - generic [ref=e222]: AI 智能体
+              - img [ref=e223]
+        - paragraph [ref=e225]: 或从左侧面板选择已有会话继续对话
+      - region "Notifications alt+T"

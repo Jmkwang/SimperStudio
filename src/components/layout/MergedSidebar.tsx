@@ -359,22 +359,6 @@ export function MergedSidebar() {
 
         {/* List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {/* New session button */}
-          <button
-            onClick={() => setCurrentView(sidebarMode === 'agent' ? 'new-chat' : 'new-workflow')}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-              width: '100%', height: 30, marginBottom: 4,
-              border: `1px dashed ${c.border}`, borderRadius: 6,
-              background: 'transparent', color: c.textMuted,
-              fontSize: '0.8125rem', cursor: 'pointer',
-              transition: 'background 150ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-          >
-            + {t('新增会话')}
-          </button>
           {sidebarMode === 'agent' ? (
             agentRecents.length > 0
               ? agentRecents.map(s => renderSessionRow(s))

@@ -29,8 +29,8 @@
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 8% 85%;
-    --input: 240 8% 87%;
+    --border: 220 8% 88%;
+    --input: 240 6% 91%;
     --ring: 258 85% 68%;
 
     --radius: 12px;
@@ -68,7 +68,7 @@
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.12;
+    --border: 0 0% 100% / 0.1;
     --input: 0 0% 100% / 0.12;
     --ring: 258 75% 72%;
 
@@ -93,7 +93,7 @@
 
   /* Chat markdown rendering */
   .prose pre {
-    @apply bg-muted/50 border border-border/30 rounded-lg text-sm;
+    @apply bg-muted/50 border border-border rounded-lg text-sm;
   }
   .prose code:not(pre code) {
     @apply bg-muted/50 px-1 py-0.5 rounded text-sm;
@@ -102,7 +102,7 @@
     @apply text-sm;
   }
   .prose th, .prose td {
-    @apply border border-border/30 px-2 py-1;
+    @apply border border-border px-2 py-1;
   }
   .prose blockquote {
     @apply border-l-primary/50;

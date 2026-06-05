@@ -189,11 +189,12 @@ const AssistantBubble = memo(function AssistantBubble({
 
   return (
     <div className={cn(
-      "flex justify-start gap-3 group",
-      layout === 'multi' && "flex-1"
+      "grid gap-x-3 group",
+      layout === 'single' ? "max-w-[80%]" : "w-full",
+      "[grid-template-columns:auto_1fr]"
     )}>
-      {/* Left column: avatar spanning 2 lines */}
-      <div className="shrink-0">
+      {/* Avatar — row 1 col 1 */}
+      <div className="shrink-0 row-start-1 col-start-1">
         {agent?.avatar ? (
           <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex items-center justify-center text-sm">
             {agent.avatar.startsWith('http') || agent.avatar.startsWith('/') ? (
@@ -208,90 +209,85 @@ const AssistantBubble = memo(function AssistantBubble({
           </div>
         )}
       </div>
-      {/* Right column */}
-      <div className={cn(
-        "flex flex-col items-start min-w-0",
-        layout === 'single' ? "max-w-[80%]" : "w-full"
-      )}>
-        {/* Row 1: Agent name */}
-        <span className="text-sm font-semibold text-foreground mb-0.5 truncate max-w-full">
+      {/* Agent name + model — row 1 col 2 */}
+      <div className="row-start-1 col-start-2 flex flex-col justify-center min-w-0">
+        <span className="text-sm font-semibold text-foreground truncate">
           {agent?.name || 'Agent'}
         </span>
-        {/* Row 2: Model info */}
         {(response.providerName || response.modelName) && (
-          <span className="text-xs text-muted-foreground mb-1 truncate max-w-full">
+          <span className="text-[10px] text-muted-foreground truncate">
             {response.providerName}/{response.modelName || response.modelId}
           </span>
         )}
-        {/* Row 3: Thinking */}
+      </div>
+      {/* Content — row 2, spans both columns */}
+      <div className={cn(
+        "col-span-2 min-w-0 mt-2",
+        isError && "border border-destructive/30 bg-destructive/5 rounded-lg px-3 py-1.5"
+      )}>
+        {/* Thinking */}
         {response.content.thinking && (
           <ThinkingBlock thinking={response.content.thinking} isStreaming={isStreaming} />
         )}
-        {/* Row 4: Content */}
-        <div className={cn(
-          "w-full",
-          isError && "border border-destructive/30 bg-destructive/5 rounded-lg px-3 py-1.5"
-        )}>
-          {isError ? (
-            <div className="space-y-1.5">
+        {isError ? (
+          <div className="space-y-1.5">
+            <button
+              className="flex items-center gap-2 text-destructive cursor-pointer"
+              onClick={() => setShowErrorDetail(!showErrorDetail)}
+              aria-expanded={showErrorDetail}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span>{response.errorSummary || t('模型调用失败')}</span>
+              <ChevronDown className={cn("h-3 w-3 transition-transform", showErrorDetail && "rotate-180")} />
+            </button>
+            {showErrorDetail && response.errorDetail && (
+              <pre className="text-xs text-destructive/80 bg-destructive/10 p-2 rounded overflow-auto max-h-40">
+                {response.errorDetail}
+              </pre>
+            )}
+          </div>
+        ) : (
+          <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <Markdown remarkPlugins={[remarkGfm]}>{response.content.text}</Markdown>
+          </div>
+        )}
+      </div>
+      {/* Actions — row 3, spans both columns */}
+      <div className="col-span-2 flex items-start justify-between gap-2 mt-1 w-full">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          {(response.tokenUsage || response.duration) && (
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              ({[
+                response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : '',
+                response.duration ? `${(response.duration / 1000).toFixed(1)}s` : '',
+              ].filter(Boolean).join(' / ')})
+            </span>
+          )}
+          {!isStreaming && (
+            <div className="flex items-center gap-0.5">
               <button
-                className="flex items-center gap-2 text-destructive cursor-pointer"
-                onClick={() => setShowErrorDetail(!showErrorDetail)}
-                aria-expanded={showErrorDetail}
+                onClick={handleCopy}
+                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors relative"
+                aria-label={t("Copy")}
               >
-                <AlertTriangle className="h-4 w-4" />
-                <span>{response.errorSummary || t('模型调用失败')}</span>
-                <ChevronDown className={cn("h-3 w-3 transition-transform", showErrorDetail && "rotate-180")} />
+                <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
+                <Check className={`h-3 w-3 absolute text-green-500 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
               </button>
-              {showErrorDetail && response.errorDetail && (
-                <pre className="text-xs text-destructive/80 bg-destructive/10 p-2 rounded overflow-auto max-h-40">
-                  {response.errorDetail}
-                </pre>
+              {onRetry && (
+                <button
+                  onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
+                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={t("Retry")}
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </button>
               )}
-            </div>
-          ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-              <Markdown remarkPlugins={[remarkGfm]}>{response.content.text}</Markdown>
             </div>
           )}
         </div>
-        {/* Row 4: Actions */}
-        <div className="flex items-start justify-between gap-2 mt-1 w-full">
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
-            {(response.tokenUsage || response.duration) && (
-              <span className="text-xs text-muted-foreground shrink-0">
-                ({[
-                  response.tokenUsage ? `↑${response.tokenUsage.promptTokens} ↓${response.tokenUsage.completionTokens} ${t("tokens")}` : '',
-                  response.duration ? `${(response.duration / 1000).toFixed(1)}s` : '',
-                ].filter(Boolean).join(' / ')})
-              </span>
-            )}
-            {!isStreaming && (
-              <div className="flex items-center gap-0.5">
-                <button
-                  onClick={handleCopy}
-                  className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors relative"
-                  aria-label={t("Copy")}
-                >
-                  <Copy className={`h-3 w-3 transition-opacity duration-300 ${copied ? 'opacity-0' : 'opacity-100'}`} />
-                  <Check className={`h-3 w-3 absolute text-green-500 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`} />
-                </button>
-                {onRetry && (
-                  <button
-                    onClick={() => onRetry(response.agentId || agent?.id || '', message.id)}
-                    className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={t("Retry")}
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground/80 shrink-0">
-            {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </span>
-        </div>
+        <span className="text-[10px] text-muted-foreground/80 shrink-0">
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </span>
       </div>
     </div>
   );
@@ -391,7 +387,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({
           {filtered.map((response, idx) => (
             <div
               key={`${message.id}-${idx}`}
-              className="flex-1 rounded-xl border border-border/30 bg-card/50 p-3"
+              className="flex-1 rounded-xl border border-border p-3"
             >
               <AssistantBubble
                 response={response}
