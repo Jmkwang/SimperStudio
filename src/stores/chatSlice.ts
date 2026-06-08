@@ -288,15 +288,29 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
         const messages = s.messages.map((m: ChatMessage) => {
           if (!m.agentResponses) return m;
           let msgChanged = false;
-          const agentResponses = m.agentResponses.map((ar: any) => {
+          const agentResponses = [...m.agentResponses];
+
+          // Update existing agentResponses
+          for (let i = 0; i < agentResponses.length; i++) {
+            const ar = agentResponses[i];
             const key = [s.id, m.id, ar.agentId, ar.nodeId || ''].join(':');
             const entry = pending.get(key);
             if (entry && entry.chunks.length > 0) {
               msgChanged = true;
-              return { ...ar, content: { ...ar.content, text: ar.content.text + entry.chunks.join('') } };
+              agentResponses[i] = { ...ar, content: { ...ar.content, text: ar.content.text + entry.chunks.join('') } };
             }
-            return ar;
-          });
+          }
+
+          // Create new agentResponses for entries not matched above
+          for (const entry of pending.values()) {
+            if (entry.messageId !== m.id || entry.sessionId !== s.id) continue;
+            const exists = agentResponses.some(ar => ar.agentId === entry.agentId && ar.nodeId === entry.nodeId);
+            if (!exists && entry.chunks.length > 0) {
+              msgChanged = true;
+              agentResponses.push(createAgentResponse(entry.agentId, entry.chunks.join(''), entry.nodeId, 'streaming'));
+            }
+          }
+
           if (msgChanged) {
             sessionChanged = true;
             return { ...m, agentResponses, updatedAt: Date.now() };
@@ -435,9 +449,11 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
       const state = get();
       const session = state.sessions.find((s: ChatSession) => s.id === sessionId);
       const isNewMessage = session ? session.messages.findIndex((m: ChatMessage) => m.id === messageId) === -1 : false;
+      const existingMsg = session?.messages.find((m: ChatMessage) => m.id === messageId);
+      const hasAgentResponse = existingMsg?.agentResponses?.some((ar: any) => ar.agentId === agentId && ar.nodeId === nodeId);
 
-      // Immediately process: new message creation, or chunks with metadata (first real chunk, errors)
-      if (isNewMessage || meta) {
+      // Immediately process: new message creation, new agent on existing message, or chunks with metadata (first real chunk, errors)
+      if (isNewMessage || meta || !hasAgentResponse) {
         let newAssistantMsg: ChatMessage | null = null;
         set((state: any) => {
           const sessions = state.sessions.map((s: ChatSession) => {

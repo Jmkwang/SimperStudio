@@ -22,7 +22,7 @@ import { ChatLoopNode } from './ChatLoopNode';
 import { ChatRouterNode } from './ChatRouterNode';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Paperclip, X, Brain } from 'lucide-react';
+import { Send, Paperclip, X, Brain, Square } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
 import { cn } from '@/lib/utils';
@@ -42,7 +42,6 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const { theme } = useTheme();
   const { trackClick } = useDebugTrack('WorkflowChatView');
 
-  const multiAgentMode = workflowChatUI.multiAgentModeBySession[session.id] ?? true;
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [thinkingLevel, setThinkingLevel] = useState<'default' | 'off'>('default');
@@ -207,6 +206,12 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   return (
     <div className="flex flex-col h-full relative">
       <DebugBadge id="WorkflowChatView" position="bottom-left" />
+
+      {/* Session header */}
+      <div className="shrink-0 h-8 px-4 flex items-center justify-between border-b bg-card/50 text-xs text-muted-foreground">
+        <span className="font-mono opacity-60">ID: {session.id.slice(0, 8)}</span>
+        <span>{new Date(session.createdAt).toLocaleString()}</span>
+      </div>
 
       {multiAgentMode ? (
         <div className="flex-1 flex flex-col min-h-0">

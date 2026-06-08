@@ -1,10 +1,9 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
-import { SimperLogo } from './SimperLogo'
-import { Moon, Settings, Sun, Zap, Plus, Bot, FileText, MessageSquare, Workflow, Wrench } from 'lucide-react'
+import { Moon, Settings, Sun, Zap, Plus, Bot, FileText, MessageSquare, Workflow, Wrench, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Mode = 'agent' | 'workflow'
@@ -31,7 +30,6 @@ const WORKFLOW_NAV: NavItem[] = [
   { id: 'workflow', labelKey: '工作流编辑器', icon: <Workflow className="h-4 w-4" /> },
   { id: 'prompts', labelKey: '提示词', icon: <FileText className="h-4 w-4" /> },
 ]
-
 export function MergedSidebar() {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
@@ -66,6 +64,13 @@ export function MergedSidebar() {
     }
   }, [settings.showSidebarAgentMode, settings.showSidebarWorkflowMode, sidebarMode])
 
+  const showAgent = settings.showSidebarAgentMode !== false
+  const showWorkflow = settings.showSidebarWorkflowMode !== false
+  const visibleModes = (['agent', 'workflow'] as const).filter(m =>
+    m === 'agent' ? showAgent : showWorkflow
+  )
+  const isSingleMode = visibleModes.length <= 1
+
   const navItems = sidebarMode === 'agent' ? AGENT_NAV : WORKFLOW_NAV
 
   // workflow view mode: grouped or flat, persisted
@@ -91,6 +96,19 @@ export function MergedSidebar() {
   const [renameItemId, setRenameItemId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
+
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      updateSettings({ userAvatar: reader.result as string })
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
 
   // Settings menu
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -125,7 +143,7 @@ export function MergedSidebar() {
     return Array.from(map.values())
   }, [wfSessions, workflows])
 
-  const rLabel = sidebarMode === 'agent' ? t('最近会话') : t('最近工作流会话')
+  const rLabel = isSingleMode ? t('Recents') : (sidebarMode === 'agent' ? t('最近会话') : t('最近工作流会话'))
 
   const handleNavClick = (item: NavItem) => {
     if (item.id === 'chat') setCurrentView('new-chat')
@@ -193,9 +211,10 @@ export function MergedSidebar() {
   }
 
   // Shared session row renderer
-  const renderSessionRow = (session: { id: string; title: string; updatedAt: number; messages?: { role: string; agentResponses?: { agentId?: string }[] }[] }, indent = false) => {
+  const renderSessionRow = (session: { id: string; title: string; updatedAt: number; mode?: string; workflowId?: string; messages?: { role: string; agentResponses?: { agentId?: string }[] }[] }, indent = false) => {
     const isSelected = activeSessionId === session.id
     const isHovered = hoveredItemId === session.id
+    const isWorkflowSession = session.mode === 'workflow' || !!session.workflowId
     return (
       <div
         key={session.id}
@@ -203,13 +222,13 @@ export function MergedSidebar() {
         tabIndex={0}
         onClick={() => {
           setActiveSession(session.id)
-          setCurrentView(sidebarMode === 'workflow' ? 'workflowChat' : 'chat')
+          setCurrentView(isWorkflowSession ? 'workflowChat' : 'chat')
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             setActiveSession(session.id)
-            setCurrentView(sidebarMode === 'workflow' ? 'workflowChat' : 'chat')
+            setCurrentView(isWorkflowSession ? 'workflowChat' : 'chat')
           }
         }}
         className={cn(
@@ -228,7 +247,7 @@ export function MergedSidebar() {
           isSelected ? "scale-y-100" : "scale-y-0"
         )} />
         
-        {sidebarMode === 'agent' && (
+        {!isWorkflowSession ? (
           (() => {
             const avatar = getSessionAvatar(session)
             return avatar
@@ -238,8 +257,7 @@ export function MergedSidebar() {
                   isSelected ? "bg-primary" : "bg-muted-foreground/30"
                 )} />
           })()
-        )}
-        {sidebarMode === 'workflow' && (
+        ) : (
           <Zap size={14} className="shrink-0 text-muted-foreground/50" />
         )}
         <span className="flex-1 min-w-0 truncate">
@@ -283,39 +301,24 @@ export function MergedSidebar() {
     <aside className="flex flex-col select-none flex-shrink-0 w-[260px] h-full bg-card p-3 pb-2 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden">
       <DebugBadge id="MergedSidebar" position="top-left" />
 
-      {/* ══════ Logo ══════ */}
-      <div className="px-1 pt-1 pb-2 flex items-center gap-2.5">
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
-          <SimperLogo size={18} />
-        </div>
-        <span className="text-sm font-semibold tracking-tight">SimperStudio</span>
-      </div>
-
       {/* ══════ Mode Switcher ══════ */}
-      {(() => {
-        const showAgent = settings.showSidebarAgentMode !== false
-        const showWorkflow = settings.showSidebarWorkflowMode !== false
-        const visibleModes = (['agent', 'workflow'] as const).filter(m =>
-          m === 'agent' ? showAgent : showWorkflow
-        )
-        if (visibleModes.length <= 1) return null
-        return (
-          <div className="flex bg-secondary rounded-[10px] h-9 flex-shrink-0 p-[3px]">
-            {visibleModes.map(mode => (
-              <button key={mode}
-                onClick={() => { setSidebarMode(mode); try { localStorage.setItem('ss_sidebar_mode', mode) } catch {}; setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
-                className={cn(
-                  "flex-1 border-none cursor-pointer flex items-center justify-center text-sm font-medium rounded-lg transition-all duration-200",
-                  sidebarMode === mode
-                    ? "bg-muted text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                aria-pressed={sidebarMode === mode}
-              >{mode === 'agent' ? t('会话') : t('Workflows')}</button>
-            ))}
-          </div>
-        )
-      })()}
+      {visibleModes.length > 0 && (
+        <div className="flex bg-secondary rounded-[10px] h-9 flex-shrink-0 p-[3px]">
+          {visibleModes.map(mode => (
+            <button key={mode}
+              onClick={() => { setSidebarMode(mode); try { localStorage.setItem('ss_sidebar_mode', mode) } catch {}; setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
+              className={cn(
+                "flex-1 border-none cursor-pointer flex items-center justify-center text-sm font-medium rounded-lg transition-all duration-200",
+                sidebarMode === mode
+                  ? "bg-muted text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              aria-pressed={sidebarMode === mode}
+              disabled={visibleModes.length <= 1}
+            >{mode === 'agent' ? t('会话') : t('Workflows')}</button>
+          ))}
+        </div>
+      )}
 
       {/* ══════ Nav Items ══════ */}
       <nav className="mt-3 flex-shrink-0 space-y-0.5">
@@ -356,7 +359,58 @@ export function MergedSidebar() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto -mx-1 space-y-0.5">
-          {sidebarMode === 'agent' ? (
+          {isSingleMode ? (
+            <>
+              {/* Single chat sessions */}
+              {agentRecents.length > 0 && (
+                <div className="mb-2">
+                  <div className="px-2 h-6 flex items-center text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t('会话')}</div>
+                  <div className="space-y-0.5">{agentRecents.map(s => renderSessionRow(s))}</div>
+                </div>
+              )}
+              {/* Workflow sessions - grouped */}
+              {wfGroups.length > 0 && (
+                <div>
+                  <div className="px-2 h-6 flex items-center text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t('工作流')}</div>
+                  {wfGroups.map(group => {
+                    const isExpanded = expandedGroups.has(group.wfId)
+                    return (
+                      <div key={group.wfId} className="mb-1">
+                        <button
+                          onClick={() => toggleGroup(group.wfId)}
+                          onDoubleClick={async () => {
+                            const title = `${group.wfName} · ${group.sessions.length + 1}`
+                            await createSession(title, activeWorkspaceId || 'default-workspace', group.wfId, 'workflow')
+                            setExpandedGroups(prev => {
+                              const next = new Set(prev)
+                              next.add(group.wfId)
+                              return next
+                            })
+                          }}
+                          className="w-full flex items-center gap-1.5 border-none bg-transparent px-2 h-7 rounded-md cursor-pointer text-left transition-colors hover:bg-muted/60"
+                        >
+                          <span className={cn(
+                            "text-[10px] text-muted-foreground/60 shrink-0 inline-block transition-transform duration-200",
+                            isExpanded && "rotate-90"
+                          )}>▶</span>
+                          <span className="flex-1 min-w-0 truncate text-[13px] font-medium text-muted-foreground">
+                            {group.wfName}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground/40 shrink-0">
+                            {group.sessions.length}
+                          </span>
+                        </button>
+                        {isExpanded && group.sessions.map(s => renderSessionRow(s, true))}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {agentRecents.length === 0 && wfGroups.length === 0 && (
+                <div className="px-3 text-xs text-muted-foreground/50">{t('暂无')}</div>
+              )}
+            </>
+          ) : sidebarMode === 'agent' ? (
             agentRecents.length > 0
               ? agentRecents.map(s => renderSessionRow(s))
               : <div className="px-3 text-xs text-muted-foreground/50">{t('暂无')}</div>
@@ -407,10 +461,20 @@ export function MergedSidebar() {
       {/* ══════ Gateway ══════ */}
       <div className="mt-auto pt-2 flex-shrink-0 border-t border-border flex items-center justify-between h-11">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <span className="text-[10px] text-primary-foreground font-bold">S</span>
-          </div>
-          <span className="text-xs font-medium text-muted-foreground">SimperStudio</span>
+          <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleAvatarChange} />
+          <button
+            onClick={() => avatarInputRef.current?.click()}
+            className="h-7 w-7 rounded-full border border-border/50 overflow-hidden flex items-center justify-center bg-muted shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
+            title={t('Change avatar')}
+            aria-label={t('Change avatar')}
+          >
+            {settings.userAvatar ? (
+              <img src={settings.userAvatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <User className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+          <span className="text-xs font-medium text-muted-foreground">{settings.userName || 'User'}</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={cycleTheme}

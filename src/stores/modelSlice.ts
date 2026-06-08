@@ -113,6 +113,7 @@ export function createModelSlice(set: any, _get: any, writeConfig: (name: string
       allowRemoteAccess: true,
       remoteAccessPort: 1420,
       fontSize: 100,
+      userName: 'User',
     },
 
     updateSettings: (updates) => set((state: any) => {

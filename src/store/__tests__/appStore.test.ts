@@ -31,10 +31,11 @@ describe('addAgentResponseStream', () => {
     expect(updated.messages[0].agentResponses![0].status).toBe('streaming');
   });
 
-  it('should append chunks without duplicating', () => {
+  it('should append chunks without duplicating', async () => {
     const { addAgentResponseStream } = useAppStore.getState();
     addAgentResponseStream('test-session', 'msg-1', 'agent-1', 'Hello');
     addAgentResponseStream('test-session', 'msg-1', 'agent-1', ' World');
+    await new Promise(r => setTimeout(r, 100));
 
     const updated = useAppStore.getState().sessions.find(s => s.id === 'test-session')!;
     expect(updated.messages).toHaveLength(1);

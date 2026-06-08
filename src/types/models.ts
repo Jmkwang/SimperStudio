@@ -352,6 +352,8 @@ export interface Settings {
   customApiKey?: string;
   customHeader?: string;
   customXmlTemplate?: string;
+  userAvatar?: string;
+  userName?: string;
 }
 
 export interface MessageAttachment {

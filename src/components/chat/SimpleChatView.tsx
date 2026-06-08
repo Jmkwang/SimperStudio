@@ -148,6 +148,13 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   return (
     <div className="flex flex-col h-full relative">
       <DebugBadge id="SimpleChatView" position="bottom-left" />
+
+      {/* Session header */}
+      <div className="shrink-0 h-8 px-4 flex items-center justify-between border-b bg-card/50 text-xs text-muted-foreground">
+        <span className="font-mono opacity-60">ID: {session.id.slice(0, 8)}</span>
+        <span>{new Date(session.createdAt).toLocaleString()}</span>
+      </div>
+
       {/* Main chat area */}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4" role="log" aria-live="polite">
         {session.messages.length === 0 && (
