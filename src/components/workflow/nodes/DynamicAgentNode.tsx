@@ -88,7 +88,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-purple-500 bg-background"
+        className="w-3 h-3 border-2 border-purple-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b border-purple-100 dark:border-purple-900/30 p-3 bg-purple-50/30 dark:bg-purple-950/20">
         <div className="flex items-center gap-3">
@@ -344,7 +344,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-purple-500 bg-background"
+        className="w-3 h-3 border-2 border-purple-500 bg-popover"
       />
     </div>
   );

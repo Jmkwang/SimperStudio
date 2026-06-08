@@ -93,14 +93,14 @@ export function AgentResultCard({ agent, messages, onSendMessage }: AgentResultC
         ))}
       </div>
 
-      <div className="p-4 border-t border-border/50 bg-background/50">
+      <div className="p-4 border-t border-border/50 bg-popover/50">
         <div className="flex gap-2">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={t('Ask') + ' ' + agent.name + '...'}
-            className="flex-1 bg-background border-border/50 focus:border-primary"
+            className="flex-1 bg-popover border-border/50 focus:border-primary"
           />
           <Button 
             onClick={handleSend}

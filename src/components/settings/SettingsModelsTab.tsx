@@ -344,7 +344,7 @@ export function SettingsModelsTab() {
                       }
                     </div>
                     {/* Pencil badge */}
-                    <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border border-border shadow-sm group-hover:bg-muted transition-colors">
+                    <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-popover border border-border shadow-sm group-hover:bg-muted transition-colors">
                       <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
                     </div>
                   </div>
@@ -478,7 +478,7 @@ export function SettingsModelsTab() {
                                 <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-200", expandedModelGroups.has(group) ? "" : "-rotate-90")} />
                               </button>
                               {editingGroup === group ? (
-                                <input className="text-sm font-medium bg-background border rounded px-2 py-1 w-28 outline-none focus:border-primary"
+                                <input className="text-sm font-medium bg-popover border rounded px-2 py-1 w-28 outline-none focus:border-primary"
                                   value={editGroupName} onChange={(e) => setEditGroupName(e.target.value)}
                                   onBlur={() => {
                                     if (editGroupName.trim() && editGroupName !== group) {

@@ -54,30 +54,30 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[260px] rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="node-card w-[260px] rounded-xl border border-border/60 bg-card text-card-foreground shadow-soft overflow-hidden group">
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-primary bg-background"
+        className="w-3 h-3 border-2 border-primary bg-popover"
       />
-      <div className="flex items-center justify-between border-b p-3 bg-muted/20">
+      <div className="gradient-header flex items-center justify-between border-b border-border/50 p-3">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 rounded-md border shadow-sm">
+          <Avatar className="h-8 w-8 rounded-lg ring-2 ring-primary/10 shadow-sm">
             <AvatarImage src={activeAgent?.avatar} />
-            <AvatarFallback className="rounded-md bg-primary/10 text-primary">
+            <AvatarFallback className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 text-primary">
               <Bot className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
-          <div>
+          <div class="min-w-0">
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
-            {data.schema && <p className="text-xs text-primary mt-0.5">{t("Tool Calling Enabled")}</p>}
+            {data.schema && <p className="text-xs text-primary mt-0.5 font-medium">{t("Tool Calling Enabled")}</p>}
           </div>
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure agent node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted/80" aria-label="Configure agent node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -180,21 +180,21 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
         </Dialog>
 
       </div>
-      <div className="p-3">
-         <p className="text-xs text-muted-foreground line-clamp-2 italic">
+      <div className="p-3 space-y-2">
+         <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
             {data.prompt || 'Process input using assigned agent capabilities.'}
          </p>
          {data.autoSendToNext && (
-           <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
+           <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-md px-2 py-1">
              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-             Auto-forward enabled
-           </p>
+             <span className="font-medium">Auto-forward enabled</span>
+           </div>
          )}
       </div>
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-primary bg-background"
+        className="w-3 h-3 border-2 border-primary bg-popover"
       />
     </div>
   );

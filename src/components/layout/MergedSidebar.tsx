@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
 import { SimperLogo } from './SimperLogo'
-import { Moon, Settings, Sun, Zap } from 'lucide-react'
+import { Moon, Settings, Sun, Zap, Plus, Bot, FileText, MessageSquare, Workflow, Wrench } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type Mode = 'agent' | 'workflow'
 type WorkflowViewMode = 'grouped' | 'flat'
@@ -18,17 +19,17 @@ function saveWfViewMode(m: WorkflowViewMode) {
   try { localStorage.setItem(WF_VIEW_KEY, m) } catch {}
 }
 
-interface NavItem { id: string; labelKey: string }
+interface NavItem { id: string; labelKey: string; icon: React.ReactNode }
 const AGENT_NAV: NavItem[] = [
-  { id: 'chat', labelKey: '新增会话' },
-  { id: 'agents', labelKey: '智能体管理' },
-  { id: 'prompts', labelKey: '提示词' },
+  { id: 'chat', labelKey: '新增会话', icon: <Plus className="h-4 w-4" /> },
+  { id: 'agents', labelKey: '智能体管理', icon: <Bot className="h-4 w-4" /> },
+  { id: 'prompts', labelKey: '提示词', icon: <FileText className="h-4 w-4" /> },
 ]
 const WORKFLOW_NAV: NavItem[] = [
-  { id: 'workflowChat', labelKey: '工作流会话' },
-  { id: 'agents', labelKey: '智能体管理' },
-  { id: 'workflow', labelKey: '工作流编辑器' },
-  { id: 'prompts', labelKey: '提示词' },
+  { id: 'workflowChat', labelKey: '工作流会话', icon: <MessageSquare className="h-4 w-4" /> },
+  { id: 'agents', labelKey: '智能体管理', icon: <Bot className="h-4 w-4" /> },
+  { id: 'workflow', labelKey: '工作流编辑器', icon: <Workflow className="h-4 w-4" /> },
+  { id: 'prompts', labelKey: '提示词', icon: <FileText className="h-4 w-4" /> },
 ]
 
 export function MergedSidebar() {
@@ -44,10 +45,27 @@ export function MergedSidebar() {
   const setActiveSession = useAppStore(s => s.setActiveSession)
   const updateSettings = useAppStore(s => s.updateSettings)
   const agents = useAppStore(s => s.agents)
+  const createSession = useAppStore(s => s.createSession)
+  const activeWorkspaceId = useAppStore(s => s.activeWorkspaceId)
+  const settings = useAppStore(s => s.settings)
 
   const [sidebarMode, setSidebarMode] = useState<Mode>(() => {
     try { return (localStorage.getItem('ss_sidebar_mode') as Mode) || 'workflow' } catch { return 'workflow' }
   })
+
+  // Auto-sync sidebarMode when only one mode is visible
+  useEffect(() => {
+    const showAgent = settings.showSidebarAgentMode !== false
+    const showWorkflow = settings.showSidebarWorkflowMode !== false
+    if (showAgent && !showWorkflow && sidebarMode !== 'agent') {
+      setSidebarMode('agent')
+      try { localStorage.setItem('ss_sidebar_mode', 'agent') } catch {}
+    } else if (!showAgent && showWorkflow && sidebarMode !== 'workflow') {
+      setSidebarMode('workflow')
+      try { localStorage.setItem('ss_sidebar_mode', 'workflow') } catch {}
+    }
+  }, [settings.showSidebarAgentMode, settings.showSidebarWorkflowMode, sidebarMode])
+
   const navItems = sidebarMode === 'agent' ? AGENT_NAV : WORKFLOW_NAV
 
   // workflow view mode: grouped or flat, persisted
@@ -77,20 +95,6 @@ export function MergedSidebar() {
   // Settings menu
   const [settingsOpen, setSettingsOpen] = useState(false)
   const setSettingsActiveTab = useAppStore(s => s.setSettingsActiveTab)
-
-  const c = useMemo(() => ({
-    bg: 'hsl(var(--background))',
-    text: 'hsl(var(--foreground))',
-    textMuted: 'hsl(var(--muted-foreground))',
-    textDim: 'hsl(var(--muted-foreground) / 0.55)',
-    hover: 'hsl(var(--hover))',
-    active: 'hsl(var(--muted))',
-    indicator: 'hsl(var(--primary))',
-    border: 'hsl(var(--border))',
-    pillBg: 'hsl(var(--secondary))',
-    activeText: 'hsl(var(--foreground))',
-    white: 'hsl(var(--primary-foreground))',
-  }), [])
 
   // agent mode: flat list of single sessions
   const agentRecents = useMemo(() =>
@@ -208,71 +212,63 @@ export function MergedSidebar() {
             setCurrentView(sidebarMode === 'workflow' ? 'workflowChat' : 'chat')
           }
         }}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          height: 30, paddingLeft: indent ? 24 : 12, paddingRight: 12,
-          borderRadius: 6, width: '100%', border: 'none', position: 'relative',
-          background: isSelected ? c.active : 'transparent',
-          color: isSelected ? c.activeText : c.text,
-          fontSize: '0.8125rem', cursor: 'pointer', textAlign: 'left',
-          transition: 'background 150ms ease',
-        }}
-        onMouseEnter={e => { setHoveredItemId(session.id); e.currentTarget.style.background = c.hover }}
-        onMouseLeave={e => { setHoveredItemId(null); e.currentTarget.style.background = isSelected ? c.active : 'transparent' }}
-      >
-        {isSelected && (
-          <span style={{
-            position: 'absolute', left: indent ? 12 : -4, top: '50%', transform: 'translateY(-50%)',
-            width: 3, height: 16, borderRadius: '0 3px 3px 0', background: c.indicator, flexShrink: 0,
-          }} />
+        className={cn(
+          "flex items-center gap-2 h-[30px] rounded-md text-[13px] cursor-pointer text-left relative select-none",
+          "transition-colors duration-150",
+          indent ? "pl-6 pr-3" : "pl-3 pr-3",
+          isSelected && "bg-muted text-foreground font-medium",
+          !isSelected && "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
         )}
+        onMouseEnter={() => setHoveredItemId(session.id)}
+        onMouseLeave={() => setHoveredItemId(null)}
+      >
+        {/* 选中态指示条 */}
+        <span className={cn(
+          "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary transition-transform duration-200 ease-out",
+          isSelected ? "scale-y-100" : "scale-y-0"
+        )} />
+        
         {sidebarMode === 'agent' && (
           (() => {
             const avatar = getSessionAvatar(session)
             return avatar
-              ? <img src={avatar} alt="" style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0, objectFit: 'cover' }} />
-              : <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? c.indicator : c.textDim, flexShrink: 0 }} />
+              ? <img src={avatar} alt="" className="w-4 h-4 rounded-[3px] shrink-0 object-cover" />
+              : <span className={cn(
+                  "w-1 h-1 rounded-full shrink-0",
+                  isSelected ? "bg-primary" : "bg-muted-foreground/30"
+                )} />
           })()
         )}
         {sidebarMode === 'workflow' && (
-          <Zap size={14} style={{ flexShrink: 0, color: c.textDim }} />
+          <Zap size={14} className="shrink-0 text-muted-foreground/50" />
         )}
-        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span className="flex-1 min-w-0 truncate">
           {session.title}
         </span>
         {!isHovered && (
-          <span style={{ fontSize: '0.7rem', color: c.textDim, flexShrink: 0 }}>{formatTimeAgo(session.updatedAt)}</span>
+          <span className="text-[10px] text-muted-foreground/40 shrink-0">{formatTimeAgo(session.updatedAt)}</span>
         )}
         {isHovered && (
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div className="relative shrink-0">
             <button
               onClick={e => { e.stopPropagation(); setMenuItemId(menuItemId === session.id ? null : session.id) }}
-              style={{
-                width: 18, height: 18, borderRadius: 4, border: 'none',
-                background: 'transparent', color: c.textMuted, fontSize: '0.75rem',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: 0, lineHeight: 1,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = c.text }}
-              onMouseLeave={e => { e.currentTarget.style.color = c.textMuted }}
+              className="w-[18px] h-[18px] rounded flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
               title={t('更多')}
             >⋮</button>
             {menuItemId === session.id && (
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', zIndex: 50,
-                background: c.bg, border: `1px solid ${c.border}`,
-                borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                minWidth: 120, padding: 4,
-              }}>
+              <div className="absolute right-0 top-full z-50 bg-popover border rounded-md shadow-lg min-w-[120px] p-1">
                 {[
-                  { label: t('重命名'), color: c.text, onClick: () => { setRenameItemId(session.id); setRenameValue(session.title); setMenuItemId(null) } },
-                  { label: t('导出'), color: c.text, onClick: () => handleExportSession(session.id) },
-                  { label: t('删除'), color: 'hsl(var(--destructive))', onClick: () => { setDeleteItem({ id: session.id, name: session.title }); setMenuItemId(null) } },
+                  { label: t('重命名'), onClick: () => { setRenameItemId(session.id); setRenameValue(session.title); setMenuItemId(null) } },
+                  { label: t('导出'), onClick: () => handleExportSession(session.id) },
+                  { label: t('删除'), destructive: true, onClick: () => { setDeleteItem({ id: session.id, name: session.title }); setMenuItemId(null) } },
                 ].map(item => (
                   <button key={item.label} onClick={e => { e.stopPropagation(); item.onClick() }}
-                    style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', color: item.color, fontSize: '0.8rem', padding: '6px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left' }}
-                    onMouseEnter={e => e.currentTarget.style.background = c.hover}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    className={cn(
+                      "block w-full text-left text-xs px-3 py-1.5 rounded-sm cursor-pointer transition-colors",
+                      item.destructive
+                        ? "text-destructive hover:bg-destructive/10"
+                        : "text-foreground hover:bg-muted"
+                    )}
                   >{item.label}</button>
                 ))}
               </div>
@@ -284,47 +280,56 @@ export function MergedSidebar() {
   }
 
   return (
-    <aside className="flex flex-col select-none flex-shrink-0 rounded-2xl" style={{ width: 260, background: c.bg, padding: '12px 16px 8px', border: `2px solid ${c.border}`, margin: '4px 4px 8px 8px', boxShadow: '0 0 0 1px hsl(var(--border) / 0.4)' }}>
+    <aside className="flex flex-col select-none flex-shrink-0 w-[260px] h-full bg-card p-3 pb-2 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden">
       <DebugBadge id="MergedSidebar" position="top-left" />
 
-      {/* ══════ Mode Switcher ══════ */}
-      <div style={{ display: 'flex', background: c.pillBg, borderRadius: 8, height: 36, flexShrink: 0, padding: 3 }}>
-        {(['agent', 'workflow'] as const).map(mode => (
-          <button key={mode}
-            onClick={() => { setSidebarMode(mode); try { localStorage.setItem('ss_sidebar_mode', mode) } catch {}; setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
-            style={{
-              flex: 1, border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.875rem', fontWeight: 500,
-              color: sidebarMode === mode ? c.activeText : c.textMuted,
-              background: sidebarMode === mode ? c.bg : 'transparent',
-              borderRadius: sidebarMode === mode ? '6px' : '0',
-              transition: 'all 150ms ease-out',
-            }}
-            aria-pressed={sidebarMode === mode}
-          >{mode === 'agent' ? t('会话') : t('Workflows')}</button>
-        ))}
+      {/* ══════ Logo ══════ */}
+      <div className="px-1 pt-1 pb-2 flex items-center gap-2.5">
+        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
+          <SimperLogo size={18} />
+        </div>
+        <span className="text-sm font-semibold tracking-tight">SimperStudio</span>
       </div>
 
+      {/* ══════ Mode Switcher ══════ */}
+      {(() => {
+        const showAgent = settings.showSidebarAgentMode !== false
+        const showWorkflow = settings.showSidebarWorkflowMode !== false
+        const visibleModes = (['agent', 'workflow'] as const).filter(m =>
+          m === 'agent' ? showAgent : showWorkflow
+        )
+        if (visibleModes.length <= 1) return null
+        return (
+          <div className="flex bg-secondary rounded-[10px] h-9 flex-shrink-0 p-[3px]">
+            {visibleModes.map(mode => (
+              <button key={mode}
+                onClick={() => { setSidebarMode(mode); try { localStorage.setItem('ss_sidebar_mode', mode) } catch {}; setCurrentView(mode === 'agent' ? 'chat' : 'workflowChat') }}
+                className={cn(
+                  "flex-1 border-none cursor-pointer flex items-center justify-center text-sm font-medium rounded-lg transition-all duration-200",
+                  sidebarMode === mode
+                    ? "bg-muted text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                aria-pressed={sidebarMode === mode}
+              >{mode === 'agent' ? t('会话') : t('Workflows')}</button>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* ══════ Nav Items ══════ */}
-      <nav style={{ marginTop: 16, flexShrink: 0 }}>
+      <nav className="mt-3 flex-shrink-0 space-y-0.5">
         {navItems.map(item => {
           return (
             <button key={item.id} onClick={() => handleNavClick(item)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                height: 36, padding: '0 12px', borderRadius: 6,
-                width: '100%', border: 'none',
-                background: 'transparent',
-                color: c.text,
-                fontSize: '0.875rem', cursor: 'pointer',
-                position: 'relative', textAlign: 'left',
-                transition: 'background 150ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              className={cn(
+                "w-full flex items-center gap-2.5 h-9 px-3 rounded-lg text-sm text-left relative",
+                "transition-colors duration-150 cursor-pointer",
+                "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              )}
             >
-              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="text-muted-foreground/50">{item.icon}</span>
+              <span className="flex-1 min-w-0 truncate">
                 {t(item.labelKey)}
               </span>
             </button>
@@ -333,23 +338,15 @@ export function MergedSidebar() {
       </nav>
 
       {/* ══════ Recents ══════ */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', marginTop: 20 }}>
+      <div className="flex-1 min-h-0 flex flex-col mt-4">
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px', flexShrink: 0 }}>
-          <span style={{ fontSize: '0.75rem', color: c.textMuted, fontWeight: 400 }}>{rLabel}</span>
+        <div className="flex items-center justify-between mb-2 px-1 flex-shrink-0">
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{rLabel}</span>
           {sidebarMode === 'workflow' && (
             <button
               onClick={toggleWfViewMode}
               title={wfViewMode === 'grouped' ? t('切换为平铺视图') : t('切换为分组视图')}
-              style={{
-                width: 20, height: 20, border: 'none', background: 'transparent',
-                color: c.textMuted, cursor: 'pointer', borderRadius: 4,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.7rem', padding: 0,
-                transition: 'background 150ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = c.hover; e.currentTarget.style.color = c.text }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textMuted }}
+              className="w-5 h-5 border-none bg-transparent text-muted-foreground hover:text-foreground rounded cursor-pointer flex items-center justify-center text-[10px] transition-colors"
               aria-label={wfViewMode === 'grouped' ? t('切换为平铺视图') : t('切换为分组视图')}
             >
               {wfViewMode === 'grouped' ? '≡' : '⊞'}
@@ -358,44 +355,43 @@ export function MergedSidebar() {
         </div>
 
         {/* List */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="flex-1 overflow-y-auto -mx-1 space-y-0.5">
           {sidebarMode === 'agent' ? (
             agentRecents.length > 0
               ? agentRecents.map(s => renderSessionRow(s))
-              : <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>{t('暂无')}</div>
+              : <div className="px-3 text-xs text-muted-foreground/50">{t('暂无')}</div>
           ) : wfViewMode === 'flat' ? (
             wfSessions.length > 0
               ? wfSessions.map(s => renderSessionRow(s))
-              : <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>{t('暂无')}</div>
+              : <div className="px-3 text-xs text-muted-foreground/50">{t('暂无')}</div>
           ) : (
             // grouped view
             wfGroups.length > 0 ? wfGroups.map(group => {
-              const isExpanded = expandedGroups.has(group.wfId) // default collapsed
+              const isExpanded = expandedGroups.has(group.wfId)
               return (
-                <div key={group.wfId} style={{ marginBottom: 4 }}>
+                <div key={group.wfId} className="mb-1">
                   {/* Group header */}
                   <button
                     onClick={() => toggleGroup(group.wfId)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      width: '100%', border: 'none', background: 'transparent',
-                      padding: '0 8px', height: 28, borderRadius: 5,
-                      cursor: 'pointer', textAlign: 'left',
-                      transition: 'background 150ms ease',
+                    onDoubleClick={async () => {
+                      const title = `${group.wfName} · ${group.sessions.length + 1}`
+                      await createSession(title, activeWorkspaceId || 'default-workspace', group.wfId, 'workflow')
+                      setExpandedGroups(prev => {
+                        const next = new Set(prev)
+                        next.add(group.wfId)
+                        return next
+                      })
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                    className="w-full flex items-center gap-1.5 border-none bg-transparent px-2 h-7 rounded-md cursor-pointer text-left transition-colors hover:bg-muted/60"
                   >
-                    <span style={{
-                      fontSize: '0.6rem', color: c.textMuted, flexShrink: 0,
-                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                      transition: 'transform 150ms ease', display: 'inline-block',
-                    }}>▶</span>
-                    <span style={{
-                      flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      fontSize: '0.8rem', fontWeight: 500, color: c.textMuted,
-                    }}>{group.wfName}</span>
-                    <span style={{ fontSize: '0.7rem', color: c.textDim, flexShrink: 0 }}>
+                    <span className={cn(
+                      "text-[10px] text-muted-foreground/60 shrink-0 inline-block transition-transform duration-200",
+                      isExpanded && "rotate-90"
+                    )}>▶</span>
+                    <span className="flex-1 min-w-0 truncate text-[13px] font-medium text-muted-foreground">
+                      {group.wfName}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/40 shrink-0">
                       {group.sessions.length}
                     </span>
                   </button>
@@ -403,54 +399,34 @@ export function MergedSidebar() {
                   {isExpanded && group.sessions.map(s => renderSessionRow(s, true))}
                 </div>
               )
-            }) : <div style={{ padding: '0 12px', fontSize: '0.75rem', color: c.textDim }}>{t('暂无')}</div>
+            }) : <div className="px-3 text-xs text-muted-foreground/50">{t('暂无')}</div>
           )}
         </div>
       </div>
 
       {/* ══════ Gateway ══════ */}
-      <div style={{
-        marginTop: 'auto', paddingTop: 8, flexShrink: 0,
-        borderTop: `1px solid ${c.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        height: 44,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <SimperLogo size={18} />
-          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: c.text }}>SimperStudio</span>
+      <div className="mt-auto pt-2 flex-shrink-0 border-t border-border flex items-center justify-between h-11">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+            <span className="text-[10px] text-primary-foreground font-bold">S</span>
+          </div>
+          <span className="text-xs font-medium text-muted-foreground">SimperStudio</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div className="flex items-center gap-1">
           <button onClick={cycleTheme}
-            style={{
-              width: 32, height: 32, borderRadius: 6, border: 'none',
-              background: 'transparent', color: c.textMuted, fontSize: '1rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 150ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            className="h-8 w-8 flex items-center justify-center rounded-lg border-none bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
           ><ThemeIcon size={18} /></button>
-          <div style={{ position: 'relative' }}>
+          <div className="relative">
             <button onClick={() => setSettingsOpen(v => !v)}
-              style={{
-                width: 32, height: 32, borderRadius: 6, border: 'none',
-                background: settingsOpen ? c.hover : 'transparent', color: c.textMuted, fontSize: '1rem',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 150ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-              onMouseLeave={e => { e.currentTarget.style.background = settingsOpen ? c.hover : 'transparent' }}
+              className={cn(
+                "h-8 w-8 flex items-center justify-center rounded-lg border-none text-muted-foreground hover:text-foreground transition-colors cursor-pointer",
+                settingsOpen ? "bg-muted/60" : "bg-transparent hover:bg-muted/60"
+              )}
             ><Settings size={18} /></button>
             {settingsOpen && (
               <>
-                <div onClick={() => setSettingsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
-                <div style={{
-                  position: 'absolute', bottom: '100%', right: 0, zIndex: 95,
-                  marginBottom: 6, minWidth: 160,
-                  background: c.bg, border: `1px solid ${c.border}`,
-                  borderRadius: 8, padding: 4,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-                }}>
+                <div onClick={() => setSettingsOpen(false)} className="fixed inset-0 z-[90]" />
+                <div className="absolute bottom-full right-0 z-[95] mb-1.5 min-w-[160px] bg-popover border rounded-lg p-1 shadow-lg">
                   {[
                     { id: 'general' as const, label: t('General') },
                     { id: 'appearance' as const, label: t('Appearance') },
@@ -459,14 +435,7 @@ export function MergedSidebar() {
                   ].map(tab => (
                     <button key={tab.id}
                       onClick={() => { setSettingsActiveTab(tab.id); setCurrentView('settings'); setSettingsOpen(false) }}
-                      style={{
-                        display: 'block', width: '100%', border: 'none', background: 'transparent',
-                        color: c.text, fontSize: '0.8125rem', padding: '7px 12px', borderRadius: 5,
-                        cursor: 'pointer', textAlign: 'left',
-                        transition: 'background 150ms ease',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = c.hover }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      className="block w-full text-left border-none bg-transparent text-sm px-3 py-1.5 rounded-md cursor-pointer text-foreground hover:bg-muted transition-colors"
                     >{tab.label}</button>
                   ))}
                 </div>
@@ -478,21 +447,21 @@ export function MergedSidebar() {
 
       {/* ══════ Rename Dialog ══════ */}
       {renameItemId && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30"
           onClick={() => setRenameItemId(null)}>
-          <div style={{ background: c.bg, borderRadius: 8, padding: 16, minWidth: 280, border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+          <div className="bg-popover rounded-lg p-4 min-w-[280px] border shadow-xl"
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 12, color: c.text }}>{t('重命名')}</div>
+            <div className="text-sm font-semibold mb-3 text-foreground">{t('重命名')}</div>
             <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { renameSession(renameItemId, renameValue); setRenameItemId(null) } }}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${c.border}`, background: c.hover, color: c.text, fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }}
+              className="w-full px-3 py-2 rounded-md border bg-muted text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+            <div className="flex justify-end gap-2 mt-3">
               <button onClick={() => setRenameItemId(null)}
-                style={{ padding: '6px 16px', borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: '0.8rem' }}
+                className="px-4 py-1.5 rounded-md border text-sm text-foreground hover:bg-muted transition-colors cursor-pointer"
               >{t('取消')}</button>
               <button onClick={() => { renameSession(renameItemId, renameValue); setRenameItemId(null) }}
-                style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: c.indicator, color: c.white, cursor: 'pointer', fontSize: '0.8rem' }}
+                className="px-4 py-1.5 rounded-md border-none bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors cursor-pointer"
               >{t('确定')}</button>
             </div>
           </div>
@@ -501,18 +470,18 @@ export function MergedSidebar() {
 
       {/* ══════ Delete Dialog ══════ */}
       {deleteItem && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30"
           onClick={() => setDeleteItem(null)}>
-          <div style={{ background: c.bg, borderRadius: 8, padding: 16, minWidth: 280, border: `1px solid ${c.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+          <div className="bg-popover rounded-lg p-4 min-w-[280px] border shadow-xl"
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 8, color: c.text }}>{t('删除')}</div>
-            <div style={{ fontSize: '0.8rem', color: c.textMuted, marginBottom: 12 }}>{t('确定删除')} "{deleteItem.name}"?</div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <div className="text-sm font-semibold mb-2 text-foreground">{t('删除')}</div>
+            <div className="text-sm text-muted-foreground mb-4">{t('确定删除')} "{deleteItem.name}"?</div>
+            <div className="flex justify-end gap-2">
               <button onClick={() => setDeleteItem(null)}
-                style={{ padding: '6px 16px', borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: '0.8rem' }}
+                className="px-4 py-1.5 rounded-md border text-sm text-foreground hover:bg-muted transition-colors cursor-pointer"
               >{t('取消')}</button>
               <button onClick={() => { deleteSession(deleteItem.id); setDeleteItem(null) }}
-                style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))', cursor: 'pointer', fontSize: '0.8rem' }}
+                className="px-4 py-1.5 rounded-md border-none bg-destructive text-destructive-foreground text-sm hover:bg-destructive/90 transition-colors cursor-pointer"
               >{t('确定')}</button>
             </div>
           </div>

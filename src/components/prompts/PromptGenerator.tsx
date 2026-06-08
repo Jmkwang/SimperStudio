@@ -85,7 +85,7 @@ const handleKeyDown = (e: React.KeyboardEvent) => {
   };
 
   return (
-    <div className="relative flex flex-col h-full bg-background">
+    <div className="relative flex flex-col h-full bg-card">
       <DebugBadge id="PromptGenerator" />
       {/* Top Area: Meta Prompt Editor */}
       <div className="p-4 border-b shrink-0 bg-muted/20">
@@ -96,7 +96,7 @@ const handleKeyDown = (e: React.KeyboardEvent) => {
         <Textarea
           value={metaPrompt}
           onChange={(e) => setMetaPrompt(e.target.value)}
-          className="min-h-[80px] text-sm resize-y font-mono bg-background"
+          className="min-h-[80px] text-sm resize-y font-mono bg-popover"
           placeholder="Enter the instructions for the prompt generator..."
         />
       </div>
@@ -149,7 +149,7 @@ const handleKeyDown = (e: React.KeyboardEvent) => {
       </ScrollArea>
 
       {/* Bottom Area: Input */}
-      <div className="p-4 border-t bg-background shrink-0">
+      <div className="p-4 border-t bg-card shrink-0">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative flex items-end gap-2">
           <Textarea
             value={input}

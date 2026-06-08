@@ -30,7 +30,7 @@ export function WorkflowNodePanel({ currentView }: { currentView: string }) {
   if (collapsed) return null
 
   return (
-    <div className="relative flex flex-col border-r bg-background/50 w-72 flex-shrink-0 max-lg:hidden">
+    <div className="relative flex flex-col border-r bg-card/50 w-72 flex-shrink-0 max-lg:hidden">
       <DebugBadge id="WorkflowNodePanel" position="top-right" />
       <div className="p-2 border-b h-14 flex items-center justify-between">
         <div className="min-w-0 px-2">

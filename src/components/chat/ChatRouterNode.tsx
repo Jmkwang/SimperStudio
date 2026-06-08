@@ -14,7 +14,7 @@ export function ChatRouterNode({ data }: { data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-orange-500 bg-background"
+        className="w-3 h-3 border-2 border-orange-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3 bg-orange-50/50 dark:bg-orange-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
@@ -39,7 +39,7 @@ export function ChatRouterNode({ data }: { data: any }) {
               position={Position.Right}
               id={route.id}
               style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)' }}
-              className="w-3 h-3 border-2 border-orange-500 bg-background absolute"
+              className="w-3 h-3 border-2 border-orange-500 bg-popover absolute"
             />
           </div>
         ))}

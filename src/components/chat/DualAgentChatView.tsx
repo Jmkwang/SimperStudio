@@ -89,14 +89,14 @@ export function DualAgentChatView({ workflow }: DualAgentChatViewProps) {
       </div>
 
       {session && (
-        <div className="border-t border-border/50 bg-background p-4">
+        <div className="border-t border-border/50 bg-card p-4">
           <div className="flex gap-2 max-w-4xl mx-auto">
             <Input
               value={mainInput}
               onChange={(e) => setMainInput(e.target.value)}
               onKeyPress={handleMainKeyPress}
               placeholder={t('Enter message both agents')}
-              className="flex-1 bg-background border-border/50 focus:border-primary"
+              className="flex-1 bg-popover border-border/50 focus:border-primary"
             />
             <Button 
               onClick={handleMainSend}

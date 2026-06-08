@@ -148,28 +148,6 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
   return (
     <div className="flex flex-col h-full relative">
       <DebugBadge id="SimpleChatView" position="bottom-left" />
-      {/* Breadcrumb Bar — simple title + timestamp */}
-      <div className="px-6 py-2 shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <span className="font-medium">{session.title}</span>
-          </div>
-          <div className="text-xs text-muted-foreground/80">
-            {new Date(session.updatedAt).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-          </div>
-        </div>
-      </div>
-
-      {totalTokens > 0 && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-6">
-          <span>{t("Total")}: {totalTokens}</span>
-          <ArrowUp className="h-3 w-3" />
-          <span>{promptTokens}</span>
-          <ArrowDown className="h-3 w-3" />
-          <span>{completionTokens}</span>
-        </div>
-      )}
-
       {/* Main chat area */}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto p-6 space-y-4" role="log" aria-live="polite">
         {session.messages.length === 0 && (
@@ -213,13 +191,13 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                 </div>
               )}
               <div className="flex flex-col gap-1">
-                <div className="relative rounded-2xl border bg-card shadow-sm">
+                <div className="relative rounded-2xl border border-[hsl(var(--border))] bg-card shadow-soft input-glow transition-all">
                   {attachments.length > 0 && (
                     <div className="absolute bottom-full left-0 right-0 flex flex-wrap gap-1.5 p-2 pb-0 max-w-full">
                       {attachments.map((file, i) => (
-                        <div key={i} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs max-w-[160px] overflow-hidden">
+                        <div key={i} className="flex items-center gap-1.5 rounded-lg bg-muted/70 px-2.5 py-1 text-[11px] max-w-[160px] overflow-hidden border border-border/40 shadow-sm">
                           <span className="truncate">{file.name}</span>
-                          <button onClick={() => handleRemoveAttachment(i)} className="shrink-0 hover:text-foreground text-muted-foreground" aria-label={t('Remove')}>
+                          <button onClick={() => handleRemoveAttachment(i)} className="shrink-0 hover:text-foreground text-muted-foreground/60 transition-colors" aria-label={t('Remove')}>
                             <X className="h-3 w-3" />
                           </button>
                         </div>
@@ -237,39 +215,41 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                     }}
                     placeholder={activeAgent ? `${t("Send message")}...` : t("Select an agent")}
                     disabled={!activeAgent}
-                    className="min-h-[80px] text-sm border-0 focus-visible:ring-0 resize-none pb-12"
+                    className="min-h-[80px] text-sm border-0 focus-visible:ring-0 resize-none pb-14 px-4 pt-3"
                   />
                   {/* Bottom bar inside input */}
-                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                  <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileSelect} />
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors"
+                        className="btn-press h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground/50 hover:text-foreground hover:bg-muted/70 transition-all"
                         aria-label={t('Attach file')}
                         disabled={isStreaming}
                       >
-                        <Paperclip className="h-3.5 w-3.5" />
+                        <Paperclip className="h-4 w-4" />
                       </button>
+                      {/* Divider */}
+                      <div className="w-px h-4 bg-border mx-0.5" />
                       {/* Thinking level control */}
                       <div className="relative">
                         <button
                           onClick={() => setThinkingPickerOpen(!thinkingPickerOpen)}
                           className={cn(
-                            "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                            "btn-press h-8 w-8 flex items-center justify-center rounded-full transition-all",
                             thinkingLevel === 'default'
                               ? "text-primary/60 hover:text-primary hover:bg-primary/10"
-                              : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
+                              : "text-muted-foreground/50 hover:text-foreground hover:bg-muted/70"
                           )}
                           aria-label={t('Thinking level')}
                           disabled={isStreaming}
                         >
-                          <Brain className="h-3.5 w-3.5" />
+                          <Brain className="h-4 w-4" />
                         </button>
                         {thinkingPickerOpen && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setThinkingPickerOpen(false)} />
-                            <div className="absolute bottom-full left-0 mb-1 z-50 min-w-[160px] rounded-lg border bg-popover p-1 shadow-md">
+                            <div className="absolute bottom-full left-0 mb-1.5 z-50 min-w-[180px] rounded-xl border bg-popover p-1.5 shadow-lg">
                               {[
                                 { value: 'default' as const, label: t('Default (Auto)'), desc: t('Model decides') },
                                 { value: 'off' as const, label: t('Off'), desc: t('No thinking') },
@@ -278,16 +258,16 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                                   key={option.value}
                                   onClick={() => { setThinkingLevel(option.value); setThinkingPickerOpen(false); }}
                                   className={cn(
-                                    "w-full text-left px-3 py-1.5 text-xs rounded-md flex items-center gap-2",
+                                    "w-full text-left px-3 py-2 text-xs rounded-lg flex items-center gap-2.5 transition-colors",
                                     thinkingLevel === option.value
                                       ? 'bg-primary/10 text-primary font-medium'
                                       : 'text-foreground/80 hover:bg-muted'
                                   )}
                                 >
-                                  <span className={cn("w-1.5 h-1.5 rounded-full", thinkingLevel === option.value ? 'bg-primary' : 'bg-transparent')} />
+                                  <span className={cn("w-2 h-2 rounded-full", thinkingLevel === option.value ? 'bg-primary' : 'bg-transparent ring-1 ring-muted-foreground/30')} />
                                   <div>
                                     <div>{option.label}</div>
-                                    <div className="text-muted-foreground/60 text-[10px]">{option.desc}</div>
+                                    <div className="text-muted-foreground/50 text-[10px]">{option.desc}</div>
                                   </div>
                                 </button>
                               ))}
@@ -299,18 +279,19 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                         <div className="relative">
                           <button
                             onClick={() => setModelPickerOpen(!modelPickerOpen)}
-                            className="text-xs text-muted-foreground/70 hover:text-foreground/60 leading-none transition-colors"
+                            className="btn-press h-7 px-2.5 flex items-center gap-1.5 rounded-full bg-muted/50 text-[11px] text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-all"
                             aria-label={t('Switch model')}
                           >
-                            {activeAgentModelInfo.providerName}/{activeAgentModelInfo.modelName}
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                            <span className="truncate max-w-[100px]">{activeAgentModelInfo.modelName}</span>
                           </button>
                           {modelPickerOpen && (
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setModelPickerOpen(false)} />
-                              <div className="absolute bottom-full left-0 mb-1 z-50 min-w-[180px] rounded-lg border bg-popover p-1 shadow-md">
+                              <div className="absolute bottom-full left-0 mb-1.5 z-50 min-w-[200px] rounded-xl border bg-popover p-1.5 shadow-lg">
                                 {settings.providers?.filter((p: any) => p.isEnabled).map((provider: any) => (
                                   <div key={provider.id}>
-                                    <div className="px-2 py-1 text-xs font-medium text-muted-foreground/60 uppercase tracking-wider">{provider.name}</div>
+                                    <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wider">{provider.name}</div>
                                     {(provider.models || []).map((model: any) => {
                                       const isActive = (provider.id === settings.activeProviderId) &&
                                         (model.modelId === (activeAgentModelInfo?.modelName || ''));
@@ -318,11 +299,12 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                                         <button
                                           key={model.id || model.modelId}
                                           onClick={() => { setActiveProvider(provider.id); setModelPickerOpen(false) }}
-                                          className={`w-full text-left px-3 py-1.5 text-xs rounded-md flex items-center gap-2 ${
+                                          className={cn(
+                                            "w-full text-left px-3 py-1.5 text-xs rounded-lg flex items-center gap-2 transition-colors",
                                             isActive ? 'bg-primary/10 text-primary font-medium' : 'text-foreground/80 hover:bg-muted'
-                                          }`}
+                                          )}
                                         >
-                                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-primary' : 'bg-transparent'}`} />
+                                          <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? 'bg-primary' : 'bg-transparent ring-1 ring-muted-foreground/20')} />
                                           <span className="truncate">{model.name || model.modelId}</span>
                                         </button>
                                       )
@@ -338,19 +320,25 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
                     {isStreaming ? (
                       <button
                         onClick={handleStop}
-                        className="h-7 w-7 flex items-center justify-center rounded text-destructive hover:bg-destructive/10 transition-colors"
+                        className="btn-press h-8 w-8 flex items-center justify-center rounded-full text-destructive hover:bg-destructive/10 transition-all"
                         aria-label={t('Stop')}
                       >
-                        <Square className="h-3.5 w-3.5" />
+                        <Square className="h-4 w-4" />
                       </button>
                     ) : (
                       <button
                         onClick={trackClick(handleSend, 'chat:send')}
                         disabled={!input.trim() || !activeAgent}
-                        className="h-7 w-7 flex items-center justify-center rounded text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:text-muted-foreground"
+                        className={cn(
+                          "btn-press h-8 w-8 flex items-center justify-center rounded-full transition-all",
+                          "bg-primary text-primary-foreground shadow-sm shadow-primary/20",
+                          "hover:bg-primary/90 hover:shadow-md hover:shadow-primary/30",
+                          "active:scale-95",
+                          "disabled:opacity-30 disabled:shadow-none disabled:hover:bg-primary"
+                        )}
                         aria-label={t("Send")}
                       >
-                        <Send className="h-3.5 w-3.5" />
+                        <Send className="h-4 w-4" />
                       </button>
                     )}
                   </div>

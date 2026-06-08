@@ -106,6 +106,46 @@ export function SettingsGeneralTab() {
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
+            <Label>{t("Agent Mode")}</Label>
+            <div className="text-sm text-muted-foreground">
+              {t('Show Agent (Chat) mode in the sidebar mode switcher')}
+            </div>
+          </div>
+          <Switch
+            checked={settings.showSidebarAgentMode !== false}
+            onCheckedChange={(checked: boolean) => {
+              if (!checked && settings.showSidebarWorkflowMode === false) {
+                updateSettings({ showSidebarAgentMode: false, showSidebarWorkflowMode: true })
+              } else {
+                updateSettings({ showSidebarAgentMode: checked })
+              }
+            }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>{t("Workflow Mode")}</Label>
+            <div className="text-sm text-muted-foreground">
+              {t('Show Workflow mode in the sidebar mode switcher')}
+            </div>
+          </div>
+          <Switch
+            checked={settings.showSidebarWorkflowMode !== false}
+            onCheckedChange={(checked: boolean) => {
+              if (!checked && settings.showSidebarAgentMode === false) {
+                updateSettings({ showSidebarWorkflowMode: false, showSidebarAgentMode: true })
+              } else {
+                updateSettings({ showSidebarWorkflowMode: checked })
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
             <Label>{t("Debug Mode")}</Label>
             <div className="text-sm text-muted-foreground">
               {t('Show interface container ID labels for debugging layout issues')}

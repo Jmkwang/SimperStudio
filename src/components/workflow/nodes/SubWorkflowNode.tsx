@@ -36,7 +36,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
 
   return (
     <div className="w-[240px] rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
-      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-indigo-500 bg-background" />
+      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-indigo-500 bg-popover" />
       <div className="flex items-center justify-between border-b p-3 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-500">
@@ -87,7 +87,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
           {selectedWorkflow?.name || 'Select workflow...'}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-indigo-500 bg-background" />
+      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-indigo-500 bg-popover" />
     </div>
   );
 }

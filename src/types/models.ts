@@ -334,6 +334,9 @@ export interface Settings {
     confirmByDefault?: boolean;
     defaultTimeoutMs?: number;
   };
+  showSidebarAgentMode?: boolean;
+  showSidebarWorkflowMode?: boolean;
+  accentColor?: string;
   // Legacy fields for backward compatibility
   apiProvider?: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
   openaiKey?: string;

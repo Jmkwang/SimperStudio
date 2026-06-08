@@ -87,7 +87,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
         </div>
         {data.authToken && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t("Auth required")}</p>}
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-lime-500 bg-background" />
+      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-lime-500 bg-popover" />
     </div>
   );
 }

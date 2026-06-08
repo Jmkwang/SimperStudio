@@ -55,6 +55,12 @@ Thumbs.db
 .claude/memory/
 .claude/scheduled-tasks/
 
+# Playwright MCP
+.playwright-mcp/
+
+# Prototype files
+prototype/
+
 # Build artifacts & Installers
 *.dmg
 *.exe

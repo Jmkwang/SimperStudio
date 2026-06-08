@@ -83,7 +83,7 @@ function AgentCard({ agent, bulkMode, selectedIds, providers, onToggle, onEdit, 
               "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
               selectedIds.has(agent.id)
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-foreground/30 bg-background hover:border-primary/60"
+                : "border-foreground/30 bg-card hover:border-primary/60"
             )}
             onClick={() => onToggle(agent.id)}
             role="checkbox"
@@ -553,7 +553,7 @@ export function AgentsView() {
                       "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
                       agents.filter(agent => (agent.category || agent.industry || 'General') === selectedAgentCategory).every((a) => selectedIds.has(a.id))
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-foreground/30 bg-background hover:border-primary/60"
+                        : "border-foreground/30 bg-card hover:border-primary/60"
                     )}
                     aria-label={t('Select all in category')}
                   >
@@ -603,7 +603,7 @@ export function AgentsView() {
                           "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
                           categoryAgents.every((a) => selectedIds.has(a.id))
                             ? "border-primary bg-primary text-primary-foreground"
-                            : "border-foreground/30 bg-background hover:border-primary/60"
+                            : "border-foreground/30 bg-card hover:border-primary/60"
                         )}
                         aria-label={t('Select all in category')}
                       >

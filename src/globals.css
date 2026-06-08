@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    /* Light Mode - Refined Warm Minimalism */
-    --background: 40 20% 98%;
-    --foreground: 240 10% 10%;
+    /* Light Mode - 参考原型: 暖白背景 + 极淡暖灰边框 */
+    --background: 40 20% 98%;        /* #FAFAF8 */
+    --foreground: 240 10% 10%;       /* #17171A */
 
-    --card: 0 0% 100%;
+    --card: 0 0% 100%;               /* #FFFFFF */
     --card-foreground: 240 10% 10%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 10%;
 
-    --primary: 258 85% 68%;
+    --primary: 258 85% 68%;          /* #A78BFA */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 6% 93%;
+    --secondary: 40 15% 95%;         /* #F5F5F3 暖灰 */
     --secondary-foreground: 240 10% 10%;
 
-    --muted: 40 15% 95%;
-    --muted-foreground: 240 5% 42%;
+    --muted: 40 10% 94%;             /* #F0EFED */
+    --muted-foreground: 240 5% 45%;  /* #6B6B75 */
 
     --accent: 258 65% 72%;
     --accent-foreground: 0 0% 100%;
@@ -29,8 +29,8 @@
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 8% 88%;
-    --input: 240 6% 91%;
+    --border: 40 10% 90%;            /* 暖灰边框，接近 rgba(0,0,0,0.06) */
+    --input: 40 10% 92%;
     --ring: 258 85% 68%;
 
     --radius: 12px;
@@ -38,29 +38,29 @@
     --glow: 258 60% 65%;
     --surface: 40 15% 99%;
     --surface-elevated: 0 0% 100%;
-    --hover: 240 10% 12% / 0.05;
+    --hover: 40 10% 12% / 0.04;
     --hover-foreground: 240 10% 10%;
   }
 
   .dark {
-    /* Dark Mode */
-    --background: 40 2% 12%;
-    --foreground: 0 0% 92%;
+    /* Dark Mode - 参考原型: 深灰黑背景 + 极淡白边框 */
+    --background: 240 4% 8%;           /* #131316 接近原型 #0f0f11 */
+    --foreground: 0 0% 92%;          /* #EBEBEB */
 
-    --card: 0 0% 11%;
+    --card: 240 3% 9%;               /* #141416 接近原型 */
     --card-foreground: 0 0% 92%;
 
-    --popover: 0 0% 10%;
+    --popover: 240 3% 10%;
     --popover-foreground: 0 0% 92%;
 
-    --primary: 258 75% 72%;
+    --primary: 258 75% 72%;          /* #B794F6 */
     --primary-foreground: 0 0% 6%;
 
-    --secondary: 0 0% 16%;
+    --secondary: 240 3% 16%;         /* #27272A */
     --secondary-foreground: 0 0% 92%;
 
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 62%;
+    --muted: 240 3% 16%;
+    --muted-foreground: 0 0% 58%;    /* #949494 */
 
     --accent: 258 65% 68%;
     --accent-foreground: 0 0% 6%;
@@ -68,14 +68,14 @@
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.1;
-    --input: 0 0% 100% / 0.12;
+    --border: 0 0% 100% / 0.06;      /* 极淡白边，接近原型 rgba(255,255,255,0.06) */
+    --input: 0 0% 100% / 0.08;
     --ring: 258 75% 72%;
 
     --glow: 258 75% 72%;
-    --surface: 0 0% 11%;
-    --surface-elevated: 0 0% 15%;
-    --hover: 0 0% 100% / 0.1;
+    --surface: 240 3% 11%;
+    --surface-elevated: 240 3% 15%;
+    --hover: 0 0% 100% / 0.06;
     --hover-foreground: 0 0% 92%;
   }
 }
@@ -163,6 +163,111 @@
     background: hsl(var(--surface) / 0.8);
     backdrop-filter: blur(12px) saturate(1.2);
     -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  }
+
+  /* Button press feedback */
+  .btn-press {
+    @apply transition-transform duration-100 active:scale-[0.96];
+  }
+  
+  /* List item hover glow */
+  .item-glow {
+    @apply transition-all duration-200;
+  }
+  .item-glow:hover {
+    background: hsl(var(--muted-foreground) / 0.06);
+  }
+  
+  /* Card lift on hover */
+  .card-lift {
+    @apply transition-all duration-300;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  }
+  
+  /* Indicator bar animation */
+  .indicator-bar {
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Mode pill */
+  .mode-pill {
+    @apply flex bg-secondary rounded-[10px] p-[3px];
+  }
+  
+  /* Input glow on focus */
+  .input-glow:focus-within {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1), 0 2px 8px rgba(0,0,0,0.04);
+  }
+  
+  /* Node card hover */
+  .node-card {
+    @apply transition-all duration-300;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .node-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px hsl(var(--primary) / 0.15);
+  }
+  
+  /* Gradient header for nodes/cards */
+  .gradient-header {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, transparent 60%);
+  }
+  
+  /* Theme preview card */
+  .theme-preview {
+    @apply transition-all duration-200;
+  }
+  .theme-preview.selected {
+    @apply border-primary;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  }
+  
+  /* Setting card hover */
+  .setting-card {
+    @apply transition-all duration-200;
+  }
+  .setting-card:hover {
+    border-color: hsl(var(--primary) / 0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  
+  /* Tab button active indicator */
+  .tab-btn {
+    @apply relative transition-all duration-200;
+  }
+  .tab-btn.active::after {
+    content: '';
+    @apply absolute bottom-[-1px] left-3 right-3 h-[2px] bg-primary rounded-full;
+  }
+  
+  /* Pulse ring for streaming indicator */
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .animate-pulse-ring::before {
+    content: '';
+    @apply absolute inset-[-2px] rounded-full;
+    border: 2px solid #22C55E;
+    animation: pulse-ring 1.5s ease-out infinite;
+  }
+  
+  /* Bubble user gradient */
+  .bubble-user {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%);
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.25), 0 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  /* Bubble assistant subtle */
+  .bubble-assistant {
+    background: hsl(var(--muted) / 0.5);
+    border: 1px solid hsl(var(--border));
   }
 
   @keyframes breathe {

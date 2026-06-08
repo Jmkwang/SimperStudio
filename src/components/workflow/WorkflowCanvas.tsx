@@ -273,7 +273,7 @@ function Flow() {
   }, 'workflow:export');
 
   return (
-    <div ref={containerRef} className="flex-1 w-full h-full relative bg-background">
+    <div ref={containerRef} className="flex-1 w-full h-full relative bg-card">
       <DebugBadge id="WorkflowCanvas" />
       <ReactFlow
         nodes={nodes}
@@ -283,7 +283,7 @@ function Flow() {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
-        className="bg-background"
+        className="bg-card"
         colorMode={isDark ? 'dark' : 'light'}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} className="opacity-40" />

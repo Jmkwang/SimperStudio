@@ -44,7 +44,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
 
   return (
     <div className="w-[240px] rounded-xl border border-amber-200 dark:border-amber-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md min-h-[100px]">
-      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-amber-500 bg-background" />
+      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-amber-500 bg-popover" />
       <div className="flex items-center justify-between border-b p-3 bg-amber-50/50 dark:bg-amber-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500">
@@ -95,7 +95,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
         {(data.branches || branches).map((b: any) => (
           <div key={b.id} className="flex justify-end items-center relative h-6">
             <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded truncate max-w-[150px] font-mono mr-2" title={b.condition}>{b.label}</span>
-            <Handle type="source" position={Position.Right} id={b.id} style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)' }} className="w-3 h-3 border-2 border-amber-500 bg-background absolute" />
+            <Handle type="source" position={Position.Right} id={b.id} style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)' }} className="w-3 h-3 border-2 border-amber-500 bg-popover absolute" />
           </div>
         ))}
       </div>

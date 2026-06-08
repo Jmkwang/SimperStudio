@@ -9,7 +9,7 @@ export function ChatOutputNode({ data }: { data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-slate-500 bg-background"
+        className="w-3 h-3 border-2 border-slate-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-3">

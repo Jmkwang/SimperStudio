@@ -48,6 +48,7 @@ const STREAM_FLUSH_MS = 50;
 
 export type WorkflowChatUIState = {
   sidebarCollapsedBySession: Record<string, boolean>;
+  multiAgentModeBySession: Record<string, boolean>;
   windows: WorkflowConversationWindow[];
   agentChatWindows: AgentChatWindowData[];
   activeWindowId: string | null;
@@ -255,6 +256,7 @@ export interface ChatSlice {
   getWorkflowForSession: (sessionId: string) => Workflow | undefined;
 
   setWorkflowSidebarCollapsed: (sessionId: string, collapsed: boolean) => void;
+  setMultiAgentMode: (sessionId: string, mode: boolean) => void;
   openWorkflowAgentWindow: (sessionId: string, workflowId: string, nodeId: string, agentId: string) => void;
   focusWorkflowAgentWindow: (windowId: string) => void;
   closeWorkflowAgentWindow: (windowId: string) => void;
@@ -311,6 +313,7 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
     activeStreamingSessionIds: [],
     workflowChatUI: {
       sidebarCollapsedBySession: {},
+      multiAgentModeBySession: {},
       windows: [],
       agentChatWindows: [],
       activeWindowId: null,
@@ -878,6 +881,15 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
         sidebarCollapsedBySession: {
           ...state.workflowChatUI.sidebarCollapsedBySession,
           [sessionId]: collapsed,
+        },
+      },
+    })),
+    setMultiAgentMode: (sessionId, mode) => set((state: any) => ({
+      workflowChatUI: {
+        ...state.workflowChatUI,
+        multiAgentModeBySession: {
+          ...state.workflowChatUI.multiAgentModeBySession,
+          [sessionId]: mode,
         },
       },
     })),

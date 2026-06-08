@@ -61,7 +61,7 @@ export function AgentTopologyView({ sessionId }: { sessionId: string }) {
           {t('点击智能体节点打开对话窗口')}
         </p>
       </div>
-      <div className="flex-1 relative bg-background">
+      <div className="flex-1 relative bg-card">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -69,7 +69,7 @@ export function AgentTopologyView({ sessionId }: { sessionId: string }) {
           onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-background"
+          className="bg-card"
           colorMode={colorMode}
         >
           <Background variant={BackgroundVariant.Dots} gap={24} size={1} className={isDark ? 'opacity-30' : 'opacity-40'} color="hsl(var(--muted-foreground) / 0.3)" />

@@ -15,7 +15,7 @@ export const AgentNode = memo(({ data }: { data: AgentNodeData }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="px-4 py-3 shadow-md rounded-xl bg-background border border-border min-w-[160px] hover:border-primary/50 transition-colors">
+    <div className="px-4 py-3 shadow-md rounded-xl bg-card border border-border min-w-[160px] hover:border-primary/50 transition-colors">
       <Handle type="target" position={Position.Top} className="!bg-primary !w-2 !h-2" />
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">

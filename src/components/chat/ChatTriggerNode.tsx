@@ -9,7 +9,7 @@ export function ChatTriggerNode({ data }: { data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-emerald-500 bg-background"
+        className="w-3 h-3 border-2 border-emerald-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-3">

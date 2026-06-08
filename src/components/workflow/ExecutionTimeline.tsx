@@ -133,7 +133,7 @@ export function ExecutionTimeline() {
   const isError = workflowExecution.status === 'error';
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur border rounded-xl shadow-lg p-4 z-10 max-w-3xl mx-auto pointer-events-auto max-sm:bottom-2 max-sm:left-2 max-sm:right-2 max-sm:p-3">
+    <div className="absolute bottom-4 left-4 right-4 bg-popover/95 backdrop-blur border rounded-xl shadow-lg p-4 z-10 max-w-3xl mx-auto pointer-events-auto max-sm:bottom-2 max-sm:left-2 max-sm:right-2 max-sm:p-3">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">

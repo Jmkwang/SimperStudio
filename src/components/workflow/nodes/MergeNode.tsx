@@ -32,8 +32,8 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
 
   return (
     <div className="w-[240px] rounded-xl border border-pink-200 dark:border-pink-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
-      <Handle type="target" position={Position.Left} id="input-1" style={{ top: '35%' }} className="w-3 h-3 border-2 border-pink-500 bg-background" />
-      <Handle type="target" position={Position.Left} id="input-2" style={{ top: '65%' }} className="w-3 h-3 border-2 border-pink-500 bg-background" />
+      <Handle type="target" position={Position.Left} id="input-1" style={{ top: '35%' }} className="w-3 h-3 border-2 border-pink-500 bg-popover" />
+      <Handle type="target" position={Position.Left} id="input-2" style={{ top: '65%' }} className="w-3 h-3 border-2 border-pink-500 bg-popover" />
       <div className="flex items-center justify-between border-b p-3 bg-pink-50/50 dark:bg-pink-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-500">
@@ -85,7 +85,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
           {strategy === 'byKey' ? `merge by "${mergeKey}"` : strategy}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-pink-500 bg-background" />
+      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-pink-500 bg-popover" />
     </div>
   );
 }

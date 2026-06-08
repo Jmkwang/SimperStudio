@@ -36,7 +36,7 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
 
   return (
     <div className="w-[240px] rounded-xl border border-violet-200 dark:border-violet-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
-      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-violet-500 bg-background" />
+      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-violet-500 bg-popover" />
       <div className="flex items-center justify-between border-b p-3 bg-violet-50/50 dark:bg-violet-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-500">
@@ -93,7 +93,7 @@ export function WaitDelayNode({ id, data }: { id: string, data: any }) {
           {mode === 'until' ? (untilExpression || 'Not configured') : `sleep ${delayMs}ms`}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-violet-500 bg-background" />
+      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-violet-500 bg-popover" />
     </div>
   );
 }

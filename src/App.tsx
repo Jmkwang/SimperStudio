@@ -66,7 +66,6 @@ function App() {
     <ErrorBoundary>
       <AppShell
         currentView={viewMode}
-        setCurrentView={(v) => setCurrentView(v)}
       >
         <div className="flex flex-col h-full">
           <div className="flex-1 relative overflow-hidden flex">

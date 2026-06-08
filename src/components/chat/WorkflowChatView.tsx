@@ -22,8 +22,7 @@ import { ChatLoopNode } from './ChatLoopNode';
 import { ChatRouterNode } from './ChatRouterNode';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Bot, Send, PlayCircle, Square, Loader2, AlertCircle, CheckCircle2, MessageSquare, GitBranch, Paperclip, X, Brain } from 'lucide-react';
+import { Send, Paperclip, X, Brain } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
 import { cn } from '@/lib/utils';
@@ -33,22 +32,17 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
   const agents = useAppStore(state => state.agents);
   const openWorkflowAgentWindow = useAppStore(state => state.openWorkflowAgentWindow);
   const workflowChatUI = useAppStore(state => state.workflowChatUI);
-  const setWorkflowSidebarCollapsed = useAppStore(state => state.setWorkflowSidebarCollapsed);
   const sendMessageToAgents = useAppStore(state => state.sendMessageToAgents);
   const cancelSessionStream = useAppStore(state => state.cancelSessionStream);
   const activeStreamingSessionIds = useAppStore(state => state.activeStreamingSessionIds);
   const retryAgentResponse = useAppStore(state => state.retryAgentResponse);
   const chatLayoutMode = useAppStore(state => state.chatLayoutMode);
   const setChatLayoutMode = useAppStore(state => state.setChatLayoutMode);
-  const executeWorkflow = useAppStore(state => state.executeWorkflow);
-  const cancelWorkflowExecution = useAppStore(state => state.cancelWorkflowExecution);
-  const workflowExecution = useAppStore(state => state.workflowExecution);
-  const settings = useAppStore(state => state.settings);
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { trackClick } = useDebugTrack('WorkflowChatView');
 
-  const [multiAgentMode, setMultiAgentMode] = useState(true);
+  const multiAgentMode = workflowChatUI.multiAgentModeBySession[session.id] ?? true;
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [thinkingLevel, setThinkingLevel] = useState<'default' | 'off'>('default');
@@ -84,7 +78,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
 
   const workflow = session.workflowId ? workflows.find(item => item.id === session.workflowId) : undefined;
 
-  const isCollapsed = workflowChatUI.sidebarCollapsedBySession[session.id] ?? true;
+  const multiAgentMode = workflowChatUI.multiAgentModeBySession[session.id] ?? true;
 
   const agentNodes = workflow?.nodesData?.filter(node =>
     (node.type === 'agent' && (node.data as Record<string, unknown>)?.agentId) ||
@@ -210,107 +204,9 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const [runError, setRunError] = useState<string | null>(null);
-
-  const handleRunWorkflow = async () => {
-    if (!workflow || workflowExecution.status === 'running') return;
-    setRunError(null);
-
-    // Pre-check: ensure at least one provider with an API key is configured
-    const hasConfiguredProvider = settings.providers?.some(
-      (p: any) => p.isEnabled && p.apiKey
-    );
-    if (!hasConfiguredProvider) {
-      setRunError(t('No API provider configured. Please set up a provider with a valid API key in Settings > Models.'));
-      return;
-    }
-
-    try {
-      const result = await executeWorkflow(workflow.id, {});
-      if (result && result._error) {
-        setRunError(result._error);
-      }
-    } catch (e: any) {
-      setRunError(e.message || 'Execution failed');
-    }
-  };
-
-  const handleCancelWorkflow = () => {
-    cancelWorkflowExecution();
-  };
-
   return (
     <div className="flex flex-col h-full relative">
       <DebugBadge id="WorkflowChatView" position="bottom-left" />
-      <div className="p-6 pb-2 shrink-0 h-[80px] flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{workflow.name}</h2>
-        <div className="flex items-center gap-2">
-          {workflowExecution.status === 'running' ? (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={trackClick(handleCancelWorkflow, 'workflow:cancel')}
-              className="h-8 shadow-sm"
-              aria-label={t('Stop')}
-            >
-              <Square className="h-4 w-4 mr-1" />
-              {t('Stop')}
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={trackClick(handleRunWorkflow, 'workflow:run')}
-              className="h-8 shadow-sm"
-              aria-label={t('Run Workflow')}
-            >
-              <PlayCircle className="h-4 w-4 mr-1" />
-              {t('Run Workflow')}
-            </Button>
-          )}
-          {workflowExecution.status === 'running' && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              {t('Running...')}
-            </span>
-          )}
-          {isCollapsed && (
-            <button
-              onClick={trackClick(() => setWorkflowSidebarCollapsed(session.id, false), 'workflow:expandSidebar')}
-              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
-              title={t('Show workflow panel')}
-              data-debug-source="WorkflowChatView"
-              data-debug-action="workflow:expandSidebar"
-            >
-              <Bot className="h-4 w-4" />
-            </button>
-          )}
-          <button
-            onClick={trackClick(() => setMultiAgentMode(!multiAgentMode), 'workflow:toggleMode')}
-            className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
-            title={multiAgentMode ? t('拓扑') : t('聊天')}
-            data-debug-source="WorkflowChatView"
-            data-debug-action="workflow:toggleMode"
-          >
-            {multiAgentMode ? <GitBranch className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Execution status feedback */}
-      {runError && (
-        <div className="mx-6 mb-2 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive shrink-0">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span className="flex-1 truncate">{runError}</span>
-          <button onClick={() => setRunError(null)} className="text-xs underline shrink-0">{t('Dismiss')}</button>
-        </div>
-      )}
-      {workflowExecution.status === 'completed' && !runError && (
-        <div className="mx-6 mb-2 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400 shrink-0">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>{t('Workflow completed')}</span>
-        </div>
-      )}
 
       {multiAgentMode ? (
         <div className="flex-1 flex flex-col min-h-0">
@@ -455,7 +351,7 @@ export function WorkflowChatView({ session }: { session: ChatSession }) {
         </div>
       ) : (
         <>
-          <div className="flex-1 relative bg-background">
+          <div className="flex-1 relative bg-card">
             <ReactFlow
               nodes={nodes}
               edges={edges}

@@ -35,7 +35,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-blue-500 bg-background"
+        className="w-3 h-3 border-2 border-blue-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
                 <textarea 
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-[150px] w-full rounded-md border border-input bg-popover px-3 py-2 text-sm font-mono shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   spellCheck="false"
                 />
                 <div className="bg-muted p-2 rounded-md text-xs font-mono text-muted-foreground mt-1">
@@ -98,7 +98,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-blue-500 bg-background"
+        className="w-3 h-3 border-2 border-blue-500 bg-popover"
       />
     </div>
   );

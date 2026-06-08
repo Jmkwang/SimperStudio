@@ -47,7 +47,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-violet-500 bg-background"
+        className="w-3 h-3 border-2 border-violet-500 bg-popover"
       />
 
       <div className="flex items-center justify-between border-b p-3 bg-violet-50/50 dark:bg-violet-950/20 rounded-t-xl">
@@ -150,7 +150,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-violet-500 bg-background"
+        className="w-3 h-3 border-2 border-violet-500 bg-popover"
       />
     </div>
   );

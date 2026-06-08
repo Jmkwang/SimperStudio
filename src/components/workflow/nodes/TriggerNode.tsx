@@ -66,7 +66,7 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-emerald-500 bg-background"
+        className="w-3 h-3 border-2 border-emerald-500 bg-popover"
       />
     </div>
   );

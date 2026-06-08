@@ -49,7 +49,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
 
   return (
     <div className="w-[240px] rounded-xl border border-teal-200 dark:border-teal-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
-      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-teal-500 bg-background" />
+      <Handle type="target" position={Position.Left} className="w-3 h-3 border-2 border-teal-500 bg-popover" />
       <div className="flex items-center justify-between border-b p-3 bg-teal-50/50 dark:bg-teal-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-500">
@@ -108,7 +108,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
           {(data.mappings || []).map((m: FieldMapping) => `${m.sourcePath} → ${m.targetPath}`).join(', ') || 'No mappings'}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-teal-500 bg-background" />
+      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-teal-500 bg-popover" />
     </div>
   );
 }

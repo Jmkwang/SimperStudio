@@ -17,7 +17,7 @@ export function ChatAgentNode({ data }: { data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-primary bg-background"
+        className="w-3 h-3 border-2 border-primary bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3 bg-muted/20">
         <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export function ChatAgentNode({ data }: { data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-primary bg-background"
+        className="w-3 h-3 border-2 border-primary bg-popover"
       />
     </div>
   );

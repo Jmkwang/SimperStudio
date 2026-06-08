@@ -109,7 +109,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-amber-500 bg-background"
+        className="w-3 h-3 border-2 border-amber-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3 bg-amber-500/10">
         <div className="flex items-center gap-3">
@@ -315,7 +315,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-amber-500 bg-background"
+        className="w-3 h-3 border-2 border-amber-500 bg-popover"
       />
     </div>
   );

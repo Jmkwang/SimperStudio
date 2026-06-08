@@ -111,7 +111,7 @@ export function WorkflowAgentWindow({ windowData }: { windowData: WorkflowConver
 
   return (
     <div
-      className="absolute rounded-xl border bg-background shadow-xl flex flex-col overflow-hidden"
+      className="absolute rounded-xl border bg-popover shadow-xl flex flex-col overflow-hidden"
       style={{
         borderColor: softBorder,
         left: pos.x,
