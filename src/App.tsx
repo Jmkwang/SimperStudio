@@ -20,7 +20,6 @@ function App() {
   const fetchInitialData = useAppStore(state => state.fetchInitialData);
   const fontSize = useAppStore(state => state.settings.fontSize);
   const viewMode = useAppStore(state => state.currentView) as ViewMode;
-  const setCurrentView = useAppStore(state => state.setCurrentView);
 
   useEffect(() => {
     fetchInitialData();

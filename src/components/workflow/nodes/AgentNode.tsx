@@ -68,7 +68,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               <Bot className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
-          <div class="min-w-0">
+          <div className="min-w-0">
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
             {data.schema && <p className="text-xs text-primary mt-0.5 font-medium">{t("Tool Calling Enabled")}</p>}

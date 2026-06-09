@@ -3,7 +3,6 @@ import { useAppStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useTheme } from '@/components/theme/ThemeProvider';
 import { Send, Square, X } from 'lucide-react';
 import { AgentChatWindowData } from '@/types/models';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,8 +12,6 @@ const DEFAULT_WIDTH = 420;
 const DEFAULT_HEIGHT = 480;
 
 export function AgentChatWindow({ windowData }: { windowData: AgentChatWindowData }) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const softBorder = 'hsl(var(--border))';
   const [input, setInput] = useState('');
   const sendToAgent = useAppStore(state => state.sendToAgent);

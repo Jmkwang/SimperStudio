@@ -3,7 +3,7 @@ import { useAppStore } from '@/stores'
 import { useTheme } from '@/components/theme/ThemeProvider'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
-import { Moon, Settings, Sun, Zap, Plus, Bot, FileText, MessageSquare, Workflow, Wrench, User } from 'lucide-react'
+import { Moon, Settings, Sun, Zap, Plus, Bot, FileText, MessageSquare, Workflow, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Mode = 'agent' | 'workflow'

@@ -47,7 +47,7 @@ stores/
 **Actions**（节选）：
 - 会话：`createSession`、`openWorkflowSession`、`renameSession`、`deleteSession`
 - 消息：`addAgentResponseStream`、`addAgentThinkingStream`、`completeAgentResponse`、`retryAgentResponse`
-- 转发：`sendMessageToAgents`（支持 `thinkingLevel` 参数）、`sendToWorkflowAgent`、`forwardAgentReplyToNext`、`rerunAgentReply`、`sendToAgent`（支持 `thinkingLevel` 参数）
+- 转发：`sendMessageToAgents`（支持 `thinkingLevel` 参数）、`sendToWorkflowAgent`、`forwardAgentReplyToNext`、`rerunAgentReply`、`rerunAndForwardAgentReply`、`sendToAgent`（支持 `thinkingLevel` 参数）；workflow 模式支持 `agent` 与 `dynamic-agent` 节点
 - 流式取消：`cancelSessionStream(sessionId)` — 取消该 session 的所有进行中请求
 - 浮窗：`openWorkflowAgentWindow`、`focusWorkflowAgentWindow`、`closeWorkflowAgentWindow`、`setWorkflowSidebarCollapsed`
 
@@ -103,7 +103,7 @@ stores/
 | `_abortController` | `AbortController \| null` | 当前执行的取消控制器 |
 
 **Actions**：
-- CRUD：`createWorkflow`、`saveWorkflow`、`deleteWorkflow`、`renameWorkflow`
+- CRUD：`createWorkflow`、`saveWorkflow`、`deleteWorkflow`、`renameWorkflow`；`saveWorkflow` 保存时清理 React Flow UI-only 字段，并保留节点专属配置字段
 - 执行：`executeWorkflow(workflowId, initialPayload, options?)` — 调用 `lib/workflow/engine.executeWorkflow`，5 分钟全局超时，结果通过 `onNodeResult` 回写聊天
 - 取消：`cancelWorkflowExecution()`
 - 状态：`setWorkflowExecutionState(partial)`

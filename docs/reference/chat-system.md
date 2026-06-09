@@ -120,7 +120,9 @@ WorkflowChatView
      └── 聊天模式：扁平化消息流（按节点分组）
 ```
 
-**autoSendToNext**：agent 节点配置 `data.autoSendToNext === true` 时，回复完成自动调用 `forwardAgentReplyToNext`，沿出边找下一个 agent/dynamic-agent 继续发送。
+**autoSendToNext**：agent / dynamic-agent 节点配置 `data.autoSendToNext === true` 时，回复完成自动调用 `forwardAgentReplyToNext`，沿出边找下一个 agent/dynamic-agent 继续发送。
+
+workflow chat 手动转发 / 自动转发 / 重跑后转发是交互式调试路径，不等同于正式 `executeWorkflow` 的完整 payload 执行；Dynamic Agent inline 模板在该路径中使用当前 prompt 构造最小 chat payload。
 
 ---
 
@@ -128,7 +130,7 @@ WorkflowChatView
 
 | Action | 入口 | 行为 |
 |---|---|---|
-| `forwardAgentReplyToNext` | hover 操作 / `autoSendToNext` | 通过 edges 找后继 agent 节点，把当前回复作为 prompt 发送 |
+| `forwardAgentReplyToNext` | hover 操作 / `autoSendToNext` | 通过 edges 找后继 agent 或 dynamic-agent 节点，把当前回复作为 prompt 发送 |
 | `rerunAgentReply` | hover 操作 | 用同 prompt 重新生成回复（新建消息） |
 | `retryAgentResponse` | 气泡 retry 按钮 | 在原气泡内重生成（清除 `agentResponse`，复用 `messageId`） |
 | `rerunAndForwardAgentReply` | hover 操作 | 重跑后自动转发 |

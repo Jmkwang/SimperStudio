@@ -13,6 +13,7 @@ import { fetchFromResolvedConfig } from '@/lib/api';
 import { resolveAgentModelConfig, shortError, ResolveSettings } from '@/lib/agentProviderRouter';
 import { createUserMessage, createStreamMessage, createAgentResponse } from '@/lib/messageService';
 import { debugLogger } from '@/lib/debugLogger';
+import { getByPath, replaceTemplateVars } from '@/lib/workflow/helpers';
 import { writeConfig } from './baseSlice';
 
 // ── Session-level Stream Abort Controllers ──
@@ -81,6 +82,7 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
     visited.add(nextNodeId);
     const node = workflow.nodesData.find((item) => item.id === nextNodeId);
     if (node?.type === 'agent' && (node.data as any)?.agentId) return node;
+    if (node?.type === 'dynamic-agent') return node;
     workflow.edgesData
       .filter((edge) => edge.source === nextNodeId)
       .forEach((edge) => queue.push(edge.target));
@@ -89,16 +91,17 @@ function findNextAgentNode(workflow: Workflow | undefined, nodeId: string): Work
 }
 
 async function runAgentResponse({
-  sessionId, messageId, agent, prompt, nodeId, nodeData, signal, thinkingLevel,
+  sessionId, messageId, agent, prompt, nodeId, nodeData, signal, thinkingLevel, responseMeta,
   addAgentResponseStream, addAgentThinkingStream, completeAgentResponse, getSettings,
 }: {
   sessionId: string; messageId: string; agent: Agent; prompt: string; nodeId?: string;
   nodeData?: Pick<WorkflowAgentNodeData, 'overrideProviderId' | 'overrideModelId' | 'overrideSystemPrompt'>;
   signal?: AbortSignal;
   thinkingLevel?: 'default' | 'off';
+  responseMeta?: MessageMeta;
   addAgentResponseStream: any; addAgentThinkingStream: any; completeAgentResponse: any; getSettings: () => any;
 }) {
-  addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId);
+  addAgentResponseStream(sessionId, messageId, agent.id, '', nodeId, responseMeta);
   let streamKey: string | undefined;
   try {
     const settings: ResolveSettings = getSettings();
@@ -129,6 +132,7 @@ async function runAgentResponse({
         }
         if (firstChunk && textPart) {
           addAgentResponseStream(sessionId, messageId, agent.id, textPart, nodeId, {
+            ...responseMeta,
             providerId: config.provider.id,
             providerName: config.providerName,
             modelId: config.model.modelId,
@@ -463,6 +467,9 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
               if (assistantMsgIndex === -1) {
                 newAssistantMsg = createStreamMessage(sessionId, agentId, nodeId, meta, messageId);
                 newAssistantMsg.agentResponses![0].content.text = textChunk;
+                if (meta?._dynamicAgentMeta) {
+                  newAssistantMsg.agentResponses![0]._dynamicAgentMeta = meta._dynamicAgentMeta;
+                }
                 // Backfill model info / error state from meta on first creation
                 if (meta?.providerId) {
                   newAssistantMsg.agentResponses![0].providerId = meta.providerId;
@@ -660,6 +667,7 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
           nodeData: options.nodeData,
           signal: controller.signal,
           thinkingLevel: options.thinkingLevel,
+          responseMeta: options.meta,
           addAgentResponseStream: get().addAgentResponseStream,
           addAgentThinkingStream: get().addAgentThinkingStream,
           completeAgentResponse: get().completeAgentResponse,
@@ -689,45 +697,65 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
       if (node.type === 'dynamic-agent') {
         const nodeData = node.data as any;
         const inline = nodeData?.inlineConfig;
+        const chatPayload = {
+          input: prompt,
+          prompt,
+          message: prompt,
+          payload: {
+            input: prompt,
+            prompt,
+            message: prompt,
+          },
+        };
 
-        // Build dynamic config from inline templates (chat layer uses empty payload for literal templates)
-        const dynamicName = inline?.nameTemplate?.replace(/\{\{.*?\}\}/g, '') || 'Dynamic Agent';
-        const dynamicSystemPrompt = inline?.systemPromptTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
-        const dynamicRole = inline?.roleTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
-        const dynamicPersonality = inline?.personalityTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
-
-        // Resolve fallback agent for model config and avatar inheritance
         const fallbackAgent = nodeData?.fallbackAgentId
           ? agents.find((a: Agent) => a.id === nodeData.fallbackAgentId)
           : undefined;
 
-        // If no avatarTemplate is provided, inherit from fallbackAgent or match by name
-        let dynamicAvatar = inline?.avatarTemplate?.replace(/\{\{.*?\}\}/g, '') || '';
-        if (!dynamicAvatar) {
-          if (fallbackAgent?.avatar) {
-            dynamicAvatar = fallbackAgent.avatar;
-          } else if (agents) {
-            const matched = agents.find((a: Agent) => a.name === dynamicName);
-            if (matched?.avatar) dynamicAvatar = matched.avatar;
+        let dynamicName = 'Dynamic Agent';
+        let dynamicSystemPrompt = '';
+        let dynamicRole = '';
+        let dynamicPersonality = '';
+        let dynamicAvatar = '';
+
+        if (nodeData?.configSource === 'payload') {
+          const configPath = String(nodeData?.configPath || 'payload.dynamicAgentConfig');
+          const resolved = getByPath(chatPayload, configPath);
+          if (resolved && typeof resolved === 'object') {
+            dynamicName = String((resolved as any).name || dynamicName);
+            dynamicSystemPrompt = String((resolved as any).systemPrompt || '');
+            dynamicRole = String((resolved as any).role || '');
+            dynamicPersonality = String((resolved as any).personality || '');
+            dynamicAvatar = String((resolved as any).avatar || '');
           }
+        } else {
+          dynamicName = replaceTemplateVars(inline?.nameTemplate || 'Dynamic Agent', chatPayload);
+          dynamicSystemPrompt = replaceTemplateVars(inline?.systemPromptTemplate || '', chatPayload);
+          dynamicRole = inline?.roleTemplate ? replaceTemplateVars(inline.roleTemplate, chatPayload) : '';
+          dynamicPersonality = inline?.personalityTemplate ? replaceTemplateVars(inline.personalityTemplate, chatPayload) : '';
+          dynamicAvatar = inline?.avatarTemplate ? replaceTemplateVars(inline.avatarTemplate, chatPayload) : '';
         }
 
-        const virtualAgent: Agent = fallbackAgent || {
+        if (!dynamicAvatar) dynamicAvatar = fallbackAgent?.avatar || '';
+
+        const virtualAgent: Agent = {
           id: `dynamic-${nodeId}`,
-          name: dynamicName,
+          name: dynamicName || fallbackAgent?.name || 'Dynamic Agent',
           avatar: dynamicAvatar,
-          systemPrompt: dynamicSystemPrompt,
-          providerId: nodeData?.fallbackProviderId,
-          modelId: nodeData?.fallbackModelId,
+          systemPrompt: dynamicSystemPrompt || fallbackAgent?.systemPrompt || '',
+          providerId: nodeData?.fallbackProviderId || fallbackAgent?.providerId,
+          modelId: nodeData?.fallbackModelId || fallbackAgent?.modelId,
+          temperature: fallbackAgent?.temperature,
+          maxTokens: fallbackAgent?.maxTokens,
         };
 
         const dynamicMeta = {
           nodeId,
-          name: dynamicName,
+          name: virtualAgent.name,
           role: dynamicRole,
           personality: dynamicPersonality,
           avatar: dynamicAvatar,
-          systemPrompt: dynamicSystemPrompt,
+          systemPrompt: virtualAgent.systemPrompt,
         };
 
         const messageId = await get().sendMessageToAgents(sessionId, prompt, [virtualAgent], {
@@ -790,7 +818,7 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
       const currentMessage = session?.messages.find((message: ChatMessage) => message.id === messageId);
       const currentResponse = currentMessage?.agentResponses?.find((response: any) => response.agentId === agentId && response.nodeId === fromNodeId);
       const nextNode = findNextAgentNode(workflow, fromNodeId);
-      if (!session || !workflow || !currentResponse || !nextNode || !(nextNode?.data as any)?.agentId) return;
+      if (!session || !workflow || !currentResponse || !nextNode) return;
       await get().sendToWorkflowAgent(sessionId, nextNode.id, currentResponse.content.text, {
         addUserMessage: true, triggeredBy, forwardFromMessageId: messageId,
       });
@@ -801,14 +829,19 @@ export function createChatSlice(set: StoreApi<FullState>['setState'], get: Store
     },
 
     rerunAndForwardAgentReply: async (sessionId, nodeId, prompt) => {
-      const { sessions, workflows, agents } = get();
+      const { sessions, workflows } = get();
       const session = sessions.find((item: ChatSession) => item.id === sessionId);
       const workflow = session?.workflowId ? workflows.find((item: Workflow) => item.id === session.workflowId) : undefined;
       const node = getAgentNode(workflow, nodeId);
-      const agent = agents.find((item: Agent) => item.id === (node?.data as any)?.agentId);
-      if (!agent) return;
+      if (!node) return;
+
+      const sourceAgentId = node.type === 'dynamic-agent'
+        ? `dynamic-${nodeId}`
+        : (node.data as any)?.agentId;
+      if (!sourceAgentId) return;
+
       const messageId = await get().rerunAgentReply(sessionId, nodeId, prompt);
-      if (messageId) await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, agent.id, 'reload');
+      if (messageId) await get().forwardAgentReplyToNext(sessionId, nodeId, messageId, sourceAgentId, 'reload');
     },
 
     sendToAgent: async (sessionId, agentId, prompt, options = {}) => {

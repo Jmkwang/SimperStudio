@@ -67,10 +67,16 @@ UI 上由 `components/workflow/NodeBaseConfigSection.tsx` 统一渲染。
 
 ### `dynamic-agent`
 - `configSource: 'payload' | 'inline'`
-- `configPath?: string` — payload 模式下读取路径
-- `inlineConfig?: { name?, avatar?, systemPromptTemplate, userPromptTemplate? }` — inline 模式
-- `fallbackAgentId?: string` — 模型回退到此 agent
+- `configPath?: string` — payload 模式下读取 `DynamicAgentConfig` 的路径，默认 `payload.dynamicAgentConfig`
+- `inlineConfig?: { nameTemplate?, systemPromptTemplate, avatarTemplate?, personalityTemplate?, roleTemplate? }` — inline 模式模板，支持 `{{path.to.value}}`
+- `promptTemplate?: string` — 用户消息模板；不填时 formal engine 发送当前 payload JSON
+- `fallbackAgentId?: string` — 继承模型配置 / avatar 的回退 Agent，不改变 Dynamic Agent 节点身份
+- `fallbackProviderId?: string`
+- `fallbackModelId?: string`
 - `outputField?: string` — 默认 `llmResult`
+- `autoSendToNext?: boolean` — workflow chat 交互路径中回复完成后自动转发
+- `enableChatWindow?: boolean` — UI 可选字段
+- 输出字段：写入 `outputField || 'llmResult'`，并附带 `_dynamicAgentMeta`
 
 ### `cli-agent`
 - `mode: 'preset' | 'custom'`

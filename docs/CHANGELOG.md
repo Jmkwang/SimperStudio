@@ -42,6 +42,9 @@
 - **文案修复**：测试全部模型对话框 `{t('models in total,')}` 改为自然文案（`SettingsModelsTab.tsx`）
 - **新建服务商默认模型硬编码修复**：新建服务商时根据服务商类型设置合理的默认模型，不再硬编码 `gpt-4o`（`modelSlice.ts`）
 
+### Bug 修复
+- **Workflow Dynamic Agent 保存与转发修复**：`saveWorkflow` 保留 Dynamic Agent 专属配置字段与 agent 节点模型 override 字段；workflow chat 的手动转发、自动转发、重跑后转发支持 `dynamic-agent`，并同步 reference 文档（`src/stores/workflowSlice.ts` / `src/stores/chatSlice.ts` / `src/store/__tests__/workflowSave.test.ts` / `src/store/__tests__/workflowChat.test.ts` / `docs/reference/nodes.md` / `docs/reference/chat-system.md` / `docs/reference/stores.md`）
+
 ### 设计审计 P1 残留（P4）
 - **WorkflowCanvas 节点尺寸标准化**：节点尺寸/间距统一规范（`WorkflowCanvas.tsx`）
 - **GenericNode red-* 替换**：`red-500/red-700/red-950` 替换为 `text-destructive` 系列（`GenericNode.tsx`）

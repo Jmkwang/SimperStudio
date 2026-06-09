@@ -3,7 +3,7 @@ import { ChatSession, ModelProvider, ProviderModel } from "@/types/models";
 import { useAppStore } from '@/stores';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowUp, ArrowDown, AlertTriangle, Square, Paperclip, X, Brain } from "lucide-react";
+import { Send, AlertTriangle, Square, Paperclip, X, Brain } from "lucide-react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { DebugBadge } from "@/components/debug/DebugBadge";
 import { useDebugTrack } from "@/hooks/useDebugTrack";
@@ -67,7 +67,7 @@ export function SimpleChatView({ session }: { session: ChatSession }) {
     try { localStorage.setItem('ss_chat_layout', mode); } catch {}
   }, []);
 
-  const { totalTokens, promptTokens, completionTokens } = useMemo(() => {
+  useMemo(() => {
     let total = 0, prompt = 0, completion = 0;
     for (const msg of session.messages) {
       for (const r of msg.agentResponses ?? []) {
