@@ -252,6 +252,18 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         avatar: '/avatars/sage-villager.svg',
         systemPrompt: '你是狼人杀平民"智者"，性格善于观察、逻辑清晰。你擅长从其他玩家的发言中找破绽和矛盾，喜欢用推理说服他人。你的投票基于发言分析，不轻易跟风。输出 voteTargetId 和详细的推理 reason。',
         modelProvider: 'local', modelId: 'default', temperature: 0.75, parameters: {}, createdAt: Date.now(), industry: 'Game'
+      },
+      {
+        id: 'agent-competitor-analyst', name: '竞品分析师',
+        avatar: '/avatars/analyst.svg',
+        systemPrompt: '你是一位资深竞品分析专家。当用户提供一个产品名称时，你需要：\n1. 识别该产品的核心定位和目标用户\n2. 列出3-5个直接竞品\n3. 做功能对比矩阵（用表格形式）\n4. 分析优劣势（SWOT 简化版）\n5. 给出市场机会点\n\n输出必须是结构化文本，方便下游处理。使用清晰的标题和列表。',
+        modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'General'
+      },
+      {
+        id: 'agent-report-writer', name: '报告撰写员',
+        avatar: '/avatars/writer.svg',
+        systemPrompt: '你是一位专业的商业报告撰写专家。你会收到上游分析师提供的竞品分析 raw data。\n你的任务是将这些 raw data 转化为一份结构化的 Markdown 竞品分析报告，包含：\n- 执行摘要\n- 市场概况\n- 竞品对比表\n- SWOT 分析\n- 战略建议\n- 附录（数据来源说明）\n\n报告风格：专业、简洁、数据驱动。使用 Markdown 格式。',
+        modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'General'
       }
     ],
 

@@ -229,6 +229,11 @@ const MOCK_SESSIONS: ChatSession[] = [
     id: 'session-werewolf', workspaceId: 'default-workspace', title: '狼人杀·标准局',
     mode: 'workflow', workflowId: 'werewolf-standard',
     createdAt: Date.now(), updatedAt: Date.now(), messages: []
+  },
+  {
+    id: 'session-competitor', workspaceId: 'default-workspace', title: '竞品分析：Notion',
+    mode: 'workflow', workflowId: 'workflow-competitor-analysis',
+    createdAt: Date.now(), updatedAt: Date.now(), messages: []
   }
 ];
 

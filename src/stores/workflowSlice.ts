@@ -85,6 +85,36 @@ const MOCK_WORKFLOWS: Workflow[] = [
     updatedAt: Date.now()
   },
   {
+    id: 'workflow-competitor-analysis',
+    workspaceId: 'default-workspace',
+    name: '竞品分析报告生成',
+    description: '输入产品名称，自动分析竞品并生成结构化报告',
+    testPayload: { input: 'Notion' },
+    nodesData: [
+      { id: 'ca-trigger', type: 'trigger', position: { x: 50, y: 200 }, data: { label: '输入产品名称' } },
+      { id: 'ca-analyst', type: 'agent', position: { x: 300, y: 200 }, data: {
+        label: '竞品分析师',
+        agentId: 'agent-competitor-analyst',
+        prompt: '请分析产品 "{{payload.input}}" 的竞品情况。识别核心定位、目标用户、3-5个直接竞品、功能对比矩阵、SWOT分析和市场机会点。',
+        autoSendToNext: true
+      }},
+      { id: 'ca-writer', type: 'agent', position: { x: 600, y: 200 }, data: {
+        label: '报告撰写员',
+        agentId: 'agent-report-writer',
+        prompt: '请基于以下竞品分析数据，撰写一份专业的 Markdown 竞品分析报告：\n\n{{payload.llmResult}}'
+      }},
+      { id: 'ca-output', type: 'output', position: { x: 900, y: 200 }, data: { label: '最终报告' } }
+    ],
+    edgesData: [
+      { id: 'e-ca-1', source: 'ca-trigger', target: 'ca-analyst', animated: true },
+      { id: 'e-ca-2', source: 'ca-analyst', target: 'ca-writer', animated: true },
+      { id: 'e-ca-3', source: 'ca-writer', target: 'ca-output', animated: true }
+    ],
+    status: 'active',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  },
+  {
     id: 'werewolf-standard',
     workspaceId: 'default-workspace',
     name: '狼人杀·标准局',
