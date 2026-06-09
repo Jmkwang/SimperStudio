@@ -133,7 +133,9 @@
       "Bash(npm cache *)",
       "Bash(cargo add *)",
       "Bash(npx -y serve prototype -p 3333)",
-      "Bash(npx serve *)"
+      "Bash(npx serve *)",
+      "Bash(git *)",
+      "Bash(npm *)"
     ]
   }
 }
