@@ -473,22 +473,41 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
           // Let the user land on the placeholder for their last view
 
           const workflows = await invoke<Workflow[]>('get_workflows', { workspaceId: defaultWorkspaceId });
+          let finalWorkflows: Workflow[] = [];
           if (workflowsConfig?.length) {
-            const migratedConfig = workflowsConfig.map((w: any) => ({
+            finalWorkflows = workflowsConfig.map((w: any) => ({
               ...w,
               nodesData: w.nodesData ?? w.nodes_data ?? [],
               edgesData: w.edgesData ?? w.edges_data ?? [],
             }));
-            set({ workflows: migratedConfig });
           } else if (workflows.length) {
-            const parsedWorkflows = workflows.map((w: any) => {
+            finalWorkflows = workflows.map((w: any) => {
               let nodesData: any = [];
               let edgesData: any = [];
               try { nodesData = JSON.parse(w.nodesData as unknown as string); } catch { /* corrupted nodesData, keep default */ }
               try { edgesData = JSON.parse(w.edgesData as unknown as string); } catch { /* corrupted edgesData, keep default */ }
               return { ...w, nodesData, edgesData };
             });
-            set({ workflows: parsedWorkflows });
+          }
+
+          // Ensure built-in workflows are always present (same pattern as agents above)
+          const defaultWorkflows = get().workflows as Workflow[];
+          const existingIds = new Set(finalWorkflows.map((w: Workflow) => w.id));
+          const missingWorkflows = defaultWorkflows.filter((w: Workflow) => !existingIds.has(w.id));
+          for (const wf of missingWorkflows) {
+            try {
+              await invoke('add_workflow', {
+                workflow: {
+                  ...wf,
+                  nodesData: JSON.stringify(wf.nodesData),
+                  edgesData: JSON.stringify(wf.edgesData),
+                }
+              });
+              finalWorkflows.push(wf);
+            } catch { /* best-effort */ }
+          }
+          if (finalWorkflows.length) {
+            set({ workflows: finalWorkflows });
           }
         }
 

@@ -47,6 +47,9 @@
 - **对话导出在 Tauri 环境下无效**：`MergedSidebar.tsx` 中原生 `<a download>` 方式在 Tauri WebView 中无法触发保存，改为使用 `tauri-plugin-dialog` 的 `save()` + `tauri-plugin-fs` 的 `writeTextFile()`，与 `WorkflowCanvas` 导出逻辑保持一致；补全 `Session exported` / `Workflow exported` / `Export failed` 三处 i18n key（`src/components/layout/MergedSidebar.tsx` / `src/hooks/useTranslation.ts`）
 - **Settings 旧版 provider 字段清理**：`PromptGenerator.tsx` 从 `fetchFromModel()`（依赖 `settings.apiProvider` / `customBaseUrl` / `openaiKey` 等旧字段）迁移到 `fetchFromProvider()`（通过 `settings.providers` 路由）；删除 `api.ts` 中的 `fetchFromModel()` 废弃函数；从 `Settings` 接口移除 14 个 legacy provider 字段（`src/components/prompts/PromptGenerator.tsx` / `src/lib/api.ts` / `src/types/models.ts`）
 - **Agent 废弃字段清理**：`Agent.apiKey` / `Agent.baseUrl` 在前端已无运行时代码读取，从 TS `Agent` 接口移除；同步删除 Rust `Agent` struct 的 `api_key` / `base_url` 字段及 SQL 读写（`src/types/models.ts` / `src/stores/baseSlice.ts` / `src-tauri/src/db.rs`）；`modelProvider` 因 Rust 侧仍为 NOT NULL 保留，`docs/reference/tauri-commands.md` SQL schema 同步更新
+- **默认工作流自动补全**：`fetchInitialData()` 新增工作流缺失检测逻辑，与 Agent 保持一致——SQLite 中缺少的内置工作流自动写入并合并到内存，避免代码新增默认工作流后用户刷新仍不可见（`src/stores/baseSlice.ts`）
+- **工作流导入功能**：`WorkflowCanvas` Save 下拉菜单新增 Import 按钮，支持通过系统文件对话框选择 JSON 文件导入工作流（节点 + 边 + testPayload 全量恢复）；同步添加 `dialog:allow-open` 权限、`Import` / `Workflow imported` / `Import failed` i18n key（`src/components/workflow/WorkflowCanvas.tsx` / `src-tauri/capabilities/default.json` / `src/hooks/useTranslation.ts`）
+- **工作流拖放导入**：支持直接将 JSON 文件拖入 WorkflowCanvas 画布区域导入，拖入时显示半透明遮罩提示；提取 `importFromData` 复用函数供按钮导入与拖放导入共用（`src/components/workflow/WorkflowCanvas.tsx` / `src/hooks/useTranslation.ts`）
 
 ### 新工作流
 - **礼物推荐助手**：日常生活场景，用户输入送礼需求 → 礼物策划师（Agent A）推荐 3-5 个选项（`autoSendToNext: true`）→ 礼物评估师（Agent B）四维度评分并给出最终推荐 → 输出节点展示结果。新增 2 个 Agent（`agent-gift-planner` / `agent-gift-evaluator`）+ 2 个 avatar SVG（`src/stores/baseSlice.ts` / `src/stores/workflowSlice.ts` / `public/avatars/gift.svg` / `public/avatars/evaluator.svg`）

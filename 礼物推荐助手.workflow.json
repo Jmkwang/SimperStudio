@@ -1,0 +1,47 @@
+{
+  "name": "礼物推荐助手",
+  "description": "输入送礼场景，先由礼物策划师推荐选项，再由评估师选出最佳方案",
+  "testPayload": {
+    "input": "朋友快过生日了，TA 平时喜欢烘焙和摄影，预算 300 元左右，送什么礼物好？"
+  },
+  "nodes": [
+    {
+      "id": "gift-trigger",
+      "type": "trigger",
+      "position": { "x": 50, "y": 200 },
+      "data": { "label": "输入送礼场景" }
+    },
+    {
+      "id": "gift-planner",
+      "type": "agent",
+      "position": { "x": 300, "y": 200 },
+      "data": {
+        "label": "礼物策划师",
+        "agentId": "agent-gift-planner",
+        "prompt": "请根据以下送礼场景，推荐 3-5 个合适的礼物选项：\n\n{{payload.input}}",
+        "autoSendToNext": true
+      }
+    },
+    {
+      "id": "gift-evaluator",
+      "type": "agent",
+      "position": { "x": 600, "y": 200 },
+      "data": {
+        "label": "礼物评估师",
+        "agentId": "agent-gift-evaluator",
+        "prompt": "请对以下礼物推荐选项进行评估，从性价比、独特性、情感价值和实用性四个维度打分，并给出最终推荐：\n\n{{payload.llmResult}}"
+      }
+    },
+    {
+      "id": "gift-output",
+      "type": "output",
+      "position": { "x": 900, "y": 200 },
+      "data": { "label": "最终推荐" }
+    }
+  ],
+  "edges": [
+    { "id": "e-gift-1", "source": "gift-trigger", "target": "gift-planner", "animated": true },
+    { "id": "e-gift-2", "source": "gift-planner", "target": "gift-evaluator", "animated": true },
+    { "id": "e-gift-3", "source": "gift-evaluator", "target": "gift-output", "animated": true }
+  ]
+}

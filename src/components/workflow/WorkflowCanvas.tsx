@@ -43,15 +43,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Save, Trash2, Download, PlayCircle, MoreHorizontal } from 'lucide-react';
+import { Plus, Save, Trash2, Download, Upload, PlayCircle, MoreHorizontal } from 'lucide-react';
 import { useAppStore } from '@/stores';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { useDebugTrack } from '@/hooks/useDebugTrack';
-import { save } from '@tauri-apps/plugin-dialog';
-import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { invoke } from '@tauri-apps/api/core';
+import { save, open } from '@tauri-apps/plugin-dialog';
+import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
 import type { Workflow } from '@/types/models';
 
 // Create generic nodes for the ones we don't have yet so ReactFlow doesn't crash
@@ -185,6 +186,7 @@ function Flow() {
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const deleteNode = useCallback((nodeId: string) => {
     setNodes((nds) => nds.filter((n) => n.id !== nodeId));
@@ -272,9 +274,118 @@ function Flow() {
     }
   }, 'workflow:export');
 
+  const importFromData = async (data: any) => {
+    const name = data.name || 'Imported Workflow';
+    const description = data.description || '';
+    const testPayload = data.testPayload || {};
+    const importedNodes = (data.nodes || []).map((n: any) => ({
+      id: n.id || `${n.type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type: n.type,
+      position: n.position || { x: 100, y: 100 },
+      data: n.data || {},
+    }));
+    const importedEdges = (data.edges || []).map((e: any) => ({
+      id: e.id || `e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle,
+      animated: e.animated ?? true,
+    }));
+    const newWorkflow = {
+      id: `workflow-${Date.now()}`,
+      workspaceId: 'default-workspace',
+      name,
+      description,
+      testPayload,
+      nodesData: importedNodes,
+      edgesData: importedEdges,
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    try {
+      await invoke('add_workflow', {
+        workflow: {
+          ...newWorkflow,
+          nodesData: JSON.stringify(importedNodes),
+          edgesData: JSON.stringify(importedEdges),
+        }
+      });
+    } catch { /* Tauri backend not available */ }
+    useAppStore.setState((state: any) => ({
+      workflows: [...state.workflows, newWorkflow],
+      activeWorkflowId: newWorkflow.id,
+    }));
+    toast.success(t('Workflow imported'));
+  };
+
+  const handleImport = trackClick(async () => {
+    try {
+      const filePath = await open({
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (!filePath) return;
+      const content = await readTextFile(filePath);
+      const data = JSON.parse(content);
+      await importFromData(data);
+    } catch (err) {
+      console.error('Import failed:', err);
+      toast.error(t('Import failed'));
+    }
+  }, 'workflow:import');
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (!isDragOver) setIsDragOver(true);
+  }, [isDragOver]);
+
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const onDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    // Check if this is a file drop (not a react-flow node drop)
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+
+    const jsonFile = files.find(f => f.name.endsWith('.json'));
+    if (!jsonFile) {
+      toast.error(t('Please drop a JSON file'));
+      return;
+    }
+
+    try {
+      const text = await jsonFile.text();
+      const data = JSON.parse(text);
+      await importFromData(data);
+    } catch (err) {
+      console.error('Import failed:', err);
+      toast.error(t('Import failed'));
+    }
+  }, []);
+
   return (
-    <div ref={containerRef} className="flex-1 w-full h-full relative bg-card">
+    <div
+      ref={containerRef}
+      className="flex-1 w-full h-full relative bg-card"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <DebugBadge id="WorkflowCanvas" />
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
+          <div className="text-primary font-medium text-lg bg-card/80 px-6 py-3 rounded-xl shadow-lg">
+            {t('Drop JSON file to import workflow')}
+          </div>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -370,6 +481,9 @@ function Flow() {
                </DropdownMenuItem>
                <DropdownMenuItem onClick={handleExport}>
                  <Download className="h-4 w-4 mr-2" /> {t("Export")}
+               </DropdownMenuItem>
+               <DropdownMenuItem onClick={handleImport}>
+                 <Upload className="h-4 w-4 mr-2" /> {t("Import")}
                </DropdownMenuItem>
              </DropdownMenuContent>
            </DropdownMenu>
