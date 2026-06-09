@@ -25,13 +25,8 @@ export interface Agent {
   maxTokens?: number;
   parameters?: any;
 
-  // Kept for legacy data migration (baseSlice.ts migration logic still reads these)
-  /** @deprecated Use providerId instead — only used in migration */
+  // Kept for DB compatibility — Rust Agent struct requires model_provider (NOT NULL)
   modelProvider?: 'local' | 'openai' | 'anthropic' | 'google' | 'siliconflow' | 'custom';
-  /** @deprecated Use modelId instead — only used in migration */
-  apiKey?: string;
-  /** @deprecated Provider-level API config no longer needed — only used in migration */
-  baseUrl?: string;
 
   createdAt?: number;
 }
@@ -337,21 +332,6 @@ export interface Settings {
   showSidebarAgentMode?: boolean;
   showSidebarWorkflowMode?: boolean;
   accentColor?: string;
-  // Legacy fields for backward compatibility
-  apiProvider?: 'openai' | 'anthropic' | 'google' | 'gemini' | 'custom' | 'local';
-  openaiKey?: string;
-  openaiModelId?: string;
-  anthropicKey?: string;
-  anthropicModelId?: string;
-  googleKey?: string;
-  geminiKey?: string;
-  geminiModelId?: string;
-  customProtocol?: string;
-  customBaseUrl?: string;
-  customModelId?: string;
-  customApiKey?: string;
-  customHeader?: string;
-  customXmlTemplate?: string;
   userAvatar?: string;
   userName?: string;
 }

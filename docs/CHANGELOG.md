@@ -44,6 +44,12 @@
 
 ### Bug 修复
 - **Workflow Dynamic Agent 保存与转发修复**：`saveWorkflow` 保留 Dynamic Agent 专属配置字段与 agent 节点模型 override 字段；workflow chat 的手动转发、自动转发、重跑后转发支持 `dynamic-agent`，并同步 reference 文档（`src/stores/workflowSlice.ts` / `src/stores/chatSlice.ts` / `src/store/__tests__/workflowSave.test.ts` / `src/store/__tests__/workflowChat.test.ts` / `docs/reference/nodes.md` / `docs/reference/chat-system.md` / `docs/reference/stores.md`）
+- **对话导出在 Tauri 环境下无效**：`MergedSidebar.tsx` 中原生 `<a download>` 方式在 Tauri WebView 中无法触发保存，改为使用 `tauri-plugin-dialog` 的 `save()` + `tauri-plugin-fs` 的 `writeTextFile()`，与 `WorkflowCanvas` 导出逻辑保持一致；补全 `Session exported` / `Workflow exported` / `Export failed` 三处 i18n key（`src/components/layout/MergedSidebar.tsx` / `src/hooks/useTranslation.ts`）
+- **Settings 旧版 provider 字段清理**：`PromptGenerator.tsx` 从 `fetchFromModel()`（依赖 `settings.apiProvider` / `customBaseUrl` / `openaiKey` 等旧字段）迁移到 `fetchFromProvider()`（通过 `settings.providers` 路由）；删除 `api.ts` 中的 `fetchFromModel()` 废弃函数；从 `Settings` 接口移除 14 个 legacy provider 字段（`src/components/prompts/PromptGenerator.tsx` / `src/lib/api.ts` / `src/types/models.ts`）
+- **Agent 废弃字段清理**：`Agent.apiKey` / `Agent.baseUrl` 在前端已无运行时代码读取，从 TS `Agent` 接口移除；同步删除 Rust `Agent` struct 的 `api_key` / `base_url` 字段及 SQL 读写（`src/types/models.ts` / `src/stores/baseSlice.ts` / `src-tauri/src/db.rs`）；`modelProvider` 因 Rust 侧仍为 NOT NULL 保留，`docs/reference/tauri-commands.md` SQL schema 同步更新
+
+### 新工作流
+- **礼物推荐助手**：日常生活场景，用户输入送礼需求 → 礼物策划师（Agent A）推荐 3-5 个选项（`autoSendToNext: true`）→ 礼物评估师（Agent B）四维度评分并给出最终推荐 → 输出节点展示结果。新增 2 个 Agent（`agent-gift-planner` / `agent-gift-evaluator`）+ 2 个 avatar SVG（`src/stores/baseSlice.ts` / `src/stores/workflowSlice.ts` / `public/avatars/gift.svg` / `public/avatars/evaluator.svg`）
 
 ### 设计审计 P1 残留（P4）
 - **WorkflowCanvas 节点尺寸标准化**：节点尺寸/间距统一规范（`WorkflowCanvas.tsx`）

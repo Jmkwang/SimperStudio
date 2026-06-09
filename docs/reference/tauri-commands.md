@@ -91,12 +91,15 @@ CREATE TABLE agents (
     system_prompt TEXT NOT NULL,
     model_provider TEXT NOT NULL,
     model_id TEXT NOT NULL,
+    provider_id TEXT,           -- 注：通过 ALTER 迁移添加，多 provider 路由
     temperature REAL NOT NULL,
     max_tokens INTEGER,
-    api_key TEXT,
-    base_url TEXT,
     parameters TEXT NOT NULL,   -- JSON
     industry TEXT,
+    role TEXT DEFAULT 'assistant',      -- 注：通过 ALTER 迁移添加
+    type TEXT DEFAULT 'custom',         -- 注：通过 ALTER 迁移添加
+    isActive INTEGER DEFAULT 1,         -- 注：通过 ALTER 迁移添加
+    category TEXT DEFAULT '',           -- 注：通过 ALTER 迁移添加
     created_at INTEGER NOT NULL
 );
 

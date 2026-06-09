@@ -88,10 +88,6 @@
 
 ## 🟢 P3 — 代码质量遗留
 
-### 类型与数据模型
-- [ ] **Agent 废弃字段清理**：`Agent.modelProvider` / `apiKey` / `baseUrl` 仍被 `baseSlice.ts` migration 使用，迁移逻辑稳定后可删除（含 db.rs 表字段移除）
-- [ ] **Settings 旧版字段清理**：13 个旧字段仍被 `api.ts` fallback 路径使用，移除 fallback 后再删
-
 ### 文案
 - [x] 测试全部模型对话框 `{t('models in total,')}` 文案不自然
 - [x] 新建服务商默认模型硬编码 `gpt-4o`：对 Anthropic/Gemini/DeepSeek 服务商需手动删除再添加

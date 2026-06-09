@@ -264,6 +264,18 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         avatar: '/avatars/writer.svg',
         systemPrompt: '你是一位专业的商业报告撰写专家。你会收到上游分析师提供的竞品分析 raw data。\n你的任务是将这些 raw data 转化为一份结构化的 Markdown 竞品分析报告，包含：\n- 执行摘要\n- 市场概况\n- 竞品对比表\n- SWOT 分析\n- 战略建议\n- 附录（数据来源说明）\n\n报告风格：专业、简洁、数据驱动。使用 Markdown 格式。',
         modelProvider: 'local', modelId: 'default', temperature: 0.7, parameters: {}, createdAt: Date.now(), industry: 'General'
+      },
+      {
+        id: 'agent-gift-planner', name: '礼物策划师',
+        avatar: '/avatars/gift.svg',
+        systemPrompt: '你是一位精通送礼艺术的礼物策划师。你擅长根据收礼人的性格、爱好和场合，推荐既有心意又有创意的礼物。你的推荐注重实用性和惊喜感的平衡，每个推荐都附带简短的推荐理由。输出格式：用编号列表给出 3-5 个礼物选项，每个选项包含名称、价格区间和推荐理由。',
+        modelProvider: 'local', modelId: 'default', temperature: 0.85, parameters: {}, createdAt: Date.now(), industry: 'General'
+      },
+      {
+        id: 'agent-gift-evaluator', name: '礼物评估师',
+        avatar: '/avatars/evaluator.svg',
+        systemPrompt: '你是一位理性的礼物评估师。你会从性价比、独特性、情感价值和实用性四个维度评估礼物选项，帮助用户做出最佳选择。你的分析简洁有力，结论明确。输出格式：先给出各选项的评分表（1-5分），然后推荐最佳选择并说明理由。',
+        modelProvider: 'local', modelId: 'default', temperature: 0.6, parameters: {}, createdAt: Date.now(), industry: 'General'
       }
     ],
 

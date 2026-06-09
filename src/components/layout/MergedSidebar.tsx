@@ -5,6 +5,9 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { DebugBadge } from '@/components/debug/DebugBadge'
 import { Moon, Settings, Sun, Zap, Plus, Bot, FileText, MessageSquare, Workflow, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
+import { toast } from 'sonner'
 
 type Mode = 'agent' | 'workflow'
 type WorkflowViewMode = 'grouped' | 'flat'
@@ -159,7 +162,7 @@ export function MergedSidebar() {
   const ThemeIcon = theme === 'dark' ? Moon : Sun
 
   // Export a session as JSON
-  const handleExportSession = (sessionId: string) => {
+  const handleExportSession = async (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId)
     if (!session) return
     const data = {
@@ -185,13 +188,21 @@ export function MergedSidebar() {
         })),
       })),
     }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${session.title.replace(/[/\\?%*:|"<>]/g, '-') || 'session'}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    const json = JSON.stringify(data, null, 2)
+    const defaultName = `${session.title.replace(/[/\\?%*:|"<>]/g, '-') || 'session'}.json`
+    try {
+      const filePath = await save({
+        defaultPath: defaultName,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      })
+      if (filePath) {
+        await writeTextFile(filePath, json)
+        toast.success(t('Session exported'))
+      }
+    } catch (err) {
+      console.error('Export session failed:', err)
+      toast.error(t('Export failed'))
+    }
     setMenuItemId(null)
   }
 

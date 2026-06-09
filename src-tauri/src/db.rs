@@ -50,10 +50,6 @@ pub struct Agent {
     pub temperature: f64,
     #[serde(default)]
     pub max_tokens: Option<i64>,
-    #[serde(default)]
-    pub api_key: Option<String>,
-    #[serde(default)]
-    pub base_url: Option<String>,
     pub parameters: String,
     #[serde(default)]
     pub industry: Option<String>,
@@ -211,7 +207,7 @@ pub fn init_db() -> Result<Connection> {
 #[tauri::command]
 pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
     let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id, role, type, isActive, category FROM agents").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, parameters, industry, created_at, provider_id, role, type, isActive, category FROM agents").map_err(|e| e.to_string())?;
     let agent_iter = stmt.query_map([], |row| {
         Ok(Agent {
             id: row.get(0)?,
@@ -223,16 +219,14 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
             model_id: row.get(6)?,
             temperature: row.get(7)?,
             max_tokens: row.get(8)?,
-            api_key: row.get(9)?,
-            base_url: row.get(10)?,
-            parameters: row.get(11)?,
-            industry: row.get(12)?,
-            created_at: row.get(13)?,
-            provider_id: row.get(14)?,
-            role: row.get(15)?,
-            r#type: row.get(16)?,
-            is_active: row.get::<_, i32>(17).map(|v| v != 0)?,
-            category: row.get(18)?,
+            parameters: row.get(9)?,
+            industry: row.get(10)?,
+            created_at: row.get(11)?,
+            provider_id: row.get(12)?,
+            role: row.get(13)?,
+            r#type: row.get(14)?,
+            is_active: row.get::<_, i32>(15).map(|v| v != 0)?,
+            category: row.get(16)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -247,8 +241,8 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
 pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, api_key, base_url, parameters, industry, created_at, provider_id, role, type, isActive, category) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)",
-        rusqlite::params![&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.created_at, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category]
+        "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, parameters, industry, created_at, provider_id, role, type, isActive, category) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+        rusqlite::params![&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.parameters, &agent.industry, &agent.created_at, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category]
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -257,8 +251,8 @@ pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), Strin
 pub fn update_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
     let conn = state.conn.lock().unwrap();
     conn.execute(
-        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, api_key = ?9, base_url = ?10, parameters = ?11, industry = ?12, provider_id = ?13, role = ?14, type = ?15, isActive = ?16, category = ?17 WHERE id = ?18",
-        rusqlite::params![&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.api_key, &agent.base_url, &agent.parameters, &agent.industry, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category, &agent.id]
+        "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, parameters = ?9, industry = ?10, provider_id = ?11, role = ?12, type = ?13, isActive = ?14, category = ?15 WHERE id = ?16",
+        rusqlite::params![&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.parameters, &agent.industry, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category, &agent.id]
     ).map_err(|e| e.to_string())?;
     Ok(())
 }

@@ -6,7 +6,7 @@ import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { DebugBadge } from '@/components/debug/DebugBadge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
-import { fetchFromModel } from "@/lib/api";
+import { fetchFromProvider } from '@/lib/api';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -47,11 +47,15 @@ export function PromptGenerator() {
       const activeProvider = settings.activeProviderId
         ? settings.providers.find(p => p.id === settings.activeProviderId)
         : settings.providers.find(p => p.isEnabled);
-      const defaultModel = activeProvider?.models.find(m => m.isDefault) || activeProvider?.models[0];
-      const providerToUse = activeProvider ? activeProvider.type : (settings.apiProvider === 'custom' ? 'custom' : 'openai');
-      const modelToUse = activeProvider ? (defaultModel?.modelId || '') : (settings.apiProvider === 'custom' ? settings.customModelId : '');
+      if (!activeProvider) {
+        throw new Error('No active provider configured. Please set up a provider in Settings > Models.');
+      }
+      const defaultModel = activeProvider.models.find(m => m.isDefault) || activeProvider.models[0];
+      if (!defaultModel) {
+        throw new Error('No model configured for the active provider. Please add a model in Settings > Models.');
+      }
 
-      const { textStream } = await fetchFromModel(providerToUse, modelToUse || '', userMessage, settings, metaPrompt);
+      const { textStream } = await fetchFromProvider(activeProvider, defaultModel.modelId, userMessage, metaPrompt);
       
       let fullText = '';
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
