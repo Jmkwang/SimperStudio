@@ -1,5 +1,5 @@
 use rusqlite::{Connection, Result};
-use std::sync::Mutex;
+use parking_lot::Mutex;
 use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
@@ -21,6 +21,14 @@ fn ensure_app_dir() {
 
 pub struct DbState {
     pub conn: Mutex<Connection>,
+}
+
+impl DbState {
+    pub fn new(conn: Connection) -> Self {
+        Self {
+            conn: Mutex::new(conn),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -139,8 +147,11 @@ pub fn init_db() -> Result<Connection> {
 
         -- High-frequency query indexes
         CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_session_timestamp ON chat_messages(session_id, timestamp);
         CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
         CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(isActive);
         "
     )?;
 
@@ -164,21 +175,27 @@ pub fn init_db() -> Result<Connection> {
         conn.execute("ALTER TABLE agents ADD COLUMN provider_id TEXT", [])?;
     }
 
-    // Migrate agent fields: role, type, isActive, category
-    for (col, default) in [
-        ("role", "TEXT DEFAULT 'assistant'"),
-        ("type", "TEXT DEFAULT 'custom'"),
-        ("isActive", "INTEGER DEFAULT 1"),
-        ("category", "TEXT DEFAULT ''"),
-    ] {
-        let has_col = conn
-            .prepare("PRAGMA table_info(agents)")?
-            .query_map([], |row| row.get::<_, String>(1))?
-            .filter_map(Result::ok)
-            .any(|name| name == col);
-        if !has_col {
-            conn.execute(&format!("ALTER TABLE agents ADD COLUMN {} {}", col, default), [])?;
-        }
+    // Migrate agent fields: role, type, isActive, category, workspace_id
+    let agent_cols: Vec<String> = conn
+        .prepare("PRAGMA table_info(agents)")?
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(Result::ok)
+        .collect();
+
+    if !agent_cols.contains(&"role".to_string()) {
+        conn.execute("ALTER TABLE agents ADD COLUMN role TEXT DEFAULT 'assistant'", [])?;
+    }
+    if !agent_cols.contains(&"type".to_string()) {
+        conn.execute("ALTER TABLE agents ADD COLUMN type TEXT DEFAULT 'custom'", [])?;
+    }
+    if !agent_cols.contains(&"isActive".to_string()) {
+        conn.execute("ALTER TABLE agents ADD COLUMN isActive INTEGER DEFAULT 1", [])?;
+    }
+    if !agent_cols.contains(&"category".to_string()) {
+        conn.execute("ALTER TABLE agents ADD COLUMN category TEXT DEFAULT ''", [])?;
+    }
+    if !agent_cols.contains(&"workspace_id".to_string()) {
+        conn.execute("ALTER TABLE agents ADD COLUMN workspace_id TEXT", [])?;
     }
 
     let has_agent_responses = conn
@@ -204,10 +221,100 @@ pub fn init_db() -> Result<Connection> {
     Ok(conn)
 }
 
+pub fn init_memory_db() -> Result<Connection> {
+    let conn = Connection::open_in_memory()?;
+    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
+
+    conn.execute_batch(
+        "
+        CREATE TABLE IF NOT EXISTS workspaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS agents (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            avatar TEXT,
+            system_prompt TEXT NOT NULL,
+            model_provider TEXT NOT NULL,
+            model_id TEXT NOT NULL,
+            provider_id TEXT,
+            temperature REAL NOT NULL,
+            max_tokens INTEGER,
+            api_key TEXT,
+            base_url TEXT,
+            parameters TEXT NOT NULL,
+            industry TEXT,
+            role TEXT DEFAULT 'assistant',
+            type TEXT DEFAULT 'custom',
+            isActive INTEGER DEFAULT 1,
+            category TEXT DEFAULT '',
+            workspace_id TEXT,
+            created_at INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            workflow_id TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp INTEGER NOT NULL,
+            agent_responses TEXT,
+            meta TEXT,
+            FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS workflows (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            nodes_data TEXT NOT NULL,
+            edges_data TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_session_timestamp ON chat_messages(session_id, timestamp);
+        CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(isActive);
+        "
+    )?;
+
+    Ok(conn)
+}
+
 #[tauri::command]
-pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
-    let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, parameters, industry, created_at, provider_id, role, type, isActive, category FROM agents").map_err(|e| e.to_string())?;
+pub fn get_agents(limit: Option<usize>, offset: Option<usize>, state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
+    let conn = state.conn.lock();
+    let mut sql = "SELECT id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, parameters, industry, created_at, provider_id, role, type, isActive, category FROM agents".to_string();
+    if limit.is_some() || offset.is_some() {
+        let l = limit.unwrap_or(1000);
+        sql.push_str(&format!(" LIMIT {}", l));
+        if let Some(o) = offset {
+            sql.push_str(&format!(" OFFSET {}", o));
+        }
+    }
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
     let agent_iter = stmt.query_map([], |row| {
         Ok(Agent {
             id: row.get(0)?,
@@ -239,7 +346,7 @@ pub fn get_agents(state: tauri::State<DbState>) -> Result<Vec<Agent>, String> {
 
 #[tauri::command]
 pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "INSERT INTO agents (id, name, description, avatar, system_prompt, model_provider, model_id, temperature, max_tokens, parameters, industry, created_at, provider_id, role, type, isActive, category) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
         rusqlite::params![&agent.id, &agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.parameters, &agent.industry, &agent.created_at, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category]
@@ -249,7 +356,7 @@ pub fn add_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), Strin
 
 #[tauri::command]
 pub fn update_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "UPDATE agents SET name = ?1, description = ?2, avatar = ?3, system_prompt = ?4, model_provider = ?5, model_id = ?6, temperature = ?7, max_tokens = ?8, parameters = ?9, industry = ?10, provider_id = ?11, role = ?12, type = ?13, isActive = ?14, category = ?15 WHERE id = ?16",
         rusqlite::params![&agent.name, &agent.description, &agent.avatar, &agent.system_prompt, &agent.model_provider, &agent.model_id, &agent.temperature, &agent.max_tokens, &agent.parameters, &agent.industry, &agent.provider_id, &agent.role, &agent.r#type, &agent.is_active, &agent.category, &agent.id]
@@ -259,15 +366,23 @@ pub fn update_agent(agent: Agent, state: tauri::State<DbState>) -> Result<(), St
 
 #[tauri::command]
 pub fn delete_agent(id: String, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute("DELETE FROM agents WHERE id = ?1", [&id]).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_workspaces(state: tauri::State<DbState>) -> Result<Vec<Workspace>, String> {
-    let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, name, description, created_at, updated_at FROM workspaces").map_err(|e| e.to_string())?;
+pub fn get_workspaces(limit: Option<usize>, offset: Option<usize>, state: tauri::State<DbState>) -> Result<Vec<Workspace>, String> {
+    let conn = state.conn.lock();
+    let mut sql = "SELECT id, name, description, created_at, updated_at FROM workspaces".to_string();
+    if limit.is_some() || offset.is_some() {
+        let l = limit.unwrap_or(1000);
+        sql.push_str(&format!(" LIMIT {}", l));
+        if let Some(o) = offset {
+            sql.push_str(&format!(" OFFSET {}", o));
+        }
+    }
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
     let iter = stmt.query_map([], |row| {
         Ok(Workspace {
             id: row.get(0)?,
@@ -287,7 +402,7 @@ pub fn get_workspaces(state: tauri::State<DbState>) -> Result<Vec<Workspace>, St
 
 #[tauri::command]
 pub fn add_workspace(workspace: Workspace, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "INSERT INTO workspaces (id, name, description, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
         (&workspace.id, &workspace.name, &workspace.description, &workspace.created_at, &workspace.updated_at)
@@ -297,7 +412,7 @@ pub fn add_workspace(workspace: Workspace, state: tauri::State<DbState>) -> Resu
 
 #[tauri::command]
 pub fn update_workspace(workspace: Workspace, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "UPDATE workspaces SET name = ?1, description = ?2, updated_at = ?3 WHERE id = ?4",
         (&workspace.name, &workspace.description, &workspace.updated_at, &workspace.id)
@@ -307,7 +422,7 @@ pub fn update_workspace(workspace: Workspace, state: tauri::State<DbState>) -> R
 
 #[tauri::command]
 pub fn delete_workspace(id: String, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute("DELETE FROM workspaces WHERE id = ?1", [&id]).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -324,9 +439,17 @@ pub struct ChatSession {
 }
 
 #[tauri::command]
-pub fn get_chat_sessions(workspace_id: String, state: tauri::State<DbState>) -> Result<Vec<ChatSession>, String> {
-    let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, workspace_id, title, workflow_id, created_at, updated_at FROM chat_sessions WHERE workspace_id = ?1").map_err(|e| e.to_string())?;
+pub fn get_chat_sessions(workspace_id: String, limit: Option<usize>, offset: Option<usize>, state: tauri::State<DbState>) -> Result<Vec<ChatSession>, String> {
+    let conn = state.conn.lock();
+    let mut sql = "SELECT id, workspace_id, title, workflow_id, created_at, updated_at FROM chat_sessions WHERE workspace_id = ?1".to_string();
+    if limit.is_some() || offset.is_some() {
+        let l = limit.unwrap_or(1000);
+        sql.push_str(&format!(" LIMIT {}", l));
+        if let Some(o) = offset {
+            sql.push_str(&format!(" OFFSET {}", o));
+        }
+    }
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
     let iter = stmt.query_map([&workspace_id], |row| {
         Ok(ChatSession {
             id: row.get(0)?,
@@ -347,7 +470,7 @@ pub fn get_chat_sessions(workspace_id: String, state: tauri::State<DbState>) -> 
 
 #[tauri::command]
 pub fn add_chat_session(session: ChatSession, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "INSERT INTO chat_sessions (id, workspace_id, title, workflow_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         (&session.id, &session.workspace_id, &session.title, &session.workflow_id, &session.created_at, &session.updated_at)
@@ -357,7 +480,7 @@ pub fn add_chat_session(session: ChatSession, state: tauri::State<DbState>) -> R
 
 #[tauri::command]
 pub fn update_chat_session(session: ChatSession, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "UPDATE chat_sessions SET title = ?1, workflow_id = ?2, updated_at = ?3 WHERE id = ?4",
         (&session.title, &session.workflow_id, &session.updated_at, &session.id)
@@ -367,7 +490,7 @@ pub fn update_chat_session(session: ChatSession, state: tauri::State<DbState>) -
 
 #[tauri::command]
 pub fn delete_chat_session(id: String, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute("DELETE FROM chat_sessions WHERE id = ?1", [&id]).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -387,9 +510,11 @@ pub struct ChatMessage {
 }
 
 #[tauri::command]
-pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Result<Vec<ChatMessage>, String> {
-    let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, session_id, role, content, timestamp, agent_responses, meta FROM chat_messages WHERE session_id = ?1 ORDER BY timestamp ASC").map_err(|e| e.to_string())?;
+pub fn get_chat_messages(session_id: String, limit: Option<usize>, offset: Option<usize>, state: tauri::State<DbState>) -> Result<Vec<ChatMessage>, String> {
+    let conn = state.conn.lock();
+    let l = limit.unwrap_or(50);
+    let o = offset.unwrap_or(0);
+    let mut stmt = conn.prepare(&format!("SELECT id, session_id, role, content, timestamp, agent_responses, meta FROM chat_messages WHERE session_id = ?1 ORDER BY timestamp ASC LIMIT {} OFFSET {}", l, o)).map_err(|e| e.to_string())?;
     let iter = stmt.query_map([&session_id], |row| {
         Ok(ChatMessage {
             id: row.get(0)?,
@@ -411,7 +536,7 @@ pub fn get_chat_messages(session_id: String, state: tauri::State<DbState>) -> Re
 
 #[tauri::command]
 pub fn add_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "INSERT INTO chat_messages (id, session_id, role, content, timestamp, agent_responses, meta) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         (&message.id, &message.session_id, &message.role, &message.content, &message.timestamp, &message.agent_responses, &message.meta)
@@ -421,7 +546,7 @@ pub fn add_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> R
 
 #[tauri::command]
 pub fn update_chat_message(message: ChatMessage, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "UPDATE chat_messages SET content = ?1, agent_responses = ?2, meta = ?3 WHERE id = ?4",
         (&message.content, &message.agent_responses, &message.meta, &message.id)
@@ -431,7 +556,7 @@ pub fn update_chat_message(message: ChatMessage, state: tauri::State<DbState>) -
 
 #[tauri::command]
 pub fn delete_chat_message(id: String, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute("DELETE FROM chat_messages WHERE id = ?1", [&id]).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -450,9 +575,17 @@ pub struct Workflow {
 }
 
 #[tauri::command]
-pub fn get_workflows(workspace_id: String, state: tauri::State<DbState>) -> Result<Vec<Workflow>, String> {
-    let conn = state.conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, workspace_id, name, nodes_data, edges_data, status, created_at, updated_at FROM workflows WHERE workspace_id = ?1").map_err(|e| e.to_string())?;
+pub fn get_workflows(workspace_id: String, limit: Option<usize>, offset: Option<usize>, state: tauri::State<DbState>) -> Result<Vec<Workflow>, String> {
+    let conn = state.conn.lock();
+    let mut sql = "SELECT id, workspace_id, name, nodes_data, edges_data, status, created_at, updated_at FROM workflows WHERE workspace_id = ?1".to_string();
+    if limit.is_some() || offset.is_some() {
+        let l = limit.unwrap_or(1000);
+        sql.push_str(&format!(" LIMIT {}", l));
+        if let Some(o) = offset {
+            sql.push_str(&format!(" OFFSET {}", o));
+        }
+    }
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
     let iter = stmt.query_map([&workspace_id], |row| {
         Ok(Workflow {
             id: row.get(0)?,
@@ -475,7 +608,7 @@ pub fn get_workflows(workspace_id: String, state: tauri::State<DbState>) -> Resu
 
 #[tauri::command]
 pub fn add_workflow(workflow: Workflow, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "INSERT INTO workflows (id, workspace_id, name, nodes_data, edges_data, status, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         (&workflow.id, &workflow.workspace_id, &workflow.name, &workflow.nodes_data, &workflow.edges_data, &workflow.status, &workflow.created_at, &workflow.updated_at)
@@ -485,7 +618,7 @@ pub fn add_workflow(workflow: Workflow, state: tauri::State<DbState>) -> Result<
 
 #[tauri::command]
 pub fn update_workflow(workflow: Workflow, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute(
         "UPDATE workflows SET name = ?1, nodes_data = ?2, edges_data = ?3, status = ?4, updated_at = ?5 WHERE id = ?6",
         (&workflow.name, &workflow.nodes_data, &workflow.edges_data, &workflow.status, &workflow.updated_at, &workflow.id)
@@ -495,13 +628,17 @@ pub fn update_workflow(workflow: Workflow, state: tauri::State<DbState>) -> Resu
 
 #[tauri::command]
 pub fn delete_workflow(id: String, state: tauri::State<DbState>) -> Result<(), String> {
-    let conn = state.conn.lock().unwrap();
+    let conn = state.conn.lock();
     conn.execute("DELETE FROM workflows WHERE id = ?1", [&id]).map_err(|e| e.to_string())?;
     Ok(())
 }
 
+// Static lock for config file operations (commands do not take DbState)
+static CONFIG_LOCK: Mutex<()> = Mutex::new(());
+
 #[tauri::command]
 pub fn read_json_config(name: String) -> Result<String, String> {
+    let _guard = CONFIG_LOCK.lock();
     let path = config_path();
     if !path.exists() {
         return Ok(String::new());
@@ -517,6 +654,7 @@ pub fn read_json_config(name: String) -> Result<String, String> {
 
 #[tauri::command]
 pub fn write_json_config(name: String, value: String) -> Result<(), String> {
+    let _guard = CONFIG_LOCK.lock();
     let path = config_path();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -530,7 +668,11 @@ pub fn write_json_config(name: String, value: String) -> Result<(), String> {
     };
     all[&name] = val;
     let pretty = serde_json::to_string_pretty(&all).map_err(|e| e.to_string())?;
-    fs::write(path, pretty).map_err(|e| e.to_string())
+
+    // Atomic write: write to temp file, then rename
+    let tmp_path = path.with_extension("tmp");
+    fs::write(&tmp_path, pretty).map_err(|e| e.to_string())?;
+    fs::rename(&tmp_path, &path).map_err(|e| e.to_string())
 }
 
 fn config_path() -> PathBuf {

@@ -1,12 +1,35 @@
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 use std::time::Instant;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use log::{info, warn, error};
+
+// ---------------------------------------------------------------------------
+// Security: allowed executables whitelist
+// ---------------------------------------------------------------------------
+
+const ALLOWED_EXECUTABLES: &[&str] = &[
+    "npx", "npm", "node", "python", "python3", "cargo", "git", "docker",
+    "pnpm", "yarn", "bun", "rustup", "rustc", "go", "dotnet", "mvn", "gradle",
+];
+
+const ALLOWED_ENV_PREFIXES: &[&str] = &["SIMPER_"];
+const ALLOWED_ENV_EXACT: &[&str] = &[
+    "NODE_ENV", "HOME", "USERPROFILE", "HOMEDRIVE", "HOMEPATH",
+    "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "XDG_CONFIG_HOME",
+    "RUST_LOG", "RUST_BACKTRACE", "CI", "TERM", "COLORTERM",
+];
+
+const FORBIDDEN_ENV_VARS: &[&str] = &[
+    "PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES",
+    "DYLD_LIBRARY_PATH", "DYLD_FRAMEWORK_PATH", "DYLD_FALLBACK_LIBRARY_PATH",
+    "CLASSPATH", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "PYTHONPATH",
+    "NODE_OPTIONS", "ENV", "BASH_ENV", "PROMPT_COMMAND", "PS4",
+];
 
 // ---------------------------------------------------------------------------
 // State: execution IDs of active CLI processes (for kill lookup via PID)
@@ -73,6 +96,56 @@ pub struct FileSnapshot {
 }
 
 // ---------------------------------------------------------------------------
+// Validation helpers
+// ---------------------------------------------------------------------------
+
+fn validate_executable(executable: &str) -> Result<(), String> {
+    let path = Path::new(executable);
+    let file_name = path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(executable);
+
+    // Strip .exe extension on Windows for whitelist check
+    #[cfg(target_os = "windows")]
+    let base_name = file_name.strip_suffix(".exe").unwrap_or(file_name);
+    #[cfg(not(target_os = "windows"))]
+    let base_name = file_name;
+
+    let is_whitelisted = ALLOWED_EXECUTABLES.iter().any(|&allowed| allowed.eq_ignore_ascii_case(base_name));
+    if !is_whitelisted {
+        return Err(format!("Executable '{}' is not in the allowed whitelist", executable));
+    }
+
+    if path.is_absolute() {
+        if !path.exists() {
+            return Err(format!("Executable does not exist: {}", executable));
+        }
+        if !path.is_file() {
+            return Err(format!("Executable is not a file: {}", executable));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_and_filter_env_vars(env: &HashMap<String, String>) -> Result<HashMap<String, String>, String> {
+    let mut filtered = HashMap::new();
+    for (k, v) in env {
+        let upper = k.to_uppercase();
+        if FORBIDDEN_ENV_VARS.contains(&upper.as_str()) {
+            return Err(format!("Environment variable '{}' is forbidden", k));
+        }
+        let is_allowed = ALLOWED_ENV_PREFIXES.iter().any(|prefix| upper.starts_with(prefix))
+            || ALLOWED_ENV_EXACT.iter().any(|&exact| exact == upper);
+        if !is_allowed {
+            return Err(format!("Environment variable '{}' is not allowed. Only SIMPER_* prefix or known safe variables are permitted", k));
+        }
+        filtered.insert(k.clone(), v.clone());
+    }
+    Ok(filtered)
+}
+
+// ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
 
@@ -91,6 +164,9 @@ pub async fn spawn_cli_agent(
     let exec_id = request.execution_id.clone();
     info!("[CLI] Spawning agent: {} (exec_id: {})", request.executable, exec_id);
 
+    // Validate executable against whitelist
+    validate_executable(&request.executable)?;
+
     // Build command (no shell — direct exec)
     let mut cmd = Command::new(&request.executable);
     cmd.args(&request.args);
@@ -101,12 +177,16 @@ pub async fn spawn_cli_agent(
         if !path.exists() {
             return Err(format!("Working directory does not exist: {}", wd));
         }
+        if !path.is_dir() {
+            return Err(format!("Working directory is not a directory: {}", wd));
+        }
         cmd.current_dir(wd);
     }
 
-    // Environment variables
+    // Environment variables (filtered)
     if let Some(ref env) = request.env_vars {
-        for (k, v) in env {
+        let filtered = validate_and_filter_env_vars(env)?;
+        for (k, v) in filtered {
             cmd.env(k, v);
         }
     }
@@ -135,16 +215,19 @@ pub async fn spawn_cli_agent(
     if let Some(ref input) = request.stdin_input {
         if let Some(ref mut stdin) = child.stdin {
             use tokio::io::AsyncWriteExt;
-            let _ = stdin.write_all(input.as_bytes()).await;
-            let _ = stdin.shutdown().await;
+            if let Err(e) = stdin.write_all(input.as_bytes()).await {
+                warn!("[CLI] Failed to write stdin for {}: {}", exec_id, e);
+            }
+            if let Err(e) = stdin.shutdown().await {
+                warn!("[CLI] Failed to shutdown stdin for {}: {}", exec_id, e);
+            }
         }
     }
 
     // Register PID for kill support
     if let Some(pid) = child.id() {
-        if let Ok(mut pids) = registry.pids.lock() {
-            pids.insert(exec_id.clone(), pid);
-        }
+        let mut pids = registry.pids.lock().await;
+        pids.insert(exec_id.clone(), pid);
     }
 
     // Take stdout/stderr before any long-lived await
@@ -189,27 +272,45 @@ pub async fn spawn_cli_agent(
     // Apply timeout and wait for exit
     let timeout_ms = request.timeout_ms.unwrap_or(300_000); // 5 min default
 
-    let exit_result: Result<Option<i32>, String> = {
-        let wait = child.wait();
-        match tokio::time::timeout(std::time::Duration::from_millis(timeout_ms), wait).await {
-            Ok(Ok(status)) => Ok(status.code()),
-            Ok(Err(e)) => Err(format!("Process wait error: {}", e)),
-            Err(_) => Err("Process timed out".to_string()),
-        }
-    };
+    let wait_result = tokio::time::timeout(
+        std::time::Duration::from_millis(timeout_ms),
+        child.wait()
+    ).await;
 
-    // Wait for stdout/stderr readers to finish
+    let timed_out = wait_result.is_err();
+
+    if timed_out {
+        warn!("[CLI] Agent {} timed out after {}ms, killing...", exec_id, timeout_ms);
+        if let Err(e) = child.kill().await {
+            error!("[CLI] Failed to kill timed-out agent {}: {}", exec_id, e);
+        }
+        // Abort output readers to prevent hanging on closed pipes
+        stdout_handle.abort();
+        stderr_handle.abort();
+        // Remove PID from registry
+        let mut pids = registry.pids.lock().await;
+        pids.remove(&exec_id);
+    }
+
+    // Wait for stdout/stderr readers to finish (or be aborted)
     let _ = stdout_handle.await;
     let _ = stderr_handle.await;
 
     let duration_ms = start.elapsed().as_millis() as u64;
 
-    // Remove PID from registry
-    if let Ok(mut pids) = registry.pids.lock() {
+    // Remove PID from registry (if not already removed by timeout handler)
+    if !timed_out {
+        let mut pids = registry.pids.lock().await;
         pids.remove(&exec_id);
     }
 
     // Emit exit event
+    let exit_result = match wait_result {
+        Ok(Ok(status)) => Ok(status.code()),
+        Ok(Err(e)) => Err(format!("Process wait error: {}", e)),
+        Err(_) => Err("Process timed out".to_string()),
+    };
+
     match exit_result {
         Ok(exit_code) => {
             let success = exit_code.map_or(false, |c| c == 0);
@@ -250,7 +351,7 @@ pub async fn kill_cli_agent(
     execution_id: String,
 ) -> Result<(), String> {
     let pid = {
-        let pids = registry.pids.lock().map_err(|e| e.to_string())?;
+        let pids = registry.pids.lock().await;
         pids.get(&execution_id).copied()
     };
 
@@ -259,18 +360,36 @@ pub async fn kill_cli_agent(
         #[cfg(target_os = "windows")]
         {
             use std::process::Command as StdCommand;
-            let _ = StdCommand::new("taskkill")
-                .args(["/F", "/PID", &pid.to_string()])
+            let output = StdCommand::new("taskkill")
+                .args(["/F", "/T", "/PID", &pid.to_string()])
                 .output();
+            match output {
+                Ok(out) if out.status.success() => {
+                    info!("[CLI] Killed process tree for PID {} (execution_id: {})", pid, execution_id);
+                }
+                Ok(out) => {
+                    let stderr = String::from_utf8_lossy(&out.stderr);
+                    warn!("[CLI] taskkill exited with error for PID {}: {}", pid, stderr);
+                }
+                Err(e) => {
+                    error!("[CLI] Failed to execute taskkill for PID {}: {}", pid, e);
+                }
+            }
         }
         #[cfg(not(target_os = "windows"))]
         {
-            // SAFETY: We're sending SIGKILL to a process we own.
-            unsafe { libc::kill(pid as i32, libc::SIGKILL); }
+            let result = unsafe { libc::kill(pid as i32, libc::SIGKILL) };
+            if result != 0 {
+                let err = std::io::Error::last_os_error();
+                error!("[CLI] Failed to kill PID {} (execution_id: {}): {}", pid, execution_id, err);
+            } else {
+                info!("[CLI] Killed PID {} (execution_id: {})", pid, execution_id);
+            }
         }
 
         // Remove from registry
-        if let Ok(mut pids) = registry.pids.lock() {
+        {
+            let mut pids = registry.pids.lock().await;
             pids.remove(&execution_id);
         }
 
@@ -347,18 +466,35 @@ fn collect_file_snapshots(
 
 /// Cleanup: kill all active processes (called on app exit).
 pub fn kill_all_processes(registry: &CliProcessRegistry) {
-    if let Ok(mut pids) = registry.pids.lock() {
-        for (_, pid) in pids.drain() {
-            #[cfg(target_os = "windows")]
-            {
-                use std::process::Command as StdCommand;
-                let _ = StdCommand::new("taskkill")
-                    .args(["/F", "/PID", &pid.to_string()])
-                    .output();
+    let mut pids = registry.pids.blocking_lock();
+    for (exec_id, pid) in pids.drain() {
+        #[cfg(target_os = "windows")]
+        {
+            use std::process::Command as StdCommand;
+            let output = StdCommand::new("taskkill")
+                .args(["/F", "/T", "/PID", &pid.to_string()])
+                .output();
+            match output {
+                Ok(out) if out.status.success() => {
+                    info!("[CLI] Killed process tree for PID {} (execution_id: {})", pid, exec_id);
+                }
+                Ok(out) => {
+                    let stderr = String::from_utf8_lossy(&out.stderr);
+                    warn!("[CLI] taskkill exited with error for PID {}: {}", pid, stderr);
+                }
+                Err(e) => {
+                    error!("[CLI] Failed to execute taskkill for PID {}: {}", pid, e);
+                }
             }
-            #[cfg(not(target_os = "windows"))]
-            {
-                unsafe { libc::kill(pid as i32, libc::SIGKILL); }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            let result = unsafe { libc::kill(pid as i32, libc::SIGKILL) };
+            if result != 0 {
+                let err = std::io::Error::last_os_error();
+                error!("[CLI] Failed to kill PID {} (execution_id: {}): {}", pid, exec_id, err);
+            } else {
+                info!("[CLI] Killed PID {} (execution_id: {})", pid, exec_id);
             }
         }
     }

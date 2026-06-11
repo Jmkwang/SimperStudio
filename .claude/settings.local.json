@@ -135,7 +135,8 @@
       "Bash(npx -y serve prototype -p 3333)",
       "Bash(npx serve *)",
       "Bash(git *)",
-      "Bash(npm *)"
+      "Bash(npm *)",
+      "Bash(dir *.md)"
     ]
   }
 }

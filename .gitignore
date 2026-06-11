@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Build outputs
 dist/
@@ -9,7 +8,6 @@ dist-ssr/
 
 # Tauri
 src-tauri/target/
-src-tauri/Cargo.lock
 src-tauri/bundle/
 src-tauri/gen/
 src-tauri/.cargo/

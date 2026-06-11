@@ -410,19 +410,31 @@ export function AgentsView() {
                 </div>
                 <div className="grid gap-2">
                   <Label>{t("Industry")}</Label>
-                  <Select
-                    value={formData.industry || 'General'}
-                    onValueChange={(val) => setFormData({ ...formData, industry: val })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("Select Industry")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {existingCategories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.industry || 'General'}
+                      onValueChange={(val) => {
+                        if (val === '__custom__') return;
+                        setFormData({ ...formData, industry: val });
+                      }}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder={t("Select Industry")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {existingCategories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                        <SelectItem value="__custom__">{t("Custom...")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input
+                    value={formData.industry || ''}
+                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                    placeholder={t("Or type custom category...")}
+                    className="text-sm"
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="systemPrompt">{t("System Prompt")}</Label>
