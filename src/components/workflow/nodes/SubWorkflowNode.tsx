@@ -17,7 +17,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
   const workflows = useAppStore(state => state.workflows);
   const [isOpen, setIsOpen] = useState(false);
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Sub-workflow'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Sub-workflow')));
   const [subWorkflowId, setSubWorkflowId] = useState(data.subWorkflowId || '');
   const [inputMapping, setInputMapping] = useState(data.inputMapping || '');
 
@@ -44,13 +44,13 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
             <Workflow className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Sub-workflow'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{selectedWorkflow?.name || 'Not configured'}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Sub-workflow')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{selectedWorkflow?.name || t('Not configured')}</p>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure sub-workflow node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure sub-workflow node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -66,11 +66,11 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>{t("Target Workflow")}</Label>
+                <Label>{t('Target Workflow')}</Label>
                 <Select value={subWorkflowId || '__none__'} onValueChange={(v) => setSubWorkflowId(v === '__none__' ? '' : v)}>
-                  <SelectTrigger><SelectValue placeholder="Select a workflow" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('Select a workflow')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">Select a workflow</SelectItem>
+                    <SelectItem value="__none__">{t('Select a workflow')}</SelectItem>
                     {workflows.filter(w => w.id !== id).map(w => (
                       <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                     ))}
@@ -78,7 +78,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label>Input Mapping (JS expression, return payload for sub-workflow)</Label>
+                <Label>{t('Input Mapping (JS expression, return payload for sub-workflow)')}</Label>
                 <Textarea value={inputMapping} onChange={(e) => setInputMapping(e.target.value)} placeholder="return { data: payload.output }" className="font-mono text-xs h-20 resize-none" />
               </div>
             </div>
@@ -90,7 +90,7 @@ export function SubWorkflowNode({ id, data }: { id: string, data: any }) {
       </div>
       <div className="p-3">
         <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
-          {selectedWorkflow?.name || 'Select workflow...'}
+          {selectedWorkflow?.name || t('Select workflow...')}
         </div>
       </div>
       <Handle type="source" position={Position.Right} className="w-5 h-5 border-2 border-indigo-500 bg-popover" />

@@ -48,10 +48,11 @@ export async function readConfig<T>(name: string): Promise<T | null> {
   }
 }
 
-export async function writeConfig(name: string, value: unknown) {
+export async function writeConfig(name: string, value: unknown): Promise<boolean> {
   const payload = JSON.stringify(value);
   try {
     await invoke('write_json_config', { name, value: payload });
+    return true;
   } catch (e) {
     console.warn(`Tauri write_json_config failed for "${name}", falling back to localStorage`, e);
     debugLogger.warn('baseSlice', `writeConfig fallback for "${name}"`, { error: String(e) });
@@ -59,9 +60,11 @@ export async function writeConfig(name: string, value: unknown) {
       const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
       all[name] = value;
       localStorage.setItem(LS_KEY, JSON.stringify(all));
+      return true;
     } catch (lsErr) {
       console.error(`localStorage fallback failed for "${name}"`, lsErr);
       debugLogger.error('baseSlice', `localStorage fallback failed for "${name}"`, { error: String(lsErr) });
+      return false;
     }
   }
 }
@@ -76,7 +79,7 @@ export interface BaseSlice {
   deleteAgent: (id: string) => Promise<void>;
   updateAgent: (id: string, updates: Partial<Agent>) => Promise<void>;
   batchUpdateAgents: (ids: string[], updates: Partial<Agent>) => Promise<{ successCount: number; failedIds: string[] }>;
-  addAgentCategory: (category: Omit<AgentCategory, 'id' | 'createdAt'>) => void;
+  addAgentCategory: (category: Omit<AgentCategory, 'id' | 'createdAt'>) => Promise<void>;
   fetchInitialData: () => Promise<void>;
 }
 
@@ -299,22 +302,16 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
         id: uuidv4(),
         createdAt: Date.now()
       };
-      try {
-        const agentToSave = {
-          ...newAgent,
-          // Rust Agent struct uses camelCase serde; required fields must never be undefined/null
-          modelProvider: newAgent.modelProvider ?? 'local',
-          modelId: newAgent.modelId ?? 'default',
-          providerId: newAgent.providerId,
-          temperature: newAgent.temperature ?? 0.7,
-          parameters: JSON.stringify(newAgent.parameters ?? {}),
-        };
-        await invoke('add_agent', { agent: agentToSave });
-      } catch (error) {
-        console.error('Failed to persist agent to DB, using in-memory only:', error);
-        debugLogger.error('baseSlice', 'addAgent persist failed', { error: String(error) });
-        // Continue — save to store even if Tauri backend is unavailable
-      }
+      const agentToSave = {
+        ...newAgent,
+        // Rust Agent struct uses camelCase serde; required fields must never be undefined/null
+        modelProvider: newAgent.modelProvider ?? 'local',
+        modelId: newAgent.modelId ?? 'default',
+        providerId: newAgent.providerId,
+        temperature: newAgent.temperature ?? 0.7,
+        parameters: JSON.stringify(newAgent.parameters ?? {}),
+      };
+      await invoke('add_agent', { agent: agentToSave });
       const nextAgents = [...get().agents, newAgent];
       set({ agents: nextAgents });
     },
@@ -368,16 +365,19 @@ export function createBaseSlice(set: any, get: any): BaseSlice {
       return { successCount: agentsToUpdate.length, failedIds };
     },
 
-    addAgentCategory: (categoryData) => set((state: any) => {
+    addAgentCategory: async (categoryData) => {
       const newCategory: AgentCategory = {
         ...categoryData,
         id: uuidv4(),
         createdAt: Date.now()
       };
-      const nextCategories = [...state.agentCategories, newCategory];
-      void writeConfig('agent_categories.json', nextCategories);
-      return { agentCategories: nextCategories };
-    }),
+      const nextCategories = [...get().agentCategories, newCategory];
+      const ok = await writeConfig('agent_categories.json', nextCategories);
+      if (!ok) {
+        throw new Error('Failed to save agent category');
+      }
+      set({ agentCategories: nextCategories });
+    },
 
     fetchInitialData: async () => {
       try {

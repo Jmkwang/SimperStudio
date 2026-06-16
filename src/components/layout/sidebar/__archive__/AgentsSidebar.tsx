@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { cn } from "@/lib/utils"
 import { Bot, Plus } from "lucide-react"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ export function AgentsSidebar({
 }: {
   agents: any[]
   agentCategories: any[]
-  addAgentCategory: (category: { name: string; description?: string }) => void
+  addAgentCategory: (category: { name: string; description?: string }) => Promise<void>
   selectedCategory: string | null
   onSelectCategory: (category: string | null) => void
   t: (key: string) => string
@@ -69,11 +70,16 @@ export function AgentsSidebar({
     })
   }
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (categoryName.trim()) {
-      addAgentCategory({ name: categoryName.trim() })
-      setCategoryName('')
-      setIsDialogOpen(false)
+      try {
+        await addAgentCategory({ name: categoryName.trim() })
+        setCategoryName('')
+        setIsDialogOpen(false)
+      } catch (e) {
+        console.error('Failed to add category:', e)
+        toast?.error?.(t('保存失败'), { description: String(e) })
+      }
     }
   }
 

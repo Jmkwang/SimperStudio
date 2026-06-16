@@ -15,7 +15,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Merge'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Merge')));
   const [strategy, setStrategy] = useState(data.strategy || 'append');
   const [mergeKey, setMergeKey] = useState(data.mergeKey || 'id');
 
@@ -41,13 +41,13 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
             <Merge className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Merge'}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Merge')}</p>
             <p className="text-xs text-muted-foreground mt-1">{data.strategy === 'byKey' ? `by ${data.mergeKey || 'id'}` : data.strategy || 'append'}</p>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure merge node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure merge node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -63,13 +63,13 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>{t("Merge Strategy")}</Label>
+                <Label>{t('Merge Strategy')}</Label>
                 <Select value={strategy} onValueChange={setStrategy}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="append">Append (concat arrays)</SelectItem>
+                    <SelectItem value="append">{t('Append (concat arrays)')}</SelectItem>
                     <SelectItem value="byKey">{t("Merge by Key")}</SelectItem>
-                    <SelectItem value="waitForAll">Wait for All (combine objects)</SelectItem>
+                    <SelectItem value="waitForAll">{t('Wait for All (combine objects)')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

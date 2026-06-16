@@ -12,11 +12,12 @@ fn db_path() -> PathBuf {
     app_data_dir().join("simperstudio.db")
 }
 
-fn ensure_app_dir() {
+fn ensure_app_dir() -> Result<(), String> {
     let dir = app_data_dir();
     if !dir.exists() {
-        let _ = fs::create_dir_all(&dir);
+        fs::create_dir_all(&dir).map_err(|e| format!("Failed to create app data directory {:?}: {}", dir, e))?;
     }
+    Ok(())
 }
 
 pub struct DbState {
@@ -76,229 +77,154 @@ fn default_agent_role() -> String { "assistant".to_string() }
 fn default_agent_type() -> String { "custom".to_string() }
 fn default_true() -> bool { true }
 
-pub fn init_db() -> Result<Connection> {
-    ensure_app_dir();
-    let conn = Connection::open(db_path())?;
-    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
+pub fn init_db() -> Result<Connection, String> {
+    ensure_app_dir()?;
+    let conn = Connection::open(db_path()).map_err(|e| e.to_string())?;
+    conn.execute_batch("PRAGMA foreign_keys = ON;").map_err(|e| e.to_string())?;
+    conn.execute_batch("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;").map_err(|e| e.to_string())?;
 
-    conn.execute_batch(
-        "
-        CREATE TABLE IF NOT EXISTS workspaces (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL
-        );
+    (|| -> Result<(), rusqlite::Error> {
+        conn.execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS workspaces (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
 
-        CREATE TABLE IF NOT EXISTS agents (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            avatar TEXT,
-            system_prompt TEXT NOT NULL,
-            model_provider TEXT NOT NULL,
-            model_id TEXT NOT NULL,
-            provider_id TEXT,
-            temperature REAL NOT NULL,
-            max_tokens INTEGER,
-            api_key TEXT,
-            base_url TEXT,
-            parameters TEXT NOT NULL,
-            industry TEXT,
-            role TEXT DEFAULT 'assistant',
-            type TEXT DEFAULT 'custom',
-            isActive INTEGER DEFAULT 1,
-            category TEXT DEFAULT '',
-            created_at INTEGER NOT NULL
-        );
+            CREATE TABLE IF NOT EXISTS agents (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                avatar TEXT,
+                system_prompt TEXT NOT NULL,
+                model_provider TEXT NOT NULL,
+                model_id TEXT NOT NULL,
+                provider_id TEXT,
+                temperature REAL NOT NULL,
+                max_tokens INTEGER,
+                api_key TEXT,
+                base_url TEXT,
+                parameters TEXT NOT NULL,
+                industry TEXT,
+                role TEXT DEFAULT 'assistant',
+                type TEXT DEFAULT 'custom',
+                isActive INTEGER DEFAULT 1,
+                category TEXT DEFAULT '',
+                created_at INTEGER NOT NULL
+            );
 
-        CREATE TABLE IF NOT EXISTS chat_sessions (
-            id TEXT PRIMARY KEY,
-            workspace_id TEXT NOT NULL,
-            title TEXT NOT NULL,
-            workflow_id TEXT,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
-        );
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                workflow_id TEXT,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+            );
 
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id TEXT PRIMARY KEY,
-            session_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            timestamp INTEGER NOT NULL,
-            meta TEXT,
-            FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-        );
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                timestamp INTEGER NOT NULL,
+                meta TEXT,
+                FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+            );
 
-        CREATE TABLE IF NOT EXISTS workflows (
-            id TEXT PRIMARY KEY,
-            workspace_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            nodes_data TEXT NOT NULL,
-            edges_data TEXT NOT NULL,
-            status TEXT NOT NULL,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
-        );
+            CREATE TABLE IF NOT EXISTS workflows (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                nodes_data TEXT NOT NULL,
+                edges_data TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+            );
 
-        -- High-frequency query indexes
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_session_timestamp ON chat_messages(session_id, timestamp);
-        CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
-        CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
-        CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
-        CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(isActive);
-        "
-    )?;
+            -- High-frequency query indexes
+            CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+            CREATE INDEX IF NOT EXISTS idx_chat_messages_session_timestamp ON chat_messages(session_id, timestamp);
+            CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
+            CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
+            "
+        )?;
 
-    let has_workflow_id = conn
-        .prepare("PRAGMA table_info(chat_sessions)")?
-        .query_map([], |row| row.get::<_, String>(1))?
-        .filter_map(Result::ok)
-        .any(|name| name == "workflow_id");
+        let has_workflow_id = conn
+            .prepare("PRAGMA table_info(chat_sessions)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(Result::ok)
+            .any(|name| name == "workflow_id");
 
-    if !has_workflow_id {
-        conn.execute("ALTER TABLE chat_sessions ADD COLUMN workflow_id TEXT", [])?;
-    }
+        if !has_workflow_id {
+            conn.execute("ALTER TABLE chat_sessions ADD COLUMN workflow_id TEXT", [])?;
+        }
 
-    let has_provider_id = conn
-        .prepare("PRAGMA table_info(agents)")?
-        .query_map([], |row| row.get::<_, String>(1))?
-        .filter_map(Result::ok)
-        .any(|name| name == "provider_id");
+        let has_provider_id = conn
+            .prepare("PRAGMA table_info(agents)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(Result::ok)
+            .any(|name| name == "provider_id");
 
-    if !has_provider_id {
-        conn.execute("ALTER TABLE agents ADD COLUMN provider_id TEXT", [])?;
-    }
+        if !has_provider_id {
+            conn.execute("ALTER TABLE agents ADD COLUMN provider_id TEXT", [])?;
+        }
 
-    // Migrate agent fields: role, type, isActive, category, workspace_id
-    let agent_cols: Vec<String> = conn
-        .prepare("PRAGMA table_info(agents)")?
-        .query_map([], |row| row.get::<_, String>(1))?
-        .filter_map(Result::ok)
-        .collect();
+        // Migrate agent fields: role, type, isActive, category, workspace_id
+        let agent_cols: Vec<String> = conn
+            .prepare("PRAGMA table_info(agents)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(Result::ok)
+            .collect();
 
-    if !agent_cols.contains(&"role".to_string()) {
-        conn.execute("ALTER TABLE agents ADD COLUMN role TEXT DEFAULT 'assistant'", [])?;
-    }
-    if !agent_cols.contains(&"type".to_string()) {
-        conn.execute("ALTER TABLE agents ADD COLUMN type TEXT DEFAULT 'custom'", [])?;
-    }
-    if !agent_cols.contains(&"isActive".to_string()) {
-        conn.execute("ALTER TABLE agents ADD COLUMN isActive INTEGER DEFAULT 1", [])?;
-    }
-    if !agent_cols.contains(&"category".to_string()) {
-        conn.execute("ALTER TABLE agents ADD COLUMN category TEXT DEFAULT ''", [])?;
-    }
-    if !agent_cols.contains(&"workspace_id".to_string()) {
-        conn.execute("ALTER TABLE agents ADD COLUMN workspace_id TEXT", [])?;
-    }
+        if !agent_cols.contains(&"role".to_string()) {
+            conn.execute("ALTER TABLE agents ADD COLUMN role TEXT DEFAULT 'assistant'", [])?;
+        }
+        if !agent_cols.contains(&"type".to_string()) {
+            conn.execute("ALTER TABLE agents ADD COLUMN type TEXT DEFAULT 'custom'", [])?;
+        }
+        if !agent_cols.contains(&"isActive".to_string()) {
+            conn.execute("ALTER TABLE agents ADD COLUMN isActive INTEGER DEFAULT 1", [])?;
+        }
+        if !agent_cols.contains(&"category".to_string()) {
+            conn.execute("ALTER TABLE agents ADD COLUMN category TEXT DEFAULT ''", [])?;
+        }
+        if !agent_cols.contains(&"workspace_id".to_string()) {
+            conn.execute("ALTER TABLE agents ADD COLUMN workspace_id TEXT", [])?;
+        }
 
-    let has_agent_responses = conn
-        .prepare("PRAGMA table_info(chat_messages)")?
-        .query_map([], |row| row.get::<_, String>(1))?
-        .filter_map(Result::ok)
-        .any(|name| name == "agent_responses");
+        // Create agent indexes after the columns they reference have been migrated.
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id)", [])?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(isActive)", [])?;
 
-    if !has_agent_responses {
-        conn.execute("ALTER TABLE chat_messages ADD COLUMN agent_responses TEXT", [])?;
-    }
+        let has_agent_responses = conn
+            .prepare("PRAGMA table_info(chat_messages)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(Result::ok)
+            .any(|name| name == "agent_responses");
 
-    let has_meta = conn
-        .prepare("PRAGMA table_info(chat_messages)")?
-        .query_map([], |row| row.get::<_, String>(1))?
-        .filter_map(Result::ok)
-        .any(|name| name == "meta");
+        if !has_agent_responses {
+            conn.execute("ALTER TABLE chat_messages ADD COLUMN agent_responses TEXT", [])?;
+        }
 
-    if !has_meta {
-        conn.execute("ALTER TABLE chat_messages ADD COLUMN meta TEXT", [])?;
-    }
+        let has_meta = conn
+            .prepare("PRAGMA table_info(chat_messages)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(Result::ok)
+            .any(|name| name == "meta");
 
-    Ok(conn)
-}
+        if !has_meta {
+            conn.execute("ALTER TABLE chat_messages ADD COLUMN meta TEXT", [])?;
+        }
 
-pub fn init_memory_db() -> Result<Connection> {
-    let conn = Connection::open_in_memory()?;
-    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
-
-    conn.execute_batch(
-        "
-        CREATE TABLE IF NOT EXISTS workspaces (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS agents (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            avatar TEXT,
-            system_prompt TEXT NOT NULL,
-            model_provider TEXT NOT NULL,
-            model_id TEXT NOT NULL,
-            provider_id TEXT,
-            temperature REAL NOT NULL,
-            max_tokens INTEGER,
-            api_key TEXT,
-            base_url TEXT,
-            parameters TEXT NOT NULL,
-            industry TEXT,
-            role TEXT DEFAULT 'assistant',
-            type TEXT DEFAULT 'custom',
-            isActive INTEGER DEFAULT 1,
-            category TEXT DEFAULT '',
-            workspace_id TEXT,
-            created_at INTEGER NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS chat_sessions (
-            id TEXT PRIMARY KEY,
-            workspace_id TEXT NOT NULL,
-            title TEXT NOT NULL,
-            workflow_id TEXT,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id TEXT PRIMARY KEY,
-            session_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            timestamp INTEGER NOT NULL,
-            agent_responses TEXT,
-            meta TEXT,
-            FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE IF NOT EXISTS workflows (
-            id TEXT PRIMARY KEY,
-            workspace_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            nodes_data TEXT NOT NULL,
-            edges_data TEXT NOT NULL,
-            status TEXT NOT NULL,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_session_timestamp ON chat_messages(session_id, timestamp);
-        CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
-        CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
-        CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
-        CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(isActive);
-        "
-    )?;
+        Ok(())
+    })().map_err(|e| e.to_string())?;
 
     Ok(conn)
 }

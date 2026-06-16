@@ -14,7 +14,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Router'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Router')));
   // Default to two routes if none provided
   const [routes, setRoutes] = useState<{id: string, condition: string}[]>(
     data.routes || [
@@ -74,14 +74,14 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
             <SplitSquareHorizontal className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Router'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("Condition Branching")}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Router')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Condition Branching')}</p>
           </div>
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure router node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure router node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -99,9 +99,9 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
               
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label>{t("Routes (JavaScript Conditions)")}</Label>
+                  <Label>{t('Routes (JavaScript Conditions)')}</Label>
                   <Button variant="outline" size="sm" onClick={addRoute} className="h-7 px-2 text-xs">
-                    <Plus className="h-3 w-3 mr-1" /> {t("Add Route")}
+                    <Plus className="h-3 w-3 mr-1" /> {t('Add Route')}
                   </Button>
                 </div>
                 
@@ -112,7 +112,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
                       <Input 
                         value={route.condition}
                         onChange={(e) => updateRoute(idx, e.target.value)}
-                        placeholder="e.g. payload.score > 90"
+                        placeholder={t('e.g. payload.score > 90')}
                         className="font-mono text-xs flex-1"
                       />
                       <Button
@@ -121,7 +121,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
                         className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                         onClick={() => removeRoute(idx)}
                         disabled={routes.length <= 1}
-                        aria-label="Remove route"
+                        aria-label={t('Remove route')}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -129,7 +129,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Conditions are evaluated as JS expressions. The first one that evaluates to true will be taken.
+                  {t('Conditions are evaluated as JS expressions. The first one that evaluates to true will be taken.')}
                 </p>
               </div>
             </div>

@@ -13,7 +13,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
   const { setNodes } = useReactFlow();
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Loop'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Loop')));
   const [itemsPath, setItemsPath] = useState(data.itemsPath || 'payload.alivePlayers');
   const [itemAlias, setItemAlias] = useState(data.itemAlias || 'item');
   const [indexAlias, setIndexAlias] = useState(data.indexAlias || 'index');
@@ -57,14 +57,14 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
             <Repeat className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Loop'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("Iteration Control")}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Loop')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('Iteration Control')}</p>
           </div>
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure loop node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure loop node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -124,7 +124,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="break-condition">Break Condition (optional)</Label>
+                <Label htmlFor="break-condition">{t('Break Condition (optional)')}</Label>
                 <Input
                   id="break-condition"
                   value={breakCondition}
@@ -132,7 +132,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
                   placeholder="payload.shouldStop === true"
                 />
                 <p className="text-xs text-muted-foreground">
-                  JavaScript expression. When true, loop exits early.
+                  {t('JavaScript expression. When true, loop exits early.')}
                 </p>
               </div>
             </div>
@@ -145,12 +145,12 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
 
       <div className="p-3 space-y-1">
         <p className="text-xs text-muted-foreground truncate" title={data.itemsPath || 'payload.alivePlayers'}>
-          items: {data.itemsPath || 'payload.alivePlayers'}
+          {t('items:')} {data.itemsPath || 'payload.alivePlayers'}
         </p>
         <p className="text-xs text-muted-foreground">
-          aliases: {data.itemAlias || 'item'} / {data.indexAlias || 'index'}
+          {t('aliases:')} {data.itemAlias || 'item'} / {data.indexAlias || 'index'}
         </p>
-        <p className="text-xs text-muted-foreground">max: {data.maxIterations ?? 20}</p>
+        <p className="text-xs text-muted-foreground">{t('max:')} {data.maxIterations ?? 20}</p>
       </div>
 
       <Handle

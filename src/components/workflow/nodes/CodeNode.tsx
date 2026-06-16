@@ -12,7 +12,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Code Snippet'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Code Snippet')));
   const [code, setCode] = useState(data.code || 'return payload;');
   const [isOpen, setIsOpen] = useState(false);
 
@@ -44,14 +44,14 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
             <Code2 className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Code Snippet'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("JS Execution")}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Code Snippet')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('JS Execution')}</p>
           </div>
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure code node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure code node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -69,7 +69,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
               
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label>{t("JavaScript Code")}</Label>
+                  <Label>{t('JavaScript Code')}</Label>
                 </div>
                 <div className="bg-muted p-2 rounded-md text-xs font-mono text-muted-foreground mb-1">
                   function execute(payload) {'{'}
@@ -84,7 +84,7 @@ export function CodeNode({ id, data }: { id: string, data: any }) {
                   {'}'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Modify the input `payload` object and return it.
+                  {t("Modify the input `payload` object and return it.")}
                 </p>
               </div>
             </div>

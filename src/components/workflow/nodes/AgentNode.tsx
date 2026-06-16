@@ -19,7 +19,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
   const agents = useAppStore(state => state.agents);
   const providers = useAppStore(state => state.settings?.providers) || [];
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Agent Node'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Agent Node')));
   const [selectedAgentId, setSelectedAgentId] = useState(data.agentId || agents[0]?.id);
   const [localSchema, setLocalSchema] = useState(data.schema || '');
   const [localAutoSend, setLocalAutoSend] = useState(data.autoSendToNext || false);
@@ -78,7 +78,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted/80" aria-label="Configure agent node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted/80" aria-label={t('Configure agent node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -132,7 +132,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               <div className="border border-amber-200 dark:border-amber-900/40 rounded-lg p-3 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
                 <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">{t('Node-level Overrides (local only)')}</h5>
                 <div className="grid gap-2">
-                  <Label className="text-xs">{t("Override Provider")}</Label>
+                  <Label className="text-xs">{t('Override Provider')}</Label>
                   <Select
                     value={overrideProviderId || '__none__'}
                     onValueChange={(v) => { setOverrideProviderId(v === '__none__' ? '' : v); setOverrideModelId(''); }}
@@ -149,7 +149,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-xs">{t("Override Model")}</Label>
+                  <Label className="text-xs">{t('Override Model')}</Label>
                   <Select
                     value={overrideModelId || '__none__'}
                     onValueChange={(v) => setOverrideModelId(v === '__none__' ? '' : v)}
@@ -170,7 +170,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
 
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <Label>{t("Auto Send to Next")}</Label>
+                  <Label>{t('Auto Send to Next')}</Label>
                   <p className="text-xs text-muted-foreground">{t("Automatically forward this agent's reply to the next agent node.")}</p>
                 </div>
                 <Switch

@@ -20,7 +20,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Set / Transform'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Set / Transform')));
   const [mappings, setMappings] = useState<FieldMapping[]>(
     data.mappings || [{ sourcePath: 'payload.llmResult', targetPath: 'output' }]
   );
@@ -57,13 +57,13 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
             <Shuffle className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Set / Transform'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{(data.mappings || []).length} mapping(s)</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Set / Transform')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{(data.mappings || []).length}{t('mapping(s)')}</p>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure transform node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure transform node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -80,7 +80,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label>{t("Field Mappings")}</Label>
+                  <Label>{t('Field Mappings')}</Label>
                   <Button variant="outline" size="sm" onClick={addMapping} className="h-7 px-2 text-xs"><Plus className="h-3 w-3 mr-1" />{t("Add")}</Button>
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
@@ -89,17 +89,17 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
                       <Input value={m.sourcePath} onChange={(e) => updateMapping(i, 'sourcePath', e.target.value)} placeholder="payload.src" className="font-mono text-xs flex-1" />
                       <span className="text-muted-foreground text-xs">→</span>
                       <Input value={m.targetPath} onChange={(e) => updateMapping(i, 'targetPath', e.target.value)} placeholder="output.field" className="font-mono text-xs flex-1" />
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeMapping(i)} disabled={mappings.length <= 1} aria-label="Remove mapping"><Trash2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeMapping(i)} disabled={mappings.length <= 1} aria-label={t('Remove mapping')}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label>Constants (JSON, merged into output)</Label>
+                <Label>{t('Constants (JSON, merged into output)')}</Label>
                 <Textarea value={constants} onChange={(e) => setConstants(e.target.value)} placeholder='{"version": 1}' className="font-mono text-xs h-16 resize-none" />
               </div>
               <div className="grid gap-2">
-                <Label>Output Whitelist (comma-separated paths)</Label>
+                <Label>{t('Output Whitelist (comma-separated paths)')}</Label>
                 <Input value={whitelist} onChange={(e) => setWhitelist(e.target.value)} placeholder="output.name, output.score" className="font-mono text-xs" />
               </div>
             </div>
@@ -111,7 +111,7 @@ export function SetTransformNode({ id, data }: { id: string, data: any }) {
       </div>
       <div className="p-3">
         <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
-          {(data.mappings || []).map((m: FieldMapping) => `${m.sourcePath} → ${m.targetPath}`).join(', ') || 'No mappings'}
+          {(data.mappings || []).map((m: FieldMapping) => `${m.sourcePath} → ${m.targetPath}`).join(', ') || t('No mappings')}
         </div>
       </div>
       <Handle type="source" position={Position.Right} className="w-5 h-5 border-2 border-teal-500 bg-popover" />

@@ -12,7 +12,7 @@ import { NodeDeleteButton } from './NodeDeleteButton';
 export function TriggerNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
   const { setNodes } = useReactFlow();
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Trigger'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Trigger')));
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSave = () => {
@@ -38,13 +38,13 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
           <Play className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-sm font-semibold leading-none">{data.label || 'Trigger'}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t("Manual Execution")}</p>
+          <p className="text-sm font-semibold leading-none">{data.label || t('Trigger')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('Manual Execution')}</p>
         </div>
       </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure trigger node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure trigger node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -67,7 +67,7 @@ export function TriggerNode({ id, data }: { id: string, data: any }) {
         </Dialog>
       </div>
       <div className="p-3 text-xs text-muted-foreground">
-        Initiates the workflow when clicked.
+        {t('Initiates the workflow when clicked.')}
       </div>
       <Handle
         type="source"

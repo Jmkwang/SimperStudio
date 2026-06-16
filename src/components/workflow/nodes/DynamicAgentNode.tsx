@@ -19,7 +19,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
   const agents = useAppStore((state) => state.agents);
   const providers = useAppStore((state) => state.settings?.providers) || [];
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Dynamic Agent'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Dynamic Agent')));
   const [isOpen, setIsOpen] = useState(false);
 
   // Config source
@@ -97,7 +97,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
             <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none truncate max-w-[160px]">{data.label || 'Dynamic Agent'}</p>
+            <p className="text-sm font-semibold leading-none truncate max-w-[160px]">{data.label || t('Dynamic Agent')}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[160px]">
               {configSource === 'payload' ? t('From Payload') : t('Inline Template')}
             </p>
@@ -108,7 +108,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
           <DialogTrigger asChild>
             <button
               className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted"
-              aria-label="Configure dynamic agent node"
+              aria-label={t('Configure dynamic agent node')}
             >
               <Settings2 className="h-4 w-4" />
             </button>
@@ -161,7 +161,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     placeholder="payload.dynamicAgentConfig"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Path to a DynamicAgentConfig object in the payload. Use dot notation or bracket notation.
+                    {t('Path to a DynamicAgentConfig object in the payload. Use dot notation or bracket notation.')}
                   </p>
                 </div>
               )}
@@ -234,7 +234,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                   className="resize-none h-16 text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  If set, this template is used as the user prompt. Otherwise the entire payload is sent.
+                  {t('If set, this template is used as the user prompt. Otherwise the entire payload is sent.')}
                 </p>
               </div>
 
@@ -316,7 +316,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
                   <Label>{t("Auto Send to Next")}</Label>
-                  <p className="text-xs text-muted-foreground">Automatically forward this agent&apos;s reply to the next agent node.</p>
+                  <p className="text-xs text-muted-foreground">{t("Automatically forward this agent's reply to the next agent node.")}</p>
                 </div>
                 <Switch checked={autoSendToNext} onCheckedChange={setAutoSendToNext} />
               </div>

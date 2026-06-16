@@ -15,7 +15,7 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
   const updateNodeInternals = useUpdateNodeInternals();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'IF / Switch'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('IF / Switch')));
   const [branches, setBranches] = useState<{ id: string; label: string; condition: string }[]>(
     data.branches || [
       { id: 'true', label: 'True', condition: 'payload.value > 0' },
@@ -52,13 +52,13 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
             <GitBranch className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'IF / Switch'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{branches.length} branch(es)</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('IF / Switch')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{branches.length}{t('branch(es)')}</p>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure IF/Switch node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure IF/Switch node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -75,15 +75,15 @@ export function IfSwitchNode({ id, data }: { id: string, data: any }) {
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label>Branches (first match wins)</Label>
+                  <Label>{t('Branches (first match wins)')}</Label>
                   <Button variant="outline" size="sm" onClick={addBranch} className="h-7 px-2 text-xs"><Plus className="h-3 w-3 mr-1" />{t("Add")}</Button>
                 </div>
                 <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2">
                   {branches.map((b, i) => (
                     <div key={b.id} className="grid gap-1 border rounded-md p-2">
                       <div className="flex items-center gap-2">
-                        <Input value={b.label} onChange={(e) => updateBranch(i, 'label', e.target.value)} placeholder="Label" className="text-xs flex-1" />
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeBranch(i)} disabled={branches.length <= 1} aria-label="Remove branch"><Trash2 className="h-3 w-3" /></Button>
+                        <Input value={b.label} onChange={(e) => updateBranch(i, 'label', e.target.value)} placeholder={t('Label')} className="text-xs flex-1" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeBranch(i)} disabled={branches.length <= 1} aria-label={t('Remove branch')}><Trash2 className="h-3 w-3" /></Button>
                       </div>
                       <Input value={b.condition} onChange={(e) => updateBranch(i, 'condition', e.target.value)} placeholder="payload.score > 90" className="font-mono text-xs" />
                     </div>

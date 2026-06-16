@@ -13,7 +13,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const connections = useNodeConnections({ handleType: "target" });
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Output'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Output')));
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSave = () => {
@@ -46,13 +46,13 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
           <FileOutput className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-sm font-semibold leading-none">{data.label || 'Output'}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t("Final Result")}</p>
+          <p className="text-sm font-semibold leading-none">{data.label || t('Output')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('Final Result')}</p>
         </div>
       </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure output node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure output node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -75,7 +75,7 @@ export function OutputNode({ id, data }: { id: string, data: any }) {
         </Dialog>
       </div>
       <div className="p-3 text-xs text-muted-foreground">
-        Returns data to the user or system.
+        {t('Returns data to the user or system.')}
       </div>
     </div>
   );

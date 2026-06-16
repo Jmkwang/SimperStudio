@@ -2,7 +2,7 @@ mod db;
 mod cli_agent;
 
 use db::{
-    DbState, init_db, init_memory_db, get_agents, add_agent, update_agent, delete_agent,
+    DbState, init_db, get_agents, add_agent, update_agent, delete_agent,
     get_workspaces, add_workspace, update_workspace, delete_workspace,
     get_chat_sessions, add_chat_session, update_chat_session, delete_chat_session,
     get_chat_messages, add_chat_message, update_chat_message, delete_chat_message,
@@ -22,17 +22,8 @@ pub fn run() {
             conn
         }
         Err(e) => {
-            error!("Failed to initialize persistent database: {}. Falling back to in-memory database. Data will not be persisted across sessions.", e);
-            match init_memory_db() {
-                Ok(conn) => {
-                    info!("In-memory database initialized as fallback");
-                    conn
-                }
-                Err(mem_err) => {
-                    error!("Failed to initialize in-memory database: {}. Exiting.", mem_err);
-                    std::process::exit(1);
-                }
-            }
+            error!("Failed to initialize persistent database: {}. SimperStudio cannot start without a writable database.", e);
+            panic!("Failed to initialize persistent database: {}. Please ensure the app data directory is writable.", e);
         }
     };
 

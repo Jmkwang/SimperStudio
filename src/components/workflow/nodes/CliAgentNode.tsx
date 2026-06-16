@@ -53,7 +53,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
 
   const allPresets = [...BUILTIN_PRESETS, ...userPresets.filter(up => !BUILTIN_PRESETS.find(bp => bp.id === up.id))];
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'CLI Agent'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('CLI Agent')));
   const [mode, setMode] = useState<'preset' | 'custom'>(data.mode || 'preset');
   const [presetId, setPresetId] = useState(data.presetId || 'claude-code');
   const [executable, setExecutable] = useState(data.executable || '');
@@ -103,7 +103,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
 
   const displayCommand = mode === 'preset'
     ? (selectedPreset?.name || presetId)
-    : executable || '(not set)';
+    : executable || t('Not configured');
 
   return (
     <div className="w-[260px] rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md group">
@@ -119,7 +119,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
           </div>
           <div>
             <p className="text-sm font-semibold leading-none truncate max-w-[140px]">
-              {data.label || 'CLI Agent'}
+              {data.label || t('CLI Agent')}
             </p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">
               {displayCommand}
@@ -131,7 +131,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
           <DialogTrigger asChild>
             <button
               className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted"
-              aria-label="Configure CLI agent node"
+              aria-label={t('Configure CLI agent node')}
             >
               <Settings2 className="h-4 w-4" />
             </button>
@@ -181,7 +181,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
                     <SelectContent>
                       {allPresets.map(p => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.name} — {p.description}
+                          {p.name} — {t(p.description)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -199,7 +199,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
                     <Input
                       value={executable}
                       onChange={e => setExecutable(e.target.value)}
-                      placeholder="e.g. claude, aider, /usr/local/bin/my-tool"
+                      placeholder={t('e.g. claude, aider, /usr/local/bin/my-tool')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -207,7 +207,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
                     <Input
                       value={args}
                       onChange={e => setArgs(e.target.value)}
-                      placeholder='e.g. --print --output-format json'
+                      placeholder={t('e.g. --print --output-format json')}
                     />
                     <p className="text-xs text-muted-foreground">
                       {t('Supports {{variable}} template syntax')}
@@ -237,7 +237,7 @@ export function CliAgentNode({ id, data }: { id: string; data: any }) {
                   <Textarea
                     value={promptTemplate}
                     onChange={e => setPromptTemplate(e.target.value)}
-                    placeholder='e.g. Review this code: {{payload.code}}'
+                    placeholder={t('e.g. Review this code: {{payload.code}}')}
                     rows={3}
                   />
                 </div>

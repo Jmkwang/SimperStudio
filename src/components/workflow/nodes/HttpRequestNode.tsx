@@ -18,7 +18,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'HTTP Request'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('HTTP Request')));
   const [method, setMethod] = useState(data.method || 'GET');
   const [url, setUrl] = useState(data.url || '');
   const [headers, setHeaders] = useState(data.headers || '');
@@ -48,13 +48,13 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
             <Globe className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'HTTP Request'}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('HTTP Request')}</p>
             <p className="text-xs text-muted-foreground mt-1">{data.method || 'GET'} {data.url ? new URL(data.url.replace(/\{\{.*?\}\}/g, 'https://x')).hostname : '...'}</p>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure HTTP node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure HTTP node')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -65,13 +65,13 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
           />
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>{t("Configure HTTP Request")}</DialogTitle>
+              <DialogTitle>{t('Configure HTTP Request')}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid grid-cols-4 gap-2">
                 <div className="col-span-1">
-                  <Label>Method</Label>
+                  <Label>{t('Method')}</Label>
                   <Select value={method} onValueChange={setMethod}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -80,17 +80,17 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
                   </Select>
                 </div>
                 <div className="col-span-3">
-                  <Label>URL</Label>
+                  <Label>{t('URL')}</Label>
                   <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://api.example.com/data" className="font-mono text-xs" />
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label>Headers (JSON)</Label>
+                <Label>{t('Headers (JSON)')}</Label>
                 <Textarea value={headers} onChange={(e) => setHeaders(e.target.value)} placeholder='{"Authorization": "Bearer {{payload.token}}"}' className="font-mono text-xs h-16 resize-none" />
               </div>
               {method !== 'GET' && (
                 <div className="grid gap-2">
-                  <Label>Body (JSON)</Label>
+                  <Label>{t('Body (JSON)')}</Label>
                   <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder='{"key": "value"}' className="font-mono text-xs h-20 resize-none" />
                 </div>
               )}
@@ -103,7 +103,7 @@ export function HttpRequestNode({ id, data }: { id: string, data: any }) {
       </div>
       <div className="p-3">
         <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
-          {data.method || 'GET'} {data.url || 'Not configured'}
+          {data.method || 'GET'} {data.url || t('Not configured')}
         </div>
       </div>
       <Handle type="source" position={Position.Right} className="w-5 h-5 border-2 border-cyan-500 bg-popover" />

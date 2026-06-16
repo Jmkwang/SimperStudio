@@ -15,7 +15,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
   const { setNodes } = useReactFlow();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, 'Webhook Trigger'));
+  const [baseConfig, setBaseConfig] = useState(() => createNodeBaseConfigDraft(data, t('Webhook Trigger')));
   const [method, setMethod] = useState(data.webhookMethod || 'POST');
   const [path, setPath] = useState(data.webhookPath || '/webhook/' + id);
   const [authToken, setAuthToken] = useState(data.authToken || '');
@@ -40,13 +40,13 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
             <Webhook className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none">{data.label || 'Webhook Trigger'}</p>
+            <p className="text-sm font-semibold leading-none">{data.label || t('Webhook Trigger')}</p>
             <p className="text-xs text-muted-foreground mt-1">{data.webhookMethod || 'POST'} {data.webhookPath || '/webhook/...'}</p>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure webhook trigger">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label={t('Configure webhook trigger')}>
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
@@ -62,7 +62,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
             <div className="grid gap-4 py-4">
               <NodeBaseConfigSection value={baseConfig} onChange={setBaseConfig} />
               <div className="grid gap-2">
-                <Label>{t("HTTP Method")}</Label>
+                <Label>{t('HTTP Method')}</Label>
                 <Select value={method} onValueChange={setMethod}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -73,12 +73,12 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label>{t("Webhook Path")}</Label>
+                <Label>{t('Webhook Path')}</Label>
                 <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/webhook/my-hook" className="font-mono text-xs" />
               </div>
               <div className="grid gap-2">
-                <Label>Auth Token (optional)</Label>
-                <Input value={authToken} onChange={(e) => setAuthToken(e.target.value)} placeholder="Bearer token for auth" className="font-mono text-xs" />
+                <Label>{t('Auth Token (optional)')}</Label>
+                <Input value={authToken} onChange={(e) => setAuthToken(e.target.value)} placeholder={t('Bearer token for auth')} className="font-mono text-xs" />
               </div>
             </div>
             <div className="flex justify-end">
@@ -91,7 +91,7 @@ export function WebhookTriggerNode({ id, data }: { id: string, data: any }) {
         <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded font-mono truncate">
           {data.webhookMethod || 'POST'} {data.webhookPath || '/webhook/...'}
         </div>
-        {data.authToken && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t("Auth required")}</p>}
+        {data.authToken && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t('Auth required')}</p>}
       </div>
       <Handle type="source" position={Position.Right} className="w-5 h-5 border-2 border-lime-500 bg-popover" />
     </div>
