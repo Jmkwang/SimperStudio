@@ -1,6 +1,7 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Sparkles, Settings2 } from 'lucide-react';
+import { NodeDeleteButton } from './NodeDeleteButton';
 import { useAppStore } from '@/stores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -84,11 +85,11 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
   const isValid = configSource === 'payload' ? !!configPath : !!systemPromptTemplate;
 
   return (
-    <div className="w-[240px] rounded-xl border border-purple-200 dark:border-purple-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="w-[240px] rounded-xl border border-purple-200 dark:border-purple-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md group">
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-purple-500 bg-popover"
+        className="w-5 h-5 border-2 border-purple-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b border-purple-100 dark:border-purple-900/30 p-3 bg-purple-50/30 dark:bg-purple-950/20">
         <div className="flex items-center gap-3">
@@ -98,7 +99,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
           <div>
             <p className="text-sm font-semibold leading-none truncate max-w-[160px]">{data.label || 'Dynamic Agent'}</p>
             <p className="text-xs text-muted-foreground mt-1 truncate max-w-[160px]">
-              {configSource === 'payload' ? 'From payload' : 'Inline template'}
+              {configSource === 'payload' ? t('From Payload') : t('Inline Template')}
             </p>
           </div>
         </div>
@@ -106,12 +107,17 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <button
-              className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted"
+              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted"
               aria-label="Configure dynamic agent node"
             >
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
+          <NodeDeleteButton
+            nodeId={id}
+            deleteNode={data.deleteNode}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive/80 p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-destructive/10"
+          />
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Dynamic Agent")}</DialogTitle>
@@ -130,7 +136,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     onClick={() => setConfigSource('payload')}
                     className="flex-1"
                   >
-                    From Payload
+                    {t('From Payload')}
                   </Button>
                   <Button
                     type="button"
@@ -139,7 +145,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     onClick={() => setConfigSource('inline')}
                     className="flex-1"
                   >
-                    Inline Template
+                    {t('Inline Template')}
                   </Button>
                 </div>
               </div>
@@ -163,9 +169,9 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
               {/* Inline Mode */}
               {configSource === 'inline' && (
                 <div className="grid gap-3 border border-purple-100 dark:border-purple-900/30 rounded-lg p-3 bg-purple-50/20 dark:bg-purple-950/10">
-                  <h5 className="text-xs font-medium text-purple-700 dark:text-purple-400">{t("Inline Templates")}</h5>
+                  <h5 className="text-xs font-medium text-purple-700 dark:text-purple-400">{t('Inline Templates')}</h5>
                   <div className="grid gap-2">
-                    <Label htmlFor="nameTemplate" className="text-xs">{t("Name Template")}</Label>
+                    <Label htmlFor="nameTemplate" className="text-xs">{t('Name Template')}</Label>
                     <Input
                       id="nameTemplate"
                       value={nameTemplate}
@@ -175,7 +181,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="systemPromptTemplate" className="text-xs">System Prompt Template *</Label>
+                    <Label htmlFor="systemPromptTemplate" className="text-xs">{t('System Prompt Template')} *</Label>
                     <Textarea
                       id="systemPromptTemplate"
                       value={systemPromptTemplate}
@@ -185,7 +191,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="roleTemplate" className="text-xs">{t("Role Template")}</Label>
+                    <Label htmlFor="roleTemplate" className="text-xs">{t('Role Template')}</Label>
                     <Input
                       id="roleTemplate"
                       value={roleTemplate}
@@ -195,7 +201,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="personalityTemplate" className="text-xs">{t("Personality Template")}</Label>
+                    <Label htmlFor="personalityTemplate" className="text-xs">{t('Personality Template')}</Label>
                     <Input
                       id="personalityTemplate"
                       value={personalityTemplate}
@@ -205,7 +211,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="avatarTemplate" className="text-xs">{t("Avatar Template")}</Label>
+                    <Label htmlFor="avatarTemplate" className="text-xs">{t('Avatar Template')}</Label>
                     <Input
                       id="avatarTemplate"
                       value={avatarTemplate}
@@ -219,7 +225,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
 
               {/* Prompt Template */}
               <div className="grid gap-2">
-                <Label htmlFor="promptTemplate">Prompt Template (optional)</Label>
+                <Label htmlFor="promptTemplate">{t('Prompt Template (optional)')}</Label>
                 <Textarea
                   id="promptTemplate"
                   value={promptTemplate}
@@ -234,15 +240,15 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
 
               {/* Fallback Model */}
               <div className="border border-amber-200 dark:border-amber-900/40 rounded-lg p-3 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
-                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">{t("Model Fallback Chain")}</h5>
+                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">{t('Model Fallback Chain')}</h5>
                 <div className="grid gap-2">
-                  <Label className="text-xs">{t("Fallback Agent")}</Label>
+                  <Label className="text-xs">{t('Fallback Agent')}</Label>
                   <Select value={fallbackAgentId || '__none__'} onValueChange={(v) => setFallbackAgentId(v === '__none__' ? '' : v)}>
                     <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder="None" />
+                      <SelectValue placeholder={t('None')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">{t("None")}</SelectItem>
+                      <SelectItem value="__none__">{t('None')}</SelectItem>
                       {agents.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.name}
@@ -252,7 +258,7 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-xs">{t("Fallback Provider")}</Label>
+                  <Label className="text-xs">{t('Fallback Provider')}</Label>
                   <Select
                     value={fallbackProviderId || '__none__'}
                     onValueChange={(v) => {
@@ -261,10 +267,10 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                     }}
                   >
                     <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder="None" />
+                      <SelectValue placeholder={t('None')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">{t("None")}</SelectItem>
+                      <SelectItem value="__none__">{t('None')}</SelectItem>
                       {providers.filter(p => p.isEnabled).map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
@@ -274,17 +280,17 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-xs">{t("Fallback Model")}</Label>
+                  <Label className="text-xs">{t('Fallback Model')}</Label>
                   <Select
                     value={fallbackModelId || '__none__'}
                     onValueChange={(v) => setFallbackModelId(v === '__none__' ? '' : v)}
                     disabled={!fallbackProviderId}
                   >
                     <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder={fallbackProviderId ? 'Select model' : 'Select provider first'} />
+                      <SelectValue placeholder={fallbackProviderId ? t('Select Model') : t('Select a provider first')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">{t("Default")}</SelectItem>
+                      <SelectItem value="__none__">{t('Default')}</SelectItem>
                       {selectedFallbackProvider?.models.map((m) => (
                         <SelectItem key={m.id} value={m.modelId}>
                           {m.name}
@@ -318,11 +324,11 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
             <div className="flex justify-end gap-2">
               {!isValid && (
                 <p className="text-xs text-destructive mr-auto">
-                  {configSource === 'payload' ? 'Config path is required' : 'System prompt template is required'}
+                  {configSource === 'payload' ? t('Config path is required') : t('System prompt template is required')}
                 </p>
               )}
               <Button onClick={handleSave} disabled={!isValid}>
-                Save Changes
+                {t('Save Changes')}
               </Button>
             </div>
           </DialogContent>
@@ -331,20 +337,20 @@ export function DynamicAgentNode({ id, data }: { id: string; data: any }) {
       <div className="p-3">
         <p className="text-xs text-muted-foreground line-clamp-2 italic">
           {configSource === 'payload'
-            ? `From: ${configPath}`
-            : systemPromptTemplate || 'Configure dynamic persona...'}
+            ? `${t('From')}: ${configPath}`
+            : systemPromptTemplate || t('Configure dynamic persona...')}
         </p>
         {autoSendToNext && (
           <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Auto-forward enabled
+            {t('Auto-forward enabled')}
           </p>
         )}
       </div>
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-purple-500 bg-popover"
+        className="w-5 h-5 border-2 border-purple-500 bg-popover"
       />
     </div>
   );

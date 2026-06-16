@@ -220,6 +220,30 @@ function Flow() {
     []
   );
 
+  const onEdgeDoubleClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    },
+    []
+  );
+
+  const onKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        const selectedNodes = nodes.filter((n) => n.selected);
+        const selectedEdges = edges.filter((e) => e.selected);
+        if (selectedNodes.length || selectedEdges.length) {
+          event.preventDefault();
+          const nodeIds = new Set(selectedNodes.map((n) => n.id));
+          setNodes((nds) => nds.filter((n) => !nodeIds.has(n.id)));
+          const edgeIds = new Set(selectedEdges.map((e) => e.id));
+          setEdges((eds) => eds.filter((e) => !edgeIds.has(e.id) && !nodeIds.has(e.source) && !nodeIds.has(e.target)));
+        }
+      }
+    },
+    [nodes, edges]
+  );
+
   const addNode = (type: string, label: string) => {
     track('click', `addNode:${type}`, { label });
     const defaultDataBuilder = nodeDefaultDataBuilders[type];
@@ -373,10 +397,12 @@ function Flow() {
   return (
     <div
       ref={containerRef}
-      className="flex-1 w-full h-full relative bg-card"
+      className="flex-1 w-full h-full relative bg-card outline-none"
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      onKeyDown={onKeyDown}
+      tabIndex={0}
     >
       <DebugBadge id="WorkflowCanvas" />
       {isDragOver && (
@@ -392,7 +418,10 @@ function Flow() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgeDoubleClick={onEdgeDoubleClick}
         nodeTypes={nodeTypes}
+        deleteKeyCode={['Backspace', 'Delete']}
+        connectionRadius={40}
         fitView
         className="bg-card"
         colorMode={isDark ? 'dark' : 'light'}

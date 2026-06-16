@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Repeat, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
+import { NodeDeleteButton } from './NodeDeleteButton';
 
 export function LoopNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
@@ -43,11 +44,11 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[240px] rounded-xl border border-violet-200 dark:border-violet-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
+    <div className="w-[240px] rounded-xl border border-violet-200 dark:border-violet-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md group">
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-violet-500 bg-popover"
+        className="w-5 h-5 border-2 border-violet-500 bg-popover"
       />
 
       <div className="flex items-center justify-between border-b p-3 bg-violet-50/50 dark:bg-violet-950/20 rounded-t-xl">
@@ -63,10 +64,15 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure loop node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure loop node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
+          <NodeDeleteButton
+            nodeId={id}
+            deleteNode={data.deleteNode}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive/80 p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-destructive/10"
+          />
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Loop Node")}</DialogTitle>
@@ -150,7 +156,7 @@ export function LoopNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-violet-500 bg-popover"
+        className="w-5 h-5 border-2 border-violet-500 bg-popover"
       />
     </div>
   );

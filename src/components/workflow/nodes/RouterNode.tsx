@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Settings2, SplitSquareHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
+import { NodeDeleteButton } from './NodeDeleteButton';
 
 export function RouterNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
@@ -61,11 +62,11 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[240px] rounded-xl border border-orange-200 dark:border-orange-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md min-h-[100px]">
+    <div className="w-[240px] rounded-xl border border-orange-200 dark:border-orange-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md min-h-[100px] group">
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-orange-500 bg-popover"
+        className="w-5 h-5 border-2 border-orange-500 bg-popover"
       />
       <div className="flex items-center justify-between border-b p-3 bg-orange-50/50 dark:bg-orange-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
@@ -80,10 +81,15 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure router node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure router node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
+          <NodeDeleteButton
+            nodeId={id}
+            deleteNode={data.deleteNode}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive/80 p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-destructive/10"
+          />
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Router")}</DialogTitle>
@@ -148,7 +154,7 @@ export function RouterNode({ id, data }: { id: string, data: any }) {
                 position={Position.Right}
                 id={route.id}
                 style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)' }}
-                className="w-3 h-3 border-2 border-orange-500 bg-popover absolute"
+                className="w-5 h-5 border-2 border-orange-500 bg-popover absolute"
               />
             </div>
           );

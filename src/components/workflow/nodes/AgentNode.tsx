@@ -1,6 +1,7 @@
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Bot, Settings2 } from 'lucide-react';
+import { NodeDeleteButton } from './NodeDeleteButton';
 import { useAppStore } from '@/stores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -58,7 +59,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 border-2 border-primary bg-popover"
+        className="w-5 h-5 border-2 border-primary bg-popover"
       />
       <div className="gradient-header flex items-center justify-between border-b border-border/50 p-3">
         <div className="flex items-center gap-3">
@@ -69,8 +70,8 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || 'Agent Node'}</p>
-            <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || 'Select an Agent'}</p>
+            <p className="text-sm font-semibold leading-none truncate max-w-[140px]">{data.label || t('Agent Node')}</p>
+            <p className="text-xs text-muted-foreground mt-1 truncate max-w-[140px]">{activeAgent?.name || t('Select an Agent')}</p>
             {data.schema && <p className="text-xs text-primary mt-0.5 font-medium">{t("Tool Calling Enabled")}</p>}
           </div>
         </div>
@@ -81,6 +82,11 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
+          <NodeDeleteButton
+            nodeId={id}
+            deleteNode={data.deleteNode}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive/80 p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-destructive/10"
+          />
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Agent Node")}</DialogTitle>
@@ -91,7 +97,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 <Label>{t("Assigned Agent")}</Label>
                 <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select an agent" />
+                    <SelectValue placeholder={t('Select an agent')} />
                   </SelectTrigger>
                   <SelectContent>
                     {agents.map(a => (
@@ -101,7 +107,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="schema">Output Schema (JSON)</Label>
+                <Label htmlFor="schema">{t('Output Schema (JSON)')}</Label>
                 <Textarea
                   id="schema"
                   value={localSchema}
@@ -116,15 +122,15 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                   id="systemPrompt"
                   value={overrideSystemPrompt}
                   onChange={(e) => setOverrideSystemPrompt(e.target.value)}
-                  placeholder="Leave empty to use the agent's default system prompt"
+                  placeholder={t("Leave empty to use the agent's default system prompt")}
                   className="resize-none h-24"
                 />
-                <p className="text-xs text-muted-foreground">If set, this replaces the agent's system prompt for this node only.</p>
+                <p className="text-xs text-muted-foreground">{t("If set, this replaces the agent's system prompt for this node only.")}</p>
               </div>
 
               {/* Node-level overrides */}
               <div className="border border-amber-200 dark:border-amber-900/40 rounded-lg p-3 bg-amber-50/40 dark:bg-amber-950/20 space-y-3">
-                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">Node-level Overrides (local only)</h5>
+                <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400">{t('Node-level Overrides (local only)')}</h5>
                 <div className="grid gap-2">
                   <Label className="text-xs">{t("Override Provider")}</Label>
                   <Select
@@ -132,7 +138,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                     onValueChange={(v) => { setOverrideProviderId(v === '__none__' ? '' : v); setOverrideModelId(''); }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Use agent default" />
+                      <SelectValue placeholder={t('Use agent default')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">{t("Use agent default")}</SelectItem>
@@ -150,7 +156,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
                     disabled={!overrideProviderId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={overrideProviderId ? "Use provider default" : "Select a provider first"} />
+                      <SelectValue placeholder={overrideProviderId ? t('Use provider default') : t('Select a provider first')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">{t("Use provider default")}</SelectItem>
@@ -165,7 +171,7 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
                   <Label>{t("Auto Send to Next")}</Label>
-                  <p className="text-xs text-muted-foreground">Automatically forward this agent's reply to the next agent node.</p>
+                  <p className="text-xs text-muted-foreground">{t("Automatically forward this agent's reply to the next agent node.")}</p>
                 </div>
                 <Switch
                   checked={localAutoSend}
@@ -182,19 +188,19 @@ export function AgentNode({ id, data }: { id: string, data: any }) {
       </div>
       <div className="p-3 space-y-2">
          <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
-            {data.prompt || 'Process input using assigned agent capabilities.'}
+            {data.prompt || t('Process input using assigned agent capabilities.')}
          </p>
          {data.autoSendToNext && (
            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-md px-2 py-1">
              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-             <span className="font-medium">Auto-forward enabled</span>
+             <span className="font-medium">{t('Auto-forward enabled')}</span>
            </div>
          )}
       </div>
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 border-2 border-primary bg-popover"
+        className="w-5 h-5 border-2 border-primary bg-popover"
       />
     </div>
   );

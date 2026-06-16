@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings2, Merge } from 'lucide-react';
 import { useState } from 'react';
 import { NodeBaseConfigSection, applyNodeBaseConfigDraft, createNodeBaseConfigDraft } from '@/components/workflow/NodeBaseConfigSection';
+import { NodeDeleteButton } from './NodeDeleteButton';
 
 export function MergeNode({ id, data }: { id: string, data: any }) {
   const { t } = useTranslation();
@@ -31,9 +32,9 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
   };
 
   return (
-    <div className="w-[240px] rounded-xl border border-pink-200 dark:border-pink-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md">
-      <Handle type="target" position={Position.Left} id="input-1" style={{ top: '35%' }} className="w-3 h-3 border-2 border-pink-500 bg-popover" />
-      <Handle type="target" position={Position.Left} id="input-2" style={{ top: '65%' }} className="w-3 h-3 border-2 border-pink-500 bg-popover" />
+    <div className="w-[240px] rounded-xl border border-pink-200 dark:border-pink-900/50 bg-card text-card-foreground shadow-sm transition-all hover:shadow-md group">
+      <Handle type="target" position={Position.Left} id="input-1" style={{ top: '35%' }} className="w-5 h-5 border-2 border-pink-500 bg-popover" />
+      <Handle type="target" position={Position.Left} id="input-2" style={{ top: '65%' }} className="w-5 h-5 border-2 border-pink-500 bg-popover" />
       <div className="flex items-center justify-between border-b p-3 bg-pink-50/50 dark:bg-pink-950/20 rounded-t-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-500">
@@ -46,10 +47,15 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure merge node">
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-foreground transition-colors p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-muted" aria-label="Configure merge node">
               <Settings2 className="h-4 w-4" />
             </button>
           </DialogTrigger>
+          <NodeDeleteButton
+            nodeId={id}
+            deleteNode={data.deleteNode}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive/80 p-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-destructive/10"
+          />
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
               <DialogTitle>{t("Configure Merge")}</DialogTitle>
@@ -85,7 +91,7 @@ export function MergeNode({ id, data }: { id: string, data: any }) {
           {strategy === 'byKey' ? `merge by "${mergeKey}"` : strategy}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 border-2 border-pink-500 bg-popover" />
+      <Handle type="source" position={Position.Right} className="w-5 h-5 border-2 border-pink-500 bg-popover" />
     </div>
   );
 }
